@@ -20,6 +20,19 @@ Funktionalität:
 5. Benachrichtigungen: Erinnerungen und Updates zu Zielen um Nutzer regemäß zu motivieren
 6. Webapp damit von überall zugänglich
 
+Nutzungsszenario:
+- Nutzer definiert drei Ziele: 
+    - Marathon trainieren (Motivation 2, Dringlichkeit 4, Deadline in 3 Monaten), 
+    - Spanisch lernen (Motivation 4, Dringlichkeit 3, keine Deadline), 
+    - ein Buch schreiben (Motivation 3, Dringlichkeit 2, keine Deadline).
+    - Sixpack bekommen (Motivation 3, Dringlichkeit 5, 6 Monate)
+- Nutzer entscheidet, nur zwei Ziele gleichzeitig zu verfolgen.
+- Im Dashboard sieht der Nutzer die Fortschritte beim Marathontraining und Sixpack bekommen da diese Zeile höchste Dringlichkeit haben. 
+- Nach 3 Tagen wird der Nutzer gefragt, ob die Motivation und Dringlichkeit für das Spanisch lernen noch aktuell sind.
+- Der Nutzer passt die Motivation für das Spanisch lernen auf 5 an, da er kürzlich eine Reise nach Spanien geplant hat
+- Das Dashboard aktualisiert sich und zeigt nun Spanisch lernen anstatt Marathon trainieren, da die Dringlichkeit gleich ist bleibt, aber die Motivation für Spanisch lernen höher ist.
+- Der Nutzer verwendet Goaly täglich für 10 Minuten morgens um seine Fortschritte zu überprüfen und anzupassen.
+
 Implementierung:
     - Option 1:
         - Frontend: Statische Webapp
@@ -41,6 +54,3 @@ Weitere Wünsche:
 - No cost / no paid services 
 - Project in Packages aufteilen -> Parallel entwicklung
 - Zweck: Training von AI-assisted software development
-
-Erste Schritte:
-- Recherchiere frameworks und hosting möglichkeiten um ne option zu wählen
