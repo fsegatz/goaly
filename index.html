@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goaly - Zielverfolgung</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Goaly</h1>
+            <div class="header-actions">
+                <button id="exportBtn" class="btn btn-secondary">Export</button>
+                <button id="importBtn" class="btn btn-secondary">Import</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
+                <button id="settingsBtn" class="btn btn-secondary">⚙️</button>
+            </div>
+        </header>
+
+        <div class="settings-panel" id="settingsPanel" style="display: none;">
+            <h2>Einstellungen</h2>
+            <div class="setting-item">
+                <label for="maxActiveGoals">Maximale aktive Ziele:</label>
+                <input type="number" id="maxActiveGoals" min="1" max="10" value="3">
+            </div>
+            <div class="setting-item">
+                <label for="checkInInterval">Check-in Intervall (Minuten für Dev-Tests):</label>
+                <input type="number" id="checkInInterval" min="1" value="1">
+            </div>
+            <button id="saveSettingsBtn" class="btn btn-primary">Speichern</button>
+        </div>
+
+        <div class="check-ins-panel" id="checkInsPanel" style="display: none;">
+            <h2>Check-ins</h2>
+            <div id="checkInsList"></div>
+            <button id="closeCheckInsBtn" class="btn btn-secondary">Schließen</button>
+        </div>
+
+        <main>
+            <div class="dashboard-header">
+                <h2>Dashboard</h2>
+                <button id="addGoalBtn" class="btn btn-primary">+ Neues Ziel</button>
+            </div>
+
+            <div class="goals-stats">
+                <span>Aktive Ziele: <strong id="activeGoalsCount">0</strong> / <strong id="maxActiveGoalsDisplay">3</strong></span>
+            </div>
+
+            <div id="goalsList" class="goals-list"></div>
+
+            <div id="allGoalsSection" style="display: none;">
+                <h3>Alle Ziele</h3>
+                <div id="allGoalsList" class="goals-list"></div>
+            </div>
+        </main>
+
+        <!-- Goal Form Modal -->
+        <div id="goalModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="modalTitle">Neues Ziel</h2>
+                <form id="goalForm">
+                    <input type="hidden" id="goalId">
+                    
+                    <div class="form-group">
+                        <label for="goalTitle">Titel *</label>
+                        <input type="text" id="goalTitle" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="goalDescription">Beschreibung</label>
+                        <textarea id="goalDescription" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="goalMotivation">Motivation (1-5) *</label>
+                            <input type="number" id="goalMotivation" min="1" max="5" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="goalUrgency">Dringlichkeit (1-5) *</label>
+                            <input type="number" id="goalUrgency" min="1" max="5" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="goalDeadline">Deadline (optional)</label>
+                        <input type="date" id="goalDeadline">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="goalStatus">Status</label>
+                        <select id="goalStatus">
+                            <option value="active">Aktiv</option>
+                            <option value="paused">Pausiert</option>
+                            <option value="completed">Abgeschlossen</option>
+                        </select>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Speichern</button>
+                        <button type="button" id="cancelBtn" class="btn btn-secondary">Abbrechen</button>
+                        <button type="button" id="deleteBtn" class="btn btn-danger" style="display: none;">Löschen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
