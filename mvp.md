@@ -12,18 +12,20 @@ Kern-User-Stories
 
 Minimal-Feature-Set (Scope MVP)
 -------------------------------
-- Goal CRUD: Erstellen, Lesen, Aktualisieren, Löschen von Zielen.
-- Attribute: Titel, kurze Beschreibung, Motivation (1–5), Dringlichkeit (1–5), optionale Deadline, Status (aktiv/pausiert/abgeschlossen).
+- Goal CRUD: Erstellen, Lesen, Aktualisieren, Löschen von Zielen, Archivierung/Abschluss von Zielen.
+- Attribute: Titel, kurze Beschreibung, Motivation (1–5), Dringlichkeit (1–5), optionale Deadline, Status (aktiv/pausiert/abgeschlossen), Erstellungsdatum, letztes Update-Datum, Aktivitätshistorie.
 - Limit für gleichzeitig verfolgte Ziele (Einstellbar, z.B. default 3).
-- Dashboard: Anzeige der aktuell aktiven Ziele, sortiert nach Priorität (einfache Formel aus Motivation und Dringlichkeit + Deadline-Bonus).
+- Dashboard: Anzeige der aktuell aktiven Ziele, sortiert nach Priorität (einfache Formel aus Motivation und Dringlichkeit + Deadline-Bonus). Anzeigen der Ziele deren Dringlichkeit oder Motivation überprüft werden sollten (Check-ins).
 - Erinnerungs-Mechanismus: einfache browser-basierte Erinnerungen (oder E-Mail später) für anstehende Deadlines und regelmäßige Check-ins (z.B. T+3 Tage, 7 Tage, 14 Tage).
 - Datenhaltung: lokale Persistenz via LocalStorage für die erste Version; Export/Import (JSON) zur Sicherung.
 - Einfaches UI: responsive statische Webapp (HTML/CSS/JS). Backend optional in späteren Schritten.
+- Jedes Ziel wird als Karte im Dashboard angezeigt mit den wichtigsten Infos (Titel, Deadline, Status, Schritte, Ressourcen, Logbuch).
 
 Akzeptanzkriterien / Tests
 --------------------------
 - Nutzer kann ein Ziel mit allen Pflichtfeldern anlegen und in der Liste sehen.
-- Nutzer kann Ziele aktivieren/deaktivieren und das Limit für aktive Ziele wird durchgesetzt.
+- Nutzer kann Ziele aktivieren/deaktivieren
+- Dashboard zeigt aktive Ziele in priorisierter Reihenfolge und maximal N Ziele gleichzeitig an.
 - Dashboard zeigt aktive Ziele in erwarteter Prioritätsreihenfolge und aktualisiert nach Änderungen.
 - Erinnerungs-Check-ins sind sichtbar (für MVP lokal simuliert).
 - Export/Import: JSON-Export erzeugt eine Datei/Download; Import stellt Daten wieder her (lokal).
@@ -35,9 +37,8 @@ Technische Annahmen für MVP
 
 Erfolgskriterien (nach Launch MVP)
 ---------------------------------
-- Innerhalb von 2 Wochen: 5–10 Testnutzer, qualitatives Feedback zu Usability
-- Retention: Mindestens 30 % der Testnutzer kehren innerhalb einer Woche zurück
 - Technisch: Export/Import funktioniert zuverlässig und es gibt keine Datenverluste bei normalen Aktionen
+- Ester Prototyp ist live und nutzbar. 
 
 Nächste Schritte
 ----------------
