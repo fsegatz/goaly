@@ -1,239 +1,53 @@
 // Goaly MVP - Main Application Logic
 
+import GoalService from './domain/goal-service.js';
+import SettingsService from './domain/settings-service.js';
+import CheckInService from './domain/check-in-service.js';
+import UIController from './ui/ui-controller.js';
+
 class GoalyApp {
     constructor() {
-        this.goals = [];
-        this.settings = {
-            maxActiveGoals: 3,
-            checkInInterval: 1, // minutes for dev testing
-            checkInsEnabled: true
-        };
+        this.settingsService = new SettingsService();
+        this.goalService = new GoalService();
+        this.checkInService = new CheckInService(this.goalService.goals, this.settingsService.getSettings());
+        this.uiController = new UIController(this);
+        
         this.checkIns = [];
         this.checkInTimer = null;
         this.init();
     }
 
     init() {
-        this.loadSettings();
-        this.loadGoals();
-        this.setupEventListeners();
-        this.renderViews();
+        this.settingsService.loadSettings();
+        this.goalService.loadGoals();
+        this.uiController.renderViews();
         this.startCheckInTimer();
     }
 
-    // Settings Management
-    loadSettings() {
-        const saved = localStorage.getItem('goaly_settings');
-        if (saved) {
-            this.settings = { ...this.settings, ...JSON.parse(saved) };
-        }
-        document.getElementById('maxActiveGoals').value = this.settings.maxActiveGoals;
-        document.getElementById('checkInInterval').value = this.settings.checkInInterval;
-        document.getElementById('checkInsEnabled').checked = this.settings.checkInsEnabled !== false;
-    }
-
-    saveSettings() {
-        localStorage.setItem('goaly_settings', JSON.stringify(this.settings));
-    }
-
-    // Goal Management
-    loadGoals() {
-        const saved = localStorage.getItem('goaly_goals');
-        if (saved) {
-            this.goals = JSON.parse(saved).map(goal => ({
-                ...goal,
-                createdAt: goal.createdAt ? new Date(goal.createdAt) : new Date(),
-                lastUpdated: goal.lastUpdated ? new Date(goal.lastUpdated) : new Date(),
-                deadline: goal.deadline ? new Date(goal.deadline) : null
-            }));
-        }
-    }
-
-    saveGoals() {
-        localStorage.setItem('goaly_goals', JSON.stringify(this.goals));
-    }
-
-    createGoal(goalData) {
-        const goal = {
-            id: Date.now().toString(),
-            title: goalData.title,
-            description: goalData.description || '',
-            motivation: parseInt(goalData.motivation),
-            urgency: parseInt(goalData.urgency),
-            deadline: goalData.deadline ? new Date(goalData.deadline) : null,
-            status: goalData.status || 'active',
-            createdAt: new Date(),
-            lastUpdated: new Date(),
-            checkInDates: []
-        };
-
-        // Check if we can activate this goal
-        if (goal.status === 'active') {
-            const activeCount = this.goals.filter(g => g.status === 'active').length;
-            if (activeCount >= this.settings.maxActiveGoals) {
-                throw new Error(`Maximale Anzahl aktiver Ziele erreicht (${this.settings.maxActiveGoals}). Bitte ein anderes Ziel pausieren oder das Limit erhöhen.`);
-            }
-        }
-
-        this.goals.push(goal);
-        this.saveGoals();
-        return goal;
-    }
-
-    updateGoal(id, goalData) {
-        const goal = this.goals.find(g => g.id === id);
-        if (!goal) return null;
-
-        const wasActive = goal.status === 'active';
-        const willBeActive = goalData.status === 'active';
-
-        // Check if activation would exceed limit
-        if (!wasActive && willBeActive) {
-            const activeCount = this.goals.filter(g => g.status === 'active' && g.id !== id).length;
-            if (activeCount >= this.settings.maxActiveGoals) {
-                throw new Error(`Maximale Anzahl aktiver Ziele erreicht (${this.settings.maxActiveGoals}). Bitte ein anderes Ziel pausieren oder das Limit erhöhen.`);
-            }
-        }
-
-        // Only update fields that are provided, preserve existing values
-        const updates = {
-            lastUpdated: new Date()
-        };
-
-        if (goalData.title !== undefined) updates.title = goalData.title;
-        if (goalData.description !== undefined) updates.description = goalData.description;
-        if (goalData.motivation !== undefined) updates.motivation = parseInt(goalData.motivation);
-        if (goalData.urgency !== undefined) updates.urgency = parseInt(goalData.urgency);
-        if (goalData.deadline !== undefined) {
-            updates.deadline = goalData.deadline ? new Date(goalData.deadline) : null;
-        }
-        if (goalData.status !== undefined) updates.status = goalData.status;
-
-        Object.assign(goal, updates);
-        this.saveGoals();
-        return goal;
-    }
-
-    deleteGoal(id) {
-        this.goals = this.goals.filter(g => g.id !== id);
-        this.saveGoals();
-    }
-
-    // Priority Calculation
-    calculatePriority(goal) {
-        // Base priority: Motivation + (Urgency * 10)
-        // Dringlichkeit wiegt 10x so viel wie Motivation
-        let priority = goal.motivation + (goal.urgency * 10);
-
-        // Deadline bonus: linear von 0 (bei 30+ Tagen) auf 30 (bei Deadline)
-        if (goal.deadline) {
-            const now = new Date();
-            const daysUntilDeadline = Math.ceil((goal.deadline - now) / (1000 * 60 * 60 * 24));
-            
-            if (daysUntilDeadline > 30) {
-                // Über 30 Tage: kein Bonus
-                priority += 0;
-            } else {
-                // Linear von 30 (bei 0 Tagen/überfällig) auf 0 (bei 30 Tagen)
-                // Bonus = 30 - daysUntilDeadline (mit Minimum 0)
-                const bonus = Math.max(0, 30 - daysUntilDeadline);
-                priority += bonus;
-            }
-        }
-
-        return priority;
-    }
-
-    getActiveGoals() {
-        return this.goals
-            .filter(g => g.status === 'active')
-            .sort((a, b) => this.calculatePriority(b) - this.calculatePriority(a));
-    }
-
-    // Check-in System
-    shouldCheckIn(goal) {
-        if (goal.status !== 'active') return false;
-
-        const now = new Date();
-        const created = new Date(goal.createdAt);
-        const daysSinceCreation = Math.ceil((now - created) / (1000 * 60 * 60 * 24));
-
-        // Check-in intervals: 3, 7, 14, 30 days
-        const intervals = [3, 7, 14, 30];
-        const lastCheckIn = goal.checkInDates && goal.checkInDates.length > 0
-            ? new Date(Math.max(...goal.checkInDates.map(d => new Date(d))))
-            : created;
-
-        const daysSinceLastCheckIn = Math.ceil((now - lastCheckIn) / (1000 * 60 * 60 * 24));
-
-        // For dev testing, use minutes instead of days
-        const checkInMinutes = this.settings.checkInInterval;
-        const minutesSinceCreation = Math.ceil((now - created) / (1000 * 60));
-        const minutesSinceLastCheckIn = Math.ceil((now - lastCheckIn) / (1000 * 60));
-
-        // Check if we've passed any check-in interval
-        for (const interval of intervals) {
-            const intervalMinutes = interval * checkInMinutes;
-            if (minutesSinceLastCheckIn >= intervalMinutes && 
-                !goal.checkInDates.some(d => {
-                    const checkInDate = new Date(d);
-                    const minutesSinceCheckIn = Math.ceil((now - checkInDate) / (1000 * 60));
-                    return minutesSinceCheckIn < intervalMinutes && minutesSinceCheckIn >= intervalMinutes - checkInMinutes;
-                })) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    getCheckIns() {
-        return this.goals
-            .filter(g => this.shouldCheckIn(g))
-            .map(goal => ({
-                goal,
-                message: `Zeit für ein Check-in: "${goal.title}". Bitte überprüfe Motivation und Dringlichkeit.`
-            }));
-    }
-
-    performCheckIn(goalId) {
-        const goal = this.goals.find(g => g.id === goalId);
-        if (goal) {
-            if (!goal.checkInDates) goal.checkInDates = [];
-            goal.checkInDates.push(new Date().toISOString());
-            goal.lastUpdated = new Date();
-            this.saveGoals();
-        }
-    }
-
     startCheckInTimer() {
-        // Clear existing timer if any
         if (this.checkInTimer) {
             clearInterval(this.checkInTimer);
         }
 
-        // Only start timer if check-ins are enabled
-        if (this.settings.checkInsEnabled) {
-            // Check every minute for check-ins (for dev testing)
+        if (this.settingsService.getSettings().checkInsEnabled) {
             this.checkInTimer = setInterval(() => {
-                this.checkIns = this.getCheckIns();
+                this.checkIns = this.checkInService.getCheckIns();
                 if (this.checkIns.length > 0) {
-                    this.showCheckIns();
+                    this.uiController.showCheckIns();
                 }
-            }, 60000); // Check every minute
+            }, 60000);
         }
     }
 
-    // Export/Import
     exportData() {
         const data = {
-            goals: this.goals.map(goal => ({
+            goals: this.goalService.goals.map(goal => ({
                 ...goal,
                 createdAt: goal.createdAt.toISOString(),
                 lastUpdated: goal.lastUpdated.toISOString(),
                 deadline: goal.deadline ? goal.deadline.toISOString() : null
             })),
-            settings: this.settings,
+            settings: this.settingsService.getSettings(),
             exportDate: new Date().toISOString()
         };
 
@@ -255,371 +69,30 @@ class GoalyApp {
                 const data = JSON.parse(e.target.result);
                 
                 if (data.goals) {
-                    this.goals = data.goals.map(goal => ({
+                    this.goalService.goals = data.goals.map(goal => ({
                         ...goal,
                         createdAt: new Date(goal.createdAt),
                         lastUpdated: new Date(goal.lastUpdated),
                         deadline: goal.deadline ? new Date(goal.deadline) : null
                     }));
-                    this.saveGoals();
+                    this.goalService.saveGoals();
                 }
 
                 if (data.settings) {
-                    this.settings = { ...this.settings, ...data.settings };
-                    this.saveSettings();
-                    document.getElementById('maxActiveGoals').value = this.settings.maxActiveGoals;
-                    document.getElementById('checkInInterval').value = this.settings.checkInInterval;
-                    document.getElementById('checkInsEnabled').checked = this.settings.checkInsEnabled !== false;
-                    this.startCheckInTimer(); // Restart timer with imported settings
+                    this.settingsService.updateSettings(data.settings);
+                    document.getElementById('maxActiveGoals').value = this.settingsService.getSettings().maxActiveGoals;
+                    document.getElementById('checkInInterval').value = this.settingsService.getSettings().checkInInterval;
+                    document.getElementById('checkInsEnabled').checked = this.settingsService.getSettings().checkInsEnabled !== false;
+                    this.startCheckInTimer();
                 }
 
-                this.renderViews();
+                this.uiController.renderViews();
                 alert('Daten erfolgreich importiert!');
             } catch (error) {
                 alert('Fehler beim Importieren: ' + error.message);
             }
         };
         reader.readAsText(file);
-    }
-
-    // UI Rendering
-    renderViews() {
-        const activeGoals = this.getActiveGoals();
-        const totalActiveCount = activeGoals.length;
-        
-        // Dashboard: Show only max N active goals (top priority)
-        const dashboardGoals = activeGoals.slice(0, this.settings.maxActiveGoals);
-        
-        // All Goals: Show remaining active goals + all paused/completed goals
-        const remainingActiveGoals = activeGoals.slice(this.settings.maxActiveGoals);
-        const allOtherGoals = this.goals
-            .filter(g => g.status !== 'active')
-            .sort((a, b) => this.calculatePriority(b) - this.calculatePriority(a));
-        
-        const allGoals = [...remainingActiveGoals, ...allOtherGoals];
-
-        const dashboardList = document.getElementById('goalsList');
-        dashboardList.innerHTML = '';
-
-        if (dashboardGoals.length === 0) {
-            dashboardList.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">Keine aktiven Ziele. Erstelle dein erstes Ziel!</p>';
-        } else {
-            dashboardGoals.forEach(goal => {
-                dashboardList.appendChild(this.createGoalCard(goal));
-            });
-        }
-
-        // All Goals List
-        const allGoalsList = document.getElementById('allGoalsList');
-        allGoalsList.innerHTML = '';
-
-        if (allGoals.length === 0) {
-            allGoalsList.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">Keine weiteren Ziele im Backlog.</p>';
-        } else {
-            allGoals.forEach(goal => {
-                allGoalsList.appendChild(this.createGoalCard(goal));
-            });
-        }
-    }
-
-    createGoalCard(goal) {
-        const card = document.createElement('div');
-        card.className = `goal-card ${goal.status}`;
-        
-        const priority = this.calculatePriority(goal);
-        const deadlineText = goal.deadline 
-            ? this.formatDeadline(goal.deadline)
-            : 'Keine Deadline';
-
-        card.innerHTML = `
-            <div class="goal-header">
-                <div>
-                    <div class="goal-title">${this.escapeHtml(goal.title)}</div>
-                    <span class="goal-status-badge status-${goal.status}">${this.getStatusText(goal.status)}</span>
-                </div>
-            </div>
-            ${goal.description ? `<div class="goal-description">${this.escapeHtml(goal.description)}</div>` : ''}
-            <div class="goal-metrics">
-                <div class="metric">
-                    <span class="metric-label">Motivation</span>
-                    <span class="metric-value motivation">${goal.motivation}/5</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Dringlichkeit</span>
-                    <span class="metric-value urgency">${goal.urgency}/5</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Priorität</span>
-                    <span class="metric-value priority">${priority.toFixed(1)}</span>
-                </div>
-            </div>
-            <div class="goal-deadline ${this.isDeadlineUrgent(goal.deadline) ? 'urgent' : ''}">
-                📅 ${deadlineText}
-            </div>
-            <div class="goal-actions">
-                <button class="btn btn-primary edit-goal" data-id="${goal.id}">Bearbeiten</button>
-                ${goal.status === 'active' 
-                    ? `<button class="btn btn-secondary pause-goal" data-id="${goal.id}">Pausieren</button>`
-                    : goal.status === 'paused'
-                    ? `<button class="btn btn-primary activate-goal" data-id="${goal.id}">Aktivieren</button>`
-                    : ''}
-            </div>
-        `;
-
-        // Add event listeners
-        card.querySelector('.edit-goal')?.addEventListener('click', () => this.openGoalForm(goal.id));
-        card.querySelector('.pause-goal')?.addEventListener('click', () => this.pauseGoal(goal.id));
-        card.querySelector('.activate-goal')?.addEventListener('click', () => this.activateGoal(goal.id));
-
-        return card;
-    }
-
-    formatDeadline(deadline) {
-        const now = new Date();
-        const days = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
-        
-        if (days < 0) {
-            return `Überfällig (${Math.abs(days)} Tage)`;
-        } else if (days === 0) {
-            return 'Heute';
-        } else if (days === 1) {
-            return 'Morgen';
-        } else if (days <= 7) {
-            return `In ${days} Tagen`;
-        } else {
-            return deadline.toLocaleDateString('de-DE');
-        }
-    }
-
-    isDeadlineUrgent(deadline) {
-        if (!deadline) return false;
-        const now = new Date();
-        const days = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
-        return days <= 7 && days >= 0;
-    }
-
-    getStatusText(status) {
-        const statusMap = {
-            active: 'Aktiv',
-            paused: 'Pausiert',
-            completed: 'Abgeschlossen'
-        };
-        return statusMap[status] || status;
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    // Goal Form Management
-    openGoalForm(goalId = null) {
-        const modal = document.getElementById('goalModal');
-        const form = document.getElementById('goalForm');
-        const deleteBtn = document.getElementById('deleteBtn');
-        const modalTitle = document.getElementById('modalTitle');
-
-        if (goalId) {
-            const goal = this.goals.find(g => g.id === goalId);
-            if (goal) {
-                modalTitle.textContent = 'Ziel bearbeiten';
-                document.getElementById('goalId').value = goal.id;
-                document.getElementById('goalTitle').value = goal.title;
-                document.getElementById('goalDescription').value = goal.description || '';
-                document.getElementById('goalMotivation').value = goal.motivation;
-                document.getElementById('goalUrgency').value = goal.urgency;
-                document.getElementById('goalDeadline').value = goal.deadline 
-                    ? goal.deadline.toISOString().split('T')[0]
-                    : '';
-                document.getElementById('goalStatus').value = goal.status;
-                deleteBtn.style.display = 'inline-block';
-            }
-        } else {
-            modalTitle.textContent = 'Neues Ziel';
-            form.reset();
-            document.getElementById('goalId').value = '';
-            document.getElementById('goalStatus').value = 'active';
-            deleteBtn.style.display = 'none';
-        }
-
-        modal.style.display = 'block';
-    }
-
-    closeGoalForm() {
-        document.getElementById('goalModal').style.display = 'none';
-        document.getElementById('goalForm').reset();
-    }
-
-    pauseGoal(id) {
-        try {
-            const goal = this.goals.find(g => g.id === id);
-            if (!goal) return;
-
-            // Preserve all goal data, only change status
-            this.updateGoal(id, {
-                title: goal.title,
-                description: goal.description,
-                motivation: goal.motivation,
-                urgency: goal.urgency,
-                deadline: goal.deadline ? goal.deadline.toISOString().split('T')[0] : null,
-                status: 'paused'
-            });
-            this.renderViews();
-        } catch (error) {
-            alert(error.message);
-        }
-    }
-
-    activateGoal(id) {
-        try {
-            const goal = this.goals.find(g => g.id === id);
-            if (!goal) return;
-
-            // Preserve all goal data, only change status
-            this.updateGoal(id, {
-                title: goal.title,
-                description: goal.description,
-                motivation: goal.motivation,
-                urgency: goal.urgency,
-                deadline: goal.deadline ? goal.deadline.toISOString().split('T')[0] : null,
-                status: 'active'
-            });
-            this.renderViews();
-        } catch (error) {
-            alert(error.message);
-        }
-    }
-
-    showCheckIns() {
-        const panel = document.getElementById('checkInsPanel');
-        const list = document.getElementById('checkInsList');
-        
-        list.innerHTML = '';
-        
-        this.checkIns.forEach(checkIn => {
-            const item = document.createElement('div');
-            item.className = 'check-in-item';
-            item.innerHTML = `
-                <h3>${this.escapeHtml(checkIn.goal.title)}</h3>
-                <p>${checkIn.message}</p>
-                <div class="check-in-actions">
-                    <button class="btn btn-primary check-in-done" data-id="${checkIn.goal.id}">Check-in durchgeführt</button>
-                    <button class="btn btn-secondary edit-check-in-goal" data-id="${checkIn.goal.id}">Ziel bearbeiten</button>
-                </div>
-            `;
-            
-            item.querySelector('.check-in-done').addEventListener('click', () => {
-                this.performCheckIn(checkIn.goal.id);
-                this.checkIns = this.getCheckIns();
-                this.showCheckIns();
-                if (this.checkIns.length === 0) {
-                    panel.style.display = 'none';
-                }
-            });
-            
-            item.querySelector('.edit-check-in-goal').addEventListener('click', () => {
-                this.openGoalForm(checkIn.goal.id);
-            });
-            
-            list.appendChild(item);
-        });
-        
-        panel.style.display = 'block';
-    }
-
-    // Event Listeners Setup
-    setupEventListeners() {
-        // Add Goal Button
-        document.getElementById('addGoalBtn').addEventListener('click', () => this.openGoalForm());
-
-        // Goal Form
-        document.getElementById('goalForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleGoalSubmit();
-        });
-
-        document.getElementById('cancelBtn').addEventListener('click', () => this.closeGoalForm());
-        document.getElementById('deleteBtn').addEventListener('click', () => {
-            if (confirm('Möchtest du dieses Ziel wirklich löschen?')) {
-                const id = document.getElementById('goalId').value;
-                this.deleteGoal(id);
-                this.closeGoalForm();
-                this.renderViews();
-            }
-        });
-
-        // Modal Close
-        document.querySelector('.close').addEventListener('click', () => this.closeGoalForm());
-        window.addEventListener('click', (e) => {
-            const modal = document.getElementById('goalModal');
-            if (e.target === modal) {
-                this.closeGoalForm();
-            }
-        });
-
-        // Export/Import
-        document.getElementById('exportBtn').addEventListener('click', () => this.exportData());
-        document.getElementById('importBtn').addEventListener('click', () => {
-            document.getElementById('importFile').click();
-        });
-        document.getElementById('importFile').addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                this.importData(e.target.files[0]);
-                e.target.value = ''; // Reset input
-            }
-        });
-
-        // Settings
-        document.getElementById('saveSettingsBtn').addEventListener('click', () => {
-            this.settings.maxActiveGoals = parseInt(document.getElementById('maxActiveGoals').value);
-            this.settings.checkInInterval = parseInt(document.getElementById('checkInInterval').value);
-            this.settings.checkInsEnabled = document.getElementById('checkInsEnabled').checked;
-            this.saveSettings();
-            this.startCheckInTimer(); // Restart timer with new settings
-            this.renderViews();
-        });
-
-        // Menu switching
-        document.querySelectorAll('.menu-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const viewName = btn.dataset.view;
-                
-                // Update button states
-                document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                // Update content visibility
-                document.querySelectorAll('.view').forEach(content => {
-                    content.classList.remove('active');
-                });
-                document.getElementById(`${viewName}View`).classList.add('active');
-            });
-        });
-    }
-
-    handleGoalSubmit() {
-        const id = document.getElementById('goalId').value;
-        const goalData = {
-            title: document.getElementById('goalTitle').value,
-            description: document.getElementById('goalDescription').value,
-            motivation: document.getElementById('goalMotivation').value,
-            urgency: document.getElementById('goalUrgency').value,
-            deadline: document.getElementById('goalDeadline').value || null,
-            status: document.getElementById('goalStatus').value
-        };
-
-        try {
-            if (id) {
-                this.updateGoal(id, goalData);
-            } else {
-                this.createGoal(goalData);
-            }
-            this.closeGoalForm();
-            this.renderViews();
-        } catch (error) {
-            alert(error.message);
-        }
     }
 }
 
@@ -629,3 +102,4 @@ document.addEventListener('DOMContentLoaded', () => {
     app = new GoalyApp();
 });
 
+export default GoalyApp;
