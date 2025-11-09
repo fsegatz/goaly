@@ -2,7 +2,7 @@
 
 class Goal {
     constructor(goalData) {
-        this.id = goalData.id || Date.now().toString();
+        this.id = goalData.id || (Date.now().toString() + Math.random().toString());
         this.title = goalData.title;
         this.description = goalData.description || '';
         this.motivation = parseInt(goalData.motivation);
