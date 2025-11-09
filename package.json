@@ -16,6 +16,20 @@
     "babel-jest": "^27.4.2"
   },
   "jest": {
+    "collectCoverage": true,
+    "coverageDirectory": ".coverage",
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 70,
+        "branches": 67,
+        "functions": 70,
+        "lines": 70
+      }
+    },
+    "coverageReporters": ["json", "text"],
     "transform": {
       "^.+\\.js$": "babel-jest"
     }
