@@ -1,6 +1,6 @@
 // tests/settings-service.test.js
 
-const SettingsService = require('../src/domain/settings-service');
+const SettingsService = require('../src/domain/settings-service').default;
 
 describe('Settings Service', () => {
     let settingsService;

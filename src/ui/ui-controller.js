@@ -251,7 +251,8 @@ class UIController {
         document.querySelector('.close').addEventListener('click', () => this.closeGoalForm());
         window.addEventListener('click', (e) => {
             const modal = document.getElementById('goalModal');
-            if (e.target === modal) {
+            // Close the modal if the click is outside the modal content and the modal is displayed
+            if (modal.style.display === 'block' && !modal.contains(e.target)) {
                 this.closeGoalForm();
             }
         });
@@ -318,4 +319,4 @@ class UIController {
     }
 }
 
-module.exports = UIController;
+export default UIController;

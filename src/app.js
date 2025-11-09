@@ -1,9 +1,9 @@
 // Goaly MVP - Main Application Logic
 
-const GoalService = require('./domain/goal-service');
-const SettingsService = require('./domain/settings-service');
-const CheckInService = require('./domain/check-in-service');
-const UIController = require('./ui/ui-controller');
+import GoalService from './domain/goal-service.js';
+import SettingsService from './domain/settings-service.js';
+import CheckInService from './domain/check-in-service.js';
+import UIController from './ui/ui-controller.js';
 
 class GoalyApp {
     constructor() {
@@ -102,4 +102,4 @@ document.addEventListener('DOMContentLoaded', () => {
     app = new GoalyApp();
 });
 
-module.exports = GoalyApp;
+export default GoalyApp;

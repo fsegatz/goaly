@@ -56,4 +56,4 @@ class CheckInService {
     }
 }
 
-module.exports = CheckInService;
+export default CheckInService;

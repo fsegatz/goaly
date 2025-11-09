@@ -1,6 +1,6 @@
 // tests/goal-service.test.js
 
-const GoalService = require('../src/domain/goal-service');
+const GoalService = require('../src/domain/goal-service').default;
 
 describe('Goal Service', () => {
     let goalService;

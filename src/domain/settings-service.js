@@ -30,4 +30,4 @@ class SettingsService {
     }
 }
 
-module.exports = SettingsService;
+export default SettingsService;

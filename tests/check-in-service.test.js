@@ -1,7 +1,7 @@
 // tests/check-in-service.test.js
 
-const CheckInService = require('../src/domain/check-in-service');
-const Goal = require('../src/domain/goal');
+const CheckInService = require('../src/domain/check-in-service').default;
+const Goal = require('../src/domain/goal').default;
 
 describe('CheckIn Service', () => {
     let checkInService;

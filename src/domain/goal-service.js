@@ -1,6 +1,6 @@
 // src/domain/goal-service.js
 
-const Goal = require('./goal');
+import Goal from './goal.js';
 
 class GoalService {
     constructor(goals = []) {
@@ -95,4 +95,4 @@ class GoalService {
     }
 }
 
-module.exports = GoalService;
+export default GoalService;

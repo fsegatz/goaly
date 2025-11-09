@@ -15,4 +15,4 @@ class Goal {
     }
 }
 
-module.exports = Goal;
+export default Goal;
