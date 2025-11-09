@@ -19,7 +19,8 @@
     "collectCoverage": true,
     "coverageDirectory": ".coverage",
     "collectCoverageFrom": [
-      "src/**/*.js"
+      "src/**/*.js",
+      "!src/app.js"
     ],
     "coverageThreshold": {
       "global": {

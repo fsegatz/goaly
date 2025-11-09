@@ -252,7 +252,7 @@ class UIController {
         window.addEventListener('click', (e) => {
             const modal = document.getElementById('goalModal');
             // Close the modal if the click is outside the modal content and the modal is displayed
-            if (modal.style.display === 'block' && !modal.contains(e.target)) {
+            if (e.target === modal) {
                 this.closeGoalForm();
             }
         });

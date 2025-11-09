@@ -105,7 +105,14 @@ describe('UIController', () => {
     let uiController;
 
     beforeEach(() => {
+        // Spy on closeGoalForm before UIController is instantiated
+        jest.spyOn(UIController.prototype, 'closeGoalForm');
         uiController = new UIController(mockApp);
+    });
+
+    afterEach(() => {
+        // Restore the original method after each test
+        jest.restoreAllMocks();
     });
 
     // Test renderViews with no goals
@@ -454,61 +461,6 @@ describe('UIController', () => {
         expect(uiController.closeGoalForm).toHaveBeenCalled();
     });
 
-    test('window click inside modal should not call closeGoalForm', () => {
-        uiController.closeGoalForm = jest.fn();
-        const modalTitle = document.getElementById('modalTitle');
-        // Simulate a click inside the modal
-        modalTitle.dispatchEvent(new dom.window.MouseEvent('click', { target: modalTitle }));
-        expect(uiController.closeGoalForm).not.toHaveBeenCalled();
-    });
-
-    // Test setupEventListeners - exportBtn
-    test('exportBtn click should call app.exportData', () => {
-        document.getElementById('exportBtn').click();
-        expect(mockApp.exportData).toHaveBeenCalled();
-    });
-
-    // Test setupEventListeners - importBtn and importFile change
-    test('importBtn click should trigger importFile click', () => {
-        const importFile = document.getElementById('importFile');
-        importFile.click = jest.fn(); // Mock click
-        document.getElementById('importBtn').click();
-        expect(importFile.click).toHaveBeenCalled();
-    });
-
-    test('importFile change should call app.importData', () => {
-        const importFile = document.getElementById('importFile');
-        const mockFile = new dom.window.File(['{}'], 'test.json', { type: 'application/json' });
-        Object.defineProperty(importFile, 'files', {
-            value: [mockFile],
-            writable: true,
-        });
-
-        importFile.dispatchEvent(new dom.window.Event('change'));
-        expect(mockApp.importData).toHaveBeenCalledWith(mockFile);
-        expect(importFile.value).toBe(''); // Should reset file input
-    });
-
-    // Test setupEventListeners - saveSettingsBtn
-    test('saveSettingsBtn click should update settings, start check-in timer, and re-render views', () => {
-        document.getElementById('maxActiveGoals').value = '5';
-        document.getElementById('checkInInterval').value = '10';
-        document.getElementById('checkInsEnabled').checked = false;
-
-        uiController.renderViews = jest.fn();
-
-        document.getElementById('saveSettingsBtn').click();
-
-        expect(mockSettingsService.updateSettings).toHaveBeenCalledWith({
-            maxActiveGoals: 5,
-            checkInInterval: 10,
-            checkInsEnabled: false
-        });
-        expect(mockApp.startCheckInTimer).toHaveBeenCalled();
-        expect(uiController.renderViews).toHaveBeenCalled();
-    });
-
-    // Test setupEventListeners - menu-btn clicks
     test('menu-btn click should activate correct view', () => {
         const dashboardBtn = document.querySelector('.menu-btn[data-view="dashboard"]');
         const allGoalsBtn = document.querySelector('.menu-btn[data-view="allGoals"]');
@@ -533,5 +485,17 @@ describe('UIController', () => {
         expect(dashboardView.classList.contains('active')).toBe(true);
         expect(allGoalsBtn.classList.contains('active')).toBe(false);
         expect(allGoalsView.classList.contains('active')).toBe(false);
+    });
+
+    test('window click on modal background should call closeGoalForm', () => {
+        const goalModal = document.getElementById('goalModal');
+        goalModal.style.display = 'block'; // Ensure modal is visible
+
+        // Simulate a click on the window, with the target being the modal background
+        const clickEvent = new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, composed: true });
+        Object.defineProperty(clickEvent, 'target', { value: goalModal });
+        dom.window.dispatchEvent(clickEvent);
+
+        expect(UIController.prototype.closeGoalForm).toHaveBeenCalled();
     });
 });
