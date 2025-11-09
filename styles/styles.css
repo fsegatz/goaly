@@ -120,37 +120,14 @@ main {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-    gap: 15px;
-}
-
-.dashboard-header h2 {
-    color: #333;
-    font-size: 1.8rem;
-}
-
-.goals-stats {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 25px;
-    font-size: 1.1rem;
-    color: #555;
-}
-
-.tabs {
+.menu {
     display: flex;
     gap: 10px;
-    margin-bottom: 25px;
-    border-bottom: 2px solid #e0e0e0;
+    flex-grow: 1;
+    justify-content: center;
 }
 
-.tab-btn {
+.menu-btn {
     padding: 12px 24px;
     border: none;
     background: transparent;
@@ -163,22 +140,22 @@ main {
     margin-bottom: -2px;
 }
 
-.tab-btn:hover {
+.menu-btn:hover {
     color: #667eea;
     background: #f8f9ff;
 }
 
-.tab-btn.active {
+.menu-btn.active {
     color: #667eea;
     border-bottom-color: #667eea;
     font-weight: 600;
 }
 
-.tab-content {
+.view {
     display: none;
 }
 
-.tab-content.active {
+.view.active {
     display: block;
 }
 
