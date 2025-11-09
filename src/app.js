@@ -310,7 +310,7 @@ class GoalyApp {
         }
 
         // All Goals List
-        const allGoalsList = document.getElementById('backlogList');
+        const allGoalsList = document.getElementById('allGoalsList');
         allGoalsList.innerHTML = '';
 
         if (allGoals.length === 0) {
