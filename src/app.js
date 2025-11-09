@@ -17,7 +17,7 @@ class GoalyApp {
         this.loadSettings();
         this.loadGoals();
         this.setupEventListeners();
-        this.renderDashboard();
+        this.renderViews();
         this.startCheckInTimer();
     }
 
@@ -30,12 +30,10 @@ class GoalyApp {
         document.getElementById('maxActiveGoals').value = this.settings.maxActiveGoals;
         document.getElementById('checkInInterval').value = this.settings.checkInInterval;
         document.getElementById('checkInsEnabled').checked = this.settings.checkInsEnabled !== false;
-        document.getElementById('maxActiveGoalsDisplay').textContent = this.settings.maxActiveGoals;
     }
 
     saveSettings() {
         localStorage.setItem('goaly_settings', JSON.stringify(this.settings));
-        document.getElementById('maxActiveGoalsDisplay').textContent = this.settings.maxActiveGoals;
     }
 
     // Goal Management
@@ -275,7 +273,7 @@ class GoalyApp {
                     this.startCheckInTimer(); // Restart timer with imported settings
                 }
 
-                this.renderDashboard();
+                this.renderViews();
                 alert('Daten erfolgreich importiert!');
             } catch (error) {
                 alert('Fehler beim Importieren: ' + error.message);
@@ -285,22 +283,20 @@ class GoalyApp {
     }
 
     // UI Rendering
-    renderDashboard() {
+    renderViews() {
         const activeGoals = this.getActiveGoals();
         const totalActiveCount = activeGoals.length;
         
-        document.getElementById('activeGoalsCount').textContent = totalActiveCount;
-
         // Dashboard: Show only max N active goals (top priority)
         const dashboardGoals = activeGoals.slice(0, this.settings.maxActiveGoals);
         
-        // Backlog: Show remaining active goals + all paused/completed goals
+        // All Goals: Show remaining active goals + all paused/completed goals
         const remainingActiveGoals = activeGoals.slice(this.settings.maxActiveGoals);
         const allOtherGoals = this.goals
             .filter(g => g.status !== 'active')
             .sort((a, b) => this.calculatePriority(b) - this.calculatePriority(a));
         
-        const backlogGoals = [...remainingActiveGoals, ...allOtherGoals];
+        const allGoals = [...remainingActiveGoals, ...allOtherGoals];
 
         const dashboardList = document.getElementById('goalsList');
         dashboardList.innerHTML = '';
@@ -313,15 +309,15 @@ class GoalyApp {
             });
         }
 
-        // Backlog: Show remaining active goals + all other goals (paused/completed)
-        const backlogList = document.getElementById('backlogList');
-        backlogList.innerHTML = '';
+        // All Goals List
+        const allGoalsList = document.getElementById('allGoalsList');
+        allGoalsList.innerHTML = '';
 
-        if (backlogGoals.length === 0) {
-            backlogList.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">Keine weiteren Ziele im Backlog.</p>';
+        if (allGoals.length === 0) {
+            allGoalsList.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">Keine weiteren Ziele im Backlog.</p>';
         } else {
-            backlogGoals.forEach(goal => {
-                backlogList.appendChild(this.createGoalCard(goal));
+            allGoals.forEach(goal => {
+                allGoalsList.appendChild(this.createGoalCard(goal));
             });
         }
     }
@@ -469,7 +465,7 @@ class GoalyApp {
                 deadline: goal.deadline ? goal.deadline.toISOString().split('T')[0] : null,
                 status: 'paused'
             });
-            this.renderDashboard();
+            this.renderViews();
         } catch (error) {
             alert(error.message);
         }
@@ -489,7 +485,7 @@ class GoalyApp {
                 deadline: goal.deadline ? goal.deadline.toISOString().split('T')[0] : null,
                 status: 'active'
             });
-            this.renderDashboard();
+            this.renderViews();
         } catch (error) {
             alert(error.message);
         }
@@ -523,7 +519,6 @@ class GoalyApp {
             });
             
             item.querySelector('.edit-check-in-goal').addEventListener('click', () => {
-                this.closeCheckIns();
                 this.openGoalForm(checkIn.goal.id);
             });
             
@@ -531,10 +526,6 @@ class GoalyApp {
         });
         
         panel.style.display = 'block';
-    }
-
-    closeCheckIns() {
-        document.getElementById('checkInsPanel').style.display = 'none';
     }
 
     // Event Listeners Setup
@@ -554,7 +545,7 @@ class GoalyApp {
                 const id = document.getElementById('goalId').value;
                 this.deleteGoal(id);
                 this.closeGoalForm();
-                this.renderDashboard();
+                this.renderViews();
             }
         });
 
@@ -580,40 +571,31 @@ class GoalyApp {
         });
 
         // Settings
-        document.getElementById('settingsBtn').addEventListener('click', () => {
-            const panel = document.getElementById('settingsPanel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        });
-
         document.getElementById('saveSettingsBtn').addEventListener('click', () => {
             this.settings.maxActiveGoals = parseInt(document.getElementById('maxActiveGoals').value);
             this.settings.checkInInterval = parseInt(document.getElementById('checkInInterval').value);
             this.settings.checkInsEnabled = document.getElementById('checkInsEnabled').checked;
             this.saveSettings();
-            document.getElementById('settingsPanel').style.display = 'none';
             this.startCheckInTimer(); // Restart timer with new settings
-            this.renderDashboard();
+            this.renderViews();
         });
 
-        // Tab switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
+        // Menu switching
+        document.querySelectorAll('.menu-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                const tabName = btn.dataset.tab;
+                const viewName = btn.dataset.view;
                 
                 // Update button states
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 
                 // Update content visibility
-                document.querySelectorAll('.tab-content').forEach(content => {
+                document.querySelectorAll('.view').forEach(content => {
                     content.classList.remove('active');
                 });
-                document.getElementById(`${tabName}Tab`).classList.add('active');
+                document.getElementById(`${viewName}View`).classList.add('active');
             });
         });
-
-        // Check-ins
-        document.getElementById('closeCheckInsBtn').addEventListener('click', () => this.closeCheckIns());
     }
 
     handleGoalSubmit() {
@@ -634,7 +616,7 @@ class GoalyApp {
                 this.createGoal(goalData);
             }
             this.closeGoalForm();
-            this.renderDashboard();
+            this.renderViews();
         } catch (error) {
             alert(error.message);
         }
