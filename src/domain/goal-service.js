@@ -46,9 +46,10 @@ class GoalService {
         if (!goal) return null;
 
         // Prüfen, ob sich prioritätsrelevante Felder geändert haben
+        // Wichtig: goalData-Werte sind Strings, müssen für Vergleich in Zahlen umgewandelt werden
         const priorityChanged = 
-            (goalData.motivation !== undefined && goalData.motivation !== goal.motivation) ||
-            (goalData.urgency !== undefined && goalData.urgency !== goal.urgency) ||
+            (goalData.motivation !== undefined && parseInt(goalData.motivation) !== goal.motivation) ||
+            (goalData.urgency !== undefined && parseInt(goalData.urgency) !== goal.urgency) ||
             (goalData.deadline !== undefined && (
                 (goalData.deadline === null && goal.deadline !== null) ||
                 (goalData.deadline !== null && goal.deadline === null) ||
