@@ -14,22 +14,30 @@ class GoalService {
         }
     }
 
+    /**
+     * Migriert bestehende Ziele: Aktiviert automatisch die N Ziele mit höchster Priorität.
+     * Sollte beim App-Start aufgerufen werden, um bestehende manuell aktivierte Ziele zu migrieren.
+     * @param {number} maxActiveGoals - Maximale Anzahl aktiver Ziele
+     */
+    migrateGoalsToAutoActivation(maxActiveGoals) {
+        if (this.goals.length === 0) return;
+        
+        // Automatisch die N Ziele mit höchster Priorität aktivieren
+        this.autoActivateGoalsByPriority(maxActiveGoals);
+    }
+
     saveGoals() {
         localStorage.setItem('goaly_goals', JSON.stringify(this.goals));
     }
 
     createGoal(goalData, maxActiveGoals) {
-        const goal = new Goal(goalData);
-
-        if (goal.status === 'active') {
-            const activeCount = this.goals.filter(g => g.status === 'active').length;
-            if (activeCount >= maxActiveGoals) {
-                throw new Error(`Maximale Anzahl aktiver Ziele erreicht (${maxActiveGoals}). Bitte ein anderes Ziel pausieren oder das Limit erhöhen.`);
-            }
-        }
-
+        // Status wird nicht mehr manuell gesetzt, sondern automatisch bestimmt
+        const goal = new Goal({ ...goalData, status: 'paused' }); // Temporär auf paused setzen
         this.goals.push(goal);
-        this.saveGoals();
+        
+        // Automatisch die N Ziele mit höchster Priorität aktivieren
+        this.autoActivateGoalsByPriority(maxActiveGoals);
+        
         return goal;
     }
 
@@ -37,15 +45,17 @@ class GoalService {
         const goal = this.goals.find(g => g.id === id);
         if (!goal) return null;
 
-        const wasActive = goal.status === 'active';
-        const willBeActive = goalData.status === 'active';
-
-        if (!wasActive && willBeActive) {
-            const activeCount = this.goals.filter(g => g.status === 'active' && g.id !== id).length;
-            if (activeCount >= maxActiveGoals) {
-                throw new Error(`Maximale Anzahl aktiver Ziele erreicht (${maxActiveGoals}). Bitte ein anderes Ziel pausieren oder das Limit erhöhen.`);
-            }
-        }
+        // Prüfen, ob sich prioritätsrelevante Felder geändert haben
+        // Wichtig: goalData-Werte sind Strings, müssen für Vergleich in Zahlen umgewandelt werden
+        const priorityChanged = 
+            (goalData.motivation !== undefined && parseInt(goalData.motivation) !== goal.motivation) ||
+            (goalData.urgency !== undefined && parseInt(goalData.urgency) !== goal.urgency) ||
+            (goalData.deadline !== undefined && (
+                (goalData.deadline === null && goal.deadline !== null) ||
+                (goalData.deadline !== null && goal.deadline === null) ||
+                (goalData.deadline && goal.deadline && 
+                 new Date(goalData.deadline).getTime() !== goal.deadline.getTime())
+            ));
 
         const updates = {
             lastUpdated: new Date()
@@ -58,16 +68,31 @@ class GoalService {
         if (goalData.deadline !== undefined) {
             updates.deadline = goalData.deadline ? new Date(goalData.deadline) : null;
         }
-        if (goalData.status !== undefined) updates.status = goalData.status;
+        // Status wird nicht mehr manuell gesetzt, sondern automatisch bestimmt
+        // goalData.status wird ignoriert
 
         Object.assign(goal, updates);
-        this.saveGoals();
+        
+        // Wenn sich die Priorität geändert hat, automatisch neu aktivieren
+        if (priorityChanged) {
+            this.autoActivateGoalsByPriority(maxActiveGoals);
+        } else {
+            this.saveGoals();
+        }
+        
         return goal;
     }
 
-    deleteGoal(id) {
+    deleteGoal(id, maxActiveGoals) {
+        const wasActive = this.goals.find(g => g.id === id)?.status === 'active';
         this.goals = this.goals.filter(g => g.id !== id);
-        this.saveGoals();
+        
+        // Wenn ein aktives Ziel gelöscht wurde, automatisch neu aktivieren
+        if (wasActive) {
+            this.autoActivateGoalsByPriority(maxActiveGoals);
+        } else {
+            this.saveGoals();
+        }
     }
 
     calculatePriority(goal) {
@@ -92,6 +117,45 @@ class GoalService {
         return this.goals
             .filter(g => g.status === 'active')
             .sort((a, b) => this.calculatePriority(b) - this.calculatePriority(a));
+    }
+
+    /**
+     * Automatisch die N Ziele mit der höchsten Priorität aktivieren.
+     * Alle anderen nicht-abgeschlossenen Ziele werden pausiert.
+     * @param {number} maxActiveGoals - Maximale Anzahl aktiver Ziele
+     */
+    autoActivateGoalsByPriority(maxActiveGoals) {
+        // Alle nicht-abgeschlossenen Ziele nach Priorität sortieren
+        const eligibleGoals = this.goals
+            .filter(g => g.status !== 'completed')
+            .sort((a, b) => {
+                const priorityA = this.calculatePriority(a);
+                const priorityB = this.calculatePriority(b);
+                // Bei gleicher Priorität: ältere Ziele bevorzugen (stabilere Sortierung)
+                if (priorityA === priorityB) {
+                    return a.createdAt - b.createdAt;
+                }
+                return priorityB - priorityA;
+            });
+
+        // Die N Ziele mit höchster Priorität aktivieren
+        const goalsToActivate = eligibleGoals.slice(0, maxActiveGoals);
+        const goalsToPause = eligibleGoals.slice(maxActiveGoals);
+
+        // Status aktualisieren
+        goalsToActivate.forEach(goal => {
+            if (goal.status !== 'active') {
+                goal.status = 'active';
+            }
+        });
+
+        goalsToPause.forEach(goal => {
+            if (goal.status !== 'paused') {
+                goal.status = 'paused';
+            }
+        });
+
+        this.saveGoals();
     }
 }
 

@@ -31,11 +31,6 @@ beforeEach(() => {
             <input type="number" id="goalMotivation" />
             <input type="number" id="goalUrgency" />
             <input type="date" id="goalDeadline" />
-            <select id="goalStatus">
-                <option value="active">Aktiv</option>
-                <option value="paused">Pausiert</option>
-                <option value="completed">Abgeschlossen</option>
-            </select>
         </div>
         <button id="exportBtn"></button>
         <button id="importBtn"></button>
@@ -59,6 +54,7 @@ beforeEach(() => {
     global.document = document;
     global.window = window;
     global.confirm = jest.fn(); // Mock global confirm
+    global.alert = jest.fn(); // Mock global alert
 
     const RealDate = Date; // Store original Date constructor
     jest.useFakeTimers();
@@ -72,6 +68,7 @@ beforeEach(() => {
         updateGoal: jest.fn(),
         deleteGoal: jest.fn(),
         calculatePriority: jest.fn(() => 0),
+        autoActivateGoalsByPriority: jest.fn(),
     };
     mockSettingsService = {
         getSettings: jest.fn(() => ({ maxActiveGoals: 3, checkInInterval: 7, checkInsEnabled: true })),
@@ -94,12 +91,13 @@ beforeEach(() => {
     };
 });
 
-afterEach(() => {
-    // Clean up global DOM elements
-    delete global.document;
-    delete global.window;
-    delete global.confirm;
-});
+    afterEach(() => {
+        // Clean up global DOM elements
+        delete global.document;
+        delete global.window;
+        delete global.confirm;
+        delete global.alert;
+    });
 
 describe('UIController', () => {
     let uiController;
@@ -172,15 +170,17 @@ describe('UIController', () => {
         expect(card.querySelector('.metric-value.priority').textContent).toBe('4.5');
         expect(card.querySelector('.goal-deadline').textContent).toContain('In 6 Tagen'); // Assuming today is Nov 9, 2025
         expect(card.innerHTML).toContain('btn btn-primary edit-goal');
-        expect(card.innerHTML).toContain('btn btn-secondary pause-goal');
-        expect(card.innerHTML).not.toContain('activate-goal'); // Not present for active goals
+        // No pause/activate buttons anymore - status is automatic
+        expect(card.innerHTML).not.toContain('pause-goal');
+        expect(card.innerHTML).not.toContain('activate-goal');
     });
 
-    test('createGoalCard should show activate button for paused goals', () => {
-        const goal = new Goal({ id: '1', title: 'Paused Goal', description: 'Test Description', motivation: 5, urgency: 4, status: 'paused', deadline: new Date('2025-11-15') });
-        const card = uiController.createGoalCard(goal);
-        expect(card.innerHTML).toContain('btn btn-primary activate-goal');
+    test('createGoalCard should not show pause/activate buttons for any status', () => {
+        const pausedGoal = new Goal({ id: '1', title: 'Paused Goal', description: 'Test Description', motivation: 5, urgency: 4, status: 'paused', deadline: new Date('2025-11-15') });
+        const card = uiController.createGoalCard(pausedGoal);
+        expect(card.innerHTML).toContain('btn btn-primary edit-goal');
         expect(card.innerHTML).not.toContain('pause-goal');
+        expect(card.innerHTML).not.toContain('activate-goal');
     });
 
     // Test formatDeadline
@@ -258,9 +258,8 @@ describe('UIController', () => {
         expect(form.reset).toHaveBeenCalled();
         expect(document.getElementById('modalTitle').textContent).toBe('Neues Ziel');
         expect(document.getElementById('goalId').value).toBe('');
-        expect(document.getElementById('goalStatus').value).toBe('active');
         expect(document.getElementById('deleteBtn').style.display).toBe('none');
-        expect(document.getElementById('goalModal').style.display).toBe('block');
+        expect(document.getElementById('goalModal').classList.contains('is-visible')).toBe(true);
     });
 
     // Test openGoalForm for editing existing goal
@@ -277,46 +276,22 @@ describe('UIController', () => {
         expect(document.getElementById('goalMotivation').value).toBe('3');
         expect(document.getElementById('goalUrgency').value).toBe('2');
         expect(document.getElementById('goalDeadline').value).toBe('2025-12-25');
-        expect(document.getElementById('goalStatus').value).toBe('paused');
         expect(document.getElementById('deleteBtn').style.display).toBe('inline-block');
-        expect(document.getElementById('goalModal').style.display).toBe('block');
+        expect(document.getElementById('goalModal').classList.contains('is-visible')).toBe(true);
     });
 
     // Test closeGoalForm
     test('closeGoalForm should hide modal and reset form', () => {
         const form = document.getElementById('goalForm');
         form.reset = jest.fn(); // Mock reset
-        document.getElementById('goalModal').style.display = 'block'; // Set to block first
+        document.getElementById('goalModal').classList.add('is-visible'); // Set visible first
 
         uiController.closeGoalForm();
 
-        expect(document.getElementById('goalModal').style.display).toBe('none');
+        expect(document.getElementById('goalModal').classList.contains('is-visible')).toBe(false);
         expect(form.reset).toHaveBeenCalled();
     });
 
-    // Test pauseGoal
-    test('pauseGoal should update goal status to paused and re-render views', () => {
-        const goal = new Goal({ id: '1', title: 'Active Goal', motivation: 1, urgency: 1, status: 'active', deadline: null });
-        mockGoalService.goals = [goal];
-        uiController.renderViews = jest.fn(); // Mock renderViews
-
-        uiController.pauseGoal('1');
-
-        expect(mockGoalService.updateGoal).toHaveBeenCalledWith('1', { ...goal, status: 'paused' }, expect.any(Number));
-        expect(uiController.renderViews).toHaveBeenCalled();
-    });
-
-    // Test activateGoal
-    test('activateGoal should update goal status to active and re-render views', () => {
-        const goal = new Goal({ id: '1', title: 'Paused Goal', motivation: 1, urgency: 1, status: 'paused', deadline: null });
-        mockGoalService.goals = [goal];
-        uiController.renderViews = jest.fn(); // Mock renderViews
-
-        uiController.activateGoal('1');
-
-        expect(mockGoalService.updateGoal).toHaveBeenCalledWith('1', { ...goal, status: 'active' }, expect.any(Number));
-        expect(uiController.renderViews).toHaveBeenCalled();
-    });
 
     // Test showCheckIns
     test('showCheckIns should display check-ins and attach event listeners', () => {
@@ -342,6 +317,160 @@ describe('UIController', () => {
         expect(mockCheckInService.performCheckIn).toHaveBeenCalledWith('g1');
     });
 
+
+    test('showCheckIns should allow editing goal from check-in', () => {
+        const goal1 = new Goal({ id: 'g1', title: 'Goal 1', motivation: 1, urgency: 1, status: 'active', deadline: null });
+        mockApp.checkIns = [
+            { goal: goal1, message: 'Check-in for Goal 1' },
+        ];
+        mockCheckInService.getCheckIns.mockReturnValue(mockApp.checkIns);
+        uiController.openGoalForm = jest.fn();
+
+        uiController.showCheckIns();
+        const checkInsList = document.getElementById('checkInsList');
+        const editBtn = checkInsList.querySelector('.edit-check-in-goal');
+        
+        editBtn.click();
+        expect(uiController.openGoalForm).toHaveBeenCalledWith('g1');
+    });
+
+    test('createGoalCard should handle missing edit button gracefully', () => {
+        const goal = new Goal({ id: '1', title: 'Test Goal', description: 'Test Description', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-11-15') });
+        mockGoalService.calculatePriority.mockReturnValue(4.5);
+        
+        // Create card normally - edit button should exist
+        const card = uiController.createGoalCard(goal);
+        const editBtn = card.querySelector('.edit-goal');
+        
+        // Should have edit button
+        expect(editBtn).toBeDefined();
+        expect(card).toBeDefined();
+    });
+
+    test('createGoalCard should work when edit button querySelector returns null', () => {
+        const goal = new Goal({ id: '1', title: 'Test Goal', description: 'Test Description', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-11-15') });
+        mockGoalService.calculatePriority.mockReturnValue(4.5);
+        
+        // Create a card and manually remove the edit button to test the null case
+        const card = uiController.createGoalCard(goal);
+        const editBtn = card.querySelector('.edit-goal');
+        if (editBtn) {
+            editBtn.remove();
+        }
+        
+        // Should not throw error when edit button is missing
+        expect(card).toBeDefined();
+    });
+
+    test('openGoalForm should return early if modal elements are missing', () => {
+        // Remove modal from DOM
+        const modal = document.getElementById('goalModal');
+        if (modal) {
+            modal.remove();
+        }
+        
+        // Should not throw error
+        expect(() => uiController.openGoalForm()).not.toThrow();
+    });
+
+    test('showCheckIns should hide panel when check-ins are empty', () => {
+        // Test with empty check-ins
+        mockApp.checkIns = [];
+        mockCheckInService.getCheckIns.mockReturnValue([]);
+        
+        uiController.showCheckIns();
+        
+        // Panel should be hidden when no check-ins
+        expect(document.getElementById('checkInsPanel').style.display).toBe('none');
+    });
+
+
+    test('window mousedown should close modal when clicking outside', () => {
+        const modal = document.getElementById('goalModal');
+        modal.classList.add('is-visible');
+        uiController.closeGoalForm = jest.fn();
+        
+        // Simulate click outside modal - use an element that's actually in the DOM and not inside modal
+        const outsideElement = document.createElement('div');
+        outsideElement.id = 'outsideElement';
+        document.body.appendChild(outsideElement);
+        
+        const mousedownEvent = new dom.window.MouseEvent('mousedown', { 
+            bubbles: true,
+            cancelable: true
+        });
+        Object.defineProperty(mousedownEvent, 'target', {
+            value: outsideElement,
+            writable: false,
+            configurable: true
+        });
+        
+        window.dispatchEvent(mousedownEvent);
+        
+        expect(uiController.closeGoalForm).toHaveBeenCalled();
+        document.body.removeChild(outsideElement);
+    });
+
+    test('window mousedown should not close modal when clicking on add goal button', () => {
+        const modal = document.getElementById('goalModal');
+        modal.classList.add('is-visible');
+        uiController.closeGoalForm = jest.fn();
+        
+        const addGoalBtn = document.getElementById('addGoalBtn');
+        const mousedownEvent = new dom.window.MouseEvent('mousedown', { 
+            target: addGoalBtn,
+            bubbles: true 
+        });
+        
+        window.dispatchEvent(mousedownEvent);
+        
+        expect(uiController.closeGoalForm).not.toHaveBeenCalled();
+    });
+
+    test('window mousedown should not close modal when clicking on edit button', () => {
+        const modal = document.getElementById('goalModal');
+        modal.classList.add('is-visible');
+        uiController.closeGoalForm = jest.fn();
+        
+        const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 1, urgency: 1, status: 'active', deadline: null });
+        const card = uiController.createGoalCard(goal);
+        const editBtn = card.querySelector('.edit-goal');
+        document.body.appendChild(card);
+        
+        // Create event with proper target
+        const mousedownEvent = new dom.window.MouseEvent('mousedown', { 
+            bubbles: true,
+            cancelable: true
+        });
+        Object.defineProperty(mousedownEvent, 'target', {
+            value: editBtn,
+            writable: false
+        });
+        
+        window.dispatchEvent(mousedownEvent);
+        
+        expect(uiController.closeGoalForm).not.toHaveBeenCalled();
+        document.body.removeChild(card);
+    });
+
+    test('handleGoalSubmit should show alert on error', () => {
+        document.getElementById('goalId').value = '';
+        document.getElementById('goalTitle').value = 'New Goal';
+        document.getElementById('goalDescription').value = 'New Desc';
+        document.getElementById('goalMotivation').value = '5';
+        document.getElementById('goalUrgency').value = '4';
+        document.getElementById('goalDeadline').value = '2025-12-31';
+
+        global.alert = jest.fn();
+        mockGoalService.createGoal.mockImplementation(() => {
+            throw new Error('Test error message');
+        });
+
+        uiController.handleGoalSubmit();
+
+        expect(global.alert).toHaveBeenCalledWith('Test error message');
+    });
+
     // Test handleGoalSubmit for new goal
     test('handleGoalSubmit should create a new goal and re-render views', () => {
         document.getElementById('goalId').value = '';
@@ -350,7 +479,6 @@ describe('UIController', () => {
         document.getElementById('goalMotivation').value = '5';
         document.getElementById('goalUrgency').value = '4';
         document.getElementById('goalDeadline').value = '2025-12-31';
-        document.getElementById('goalStatus').value = 'active';
 
         uiController.closeGoalForm = jest.fn();
         uiController.renderViews = jest.fn();
@@ -363,8 +491,7 @@ describe('UIController', () => {
                 description: 'New Desc',
                 motivation: '5',
                 urgency: '4',
-                deadline: '2025-12-31',
-                status: 'active'
+                deadline: '2025-12-31'
             },
             expect.any(Number)
         );
@@ -380,7 +507,6 @@ describe('UIController', () => {
         document.getElementById('goalMotivation').value = '3';
         document.getElementById('goalUrgency').value = '2';
         document.getElementById('goalDeadline').value = '2026-01-01';
-        document.getElementById('goalStatus').value = 'paused';
 
         uiController.closeGoalForm = jest.fn();
         uiController.renderViews = jest.fn();
@@ -394,8 +520,7 @@ describe('UIController', () => {
                 description: 'Updated Desc',
                 motivation: '3',
                 urgency: '2',
-                deadline: '2026-01-01',
-                status: 'paused'
+                deadline: '2026-01-01'
             },
             expect.any(Number)
         );
@@ -435,7 +560,7 @@ describe('UIController', () => {
         document.getElementById('deleteBtn').click();
 
         expect(global.confirm).toHaveBeenCalledWith('Möchtest du dieses Ziel wirklich löschen?');
-        expect(mockGoalService.deleteGoal).toHaveBeenCalledWith('goal-to-delete');
+        expect(mockGoalService.deleteGoal).toHaveBeenCalledWith('goal-to-delete', 3);
         expect(uiController.closeGoalForm).toHaveBeenCalled();
         expect(uiController.renderViews).toHaveBeenCalled();
     });
@@ -461,6 +586,81 @@ describe('UIController', () => {
         expect(uiController.closeGoalForm).toHaveBeenCalled();
     });
 
+    test('window click inside modal should not call closeGoalForm', () => {
+        uiController.closeGoalForm = jest.fn();
+        const modalTitle = document.getElementById('modalTitle');
+        // Simulate a click inside the modal
+        modalTitle.dispatchEvent(new dom.window.MouseEvent('click', { target: modalTitle }));
+        expect(uiController.closeGoalForm).not.toHaveBeenCalled();
+    });
+
+    // Test setupEventListeners - exportBtn
+    test('exportBtn click should call app.exportData', () => {
+        document.getElementById('exportBtn').click();
+        expect(mockApp.exportData).toHaveBeenCalled();
+    });
+
+    // Test setupEventListeners - importBtn and importFile change
+    test('importBtn click should trigger importFile click', () => {
+        const importFile = document.getElementById('importFile');
+        importFile.click = jest.fn(); // Mock click
+        document.getElementById('importBtn').click();
+        expect(importFile.click).toHaveBeenCalled();
+    });
+
+    test('importFile change should call app.importData', () => {
+        const importFile = document.getElementById('importFile');
+        const mockFile = new dom.window.File(['{}'], 'test.json', { type: 'application/json' });
+        Object.defineProperty(importFile, 'files', {
+            value: [mockFile],
+            writable: true,
+        });
+
+        importFile.dispatchEvent(new dom.window.Event('change'));
+        expect(mockApp.importData).toHaveBeenCalledWith(mockFile);
+        expect(importFile.value).toBe(''); // Should reset file input
+    });
+
+    // Test setupEventListeners - saveSettingsBtn
+    test('saveSettingsBtn click should update settings, start check-in timer, and re-render views', () => {
+        document.getElementById('maxActiveGoals').value = '5';
+        document.getElementById('checkInInterval').value = '10';
+        document.getElementById('checkInsEnabled').checked = false;
+        mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3, checkInInterval: 7, checkInsEnabled: true });
+
+        uiController.renderViews = jest.fn();
+
+        document.getElementById('saveSettingsBtn').click();
+
+        expect(mockSettingsService.updateSettings).toHaveBeenCalledWith({
+            maxActiveGoals: 5,
+            checkInInterval: 10,
+            checkInsEnabled: false
+        });
+        // Should call autoActivateGoalsByPriority when maxActiveGoals changes
+        expect(mockGoalService.autoActivateGoalsByPriority).toHaveBeenCalledWith(5);
+        expect(mockApp.startCheckInTimer).toHaveBeenCalled();
+        expect(uiController.renderViews).toHaveBeenCalled();
+    });
+
+    test('saveSettingsBtn click should not call autoActivateGoalsByPriority when maxActiveGoals unchanged', () => {
+        document.getElementById('maxActiveGoals').value = '3';
+        document.getElementById('checkInInterval').value = '10';
+        document.getElementById('checkInsEnabled').checked = false;
+        mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3, checkInInterval: 7, checkInsEnabled: true });
+
+        uiController.renderViews = jest.fn();
+
+        document.getElementById('saveSettingsBtn').click();
+
+        expect(mockSettingsService.updateSettings).toHaveBeenCalled();
+        // Should NOT call autoActivateGoalsByPriority when maxActiveGoals unchanged
+        expect(mockGoalService.autoActivateGoalsByPriority).not.toHaveBeenCalled();
+        expect(mockApp.startCheckInTimer).toHaveBeenCalled();
+        expect(uiController.renderViews).toHaveBeenCalled();
+    });
+
+    // Test setupEventListeners - menu-btn clicks
     test('menu-btn click should activate correct view', () => {
         const dashboardBtn = document.querySelector('.menu-btn[data-view="dashboard"]');
         const allGoalsBtn = document.querySelector('.menu-btn[data-view="allGoals"]');
@@ -487,15 +687,22 @@ describe('UIController', () => {
         expect(allGoalsView.classList.contains('active')).toBe(false);
     });
 
-    test('window click on modal background should call closeGoalForm', () => {
+    test('window mousedown outside modal should call closeGoalForm', () => {
         const goalModal = document.getElementById('goalModal');
-        goalModal.style.display = 'block'; // Ensure modal is visible
+        goalModal.classList.add('is-visible'); // Ensure modal is visible
+        uiController.closeGoalForm = jest.fn();
 
-        // Simulate a click on the window, with the target being the modal background
-        const clickEvent = new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, composed: true });
-        Object.defineProperty(clickEvent, 'target', { value: goalModal });
-        dom.window.dispatchEvent(clickEvent);
+        // Create an element outside the modal
+        const outsideElement = document.createElement('div');
+        outsideElement.id = 'outsideElement';
+        document.body.appendChild(outsideElement);
 
-        expect(UIController.prototype.closeGoalForm).toHaveBeenCalled();
+        // Simulate a mousedown on the window, with the target being outside the modal
+        const mousedownEvent = new dom.window.MouseEvent('mousedown', { bubbles: true, cancelable: true, composed: true });
+        Object.defineProperty(mousedownEvent, 'target', { value: outsideElement, writable: false, configurable: true });
+        window.dispatchEvent(mousedownEvent);
+
+        expect(uiController.closeGoalForm).toHaveBeenCalled();
+        document.body.removeChild(outsideElement);
     });
 });
