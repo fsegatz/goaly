@@ -329,6 +329,14 @@ main {
     backdrop-filter: blur(4px);
 }
 
+.modal.is-visible {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    z-index: 9999;
+    pointer-events: auto;
+}
+
 .modal-content {
     background-color: white;
     margin: 5% auto;

@@ -162,22 +162,14 @@ class UIController {
             deleteBtn.style.display = 'none';
         }
 
-        // Setze display auf block mit !important
-        modal.style.setProperty('display', 'block', 'important');
-        modal.style.setProperty('visibility', 'visible', 'important');
-        modal.style.setProperty('opacity', '1', 'important');
-        modal.style.setProperty('background-color', 'rgba(0, 0, 0, 0.5)', 'important');
-        modal.style.setProperty('z-index', '9999', 'important');
-        modal.style.setProperty('pointer-events', 'auto', 'important');
+        // Zeige Modal über CSS-Klasse
+        modal.classList.add('is-visible');
     }
 
     closeGoalForm() {
         const modal = document.getElementById('goalModal');
         if (modal) {
-            // Entferne display: block und setze es auf none
-            modal.style.removeProperty('display');
-            // Setze es dann auf none mit !important
-            modal.style.setProperty('display', 'none', 'important');
+            modal.classList.remove('is-visible');
         }
         const form = document.getElementById('goalForm');
         if (form) {

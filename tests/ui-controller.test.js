@@ -259,7 +259,7 @@ describe('UIController', () => {
         expect(document.getElementById('modalTitle').textContent).toBe('Neues Ziel');
         expect(document.getElementById('goalId').value).toBe('');
         expect(document.getElementById('deleteBtn').style.display).toBe('none');
-        expect(document.getElementById('goalModal').style.display).toBe('block');
+        expect(document.getElementById('goalModal').classList.contains('is-visible')).toBe(true);
     });
 
     // Test openGoalForm for editing existing goal
@@ -277,18 +277,18 @@ describe('UIController', () => {
         expect(document.getElementById('goalUrgency').value).toBe('2');
         expect(document.getElementById('goalDeadline').value).toBe('2025-12-25');
         expect(document.getElementById('deleteBtn').style.display).toBe('inline-block');
-        expect(document.getElementById('goalModal').style.display).toBe('block');
+        expect(document.getElementById('goalModal').classList.contains('is-visible')).toBe(true);
     });
 
     // Test closeGoalForm
     test('closeGoalForm should hide modal and reset form', () => {
         const form = document.getElementById('goalForm');
         form.reset = jest.fn(); // Mock reset
-        document.getElementById('goalModal').style.display = 'block'; // Set to block first
+        document.getElementById('goalModal').classList.add('is-visible'); // Set visible first
 
         uiController.closeGoalForm();
 
-        expect(document.getElementById('goalModal').style.display).toBe('none');
+        expect(document.getElementById('goalModal').classList.contains('is-visible')).toBe(false);
         expect(form.reset).toHaveBeenCalled();
     });
 
@@ -387,7 +387,7 @@ describe('UIController', () => {
 
     test('window mousedown should close modal when clicking outside', () => {
         const modal = document.getElementById('goalModal');
-        modal.style.setProperty('display', 'block', 'important');
+        modal.classList.add('is-visible');
         uiController.closeGoalForm = jest.fn();
         
         // Simulate click outside modal - use an element that's actually in the DOM and not inside modal
@@ -413,7 +413,7 @@ describe('UIController', () => {
 
     test('window mousedown should not close modal when clicking on add goal button', () => {
         const modal = document.getElementById('goalModal');
-        modal.style.setProperty('display', 'block', 'important');
+        modal.classList.add('is-visible');
         uiController.closeGoalForm = jest.fn();
         
         const addGoalBtn = document.getElementById('addGoalBtn');
@@ -429,7 +429,7 @@ describe('UIController', () => {
 
     test('window mousedown should not close modal when clicking on edit button', () => {
         const modal = document.getElementById('goalModal');
-        modal.style.setProperty('display', 'block', 'important');
+        modal.classList.add('is-visible');
         uiController.closeGoalForm = jest.fn();
         
         const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 1, urgency: 1, status: 'active', deadline: null });
