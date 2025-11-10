@@ -313,6 +313,5 @@ describe('Goal Service', () => {
         // The older goal should be active
         expect(goal1.status).toBe('active');
         expect(goal2.status).toBe('paused');
->>>>>>> 1d4c710 (Feature: Automatische Ziel-Aktivierung basierend auf Prioritaet)
     });
 });

@@ -687,15 +687,22 @@ describe('UIController', () => {
         expect(allGoalsView.classList.contains('active')).toBe(false);
     });
 
-    test('window click on modal background should call closeGoalForm', () => {
+    test('window mousedown outside modal should call closeGoalForm', () => {
         const goalModal = document.getElementById('goalModal');
-        goalModal.style.display = 'block'; // Ensure modal is visible
+        goalModal.classList.add('is-visible'); // Ensure modal is visible
+        uiController.closeGoalForm = jest.fn();
 
-        // Simulate a click on the window, with the target being the modal background
-        const clickEvent = new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, composed: true });
-        Object.defineProperty(clickEvent, 'target', { value: goalModal });
-        dom.window.dispatchEvent(clickEvent);
+        // Create an element outside the modal
+        const outsideElement = document.createElement('div');
+        outsideElement.id = 'outsideElement';
+        document.body.appendChild(outsideElement);
 
-        expect(UIController.prototype.closeGoalForm).toHaveBeenCalled();
+        // Simulate a mousedown on the window, with the target being outside the modal
+        const mousedownEvent = new dom.window.MouseEvent('mousedown', { bubbles: true, cancelable: true, composed: true });
+        Object.defineProperty(mousedownEvent, 'target', { value: outsideElement, writable: false, configurable: true });
+        window.dispatchEvent(mousedownEvent);
+
+        expect(uiController.closeGoalForm).toHaveBeenCalled();
+        document.body.removeChild(outsideElement);
     });
 });
