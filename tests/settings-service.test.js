@@ -32,6 +32,17 @@ describe('Settings Service', () => {
         expect(settings.checkInsEnabled).toBe(false);
     });
 
+    it('should not change settings when localStorage is empty', () => {
+        localStorage.getItem.mockReturnValue(null);
+        const initialSettings = { ...settingsService.getSettings() };
+        
+        settingsService.loadSettings();
+        
+        // Settings should remain at defaults
+        expect(settingsService.getSettings().maxActiveGoals).toBe(initialSettings.maxActiveGoals);
+        expect(settingsService.getSettings().checkInInterval).toBe(initialSettings.checkInInterval);
+    });
+
     it('should save settings to localStorage', () => {
         const newSettings = { maxActiveGoals: 10 };
         settingsService.updateSettings(newSettings);

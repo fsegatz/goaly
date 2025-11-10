@@ -13,8 +13,9 @@ class CheckInService {
         const created = new Date(goal.createdAt);
         
         const intervals = [3, 7, 14, 30];
-        const lastCheckIn = goal.checkInDates && goal.checkInDates.length > 0
-            ? new Date(Math.max(...goal.checkInDates.map(d => new Date(d))))
+        const checkInDates = goal.checkInDates || [];
+        const lastCheckIn = checkInDates.length > 0
+            ? new Date(Math.max(...checkInDates.map(d => new Date(d))))
             : created;
 
         const checkInMinutes = this.settings.checkInInterval;
@@ -23,7 +24,7 @@ class CheckInService {
         for (const interval of intervals) {
             const intervalMinutes = interval * checkInMinutes;
             if (minutesSinceLastCheckIn >= intervalMinutes && 
-                !goal.checkInDates.some(d => {
+                !checkInDates.some(d => {
                     const checkInDate = new Date(d);
                     const minutesSinceCheckIn = Math.ceil((now - checkInDate) / (1000 * 60));
                     return minutesSinceCheckIn < intervalMinutes && minutesSinceCheckIn >= intervalMinutes - checkInMinutes;

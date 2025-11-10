@@ -78,17 +78,16 @@ class UIController {
             </div>
             <div class="goal-actions">
                 <button class="btn btn-primary edit-goal" data-id="${goal.id}">Bearbeiten</button>
-                ${goal.status === 'active' 
-                    ? `<button class="btn btn-secondary pause-goal" data-id="${goal.id}">Pausieren</button>`
-                    : goal.status === 'paused'
-                    ? `<button class="btn btn-primary activate-goal" data-id="${goal.id}">Aktivieren</button>`
-                    : ''}
             </div>
         `;
 
-        card.querySelector('.edit-goal')?.addEventListener('click', () => this.openGoalForm(goal.id));
-        card.querySelector('.pause-goal')?.addEventListener('click', () => this.pauseGoal(goal.id));
-        card.querySelector('.activate-goal')?.addEventListener('click', () => this.activateGoal(goal.id));
+        const editBtn = card.querySelector('.edit-goal');
+        if (editBtn) {
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Verhindere Event-Bubbling
+                this.openGoalForm(goal.id);
+            });
+        }
 
         return card;
     }
@@ -138,6 +137,10 @@ class UIController {
         const deleteBtn = document.getElementById('deleteBtn');
         const modalTitle = document.getElementById('modalTitle');
 
+        if (!modal || !form || !deleteBtn || !modalTitle) {
+            return;
+        }
+
         if (goalId) {
             const goal = this.app.goalService.goals.find(g => g.id === goalId);
             if (goal) {
@@ -150,54 +153,49 @@ class UIController {
                 document.getElementById('goalDeadline').value = goal.deadline 
                     ? goal.deadline.toISOString().split('T')[0]
                     : '';
-                document.getElementById('goalStatus').value = goal.status;
                 deleteBtn.style.display = 'inline-block';
             }
         } else {
             modalTitle.textContent = 'Neues Ziel';
             form.reset();
             document.getElementById('goalId').value = '';
-            document.getElementById('goalStatus').value = 'active';
             deleteBtn.style.display = 'none';
         }
 
-        modal.style.display = 'block';
+        // Setze display auf block mit !important
+        modal.style.setProperty('display', 'block', 'important');
+        modal.style.setProperty('visibility', 'visible', 'important');
+        modal.style.setProperty('opacity', '1', 'important');
+        modal.style.setProperty('background-color', 'rgba(0, 0, 0, 0.5)', 'important');
+        modal.style.setProperty('z-index', '9999', 'important');
+        modal.style.setProperty('pointer-events', 'auto', 'important');
     }
 
     closeGoalForm() {
-        document.getElementById('goalModal').style.display = 'none';
-        document.getElementById('goalForm').reset();
-    }
-
-    pauseGoal(id) {
-        try {
-            const goal = this.app.goalService.goals.find(g => g.id === id);
-            if (!goal) return;
-
-            this.app.goalService.updateGoal(id, { ...goal, status: 'paused' }, this.app.settingsService.getSettings().maxActiveGoals);
-            this.renderViews();
-        } catch (error) {
-            alert(error.message);
+        const modal = document.getElementById('goalModal');
+        if (modal) {
+            // Entferne display: block und setze es auf none
+            modal.style.removeProperty('display');
+            // Setze es dann auf none mit !important
+            modal.style.setProperty('display', 'none', 'important');
+        }
+        const form = document.getElementById('goalForm');
+        if (form) {
+            form.reset();
         }
     }
 
-    activateGoal(id) {
-        try {
-            const goal = this.app.goalService.goals.find(g => g.id === id);
-            if (!goal) return;
-
-            this.app.goalService.updateGoal(id, { ...goal, status: 'active' }, this.app.settingsService.getSettings().maxActiveGoals);
-            this.renderViews();
-        } catch (error) {
-            alert(error.message);
-        }
-    }
 
     showCheckIns() {
         const panel = document.getElementById('checkInsPanel');
         const list = document.getElementById('checkInsList');
         
         list.innerHTML = '';
+        
+        if (this.app.checkIns.length === 0) {
+            panel.style.display = 'none';
+            return;
+        }
         
         this.app.checkIns.forEach(checkIn => {
             const item = document.createElement('div');
@@ -231,53 +229,115 @@ class UIController {
     }
 
     setupEventListeners() {
-        document.getElementById('addGoalBtn').addEventListener('click', () => this.openGoalForm());
+        const addGoalBtn = document.getElementById('addGoalBtn');
+        if (addGoalBtn) {
+            addGoalBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Verhindere Event-Bubbling
+                this.openGoalForm();
+            });
+        }
 
-        document.getElementById('goalForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleGoalSubmit();
-        });
+        const goalForm = document.getElementById('goalForm');
+        if (goalForm) {
+            goalForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleGoalSubmit();
+            });
+        }
 
-        document.getElementById('cancelBtn').addEventListener('click', () => this.closeGoalForm());
-        document.getElementById('deleteBtn').addEventListener('click', () => {
-            if (confirm('Möchtest du dieses Ziel wirklich löschen?')) {
-                const id = document.getElementById('goalId').value;
-                this.app.goalService.deleteGoal(id);
-                this.closeGoalForm();
-                this.renderViews();
-            }
-        });
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => this.closeGoalForm());
+        }
 
-        document.querySelector('.close').addEventListener('click', () => this.closeGoalForm());
-        window.addEventListener('click', (e) => {
+        const deleteBtn = document.getElementById('deleteBtn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+                if (confirm('Möchtest du dieses Ziel wirklich löschen?')) {
+                    const id = document.getElementById('goalId').value;
+                    this.app.goalService.deleteGoal(id, this.app.settingsService.getSettings().maxActiveGoals);
+                    this.closeGoalForm();
+                    this.renderViews();
+                }
+            });
+        }
+
+        const closeBtn = document.querySelector('.close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.closeGoalForm());
+        }
+
+        // Verwende mousedown statt click, um sicherzustellen, dass das Modal nicht sofort geschlossen wird
+        window.addEventListener('mousedown', (e) => {
             const modal = document.getElementById('goalModal');
-            // Close the modal if the click is outside the modal content and the modal is displayed
-            if (e.target === modal) {
-                this.closeGoalForm();
+            if (modal) {
+                const isModalVisible = modal.classList.contains('is-visible');
+                
+                // Schließe nur, wenn der Klick außerhalb des Modals ist
+                if (isModalVisible && e.target && e.target.nodeType === 1) {
+                    try {
+                        if (!modal.contains(e.target)) {
+                            // Prüfe, ob der Klick auf einen Button war, der das Modal öffnet
+                            const clickedElement = e.target;
+                            const isAddGoalBtn = clickedElement.id === 'addGoalBtn' || clickedElement.closest('#addGoalBtn');
+                            const isEditBtn = clickedElement.classList && (clickedElement.classList.contains('edit-goal') || clickedElement.closest('.edit-goal'));
+                            
+                            if (!isAddGoalBtn && !isEditBtn) {
+                                this.closeGoalForm();
+                            }
+                        }
+                    } catch (error) {
+                        // Ignore errors if contains fails
+                    }
+                }
             }
         });
 
-        document.getElementById('exportBtn').addEventListener('click', () => this.app.exportData());
-        document.getElementById('importBtn').addEventListener('click', () => {
-            document.getElementById('importFile').click();
-        });
-        document.getElementById('importFile').addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                this.app.importData(e.target.files[0]);
-                e.target.value = '';
-            }
-        });
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => this.app.exportData());
+        }
 
-        document.getElementById('saveSettingsBtn').addEventListener('click', () => {
-            const newSettings = {
-                maxActiveGoals: parseInt(document.getElementById('maxActiveGoals').value),
-                checkInInterval: parseInt(document.getElementById('checkInInterval').value),
-                checkInsEnabled: document.getElementById('checkInsEnabled').checked
-            };
-            this.app.settingsService.updateSettings(newSettings);
-            this.app.startCheckInTimer();
-            this.renderViews();
-        });
+        const importBtn = document.getElementById('importBtn');
+        if (importBtn) {
+            importBtn.addEventListener('click', () => {
+                const importFile = document.getElementById('importFile');
+                if (importFile) {
+                    importFile.click();
+                }
+            });
+        }
+
+        const importFile = document.getElementById('importFile');
+        if (importFile) {
+            importFile.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    this.app.importData(e.target.files[0]);
+                    e.target.value = '';
+                }
+            });
+        }
+
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        if (saveSettingsBtn) {
+            saveSettingsBtn.addEventListener('click', () => {
+                const newSettings = {
+                    maxActiveGoals: parseInt(document.getElementById('maxActiveGoals').value),
+                    checkInInterval: parseInt(document.getElementById('checkInInterval').value),
+                    checkInsEnabled: document.getElementById('checkInsEnabled').checked
+                };
+                const oldMaxActiveGoals = this.app.settingsService.getSettings().maxActiveGoals;
+                this.app.settingsService.updateSettings(newSettings);
+                
+                // Wenn sich maxActiveGoals geändert hat, automatisch neu aktivieren
+                if (newSettings.maxActiveGoals !== oldMaxActiveGoals) {
+                    this.app.goalService.autoActivateGoalsByPriority(newSettings.maxActiveGoals);
+                }
+                
+                this.app.startCheckInTimer();
+                this.renderViews();
+            });
+        }
 
         document.querySelectorAll('.menu-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -289,7 +349,10 @@ class UIController {
                 document.querySelectorAll('.view').forEach(content => {
                     content.classList.remove('active');
                 });
-                document.getElementById(`${viewName}View`).classList.add('active');
+                const targetView = document.getElementById(`${viewName}View`);
+                if (targetView) {
+                    targetView.classList.add('active');
+                }
             });
         });
     }
@@ -301,8 +364,7 @@ class UIController {
             description: document.getElementById('goalDescription').value,
             motivation: document.getElementById('goalMotivation').value,
             urgency: document.getElementById('goalUrgency').value,
-            deadline: document.getElementById('goalDeadline').value || null,
-            status: document.getElementById('goalStatus').value
+            deadline: document.getElementById('goalDeadline').value || null
         };
 
         try {

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Goaly - Zielverfolgung</title>
+    <link rel="icon" type="image/png" href="styles/icon/favicon.png">
     <link rel="stylesheet" href="styles/styles.css">
 </head>
 <body>
@@ -63,9 +64,10 @@
                 </div>
             </div>
         </main>
+    </div>
 
-        <!-- Goal Form Modal -->
-        <div id="goalModal" class="modal" style="display: none;">
+    <!-- Goal Form Modal -->
+    <div id="goalModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h2 id="modalTitle">Neues Ziel</h2>
@@ -99,15 +101,6 @@
                         <input type="date" id="goalDeadline">
                     </div>
 
-                    <div class="form-group">
-                        <label for="goalStatus">Status</label>
-                        <select id="goalStatus">
-                            <option value="active">Aktiv</option>
-                            <option value="paused">Pausiert</option>
-                            <option value="completed">Abgeschlossen</option>
-                        </select>
-                    </div>
-
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">Speichern</button>
                         <button type="button" id="cancelBtn" class="btn btn-secondary">Abbrechen</button>
@@ -116,7 +109,6 @@
                 </form>
             </div>
         </div>
-    </div>
 
     <script type="module" src="src/app.js"></script>
 </body>

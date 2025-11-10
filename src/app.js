@@ -20,6 +20,8 @@ class GoalyApp {
     init() {
         this.settingsService.loadSettings();
         this.goalService.loadGoals();
+        // Migriere bestehende Ziele zur automatischen Aktivierung
+        this.goalService.migrateGoalsToAutoActivation(this.settingsService.getSettings().maxActiveGoals);
         this.uiController.renderViews();
         this.startCheckInTimer();
     }
@@ -68,6 +70,16 @@ class GoalyApp {
             try {
                 const data = JSON.parse(e.target.result);
                 
+                // Zuerst Einstellungen laden, falls vorhanden
+                if (data.settings) {
+                    this.settingsService.updateSettings(data.settings);
+                    document.getElementById('maxActiveGoals').value = this.settingsService.getSettings().maxActiveGoals;
+                    document.getElementById('checkInInterval').value = this.settingsService.getSettings().checkInInterval;
+                    document.getElementById('checkInsEnabled').checked = this.settingsService.getSettings().checkInsEnabled !== false;
+                    this.startCheckInTimer();
+                }
+                
+                // Dann Ziele laden und migrieren (mit korrektem maxActiveGoals)
                 if (data.goals) {
                     this.goalService.goals = data.goals.map(goal => ({
                         ...goal,
@@ -75,15 +87,8 @@ class GoalyApp {
                         lastUpdated: new Date(goal.lastUpdated),
                         deadline: goal.deadline ? new Date(goal.deadline) : null
                     }));
-                    this.goalService.saveGoals();
-                }
-
-                if (data.settings) {
-                    this.settingsService.updateSettings(data.settings);
-                    document.getElementById('maxActiveGoals').value = this.settingsService.getSettings().maxActiveGoals;
-                    document.getElementById('checkInInterval').value = this.settingsService.getSettings().checkInInterval;
-                    document.getElementById('checkInsEnabled').checked = this.settingsService.getSettings().checkInsEnabled !== false;
-                    this.startCheckInTimer();
+                    // Nach Import automatisch die N Ziele mit höchster Priorität aktivieren
+                    this.goalService.migrateGoalsToAutoActivation(this.settingsService.getSettings().maxActiveGoals);
                 }
 
                 this.uiController.renderViews();
