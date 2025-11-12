@@ -63,9 +63,9 @@ class GoalService {
             description: goal.description ?? '',
             motivation: Number.isNaN(goal.motivation) ? null : goal.motivation,
             urgency: Number.isNaN(goal.urgency) ? null : goal.urgency,
-            deadline: goal.deadline instanceof Date
+            deadline: goal.deadline
                 ? goal.deadline.toISOString()
-                : (goal.deadline ? new Date(goal.deadline).toISOString() : null),
+                : null,
             status: goal.status ?? 'active',
             priority: this.calculatePriority(goal)
         };
@@ -193,14 +193,14 @@ class GoalService {
             updates.description = goalData.description;
         }
         if (goalData.motivation !== undefined) {
-            const parsedMotivation = parseInt(goalData.motivation);
+            const parsedMotivation = parseInt(goalData.motivation, 10);
             if (parsedMotivation !== goal.motivation) {
                 updates.motivation = parsedMotivation;
                 priorityChanged = true;
             }
         }
         if (goalData.urgency !== undefined) {
-            const parsedUrgency = parseInt(goalData.urgency);
+            const parsedUrgency = parseInt(goalData.urgency, 10);
             if (parsedUrgency !== goal.urgency) {
                 updates.urgency = parsedUrgency;
                 priorityChanged = true;

@@ -14,9 +14,9 @@ function normalizeHistoryEntry(entry) {
         timestamp,
         changes: Array.isArray(entry.changes)
             ? entry.changes.map(change => ({
-                field: change?.field,
-                from: Object.prototype.hasOwnProperty.call(change || {}, 'from') ? change.from : null,
-                to: Object.prototype.hasOwnProperty.call(change || {}, 'to') ? change.to : null
+                field: change?.field ?? null,
+                from: change?.from ?? null,
+                to: change?.to ?? null
             }))
             : [],
         before: entry.before ? { ...entry.before } : null,

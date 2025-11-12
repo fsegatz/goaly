@@ -814,15 +814,15 @@ class UIController {
         section.hidden = false;
 
         if (!goal || !Array.isArray(goal.history) || goal.history.length === 0) {
-            list.innerHTML = '<p class=\"goal-history-empty\">Noch keine Änderungen protokolliert.</p>';
+            list.innerHTML = '<p class="goal-history-empty">Noch keine Änderungen protokolliert.</p>';
             return;
         }
 
         list.innerHTML = '';
 
         const sortedEntries = [...goal.history].sort((a, b) => {
-            const timeA = a?.timestamp ? new Date(a.timestamp).getTime() : 0;
-            const timeB = b?.timestamp ? new Date(b.timestamp).getTime() : 0;
+            const timeA = a?.timestamp?.getTime?.() || 0;
+            const timeB = b?.timestamp?.getTime?.() || 0;
             return timeB - timeA;
         });
 
