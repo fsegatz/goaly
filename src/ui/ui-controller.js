@@ -25,7 +25,8 @@ class UIController {
             minPriority: 0,
             sort: 'priority-desc',
             includeCompleted: true,
-            includeArchived: true
+            includeArchived: true,
+            includeFinalized: true
         };
         this.allGoalsControlRefs = {
             allGoalsStatusFilter: document.getElementById('allGoalsStatusFilter'),
@@ -33,6 +34,7 @@ class UIController {
             allGoalsSort: document.getElementById('allGoalsSort'),
             allGoalsToggleCompleted: document.getElementById('allGoalsToggleCompleted'),
             allGoalsToggleArchived: document.getElementById('allGoalsToggleArchived'),
+            allGoalsToggleFinalized: document.getElementById('allGoalsToggleFinalized'),
             allGoalsTableBody: document.getElementById('allGoalsTableBody'),
             allGoalsEmptyState: document.getElementById('allGoalsEmptyState')
         };
@@ -168,6 +170,35 @@ class UIController {
             });
         }
 
+        const actionsContainer = card.querySelector('.goal-actions');
+        if (actionsContainer) {
+            if (goal.status !== 'finalized') {
+                const finalizeButton = document.createElement('button');
+                finalizeButton.type = 'button';
+                finalizeButton.className = 'btn btn-secondary finalize-goal';
+                finalizeButton.textContent = 'Finalisieren';
+                finalizeButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.changeGoalStatus(goal.id, 'finalized');
+                });
+                actionsContainer.appendChild(finalizeButton);
+            }
+
+            if (goal.status !== 'archived') {
+                const archiveButton = document.createElement('button');
+                archiveButton.type = 'button';
+                archiveButton.className = 'btn btn-secondary archive-goal';
+                archiveButton.textContent = 'Archivieren';
+                archiveButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.changeGoalStatus(goal.id, 'archived', { requireConfirm: true });
+                });
+                actionsContainer.appendChild(archiveButton);
+            }
+        }
+
         const editBtn = card.querySelector('.edit-goal');
         const inlineEditor = card.querySelector('.goal-inline-editor');
 
@@ -252,7 +283,9 @@ class UIController {
         const statusMap = {
             active: 'Aktiv',
             paused: 'Pausiert',
-            completed: 'Abgeschlossen'
+            completed: 'Abgeschlossen',
+            finalized: 'Finalisiert',
+            archived: 'Archiviert'
         };
         return statusMap[status] || status;
     }
@@ -547,6 +580,12 @@ class UIController {
                 event: 'change',
                 key: 'includeArchived',
                 getValue: (element) => element.checked
+            },
+            {
+                id: 'allGoalsToggleFinalized',
+                event: 'change',
+                key: 'includeFinalized',
+                getValue: (element) => element.checked
             }
         ];
 
@@ -570,6 +609,7 @@ class UIController {
         const sortSelect = this.getControlElement('allGoalsSort');
         const toggleCompleted = this.getControlElement('allGoalsToggleCompleted');
         const toggleArchived = this.getControlElement('allGoalsToggleArchived');
+        const toggleFinalized = this.getControlElement('allGoalsToggleFinalized');
 
         if (!tableBody) {
             return;
@@ -590,6 +630,9 @@ class UIController {
         if (toggleArchived) {
             toggleArchived.checked = this.allGoalsState.includeArchived;
         }
+        if (toggleFinalized) {
+            toggleFinalized.checked = this.allGoalsState.includeFinalized;
+        }
 
         this.refreshPriorityCache();
 
@@ -603,6 +646,9 @@ class UIController {
                 return false;
             }
             if (!this.allGoalsState.includeArchived && goal.status === 'archived') {
+                return false;
+            }
+            if (!this.allGoalsState.includeFinalized && goal.status === 'finalized') {
                 return false;
             }
             if (this.allGoalsState.statusFilter !== 'all' && goal.status !== this.allGoalsState.statusFilter) {
@@ -905,6 +951,30 @@ class UIController {
 
         this.renderViews();
         this.openGoalForm(goalId);
+    }
+
+    changeGoalStatus(goalId, newStatus, { requireConfirm = false } = {}) {
+        if (!goalId || !newStatus) {
+            return;
+        }
+
+        if (requireConfirm && !window.confirm('Möchtest du dieses Ziel wirklich archivieren?')) {
+            return;
+        }
+
+        try {
+            const { maxActiveGoals } = this.app.settingsService.getSettings();
+            const updatedGoal = this.app.goalService.setGoalStatus(goalId, newStatus, maxActiveGoals);
+            if (!updatedGoal) {
+                alert('Ziel nicht gefunden.');
+                return;
+            }
+
+            this.app.checkIns = this.app.checkInService.getCheckIns();
+            this.renderViews();
+        } catch (error) {
+            alert(error.message || 'Statusänderung fehlgeschlagen.');
+        }
     }
 
     updateGoalInline(goalId, updates) {

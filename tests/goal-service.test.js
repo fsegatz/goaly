@@ -458,4 +458,69 @@ describe('Goal Service', () => {
     it('should return null when goal for rollback is missing', () => {
         expect(goalService.revertGoalToHistoryEntry('unknown-goal', 'entry', 3)).toBeNull();
     });
+
+    it('setGoalStatus should return null when goal is missing', () => {
+        const saveSpy = jest.spyOn(goalService, 'saveGoals');
+        const result = goalService.setGoalStatus('missing', 'archived', 3);
+        expect(result).toBeNull();
+        expect(saveSpy).not.toHaveBeenCalled();
+        saveSpy.mockRestore();
+    });
+
+    it('setGoalStatus should save when status stays the same', () => {
+        const goal = goalService.createGoal({ title: 'Same Status', motivation: 3, urgency: 3 }, 2);
+        const saveSpy = jest.spyOn(goalService, 'saveGoals');
+
+        const result = goalService.setGoalStatus(goal.id, goal.status, 2);
+
+        expect(result).toBe(goal);
+        expect(saveSpy).toHaveBeenCalled();
+        saveSpy.mockRestore();
+    });
+
+    it('setGoalStatus should archive active goals and trigger reactivation', () => {
+        const first = goalService.createGoal({ title: 'Primary', motivation: 5, urgency: 5 }, 1);
+        const second = goalService.createGoal({ title: 'Secondary', motivation: 3, urgency: 3 }, 1);
+        const autoSpy = jest.spyOn(goalService, 'autoActivateGoalsByPriority');
+
+        expect(first.status).toBe('active');
+        expect(second.status).toBe('paused');
+
+        goalService.setGoalStatus(first.id, 'archived', 1);
+
+        expect(first.status).toBe('archived');
+        expect(second.status).toBe('active');
+        expect(autoSpy).toHaveBeenCalledWith(1);
+        autoSpy.mockRestore();
+    });
+
+    it('setGoalStatus should trigger auto activation when activating a paused goal', () => {
+        const first = goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 1);
+        const second = goalService.createGoal({ title: 'Activate Me', motivation: 3, urgency: 3 }, 1);
+        const autoSpy = jest.spyOn(goalService, 'autoActivateGoalsByPriority');
+
+        expect(first.status).toBe('active');
+        expect(second.status).toBe('paused');
+
+        goalService.setGoalStatus(second.id, 'active', 1);
+
+        expect(autoSpy).toHaveBeenCalledWith(1);
+        expect(goalService.goals.some(goal => goal.status === 'active')).toBe(true);
+        autoSpy.mockRestore();
+    });
+
+    it('autoActivateGoalsByPriority should ignore archived and finalized goals', () => {
+        const candidate = goalService.createGoal({ title: 'Candidate', motivation: 4, urgency: 4 }, 2);
+        const archivedGoal = goalService.createGoal({ title: 'Archived', motivation: 5, urgency: 5 }, 2);
+        const finalizedGoal = goalService.createGoal({ title: 'Finalized', motivation: 5, urgency: 5 }, 2);
+
+        goalService.setGoalStatus(archivedGoal.id, 'archived', 2);
+        goalService.setGoalStatus(finalizedGoal.id, 'finalized', 2);
+
+        goalService.autoActivateGoalsByPriority(2);
+
+        expect(archivedGoal.status).toBe('archived');
+        expect(finalizedGoal.status).toBe('finalized');
+        expect(candidate.status).toBe('active');
+    });
 });

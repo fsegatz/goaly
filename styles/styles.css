@@ -351,6 +351,16 @@ main {
     color: white;
 }
 
+.status-finalized {
+    background: #20b2aa;
+    color: white;
+}
+
+.status-archived {
+    background: #95a5a6;
+    color: white;
+}
+
 .goal-description {
     color: #666;
     margin-bottom: 15px;
