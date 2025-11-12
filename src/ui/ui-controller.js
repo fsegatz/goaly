@@ -3,21 +3,33 @@
 class UIController {
     constructor(app) {
         this.app = app;
+        this.allGoalsState = {
+            statusFilter: 'all',
+            minPriority: 0,
+            sort: 'priority-desc',
+            includeCompleted: true,
+            includeArchived: true
+        };
+        this.allGoalsControlRefs = {
+            allGoalsStatusFilter: document.getElementById('allGoalsStatusFilter'),
+            allGoalsPriorityFilter: document.getElementById('allGoalsPriorityFilter'),
+            allGoalsSort: document.getElementById('allGoalsSort'),
+            allGoalsToggleCompleted: document.getElementById('allGoalsToggleCompleted'),
+            allGoalsToggleArchived: document.getElementById('allGoalsToggleArchived'),
+            allGoalsTableBody: document.getElementById('allGoalsTableBody'),
+            allGoalsEmptyState: document.getElementById('allGoalsEmptyState')
+        };
+        this.priorityCache = new Map();
+        this.priorityCacheDirty = true;
         this.setupEventListeners();
     }
 
     renderViews() {
+        this.invalidatePriorityCache();
+        this.refreshPriorityCache();
+        const settings = this.app.settingsService.getSettings();
         const activeGoals = this.app.goalService.getActiveGoals();
-        const totalActiveCount = activeGoals.length;
-        
-        const dashboardGoals = activeGoals.slice(0, this.app.settingsService.getSettings().maxActiveGoals);
-        
-        const remainingActiveGoals = activeGoals.slice(this.app.settingsService.getSettings().maxActiveGoals);
-        const allOtherGoals = this.app.goalService.goals
-            .filter(g => g.status !== 'active')
-            .sort((a, b) => this.app.goalService.calculatePriority(b) - this.app.goalService.calculatePriority(a));
-        
-        const allGoals = [...remainingActiveGoals, ...allOtherGoals];
+        const dashboardGoals = activeGoals.slice(0, settings.maxActiveGoals);
 
         const dashboardList = document.getElementById('goalsList');
         dashboardList.innerHTML = '';
@@ -30,16 +42,7 @@ class UIController {
             });
         }
 
-        const allGoalsList = document.getElementById('allGoalsList');
-        allGoalsList.innerHTML = '';
-
-        if (allGoals.length === 0) {
-            allGoalsList.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">Keine weiteren Ziele im Backlog.</p>';
-        } else {
-            allGoals.forEach(goal => {
-                allGoalsList.appendChild(this.createGoalCard(goal));
-            });
-        }
+        this.renderAllGoalsTable();
     }
 
     createGoalCard(goal) {
@@ -347,6 +350,8 @@ class UIController {
                 }
             });
         });
+
+        this.setupAllGoalsControls();
     }
 
     handleGoalSubmit() {
@@ -370,6 +375,244 @@ class UIController {
         } catch (error) {
             alert(error.message);
         }
+    }
+
+    setupAllGoalsControls() {
+        const controls = [
+            {
+                id: 'allGoalsStatusFilter',
+                event: 'change',
+                key: 'statusFilter',
+                getValue: (element) => element.value
+            },
+            {
+                id: 'allGoalsPriorityFilter',
+                event: 'input',
+                key: 'minPriority',
+                getValue: (element) => {
+                    const parsed = parseInt(element.value, 10);
+                    return Number.isNaN(parsed) ? 0 : parsed;
+                }
+            },
+            {
+                id: 'allGoalsSort',
+                event: 'change',
+                key: 'sort',
+                getValue: (element) => element.value
+            },
+            {
+                id: 'allGoalsToggleCompleted',
+                event: 'change',
+                key: 'includeCompleted',
+                getValue: (element) => element.checked
+            },
+            {
+                id: 'allGoalsToggleArchived',
+                event: 'change',
+                key: 'includeArchived',
+                getValue: (element) => element.checked
+            }
+        ];
+
+        controls.forEach(({ id, event, key, getValue }) => {
+            const element = this.getControlElement(id);
+            if (!element) {
+                return;
+            }
+            element.addEventListener(event, () => {
+                this.allGoalsState[key] = getValue(element);
+                this.renderAllGoalsTable();
+            });
+        });
+    }
+
+    renderAllGoalsTable() {
+        const tableBody = this.getControlElement('allGoalsTableBody');
+        const emptyState = this.getControlElement('allGoalsEmptyState');
+        const statusFilter = this.getControlElement('allGoalsStatusFilter');
+        const priorityFilter = this.getControlElement('allGoalsPriorityFilter');
+        const sortSelect = this.getControlElement('allGoalsSort');
+        const toggleCompleted = this.getControlElement('allGoalsToggleCompleted');
+        const toggleArchived = this.getControlElement('allGoalsToggleArchived');
+
+        if (!tableBody) {
+            return;
+        }
+
+        if (statusFilter) {
+            statusFilter.value = this.allGoalsState.statusFilter;
+        }
+        if (priorityFilter) {
+            priorityFilter.value = `${this.allGoalsState.minPriority}`;
+        }
+        if (sortSelect) {
+            sortSelect.value = this.allGoalsState.sort;
+        }
+        if (toggleCompleted) {
+            toggleCompleted.checked = this.allGoalsState.includeCompleted;
+        }
+        if (toggleArchived) {
+            toggleArchived.checked = this.allGoalsState.includeArchived;
+        }
+
+        this.refreshPriorityCache();
+
+        const goalsWithMeta = this.app.goalService.goals.map(goal => ({
+            goal,
+            priority: this.priorityCache.get(goal.id) ?? 0
+        }));
+
+        const filtered = goalsWithMeta.filter(({ goal, priority }) => {
+            if (!this.allGoalsState.includeCompleted && goal.status === 'completed') {
+                return false;
+            }
+            if (!this.allGoalsState.includeArchived && goal.status === 'archived') {
+                return false;
+            }
+            if (this.allGoalsState.statusFilter !== 'all' && goal.status !== this.allGoalsState.statusFilter) {
+                return false;
+            }
+            if (priority < this.allGoalsState.minPriority) {
+                return false;
+            }
+            return true;
+        });
+
+        const sortValue = this.allGoalsState.sort;
+        const sorted = filtered.sort((a, b) => {
+            switch (sortValue) {
+                case 'priority-asc':
+                    return a.priority - b.priority;
+                case 'updated-desc':
+                case 'updated-asc': {
+                    const getTimestamp = (value) => value instanceof Date ? value.getTime() : (value ? new Date(value).getTime() : 0);
+                    const dateA = getTimestamp(a.goal.lastUpdated);
+                    const dateB = getTimestamp(b.goal.lastUpdated);
+                    return sortValue === 'updated-desc' ? dateB - dateA : dateA - dateB;
+                }
+                case 'priority-desc':
+                default:
+                    return b.priority - a.priority;
+            }
+        });
+
+        tableBody.innerHTML = '';
+
+        if (sorted.length === 0) {
+            if (emptyState) {
+                emptyState.hidden = false;
+            }
+            return;
+        }
+
+        if (emptyState) {
+            emptyState.hidden = true;
+        }
+
+        sorted.forEach(({ goal, priority }) => {
+            const row = document.createElement('tr');
+            row.className = `goal-row status-${goal.status}`;
+            row.dataset.goalId = goal.id;
+            row.tabIndex = 0;
+            row.setAttribute('role', 'button');
+            row.setAttribute('aria-label', `${goal.title} öffnen`);
+
+            const cells = [
+                {
+                    label: 'Titel',
+                    content: this.escapeHtml(goal.title),
+                    isHtml: true,
+                    className: 'cell-title'
+                },
+                {
+                    label: 'Status',
+                    content: `<span class="goal-status-badge status-${goal.status}">${this.getStatusText(goal.status)}</span>`,
+                    isHtml: true
+                },
+                {
+                    label: 'Priorität',
+                    content: priority.toFixed(1)
+                },
+                {
+                    label: 'Motivation',
+                    content: `${goal.motivation}/5`
+                },
+                {
+                    label: 'Dringlichkeit',
+                    content: `${goal.urgency}/5`
+                },
+                {
+                    label: 'Deadline',
+                    content: goal.deadline ? goal.deadline.toLocaleDateString('de-DE') : 'Keine Deadline'
+                },
+                {
+                    label: 'Letzte Änderung',
+                    content: goal.lastUpdated ? this.formatDateTime(goal.lastUpdated) : '—'
+                }
+            ];
+
+            cells.forEach(({ label, content, isHtml, className }) => {
+                const cell = document.createElement('td');
+                cell.dataset.label = label;
+                if (className) {
+                    cell.classList.add(className);
+                }
+                if (isHtml) {
+                    cell.innerHTML = content;
+                } else {
+                    cell.textContent = content;
+                }
+                row.appendChild(cell);
+            });
+
+            row.addEventListener('click', () => this.openGoalForm(goal.id));
+            row.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    this.openGoalForm(goal.id);
+                }
+            });
+
+            tableBody.appendChild(row);
+        });
+    }
+
+    formatDateTime(date) {
+        if (!date) {
+            return '';
+        }
+        const dateObj = date instanceof Date ? date : new Date(date);
+        return dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+            ' ' +
+            dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    getControlElement(id) {
+        if (!this.allGoalsControlRefs) {
+            this.allGoalsControlRefs = {};
+        }
+        const cached = this.allGoalsControlRefs[id];
+        if (cached && cached.isConnected) {
+            return cached;
+        }
+        const element = document.getElementById(id);
+        this.allGoalsControlRefs[id] = element || null;
+        return element || null;
+    }
+
+    invalidatePriorityCache() {
+        this.priorityCacheDirty = true;
+    }
+
+    refreshPriorityCache() {
+        if (!this.priorityCacheDirty) {
+            return;
+        }
+        this.priorityCache.clear();
+        this.app.goalService.goals.forEach(goal => {
+            this.priorityCache.set(goal.id, this.app.goalService.calculatePriority(goal));
+        });
+        this.priorityCacheDirty = false;
     }
 }
 

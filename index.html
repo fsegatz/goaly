@@ -33,7 +33,56 @@
 
             <div id="all-goalsView" class="view">
                 <h2>Alle Ziele</h2>
-                <div id="allGoalsList" class="goals-list"></div>
+                <div class="all-goals-controls">
+                    <label for="allGoalsStatusFilter">
+                        Status
+                        <select id="allGoalsStatusFilter">
+                            <option value="all">Alle Status</option>
+                            <option value="active">Aktiv</option>
+                            <option value="paused">Pausiert</option>
+                            <option value="completed">Abgeschlossen</option>
+                            <option value="archived">Archiviert</option>
+                        </select>
+                    </label>
+                    <label for="allGoalsPriorityFilter">
+                        Mindestpriorität
+                        <input type="number" id="allGoalsPriorityFilter" min="0" step="1" value="0">
+                    </label>
+                    <label for="allGoalsSort">
+                        Sortierung
+                        <select id="allGoalsSort">
+                            <option value="priority-desc">Priorität (hoch → niedrig)</option>
+                            <option value="priority-asc">Priorität (niedrig → hoch)</option>
+                            <option value="updated-desc">Letzte Änderung (neu → alt)</option>
+                            <option value="updated-asc">Letzte Änderung (alt → neu)</option>
+                        </select>
+                    </label>
+                    <label class="toggle-option">
+                        <input type="checkbox" id="allGoalsToggleCompleted" checked>
+                        Abgeschlossene anzeigen
+                    </label>
+                    <label class="toggle-option">
+                        <input type="checkbox" id="allGoalsToggleArchived" checked>
+                        Archivierte anzeigen
+                    </label>
+                </div>
+                <div class="table-wrapper">
+                    <table id="allGoalsTable" class="goals-table">
+                        <thead>
+                            <tr>
+                                <th>Titel</th>
+                                <th>Status</th>
+                                <th>Priorität</th>
+                                <th>Motivation</th>
+                                <th>Dringlichkeit</th>
+                                <th>Deadline</th>
+                                <th>Letzte Änderung</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allGoalsTableBody"></tbody>
+                    </table>
+                    <div id="allGoalsEmptyState" class="empty-state" hidden>Keine Ziele vorhanden, die den aktuellen Filtern entsprechen.</div>
+                </div>
             </div>
 
             <div id="check-inView" class="view">

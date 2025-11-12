@@ -17,7 +17,58 @@ beforeEach(() => {
     // Setup JSDOM
     dom = new JSDOM(`<!DOCTYPE html><html><body>
         <div id="goalsList"></div>
-        <div id="allGoalsList"></div>
+        <div id="all-goalsView" class="view">
+            <div class="all-goals-controls">
+                <label for="allGoalsStatusFilter">
+                    Status
+                    <select id="allGoalsStatusFilter">
+                        <option value="all">Alle Status</option>
+                        <option value="active">Aktiv</option>
+                        <option value="paused">Pausiert</option>
+                        <option value="completed">Abgeschlossen</option>
+                        <option value="archived">Archiviert</option>
+                    </select>
+                </label>
+                <label for="allGoalsPriorityFilter">
+                    Mindestpriorität
+                    <input type="number" id="allGoalsPriorityFilter" value="0" />
+                </label>
+                <label for="allGoalsSort">
+                    Sortierung
+                    <select id="allGoalsSort">
+                        <option value="priority-desc">Priorität (hoch → niedrig)</option>
+                        <option value="priority-asc">Priorität (niedrig → hoch)</option>
+                        <option value="updated-desc">Letzte Änderung (neu → alt)</option>
+                        <option value="updated-asc">Letzte Änderung (alt → neu)</option>
+                    </select>
+                </label>
+                <label class="toggle-option">
+                    <input type="checkbox" id="allGoalsToggleCompleted" checked />
+                    Abgeschlossene anzeigen
+                </label>
+                <label class="toggle-option">
+                    <input type="checkbox" id="allGoalsToggleArchived" checked />
+                    Archivierte anzeigen
+                </label>
+            </div>
+            <div class="table-wrapper">
+                <table id="allGoalsTable">
+                    <thead>
+                        <tr>
+                            <th>Titel</th>
+                            <th>Status</th>
+                            <th>Priorität</th>
+                            <th>Motivation</th>
+                            <th>Dringlichkeit</th>
+                            <th>Deadline</th>
+                            <th>Letzte Änderung</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allGoalsTableBody"></tbody>
+                </table>
+                <div id="allGoalsEmptyState" hidden>Keine Ziele vorhanden, die den aktuellen Filtern entsprechen.</div>
+            </div>
+        </div>
         <button id="addGoalBtn"></button>
         <form id="goalForm"></form>
         <button id="cancelBtn"></button>
@@ -43,9 +94,8 @@ beforeEach(() => {
             <div id="checkInsList"></div>
         </div>
         <button class="menu-btn active" data-view="dashboard"></button>
-        <button class="menu-btn" data-view="allGoals"></button>
+        <button class="menu-btn" data-view="all-goals"></button>
         <div id="dashboardView" class="view active"></div>
-        <div id="allGoalsView" class="view"></div>
     </body></html>`, { url: "http://localhost" });
     document = dom.window.document;
     window = dom.window;
@@ -116,19 +166,21 @@ describe('UIController', () => {
     // Test renderViews with no goals
     test('renderViews should display "Keine aktiven Ziele" when no active goals', () => {
         mockGoalService.getActiveGoals.mockReturnValue([]);
-        mockGoalService.goals = []; // Ensure allGoalsList is also empty
+        mockGoalService.goals = []; // Ensure table is also empty
 
         uiController.renderViews();
 
         const dashboardList = document.getElementById('goalsList');
         expect(dashboardList.innerHTML).toContain('Keine aktiven Ziele. Erstelle dein erstes Ziel!');
 
-        const allGoalsList = document.getElementById('allGoalsList');
-        expect(allGoalsList.innerHTML).toContain('Keine weiteren Ziele im Backlog.');
+        const tableBody = document.getElementById('allGoalsTableBody');
+        expect(tableBody.children.length).toBe(0);
+        const emptyState = document.getElementById('allGoalsEmptyState');
+        expect(emptyState.hidden).toBe(false);
     });
 
     // Test renderViews with active goals
-    test('renderViews should render active goals in dashboard and other goals in allGoalsList', () => {
+    test('renderViews should render active goals in dashboard and populate all goals table', () => {
         const goal1 = new Goal({ id: '1', title: 'Active Goal 1', description: 'Desc 1', motivation: 5, urgency: 5, status: 'active', deadline: new Date('2025-12-01') });
         const goal2 = new Goal({ id: '2', title: 'Active Goal 2', description: 'Desc 2', motivation: 4, urgency: 4, status: 'active', deadline: new Date('2025-12-05') });
         const goal3 = new Goal({ id: '3', title: 'Active Goal 3', description: 'Desc 3', motivation: 3, urgency: 3, status: 'active', deadline: new Date('2025-12-10') });
@@ -146,13 +198,113 @@ describe('UIController', () => {
         expect(dashboardList.children.length).toBe(2); // goal1, goal2
         expect(dashboardList.innerHTML).toContain('Active Goal 1');
         expect(dashboardList.innerHTML).toContain('Active Goal 2');
-        expect(dashboardList.innerHTML).not.toContain('Active Goal 3'); // Should be in allGoalsList
+        expect(dashboardList.innerHTML).not.toContain('Active Goal 3'); // Should be in table
 
-        const allGoalsList = document.getElementById('allGoalsList');
-        expect(allGoalsList.children.length).toBe(3); // goal3, goal4, goal5
-        expect(allGoalsList.innerHTML).toContain('Active Goal 3');
-        expect(allGoalsList.innerHTML).toContain('Paused Goal 1');
-        expect(allGoalsList.innerHTML).toContain('Completed Goal 1');
+        const tableRows = document.querySelectorAll('#allGoalsTableBody tr');
+        expect(tableRows.length).toBe(5);
+        expect(Array.from(tableRows).map(row => row.dataset.goalId)).toEqual(['1', '2', '3', '4', '5']);
+        const statusTexts = Array.from(tableRows).map(row => row.querySelector('td[data-label="Status"]').textContent.trim());
+        expect(statusTexts).toEqual(['Aktiv', 'Aktiv', 'Aktiv', 'Pausiert', 'Abgeschlossen']);
+    });
+
+    describe('All goals table interactions', () => {
+        let activeGoal;
+        let pausedGoal;
+        let completedGoal;
+
+        beforeEach(() => {
+            activeGoal = new Goal({ id: 'a', title: 'Active', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
+            pausedGoal = new Goal({ id: 'p', title: 'Paused', motivation: 3, urgency: 2, status: 'paused', deadline: null, lastUpdated: new Date('2025-11-08T10:00:00.000Z') });
+            completedGoal = new Goal({ id: 'c', title: 'Completed', motivation: 4, urgency: 1, status: 'completed', deadline: null, lastUpdated: new Date('2025-11-12T10:00:00.000Z') });
+
+            mockGoalService.goals = [activeGoal, pausedGoal, completedGoal];
+            mockGoalService.calculatePriority.mockImplementation(goal => goal.motivation + goal.urgency * 10);
+            mockGoalService.getActiveGoals.mockReturnValue([activeGoal]);
+            uiController.renderViews();
+        });
+
+        test('should filter by status selection', () => {
+            const statusFilter = document.getElementById('allGoalsStatusFilter');
+            statusFilter.value = 'paused';
+            statusFilter.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            const rows = document.querySelectorAll('#allGoalsTableBody tr');
+            expect(rows.length).toBe(1);
+            expect(rows[0].dataset.goalId).toBe(pausedGoal.id);
+
+            statusFilter.value = 'all';
+            statusFilter.dispatchEvent(new window.Event('change', { bubbles: true }));
+            expect(document.querySelectorAll('#allGoalsTableBody tr').length).toBe(3);
+        });
+
+        test('should filter by minimum priority', () => {
+            const priorityFilter = document.getElementById('allGoalsPriorityFilter');
+            priorityFilter.value = '40';
+            priorityFilter.dispatchEvent(new window.Event('input', { bubbles: true }));
+
+            const rows = document.querySelectorAll('#allGoalsTableBody tr');
+            expect(rows.length).toBe(1);
+            expect(rows[0].dataset.goalId).toBe(activeGoal.id);
+
+            const emptyState = document.getElementById('allGoalsEmptyState');
+            priorityFilter.value = '100';
+            priorityFilter.dispatchEvent(new window.Event('input', { bubbles: true }));
+            expect(document.querySelectorAll('#allGoalsTableBody tr').length).toBe(0);
+            expect(emptyState.hidden).toBe(false);
+        });
+
+        test('should sort by selected option', () => {
+            const sortSelect = document.getElementById('allGoalsSort');
+            sortSelect.value = 'priority-asc';
+            sortSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            const ascOrder = Array.from(document.querySelectorAll('#allGoalsTableBody tr')).map(row => row.dataset.goalId);
+            expect(ascOrder[0]).toBe(completedGoal.id);
+
+            sortSelect.value = 'updated-desc';
+            sortSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+            const updatedOrder = Array.from(document.querySelectorAll('#allGoalsTableBody tr')).map(row => row.dataset.goalId);
+            expect(updatedOrder[0]).toBe(completedGoal.id);
+
+            sortSelect.value = 'updated-asc';
+            sortSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+            const updatedAscOrder = Array.from(document.querySelectorAll('#allGoalsTableBody tr')).map(row => row.dataset.goalId);
+            expect(updatedAscOrder[0]).toBe(pausedGoal.id);
+        });
+
+        test('should toggle completed and archived visibility', () => {
+            const toggleCompleted = document.getElementById('allGoalsToggleCompleted');
+            toggleCompleted.checked = false;
+            toggleCompleted.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            const rowIdsWithoutCompleted = Array.from(document.querySelectorAll('#allGoalsTableBody tr')).map(row => row.dataset.goalId);
+            expect(rowIdsWithoutCompleted).toEqual(['a', 'p']);
+
+            // Introduce archived goal for toggle test
+            const archivedGoal = new Goal({ id: 'r', title: 'Archived', motivation: 2, urgency: 1, status: 'archived', deadline: null, lastUpdated: new Date('2025-11-07T10:00:00.000Z') });
+            mockGoalService.goals.push(archivedGoal);
+            uiController.renderAllGoalsTable();
+
+            const toggleArchived = document.getElementById('allGoalsToggleArchived');
+            toggleArchived.checked = false;
+            toggleArchived.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            const rowIdsWithoutArchived = Array.from(document.querySelectorAll('#allGoalsTableBody tr')).map(row => row.dataset.goalId);
+            expect(rowIdsWithoutArchived).not.toContain('r');
+        });
+
+        test('clicking a table row should open goal form', () => {
+            uiController.openGoalForm = jest.fn();
+            uiController.renderAllGoalsTable();
+
+            const firstRow = document.querySelector('#allGoalsTableBody tr');
+            firstRow.click();
+            expect(uiController.openGoalForm).toHaveBeenCalledWith(firstRow.dataset.goalId);
+
+            const keydownEvent = new window.KeyboardEvent('keydown', { key: 'Enter' });
+            firstRow.dispatchEvent(keydownEvent);
+            expect(uiController.openGoalForm).toHaveBeenCalledTimes(2);
+        });
     });
 
     // Test createGoalCard
@@ -173,6 +325,20 @@ describe('UIController', () => {
         // No pause/activate buttons anymore - status is automatic
         expect(card.innerHTML).not.toContain('pause-goal');
         expect(card.innerHTML).not.toContain('activate-goal');
+    });
+
+    test('createGoalCard edit button click should open goal form', () => {
+        const goal = new Goal({ id: 'edit-test', title: 'Edit Button', description: '', motivation: 3, urgency: 2, status: 'active', deadline: null });
+        mockGoalService.calculatePriority.mockReturnValue(5);
+        const openFormSpy = jest.spyOn(uiController, 'openGoalForm').mockImplementation(() => {});
+
+        const card = uiController.createGoalCard(goal);
+        const editBtn = card.querySelector('.edit-goal');
+        expect(editBtn).not.toBeNull();
+
+        editBtn.click();
+        expect(openFormSpy).toHaveBeenCalledWith('edit-test');
+        openFormSpy.mockRestore();
     });
 
     test('createGoalCard should not show pause/activate buttons for any status', () => {
@@ -301,7 +467,7 @@ describe('UIController', () => {
             { goal: goal1, message: 'Check-in for Goal 1' },
             { goal: goal2, message: 'Check-in for Goal 2' },
         ];
-        mockCheckInService.getCheckIns.mockReturnValue(mockApp.checkIns);
+        mockCheckInService.getCheckIns.mockReturnValue([]);
 
         uiController.showCheckIns();
 
@@ -315,6 +481,7 @@ describe('UIController', () => {
         const checkInDoneBtn = checkInsList.querySelector('.check-in-done');
         checkInDoneBtn.click();
         expect(mockCheckInService.performCheckIn).toHaveBeenCalledWith('g1');
+        expect(document.getElementById('checkInsPanel').style.display).toBe('none');
     });
 
 
@@ -360,6 +527,60 @@ describe('UIController', () => {
         
         // Should not throw error when edit button is missing
         expect(card).toBeDefined();
+    });
+
+    test('renderAllGoalsTable should return early when table body is absent', () => {
+        const table = document.getElementById('allGoalsTable');
+        const tableBody = document.getElementById('allGoalsTableBody');
+        tableBody.remove();
+
+        expect(() => uiController.renderAllGoalsTable()).not.toThrow();
+
+        const newBody = document.createElement('tbody');
+        newBody.id = 'allGoalsTableBody';
+        table.appendChild(newBody);
+        uiController.renderAllGoalsTable();
+    });
+
+    test('formatDateTime should return empty string for falsy values', () => {
+        expect(uiController.formatDateTime(null)).toBe('');
+        expect(uiController.formatDateTime(undefined)).toBe('');
+    });
+
+    test('setupEventListeners should tolerate missing optional elements', () => {
+        const idsToRemove = [
+            'addGoalBtn',
+            'goalForm',
+            'cancelBtn',
+            'deleteBtn',
+            'goalModal',
+            'exportBtn',
+            'importBtn',
+            'importFile',
+            'saveSettingsBtn',
+            'allGoalsStatusFilter',
+            'allGoalsPriorityFilter',
+            'allGoalsSort',
+            'allGoalsToggleCompleted',
+            'allGoalsToggleArchived'
+        ];
+
+        idsToRemove.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.remove();
+            }
+        });
+
+        const closeBtn = document.querySelector('.close');
+        if (closeBtn) {
+            closeBtn.remove();
+        }
+
+        document.querySelectorAll('.menu-btn').forEach(btn => btn.remove());
+
+        expect(() => uiController.setupEventListeners()).not.toThrow();
+        expect(() => uiController.setupAllGoalsControls()).not.toThrow();
     });
 
     test('openGoalForm should return early if modal elements are missing', () => {
@@ -663,9 +884,9 @@ describe('UIController', () => {
     // Test setupEventListeners - menu-btn clicks
     test('menu-btn click should activate correct view', () => {
         const dashboardBtn = document.querySelector('.menu-btn[data-view="dashboard"]');
-        const allGoalsBtn = document.querySelector('.menu-btn[data-view="allGoals"]');
+        const allGoalsBtn = document.querySelector('.menu-btn[data-view="all-goals"]');
         const dashboardView = document.getElementById('dashboardView');
-        const allGoalsView = document.getElementById('allGoalsView');
+        const allGoalsView = document.getElementById('all-goalsView');
 
         // Initially dashboard is active
         expect(dashboardBtn.classList.contains('active')).toBe(true);
