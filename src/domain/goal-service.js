@@ -157,6 +157,32 @@ class GoalService {
         });
     }
 
+    setGoalStatus(id, newStatus, maxActiveGoals) {
+        const goal = this.goals.find(g => g.id === id);
+        if (!goal) {
+            return null;
+        }
+
+        const previousStatus = goal.status;
+        this.handleStatusTransition(goal, newStatus);
+
+        if (goal.status === previousStatus) {
+            return goal;
+        }
+
+        const effectiveLimit = Number.isFinite(maxActiveGoals) && maxActiveGoals > 0
+            ? maxActiveGoals
+            : this.goals.length;
+
+        if (previousStatus === 'active' || newStatus === 'active') {
+            this.autoActivateGoalsByPriority(effectiveLimit);
+        } else {
+            this.saveGoals();
+        }
+
+        return goal;
+    }
+
     createGoal(goalData, maxActiveGoals) {
         // Status wird nicht mehr manuell gesetzt, sondern automatisch bestimmt
         const goal = new Goal({ ...goalData, status: 'paused' }); // Temporär auf paused setzen
@@ -325,8 +351,9 @@ class GoalService {
      */
     autoActivateGoalsByPriority(maxActiveGoals) {
         // Alle nicht-abgeschlossenen Ziele nach Priorität sortieren
+        const ineligibleStatuses = new Set(['completed', 'abandoned']);
         const eligibleGoals = this.goals
-            .filter(g => g.status !== 'completed')
+            .filter(g => !ineligibleStatuses.has(g.status))
             .sort((a, b) => {
                 const priorityA = this.calculatePriority(a);
                 const priorityB = this.calculatePriority(b);

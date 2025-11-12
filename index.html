@@ -40,8 +40,8 @@
                             <option value="all">Alle Status</option>
                             <option value="active">Aktiv</option>
                             <option value="paused">Pausiert</option>
-                            <option value="completed">Abgeschlossen</option>
-                            <option value="archived">Archiviert</option>
+                            <option value="completed">Erreicht</option>
+                            <option value="abandoned">Nicht erreicht</option>
                         </select>
                     </label>
                     <label for="allGoalsPriorityFilter">
@@ -59,11 +59,11 @@
                     </label>
                     <label class="toggle-option">
                         <input type="checkbox" id="allGoalsToggleCompleted" checked>
-                        Abgeschlossene anzeigen
+                        Erreichte anzeigen
                     </label>
                     <label class="toggle-option">
-                        <input type="checkbox" id="allGoalsToggleArchived" checked>
-                        Archivierte anzeigen
+                        <input type="checkbox" id="allGoalsToggleAbandoned" checked>
+                        Nicht erreichte anzeigen
                     </label>
                 </div>
                 <div class="table-wrapper">
@@ -162,6 +162,19 @@
                 </div>
             </div>
         </div>
+
+    <div id="completionModal" class="modal">
+        <div class="modal-content completion-modal">
+            <span id="completionCloseBtn" class="close">&times;</span>
+            <h2>Ziel abschließen</h2>
+            <p>Hast du dein Ziel erreicht?</p>
+            <div class="completion-actions">
+                <button id="completionSuccessBtn" class="btn btn-primary">Ziel erreicht</button>
+                <button id="completionFailureBtn" class="btn btn-danger">Nicht erreicht</button>
+                <button id="completionCancelBtn" class="btn btn-secondary">Abbrechen</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="src/app.js"></script>
 </body>

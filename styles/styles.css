@@ -351,6 +351,11 @@ main {
     color: white;
 }
 
+.status-abandoned {
+    background: #95a5a6;
+    color: white;
+}
+
 .goal-description {
     color: #666;
     margin-bottom: 15px;
@@ -490,6 +495,19 @@ main {
     min-width: 80px;
     padding: 8px 12px;
     font-size: 0.9rem;
+}
+
+.completion-modal {
+    max-width: 420px;
+    text-align: center;
+}
+
+.completion-modal .completion-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+    justify-content: center;
 }
 
 @media (max-width: 768px) {

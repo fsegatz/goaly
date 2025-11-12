@@ -27,6 +27,7 @@ Dieser Leitfaden beschreibt komprimiert, wie AI-Coding-Agents oder neue Teammitg
 3. Keine bestehenden User-Änderungen überschreiben – Worktree kann „dirty“ sein.
 4. Nach Anpassungen `read_lints` (Cursor) für betroffene Dateien prüfen.
 5. Ergebnisse im PR/Commit sauber zusammenfassen und nächste Schritte benennen.
+6. Nach abgeschlossenen Änderungen einen PR erstellen und zur Review vorstellen.
 
 ## Kontaktpunkte
 
