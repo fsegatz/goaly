@@ -10,10 +10,23 @@ class UIController {
             includeCompleted: true,
             includeArchived: true
         };
+        this.allGoalsControlRefs = {
+            allGoalsStatusFilter: document.getElementById('allGoalsStatusFilter'),
+            allGoalsPriorityFilter: document.getElementById('allGoalsPriorityFilter'),
+            allGoalsSort: document.getElementById('allGoalsSort'),
+            allGoalsToggleCompleted: document.getElementById('allGoalsToggleCompleted'),
+            allGoalsToggleArchived: document.getElementById('allGoalsToggleArchived'),
+            allGoalsTableBody: document.getElementById('allGoalsTableBody'),
+            allGoalsEmptyState: document.getElementById('allGoalsEmptyState')
+        };
+        this.priorityCache = new Map();
+        this.priorityCacheDirty = true;
         this.setupEventListeners();
     }
 
     renderViews() {
+        this.invalidatePriorityCache();
+        this.refreshPriorityCache();
         const settings = this.app.settingsService.getSettings();
         const activeGoals = this.app.goalService.getActiveGoals();
         const dashboardGoals = activeGoals.slice(0, settings.maxActiveGoals);
@@ -402,7 +415,7 @@ class UIController {
         ];
 
         controls.forEach(({ id, event, key, getValue }) => {
-            const element = document.getElementById(id);
+            const element = this.getControlElement(id);
             if (!element) {
                 return;
             }
@@ -414,13 +427,13 @@ class UIController {
     }
 
     renderAllGoalsTable() {
-        const tableBody = document.getElementById('allGoalsTableBody');
-        const emptyState = document.getElementById('allGoalsEmptyState');
-        const statusFilter = document.getElementById('allGoalsStatusFilter');
-        const priorityFilter = document.getElementById('allGoalsPriorityFilter');
-        const sortSelect = document.getElementById('allGoalsSort');
-        const toggleCompleted = document.getElementById('allGoalsToggleCompleted');
-        const toggleArchived = document.getElementById('allGoalsToggleArchived');
+        const tableBody = this.getControlElement('allGoalsTableBody');
+        const emptyState = this.getControlElement('allGoalsEmptyState');
+        const statusFilter = this.getControlElement('allGoalsStatusFilter');
+        const priorityFilter = this.getControlElement('allGoalsPriorityFilter');
+        const sortSelect = this.getControlElement('allGoalsSort');
+        const toggleCompleted = this.getControlElement('allGoalsToggleCompleted');
+        const toggleArchived = this.getControlElement('allGoalsToggleArchived');
 
         if (!tableBody) {
             return;
@@ -442,9 +455,11 @@ class UIController {
             toggleArchived.checked = this.allGoalsState.includeArchived;
         }
 
+        this.refreshPriorityCache();
+
         const goalsWithMeta = this.app.goalService.goals.map(goal => ({
             goal,
-            priority: this.app.goalService.calculatePriority(goal)
+            priority: this.priorityCache.get(goal.id) ?? 0
         }));
 
         const filtered = goalsWithMeta.filter(({ goal, priority }) => {
@@ -470,12 +485,7 @@ class UIController {
                     return a.priority - b.priority;
                 case 'updated-desc':
                 case 'updated-asc': {
-                    const getTimestamp = (value) => {
-                        if (!value) {
-                            return 0;
-                        }
-                        return value instanceof Date ? value.getTime() : new Date(value).getTime();
-                    };
+                    const getTimestamp = (value) => value instanceof Date ? value.getTime() : (value ? new Date(value).getTime() : 0);
                     const dateA = getTimestamp(a.goal.lastUpdated);
                     const dateB = getTimestamp(b.goal.lastUpdated);
                     return sortValue === 'updated-desc' ? dateB - dateA : dateA - dateB;
@@ -575,6 +585,34 @@ class UIController {
         return dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
             ' ' +
             dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    getControlElement(id) {
+        if (!this.allGoalsControlRefs) {
+            this.allGoalsControlRefs = {};
+        }
+        const cached = this.allGoalsControlRefs[id];
+        if (cached && cached.isConnected) {
+            return cached;
+        }
+        const element = document.getElementById(id);
+        this.allGoalsControlRefs[id] = element || null;
+        return element || null;
+    }
+
+    invalidatePriorityCache() {
+        this.priorityCacheDirty = true;
+    }
+
+    refreshPriorityCache() {
+        if (!this.priorityCacheDirty) {
+            return;
+        }
+        this.priorityCache.clear();
+        this.app.goalService.goals.forEach(goal => {
+            this.priorityCache.set(goal.id, this.app.goalService.calculatePriority(goal));
+        });
+        this.priorityCacheDirty = false;
     }
 }
 
