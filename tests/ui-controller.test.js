@@ -361,8 +361,8 @@ describe('UIController', () => {
 
         expect(mockGoalService.updateGoal).toHaveBeenCalledWith('edit-test', {
             deadline: '2025-11-20',
-            motivation: '4',
-            urgency: '5'
+            motivation: 4,
+            urgency: 5
         }, 3);
     });
 
@@ -392,6 +392,55 @@ describe('UIController', () => {
         descriptionEl.dispatchEvent(blurEvent);
 
         expect(mockGoalService.updateGoal).toHaveBeenCalledWith('desc-test', { description: 'Updated' }, 3);
+    });
+
+    test('createGoalCard should revert description when update fails', () => {
+        const goal = new Goal({ id: 'desc-error', title: 'Desc Error', description: 'Original', motivation: 2, urgency: 3, status: 'active', deadline: null });
+        mockGoalService.calculatePriority.mockReturnValue(5);
+        mockGoalService.goals = [goal];
+        mockGoalService.getActiveGoals.mockReturnValue([goal]);
+        mockGoalService.updateGoal.mockImplementation(() => {
+            throw new Error('Boom');
+        });
+
+        const card = uiController.createGoalCard(goal);
+        global.alert.mockClear();
+        const descriptionEl = card.querySelector('.goal-description');
+        descriptionEl.textContent = 'Broken';
+
+        const blurEvent = new window.Event('blur');
+        descriptionEl.dispatchEvent(blurEvent);
+
+        expect(mockGoalService.updateGoal).toHaveBeenCalledWith('desc-error', { description: 'Broken' }, 3);
+        expect(descriptionEl.textContent).toBe('Original');
+        expect(global.alert).toHaveBeenCalledWith('Boom');
+    });
+
+    test('createGoalCard should fallback to existing values for invalid numeric input', () => {
+        const goal = new Goal({ id: 'invalid-numbers', title: 'Number Goal', description: '', motivation: 4, urgency: 2, status: 'active', deadline: null });
+        mockGoalService.calculatePriority.mockReturnValue(10);
+        mockGoalService.goals = [goal];
+        mockGoalService.getActiveGoals.mockReturnValue([goal]);
+        mockGoalService.updateGoal.mockImplementation(() => goal);
+
+        const card = uiController.createGoalCard(goal);
+        const editBtn = card.querySelector('.edit-goal');
+        const inlineEditor = card.querySelector('.goal-inline-editor');
+        const motivationInput = inlineEditor.querySelector('.inline-motivation');
+        const urgencyInput = inlineEditor.querySelector('.inline-urgency');
+        const saveBtn = inlineEditor.querySelector('.save-inline');
+
+        editBtn.click();
+        motivationInput.value = '';
+        urgencyInput.value = 'abc';
+
+        saveBtn.click();
+
+        expect(mockGoalService.updateGoal).toHaveBeenCalledWith('invalid-numbers', {
+            deadline: null,
+            motivation: 4,
+            urgency: 2
+        }, 3);
     });
 
     // Test formatDeadline

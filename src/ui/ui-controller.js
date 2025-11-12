@@ -132,7 +132,14 @@ class UIController {
                     return;
                 }
 
-                this.updateGoalInline(goal.id, { description: sanitizedValue });
+                try {
+                    const { maxActiveGoals } = this.app.settingsService.getSettings();
+                    this.app.goalService.updateGoal(goal.id, { description: sanitizedValue }, maxActiveGoals);
+                    goal.description = sanitizedValue;
+                } catch (error) {
+                    alert(error.message || 'Aktualisierung des Ziels fehlgeschlagen.');
+                    resetDescription();
+                }
             });
 
             descriptionEl.addEventListener('keydown', (event) => {
@@ -179,10 +186,14 @@ class UIController {
 
             saveButton.addEventListener('click', (event) => {
                 event.preventDefault();
+                const parseOrFallback = (value, fallback) => {
+                    const parsed = Number.parseInt(value, 10);
+                    return Number.isNaN(parsed) ? fallback : parsed;
+                };
                 const updates = {
                     deadline: deadlineInput.value || null,
-                    motivation: motivationInput.value,
-                    urgency: urgencyInput.value
+                    motivation: parseOrFallback(motivationInput.value, goal.motivation),
+                    urgency: parseOrFallback(urgencyInput.value, goal.urgency)
                 };
                 this.updateGoalInline(goal.id, updates);
             });
@@ -724,6 +735,7 @@ class UIController {
             this.renderViews();
         } catch (error) {
             alert(error.message || 'Aktualisierung des Ziels fehlgeschlagen.');
+            this.renderViews();
         }
     }
 }
