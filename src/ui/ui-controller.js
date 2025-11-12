@@ -3,21 +3,20 @@
 class UIController {
     constructor(app) {
         this.app = app;
+        this.allGoalsState = {
+            statusFilter: 'all',
+            minPriority: 0,
+            sort: 'priority-desc',
+            includeCompleted: true,
+            includeArchived: true
+        };
         this.setupEventListeners();
     }
 
     renderViews() {
+        const settings = this.app.settingsService.getSettings();
         const activeGoals = this.app.goalService.getActiveGoals();
-        const totalActiveCount = activeGoals.length;
-        
-        const dashboardGoals = activeGoals.slice(0, this.app.settingsService.getSettings().maxActiveGoals);
-        
-        const remainingActiveGoals = activeGoals.slice(this.app.settingsService.getSettings().maxActiveGoals);
-        const allOtherGoals = this.app.goalService.goals
-            .filter(g => g.status !== 'active')
-            .sort((a, b) => this.app.goalService.calculatePriority(b) - this.app.goalService.calculatePriority(a));
-        
-        const allGoals = [...remainingActiveGoals, ...allOtherGoals];
+        const dashboardGoals = activeGoals.slice(0, settings.maxActiveGoals);
 
         const dashboardList = document.getElementById('goalsList');
         dashboardList.innerHTML = '';
@@ -30,16 +29,7 @@ class UIController {
             });
         }
 
-        const allGoalsList = document.getElementById('allGoalsList');
-        allGoalsList.innerHTML = '';
-
-        if (allGoals.length === 0) {
-            allGoalsList.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">Keine weiteren Ziele im Backlog.</p>';
-        } else {
-            allGoals.forEach(goal => {
-                allGoalsList.appendChild(this.createGoalCard(goal));
-            });
-        }
+        this.renderAllGoalsTable();
     }
 
     createGoalCard(goal) {
@@ -347,6 +337,8 @@ class UIController {
                 }
             });
         });
+
+        this.setupAllGoalsControls();
     }
 
     handleGoalSubmit() {
@@ -370,6 +362,207 @@ class UIController {
         } catch (error) {
             alert(error.message);
         }
+    }
+
+    setupAllGoalsControls() {
+        const statusFilter = document.getElementById('allGoalsStatusFilter');
+        if (statusFilter) {
+            statusFilter.addEventListener('change', () => {
+                this.allGoalsState.statusFilter = statusFilter.value;
+                this.renderAllGoalsTable();
+            });
+        }
+
+        const priorityFilter = document.getElementById('allGoalsPriorityFilter');
+        if (priorityFilter) {
+            priorityFilter.addEventListener('input', () => {
+                const value = parseInt(priorityFilter.value, 10);
+                this.allGoalsState.minPriority = isNaN(value) ? 0 : value;
+                this.renderAllGoalsTable();
+            });
+        }
+
+        const sortSelect = document.getElementById('allGoalsSort');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', () => {
+                this.allGoalsState.sort = sortSelect.value;
+                this.renderAllGoalsTable();
+            });
+        }
+
+        const toggleCompleted = document.getElementById('allGoalsToggleCompleted');
+        if (toggleCompleted) {
+            toggleCompleted.addEventListener('change', () => {
+                this.allGoalsState.includeCompleted = toggleCompleted.checked;
+                this.renderAllGoalsTable();
+            });
+        }
+
+        const toggleArchived = document.getElementById('allGoalsToggleArchived');
+        if (toggleArchived) {
+            toggleArchived.addEventListener('change', () => {
+                this.allGoalsState.includeArchived = toggleArchived.checked;
+                this.renderAllGoalsTable();
+            });
+        }
+    }
+
+    renderAllGoalsTable() {
+        const tableBody = document.getElementById('allGoalsTableBody');
+        const emptyState = document.getElementById('allGoalsEmptyState');
+        const statusFilter = document.getElementById('allGoalsStatusFilter');
+        const priorityFilter = document.getElementById('allGoalsPriorityFilter');
+        const sortSelect = document.getElementById('allGoalsSort');
+        const toggleCompleted = document.getElementById('allGoalsToggleCompleted');
+        const toggleArchived = document.getElementById('allGoalsToggleArchived');
+
+        if (!tableBody) {
+            return;
+        }
+
+        if (statusFilter) {
+            statusFilter.value = this.allGoalsState.statusFilter;
+        }
+        if (priorityFilter) {
+            priorityFilter.value = `${this.allGoalsState.minPriority}`;
+        }
+        if (sortSelect) {
+            sortSelect.value = this.allGoalsState.sort;
+        }
+        if (toggleCompleted) {
+            toggleCompleted.checked = this.allGoalsState.includeCompleted;
+        }
+        if (toggleArchived) {
+            toggleArchived.checked = this.allGoalsState.includeArchived;
+        }
+
+        const goalsWithMeta = this.app.goalService.goals.map(goal => ({
+            goal,
+            priority: this.app.goalService.calculatePriority(goal)
+        }));
+
+        const filtered = goalsWithMeta.filter(({ goal, priority }) => {
+            if (!this.allGoalsState.includeCompleted && goal.status === 'completed') {
+                return false;
+            }
+            if (!this.allGoalsState.includeArchived && goal.status === 'archived') {
+                return false;
+            }
+            if (this.allGoalsState.statusFilter !== 'all' && goal.status !== this.allGoalsState.statusFilter) {
+                return false;
+            }
+            if (priority < this.allGoalsState.minPriority) {
+                return false;
+            }
+            return true;
+        });
+
+        const sortValue = this.allGoalsState.sort;
+        const sorted = filtered.sort((a, b) => {
+            switch (sortValue) {
+                case 'priority-asc':
+                    return a.priority - b.priority;
+                case 'updated-desc':
+                case 'updated-asc': {
+                    const dateA = a.goal.lastUpdated ? new Date(a.goal.lastUpdated).getTime() : 0;
+                    const dateB = b.goal.lastUpdated ? new Date(b.goal.lastUpdated).getTime() : 0;
+                    return sortValue === 'updated-desc' ? dateB - dateA : dateA - dateB;
+                }
+                case 'priority-desc':
+                default:
+                    return b.priority - a.priority;
+            }
+        });
+
+        tableBody.innerHTML = '';
+
+        if (sorted.length === 0) {
+            if (emptyState) {
+                emptyState.hidden = false;
+            }
+            return;
+        }
+
+        if (emptyState) {
+            emptyState.hidden = true;
+        }
+
+        sorted.forEach(({ goal, priority }) => {
+            const row = document.createElement('tr');
+            row.className = `goal-row status-${goal.status}`;
+            row.dataset.goalId = goal.id;
+            row.tabIndex = 0;
+            row.setAttribute('role', 'button');
+            row.setAttribute('aria-label', `${goal.title} öffnen`);
+
+            const cells = [
+                {
+                    label: 'Titel',
+                    content: this.escapeHtml(goal.title),
+                    isHtml: true,
+                    className: 'cell-title'
+                },
+                {
+                    label: 'Status',
+                    content: `<span class="goal-status-badge status-${goal.status}">${this.getStatusText(goal.status)}</span>`,
+                    isHtml: true
+                },
+                {
+                    label: 'Priorität',
+                    content: priority.toFixed(1)
+                },
+                {
+                    label: 'Motivation',
+                    content: `${goal.motivation}/5`
+                },
+                {
+                    label: 'Dringlichkeit',
+                    content: `${goal.urgency}/5`
+                },
+                {
+                    label: 'Deadline',
+                    content: goal.deadline ? goal.deadline.toLocaleDateString('de-DE') : 'Keine Deadline'
+                },
+                {
+                    label: 'Letzte Änderung',
+                    content: goal.lastUpdated ? this.formatDateTime(goal.lastUpdated) : '—'
+                }
+            ];
+
+            cells.forEach(({ label, content, isHtml, className }) => {
+                const cell = document.createElement('td');
+                cell.dataset.label = label;
+                if (className) {
+                    cell.classList.add(className);
+                }
+                if (isHtml) {
+                    cell.innerHTML = content;
+                } else {
+                    cell.textContent = content;
+                }
+                row.appendChild(cell);
+            });
+
+            row.addEventListener('click', () => this.openGoalForm(goal.id));
+            row.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    this.openGoalForm(goal.id);
+                }
+            });
+
+            tableBody.appendChild(row);
+        });
+    }
+
+    formatDateTime(date) {
+        if (!date) {
+            return '';
+        }
+        const dateObj = date instanceof Date ? date : new Date(date);
+        return dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+            ' ' +
+            dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
     }
 }
 
