@@ -467,14 +467,14 @@ describe('Goal Service', () => {
         saveSpy.mockRestore();
     });
 
-    it('setGoalStatus should save when status stays the same', () => {
+    it('setGoalStatus should skip saving when status stays the same', () => {
         const goal = goalService.createGoal({ title: 'Same Status', motivation: 3, urgency: 3 }, 2);
         const saveSpy = jest.spyOn(goalService, 'saveGoals');
 
         const result = goalService.setGoalStatus(goal.id, goal.status, 2);
 
         expect(result).toBe(goal);
-        expect(saveSpy).toHaveBeenCalled();
+        expect(saveSpy).not.toHaveBeenCalled();
         saveSpy.mockRestore();
     });
 

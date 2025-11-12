@@ -167,7 +167,6 @@ class GoalService {
         this.handleStatusTransition(goal, newStatus);
 
         if (goal.status === previousStatus) {
-            this.saveGoals();
             return goal;
         }
 
