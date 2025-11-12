@@ -25,9 +25,8 @@ beforeEach(() => {
                         <option value="all">Alle Status</option>
                         <option value="active">Aktiv</option>
                         <option value="paused">Pausiert</option>
-                        <option value="completed">Abgeschlossen</option>
-                        <option value="finalized">Finalisiert</option>
-                        <option value="archived">Archiviert</option>
+                        <option value="completed">Erreicht</option>
+                        <option value="abandoned">Nicht erreicht</option>
                     </select>
                 </label>
                 <label for="allGoalsPriorityFilter">
@@ -45,15 +44,11 @@ beforeEach(() => {
                 </label>
                 <label class="toggle-option">
                     <input type="checkbox" id="allGoalsToggleCompleted" checked />
-                    Abgeschlossene anzeigen
+                    Erreichte anzeigen
                 </label>
                 <label class="toggle-option">
-                    <input type="checkbox" id="allGoalsToggleArchived" checked />
-                    Archivierte anzeigen
-                </label>
-                <label class="toggle-option">
-                    <input type="checkbox" id="allGoalsToggleFinalized" checked />
-                    Finalisierte anzeigen
+                    <input type="checkbox" id="allGoalsToggleAbandoned" checked />
+                    Nicht erreichte anzeigen
                 </label>
             </div>
             <div class="table-wrapper">
@@ -90,6 +85,18 @@ beforeEach(() => {
             <div id="goalHistorySection" class="goal-history" hidden>
                 <h3>Historie</h3>
                 <div id="goalHistoryList" class="goal-history-list"></div>
+            </div>
+        </div>
+        <div id="completionModal" class="modal">
+            <div class="modal-content completion-modal">
+                <span id="completionCloseBtn" class="close"></span>
+                <h2>Ziel abschließen</h2>
+                <p>Hast du dein Ziel erreicht?</p>
+                <div class="completion-actions">
+                    <button id="completionSuccessBtn" class="btn btn-primary">Ziel erreicht</button>
+                    <button id="completionFailureBtn" class="btn btn-danger">Nicht erreicht</button>
+                    <button id="completionCancelBtn" class="btn btn-secondary">Abbrechen</button>
+                </div>
             </div>
         </div>
         <button id="exportBtn"></button>
@@ -199,8 +206,8 @@ describe('UIController', () => {
         const goal3 = new Goal({ id: '3', title: 'Active Goal 3', description: 'Desc 3', motivation: 3, urgency: 3, status: 'active', deadline: new Date('2025-12-10') });
         const goal4 = new Goal({ id: '4', title: 'Paused Goal 1', description: 'Desc 4', motivation: 2, urgency: 2, status: 'paused', deadline: new Date('2025-12-15') });
         const goal5 = new Goal({ id: '5', title: 'Completed Goal 1', description: 'Desc 5', motivation: 1, urgency: 1, status: 'completed', deadline: new Date('2025-12-20') });
-        const goal6 = new Goal({ id: '6', title: 'Finalized Goal 1', description: 'Desc 6', motivation: 1, urgency: 0, status: 'finalized', deadline: new Date('2025-12-22') });
-        const goal7 = new Goal({ id: '7', title: 'Archived Goal 1', description: 'Desc 7', motivation: 0, urgency: 0, status: 'archived', deadline: new Date('2025-12-25') });
+        const goal6 = new Goal({ id: '6', title: 'Completed Goal 1', description: 'Desc 6', motivation: 1, urgency: 0, status: 'completed', deadline: new Date('2025-12-22') });
+        const goal7 = new Goal({ id: '7', title: 'Abandoned Goal 1', description: 'Desc 7', motivation: 0, urgency: 0, status: 'abandoned', deadline: new Date('2025-12-25') });
 
         mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2, goal3]);
         mockGoalService.goals = [goal1, goal2, goal3, goal4, goal5, goal6, goal7];
@@ -219,7 +226,7 @@ describe('UIController', () => {
         expect(tableRows.length).toBe(7);
         expect(Array.from(tableRows).map(row => row.dataset.goalId)).toEqual(['1', '2', '3', '4', '5', '6', '7']);
         const statusTexts = Array.from(tableRows).map(row => row.querySelector('td[data-label="Status"]').textContent.trim());
-        expect(statusTexts).toEqual(expect.arrayContaining(['Aktiv', 'Pausiert', 'Abgeschlossen', 'Finalisiert', 'Archiviert']));
+        expect(statusTexts).toEqual(expect.arrayContaining(['Aktiv', 'Pausiert', 'Erreicht', 'Nicht erreicht']));
     });
 
     describe('All goals table interactions', () => {
@@ -287,7 +294,7 @@ describe('UIController', () => {
             expect(updatedAscOrder[0]).toBe(pausedGoal.id);
         });
 
-        test('should toggle completed, archived and finalized visibility', () => {
+        test('should toggle completed and abandoned visibility', () => {
             const toggleCompleted = document.getElementById('allGoalsToggleCompleted');
             toggleCompleted.checked = false;
             toggleCompleted.dispatchEvent(new window.Event('change', { bubbles: true }));
@@ -298,31 +305,16 @@ describe('UIController', () => {
             toggleCompleted.checked = true;
             toggleCompleted.dispatchEvent(new window.Event('change', { bubbles: true }));
 
-            // Introduce archived goal for toggle test
-            const archivedGoal = new Goal({ id: 'r', title: 'Archived', motivation: 2, urgency: 1, status: 'archived', deadline: null, lastUpdated: new Date('2025-11-07T10:00:00.000Z') });
-            mockGoalService.goals.push(archivedGoal);
+            const abandonedGoal = new Goal({ id: 'r', title: 'Abandoned', motivation: 2, urgency: 1, status: 'abandoned', deadline: null, lastUpdated: new Date('2025-11-07T10:00:00.000Z') });
+            mockGoalService.goals.push(abandonedGoal);
             uiController.renderAllGoalsTable();
 
-            const toggleArchived = document.getElementById('allGoalsToggleArchived');
-            toggleArchived.checked = false;
-            toggleArchived.dispatchEvent(new window.Event('change', { bubbles: true }));
+            const toggleAbandoned = document.getElementById('allGoalsToggleAbandoned');
+            toggleAbandoned.checked = false;
+            toggleAbandoned.dispatchEvent(new window.Event('change', { bubbles: true }));
 
-            const rowIdsWithoutArchived = Array.from(document.querySelectorAll('#allGoalsTableBody tr')).map(row => row.dataset.goalId);
-            expect(rowIdsWithoutArchived).not.toContain('r');
-
-            toggleArchived.checked = true;
-            toggleArchived.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-            const finalizedGoal = new Goal({ id: 'f', title: 'Finalized', motivation: 3, urgency: 1, status: 'finalized', deadline: null, lastUpdated: new Date('2025-11-06T10:00:00.000Z') });
-            mockGoalService.goals.push(finalizedGoal);
-            uiController.renderAllGoalsTable();
-
-            const toggleFinalized = document.getElementById('allGoalsToggleFinalized');
-            toggleFinalized.checked = false;
-            toggleFinalized.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-            const rowIdsWithoutFinalized = Array.from(document.querySelectorAll('#allGoalsTableBody tr')).map(row => row.dataset.goalId);
-            expect(rowIdsWithoutFinalized).not.toContain('f');
+            const rowIdsWithoutAbandoned = Array.from(document.querySelectorAll('#allGoalsTableBody tr')).map(row => row.dataset.goalId);
+            expect(rowIdsWithoutAbandoned).not.toContain('r');
         });
 
         test('clicking a table row should open goal form', () => {
@@ -361,6 +353,7 @@ describe('UIController', () => {
         // No pause/activate buttons anymore - status ist automatisch
         expect(card.innerHTML).not.toContain('pause-goal');
         expect(card.innerHTML).not.toContain('activate-goal');
+        expect(card.querySelector('.complete-goal')).not.toBeNull();
     });
 
     test('createGoalCard edit button should toggle inline editor and save changes', () => {
@@ -406,50 +399,158 @@ describe('UIController', () => {
         expect(card.innerHTML).not.toContain('activate-goal');
     });
 
-    test('finalize button should call setGoalStatus and re-render', () => {
-        const goal = new Goal({ id: 'fin-1', title: 'Finalize Me', description: '', motivation: 4, urgency: 3, status: 'active', deadline: null });
+    test('complete button should open modal and finalize goal on success', () => {
+        const goal = new Goal({ id: 'complete-yes', title: 'Success Goal', description: '', motivation: 4, urgency: 3, status: 'active', deadline: null });
         mockGoalService.calculatePriority.mockReturnValue(7);
         mockGoalService.goals = [goal];
         mockGoalService.getActiveGoals.mockReturnValue([goal]);
-        mockGoalService.setGoalStatus.mockReturnValue({ ...goal, status: 'finalized' });
+        mockGoalService.setGoalStatus.mockReturnValue({ ...goal, status: 'completed' });
         const renderSpy = jest.spyOn(uiController, 'renderViews').mockImplementation(() => {});
 
         const card = uiController.createGoalCard(goal);
-        const finalizeButton = card.querySelector('.finalize-goal');
-        expect(finalizeButton).not.toBeNull();
+        const completeButton = card.querySelector('.complete-goal');
+        expect(completeButton).not.toBeNull();
 
-        window.confirm.mockClear();
-        finalizeButton.click();
+        const modal = document.getElementById('completionModal');
+        const successBtn = document.getElementById('completionSuccessBtn');
 
-        expect(mockGoalService.setGoalStatus).toHaveBeenCalledWith('fin-1', 'finalized', 3);
+        mockGoalService.setGoalStatus.mockClear();
+
+        completeButton.click();
+        expect(modal.classList.contains('is-visible')).toBe(true);
+
+        successBtn.click();
+
+        expect(mockGoalService.setGoalStatus).toHaveBeenCalledWith('complete-yes', 'completed', 3);
         expect(renderSpy).toHaveBeenCalled();
-        expect(window.confirm).not.toHaveBeenCalled();
+        expect(modal.classList.contains('is-visible')).toBe(false);
+
         renderSpy.mockRestore();
     });
 
-    test('archive button should request confirmation before updating status', () => {
-        const goal = new Goal({ id: 'arch-1', title: 'Archive Me', description: '', motivation: 4, urgency: 2, status: 'active', deadline: null });
+    test('complete button should mark goal as abandoned on failure selection', () => {
+        const goal = new Goal({ id: 'complete-no', title: 'Fallback Goal', description: '', motivation: 4, urgency: 2, status: 'active', deadline: null });
         mockGoalService.calculatePriority.mockReturnValue(6);
         mockGoalService.goals = [goal];
         mockGoalService.getActiveGoals.mockReturnValue([goal]);
-        mockGoalService.setGoalStatus.mockReturnValue({ ...goal, status: 'archived' });
+        mockGoalService.setGoalStatus.mockReturnValue({ ...goal, status: 'abandoned' });
         const renderSpy = jest.spyOn(uiController, 'renderViews').mockImplementation(() => {});
 
         const card = uiController.createGoalCard(goal);
-        const archiveButton = card.querySelector('.archive-goal');
-        expect(archiveButton).not.toBeNull();
+        const completeButton = card.querySelector('.complete-goal');
+        expect(completeButton).not.toBeNull();
 
-        window.confirm.mockClear();
-        window.confirm.mockReturnValueOnce(false);
-        archiveButton.click();
-        expect(mockGoalService.setGoalStatus).not.toHaveBeenCalled();
+        const modal = document.getElementById('completionModal');
+        const failureBtn = document.getElementById('completionFailureBtn');
 
-        window.confirm.mockReturnValueOnce(true);
-        archiveButton.click();
-        expect(mockGoalService.setGoalStatus).toHaveBeenCalledWith('arch-1', 'archived', 3);
+        mockGoalService.setGoalStatus.mockClear();
+
+        completeButton.click();
+        expect(modal.classList.contains('is-visible')).toBe(true);
+
+        failureBtn.click();
+
+        expect(mockGoalService.setGoalStatus).toHaveBeenCalledWith('complete-no', 'abandoned', 3);
         expect(renderSpy).toHaveBeenCalled();
+        expect(modal.classList.contains('is-visible')).toBe(false);
 
         renderSpy.mockRestore();
+    });
+
+    test('completion modal cancel and close should not change status', () => {
+        const goal = new Goal({ id: 'complete-cancel', title: 'Cancel Goal', description: '', motivation: 4, urgency: 2, status: 'active', deadline: null });
+        mockGoalService.calculatePriority.mockReturnValue(6);
+        mockGoalService.goals = [goal];
+        mockGoalService.getActiveGoals.mockReturnValue([goal]);
+        mockGoalService.setGoalStatus.mockReturnValue(goal);
+
+        const card = uiController.createGoalCard(goal);
+        const completeButton = card.querySelector('.complete-goal');
+        expect(completeButton).not.toBeNull();
+
+        const modal = document.getElementById('completionModal');
+        const cancelBtn = document.getElementById('completionCancelBtn');
+        const closeBtn = document.getElementById('completionCloseBtn');
+
+        mockGoalService.setGoalStatus.mockClear();
+
+        completeButton.click();
+        expect(modal.classList.contains('is-visible')).toBe(true);
+
+        cancelBtn.click();
+        expect(modal.classList.contains('is-visible')).toBe(false);
+        expect(mockGoalService.setGoalStatus).not.toHaveBeenCalled();
+
+        completeButton.click();
+        expect(modal.classList.contains('is-visible')).toBe(true);
+        closeBtn.click();
+        expect(modal.classList.contains('is-visible')).toBe(false);
+        expect(mockGoalService.setGoalStatus).not.toHaveBeenCalled();
+    });
+
+    test('completion modal overlay click and escape key close modal', () => {
+        const goal = new Goal({ id: 'complete-overlay', title: 'Overlay Goal', description: '', motivation: 4, urgency: 2, status: 'active', deadline: null });
+        mockGoalService.calculatePriority.mockReturnValue(6);
+        mockGoalService.goals = [goal];
+        mockGoalService.getActiveGoals.mockReturnValue([goal]);
+        mockGoalService.setGoalStatus.mockReturnValue(goal);
+
+        const card = uiController.createGoalCard(goal);
+        const completeButton = card.querySelector('.complete-goal');
+        const modal = document.getElementById('completionModal');
+
+        completeButton.click();
+        expect(modal.classList.contains('is-visible')).toBe(true);
+
+        modal.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+        expect(modal.classList.contains('is-visible')).toBe(false);
+
+        completeButton.click();
+        expect(modal.classList.contains('is-visible')).toBe(true);
+
+        document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape' }));
+        expect(modal.classList.contains('is-visible')).toBe(false);
+    });
+
+    test('handleCompletionChoice alerts when goal is missing', () => {
+        mockGoalService.setGoalStatus.mockReturnValue(null);
+        const modal = document.getElementById('completionModal');
+        uiController.openCompletionModal('missing-goal');
+        expect(modal.classList.contains('is-visible')).toBe(true);
+
+        window.alert.mockClear();
+        uiController.handleCompletionChoice('completed');
+
+        expect(mockGoalService.setGoalStatus).toHaveBeenCalledWith('missing-goal', 'completed', 3);
+        expect(window.alert).toHaveBeenCalledWith('Ziel nicht gefunden.');
+        expect(modal.classList.contains('is-visible')).toBe(false);
+    });
+
+    test('changeGoalStatus returns early when parameters are missing', () => {
+        mockGoalService.setGoalStatus.mockClear();
+        uiController.changeGoalStatus('', 'completed');
+        uiController.changeGoalStatus('goal-without-status', '');
+        expect(mockGoalService.setGoalStatus).not.toHaveBeenCalled();
+    });
+
+    test('openCompletionModal ignores empty goal id', () => {
+        const modal = document.getElementById('completionModal');
+        modal.classList.remove('is-visible');
+        uiController.openCompletionModal('');
+        expect(modal.classList.contains('is-visible')).toBe(false);
+    });
+
+    test('setupCompletionModal exits when already initialized or modal missing', () => {
+        expect(uiController.completionModalInitialized).toBe(true);
+        uiController.setupCompletionModal(); // should return early when already initialized
+
+        const modal = document.getElementById('completionModal');
+        modal.remove();
+        uiController.completionModalInitialized = false;
+        uiController.completionModalRefs.completionModal = null;
+
+        expect(() => uiController.setupCompletionModal()).not.toThrow();
+        expect(uiController.completionModalInitialized).toBe(false);
     });
 
     test('createGoalCard should save description changes on blur', () => {
@@ -576,9 +677,8 @@ describe('UIController', () => {
     test('getStatusText should return correct German text for status', () => {
         expect(uiController.getStatusText('active')).toBe('Aktiv');
         expect(uiController.getStatusText('paused')).toBe('Pausiert');
-        expect(uiController.getStatusText('completed')).toBe('Abgeschlossen');
-        expect(uiController.getStatusText('finalized')).toBe('Finalisiert');
-        expect(uiController.getStatusText('archived')).toBe('Archiviert');
+        expect(uiController.getStatusText('completed')).toBe('Erreicht');
+        expect(uiController.getStatusText('abandoned')).toBe('Nicht erreicht');
         expect(uiController.getStatusText('unknown')).toBe('unknown'); // Fallback
     });
 
@@ -589,7 +689,8 @@ describe('UIController', () => {
         expect(uiController.formatHistoryValue('priority', 'not-a-number')).toBe('—');
         expect(uiController.formatHistoryValue('motivation', '4')).toBe('4');
         expect(uiController.formatHistoryValue('status', 'active')).toBe('Aktiv');
-        expect(uiController.formatHistoryValue('status', 'finalized')).toBe('Finalisiert');
+        expect(uiController.formatHistoryValue('status', 'completed')).toBe('Erreicht');
+        expect(uiController.formatHistoryValue('status', 'abandoned')).toBe('Nicht erreicht');
         expect(uiController.formatHistoryValue('title', 'My Goal')).toBe('My Goal');
         expect(uiController.formatHistoryValue('description', null)).toBe('—');
     });

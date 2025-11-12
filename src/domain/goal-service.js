@@ -352,7 +352,7 @@ class GoalService {
      */
     autoActivateGoalsByPriority(maxActiveGoals) {
         // Alle nicht-abgeschlossenen Ziele nach Priorität sortieren
-        const ineligibleStatuses = new Set(['completed', 'archived', 'finalized']);
+        const ineligibleStatuses = new Set(['completed', 'abandoned']);
         const eligibleGoals = this.goals
             .filter(g => !ineligibleStatuses.has(g.status))
             .sort((a, b) => {

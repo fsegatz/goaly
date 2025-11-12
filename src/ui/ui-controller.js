@@ -25,19 +25,26 @@ class UIController {
             minPriority: 0,
             sort: 'priority-desc',
             includeCompleted: true,
-            includeArchived: true,
-            includeFinalized: true
+            includeAbandoned: true
         };
         this.allGoalsControlRefs = {
             allGoalsStatusFilter: document.getElementById('allGoalsStatusFilter'),
             allGoalsPriorityFilter: document.getElementById('allGoalsPriorityFilter'),
             allGoalsSort: document.getElementById('allGoalsSort'),
             allGoalsToggleCompleted: document.getElementById('allGoalsToggleCompleted'),
-            allGoalsToggleArchived: document.getElementById('allGoalsToggleArchived'),
-            allGoalsToggleFinalized: document.getElementById('allGoalsToggleFinalized'),
+            allGoalsToggleAbandoned: document.getElementById('allGoalsToggleAbandoned'),
             allGoalsTableBody: document.getElementById('allGoalsTableBody'),
             allGoalsEmptyState: document.getElementById('allGoalsEmptyState')
         };
+        this.completionModalRefs = {
+            completionModal: document.getElementById('completionModal'),
+            completionSuccessBtn: document.getElementById('completionSuccessBtn'),
+            completionFailureBtn: document.getElementById('completionFailureBtn'),
+            completionCancelBtn: document.getElementById('completionCancelBtn'),
+            completionCloseBtn: document.getElementById('completionCloseBtn')
+        };
+        this.pendingCompletionGoalId = null;
+        this.completionModalInitialized = false;
         this.priorityCache = new Map();
         this.priorityCacheDirty = true;
         this.setupEventListeners();
@@ -171,32 +178,17 @@ class UIController {
         }
 
         const actionsContainer = card.querySelector('.goal-actions');
-        if (actionsContainer) {
-            if (goal.status !== 'finalized') {
-                const finalizeButton = document.createElement('button');
-                finalizeButton.type = 'button';
-                finalizeButton.className = 'btn btn-secondary finalize-goal';
-                finalizeButton.textContent = 'Finalisieren';
-                finalizeButton.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    this.changeGoalStatus(goal.id, 'finalized');
-                });
-                actionsContainer.appendChild(finalizeButton);
-            }
-
-            if (goal.status !== 'archived') {
-                const archiveButton = document.createElement('button');
-                archiveButton.type = 'button';
-                archiveButton.className = 'btn btn-secondary archive-goal';
-                archiveButton.textContent = 'Archivieren';
-                archiveButton.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    this.changeGoalStatus(goal.id, 'archived', { requireConfirm: true });
-                });
-                actionsContainer.appendChild(archiveButton);
-            }
+        if (actionsContainer && goal.status !== 'completed' && goal.status !== 'abandoned') {
+            const completeButton = document.createElement('button');
+            completeButton.type = 'button';
+            completeButton.className = 'btn btn-secondary complete-goal';
+            completeButton.textContent = 'Abschließen';
+            completeButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.openCompletionModal(goal.id);
+            });
+            actionsContainer.appendChild(completeButton);
         }
 
         const editBtn = card.querySelector('.edit-goal');
@@ -283,9 +275,8 @@ class UIController {
         const statusMap = {
             active: 'Aktiv',
             paused: 'Pausiert',
-            completed: 'Abgeschlossen',
-            finalized: 'Finalisiert',
-            archived: 'Archiviert'
+            completed: 'Erreicht',
+            abandoned: 'Nicht erreicht'
         };
         return statusMap[status] || status;
     }
@@ -521,6 +512,7 @@ class UIController {
         });
 
         this.setupAllGoalsControls();
+        this.setupCompletionModal();
     }
 
     handleGoalSubmit() {
@@ -576,15 +568,9 @@ class UIController {
                 getValue: (element) => element.checked
             },
             {
-                id: 'allGoalsToggleArchived',
+                id: 'allGoalsToggleAbandoned',
                 event: 'change',
-                key: 'includeArchived',
-                getValue: (element) => element.checked
-            },
-            {
-                id: 'allGoalsToggleFinalized',
-                event: 'change',
-                key: 'includeFinalized',
+                key: 'includeAbandoned',
                 getValue: (element) => element.checked
             }
         ];
@@ -601,6 +587,51 @@ class UIController {
         });
     }
 
+    setupCompletionModal() {
+        if (this.completionModalInitialized) {
+            return;
+        }
+
+        const modal = this.getCompletionElement('completionModal');
+        if (!modal) {
+            return;
+        }
+
+        const successBtn = this.getCompletionElement('completionSuccessBtn');
+        if (successBtn) {
+            successBtn.addEventListener('click', () => this.handleCompletionChoice('completed'));
+        }
+
+        const failureBtn = this.getCompletionElement('completionFailureBtn');
+        if (failureBtn) {
+            failureBtn.addEventListener('click', () => this.handleCompletionChoice('abandoned'));
+        }
+
+        const cancelBtn = this.getCompletionElement('completionCancelBtn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => this.closeCompletionModal());
+        }
+
+        const closeBtn = this.getCompletionElement('completionCloseBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.closeCompletionModal());
+        }
+
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                this.closeCompletionModal();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && modal.classList.contains('is-visible')) {
+                this.closeCompletionModal();
+            }
+        });
+
+        this.completionModalInitialized = true;
+    }
+
     renderAllGoalsTable() {
         const tableBody = this.getControlElement('allGoalsTableBody');
         const emptyState = this.getControlElement('allGoalsEmptyState');
@@ -608,8 +639,7 @@ class UIController {
         const priorityFilter = this.getControlElement('allGoalsPriorityFilter');
         const sortSelect = this.getControlElement('allGoalsSort');
         const toggleCompleted = this.getControlElement('allGoalsToggleCompleted');
-        const toggleArchived = this.getControlElement('allGoalsToggleArchived');
-        const toggleFinalized = this.getControlElement('allGoalsToggleFinalized');
+        const toggleAbandoned = this.getControlElement('allGoalsToggleAbandoned');
 
         if (!tableBody) {
             return;
@@ -627,11 +657,8 @@ class UIController {
         if (toggleCompleted) {
             toggleCompleted.checked = this.allGoalsState.includeCompleted;
         }
-        if (toggleArchived) {
-            toggleArchived.checked = this.allGoalsState.includeArchived;
-        }
-        if (toggleFinalized) {
-            toggleFinalized.checked = this.allGoalsState.includeFinalized;
+        if (toggleAbandoned) {
+            toggleAbandoned.checked = this.allGoalsState.includeAbandoned;
         }
 
         this.refreshPriorityCache();
@@ -645,10 +672,7 @@ class UIController {
             if (!this.allGoalsState.includeCompleted && goal.status === 'completed') {
                 return false;
             }
-            if (!this.allGoalsState.includeArchived && goal.status === 'archived') {
-                return false;
-            }
-            if (!this.allGoalsState.includeFinalized && goal.status === 'finalized') {
+            if (!this.allGoalsState.includeAbandoned && goal.status === 'abandoned') {
                 return false;
             }
             if (this.allGoalsState.statusFilter !== 'all' && goal.status !== this.allGoalsState.statusFilter) {
@@ -779,6 +803,19 @@ class UIController {
         }
         const element = document.getElementById(id);
         this.allGoalsControlRefs[id] = element || null;
+        return element || null;
+    }
+
+    getCompletionElement(id) {
+        if (!this.completionModalRefs) {
+            this.completionModalRefs = {};
+        }
+        const cached = this.completionModalRefs[id];
+        if (cached && cached.isConnected) {
+            return cached;
+        }
+        const element = document.getElementById(id);
+        this.completionModalRefs[id] = element || null;
         return element || null;
     }
 
@@ -953,12 +990,36 @@ class UIController {
         this.openGoalForm(goalId);
     }
 
-    changeGoalStatus(goalId, newStatus, { requireConfirm = false } = {}) {
-        if (!goalId || !newStatus) {
+    openCompletionModal(goalId) {
+        if (!goalId) {
             return;
         }
+        const modal = this.getCompletionElement('completionModal');
+        if (!modal) {
+            return;
+        }
+        this.pendingCompletionGoalId = goalId;
+        modal.classList.add('is-visible');
+    }
 
-        if (requireConfirm && !window.confirm('Möchtest du dieses Ziel wirklich archivieren?')) {
+    closeCompletionModal() {
+        const modal = this.getCompletionElement('completionModal');
+        if (modal) {
+            modal.classList.remove('is-visible');
+        }
+        this.pendingCompletionGoalId = null;
+    }
+
+    handleCompletionChoice(status) {
+        if (!this.pendingCompletionGoalId) {
+            return;
+        }
+        this.changeGoalStatus(this.pendingCompletionGoalId, status);
+        this.closeCompletionModal();
+    }
+
+    changeGoalStatus(goalId, newStatus) {
+        if (!goalId || !newStatus) {
             return;
         }
 
