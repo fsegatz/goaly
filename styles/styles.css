@@ -356,6 +356,26 @@ main {
     margin-bottom: 15px;
     font-size: 0.95rem;
     line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.goal-description[contenteditable="true"] {
+    border: 1px dashed transparent;
+    border-radius: 8px;
+    padding: 8px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    min-height: 48px;
+}
+
+.goal-description[contenteditable="true"]:empty::before {
+    content: attr(data-placeholder);
+    color: #999;
+}
+
+.goal-description.is-editing {
+    background: #ffffff;
+    border-color: rgba(118, 75, 162, 0.4);
+    box-shadow: 0 0 0 2px rgba(118, 75, 162, 0.1);
 }
 
 .goal-metrics {
@@ -405,6 +425,58 @@ main {
 .goal-deadline.urgent {
     color: #e74c3c;
     font-weight: 600;
+}
+
+.goal-card.is-editing-description,
+.goal-card.is-inline-editing {
+    border-color: #764ba2;
+    box-shadow: 0 8px 20px rgba(118, 75, 162, 0.15);
+}
+
+.goal-inline-editor {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed #ddd;
+    display: none;
+    gap: 12px;
+    flex-direction: column;
+}
+
+.goal-inline-editor.is-visible {
+    display: flex;
+}
+
+.goal-inline-editor .inline-fields {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+
+.goal-inline-editor label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.goal-inline-editor input {
+    padding: 8px 10px;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.goal-inline-editor input:focus {
+    outline: none;
+    border-color: #764ba2;
+    box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.15);
+}
+
+.goal-inline-editor .inline-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .goal-actions {
