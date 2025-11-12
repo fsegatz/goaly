@@ -48,9 +48,9 @@ class UIController {
     createGoalCard(goal) {
         const card = document.createElement('div');
         card.className = `goal-card ${goal.status}`;
-        
+
         const priority = this.app.goalService.calculatePriority(goal);
-        const deadlineText = goal.deadline 
+        const deadlineText = goal.deadline
             ? this.formatDeadline(goal.deadline)
             : 'Keine Deadline';
 
@@ -61,16 +61,8 @@ class UIController {
                     <span class="goal-status-badge status-${goal.status}">${this.getStatusText(goal.status)}</span>
                 </div>
             </div>
-            ${goal.description ? `<div class="goal-description">${this.escapeHtml(goal.description)}</div>` : ''}
+            <div class="goal-description" contenteditable="true" role="textbox" aria-label="Beschreibung bearbeiten" data-goal-id="${goal.id}" data-placeholder="Beschreibung hinzufügen..."></div>
             <div class="goal-metrics">
-                <div class="metric">
-                    <span class="metric-label">Motivation</span>
-                    <span class="metric-value motivation">${goal.motivation}/5</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Dringlichkeit</span>
-                    <span class="metric-value urgency">${goal.urgency}/5</span>
-                </div>
                 <div class="metric">
                     <span class="metric-label">Priorität</span>
                     <span class="metric-value priority">${priority.toFixed(1)}</span>
@@ -80,15 +72,124 @@ class UIController {
                 📅 ${deadlineText}
             </div>
             <div class="goal-actions">
-                <button class="btn btn-primary edit-goal" data-id="${goal.id}">Bearbeiten</button>
+                <button class="btn btn-primary edit-goal" data-id="${goal.id}" aria-expanded="false">Bearbeiten</button>
+            </div>
+            <div class="goal-inline-editor" aria-hidden="true">
+                <div class="inline-fields">
+                    <label>
+                        <span>Deadline</span>
+                        <input type="date" class="inline-deadline" value="${goal.deadline ? goal.deadline.toISOString().split('T')[0] : ''}">
+                    </label>
+                    <label>
+                        <span>Motivation</span>
+                        <input type="number" class="inline-motivation" min="1" max="5" step="1" value="${goal.motivation}">
+                    </label>
+                    <label>
+                        <span>Dringlichkeit</span>
+                        <input type="number" class="inline-urgency" min="1" max="5" step="1" value="${goal.urgency}">
+                    </label>
+                </div>
+                <div class="inline-actions">
+                    <button type="button" class="btn btn-primary save-inline">Speichern</button>
+                    <button type="button" class="btn btn-secondary cancel-inline">Abbrechen</button>
+                </div>
             </div>
         `;
 
+        const descriptionEl = card.querySelector('.goal-description');
+        if (descriptionEl) {
+            const currentDescription = goal.description || '';
+            descriptionEl.textContent = currentDescription;
+
+            const sanitizeDescription = (value) => {
+                if (!value) {
+                    return '';
+                }
+                return value.replace(/\u00a0/g, ' ').trim();
+            };
+
+            const resetDescription = () => {
+                descriptionEl.textContent = goal.description || '';
+                if (!descriptionEl.textContent) {
+                    descriptionEl.innerHTML = '';
+                }
+            };
+
+            descriptionEl.addEventListener('focus', () => {
+                card.classList.add('is-editing-description');
+                descriptionEl.classList.add('is-editing');
+            });
+
+            descriptionEl.addEventListener('blur', () => {
+                descriptionEl.classList.remove('is-editing');
+                card.classList.remove('is-editing-description');
+
+                const sanitizedValue = sanitizeDescription(descriptionEl.textContent);
+                const originalValue = sanitizeDescription(goal.description);
+
+                if (sanitizedValue === originalValue) {
+                    resetDescription();
+                    return;
+                }
+
+                this.updateGoalInline(goal.id, { description: sanitizedValue });
+            });
+
+            descriptionEl.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    resetDescription();
+                    descriptionEl.blur();
+                }
+            });
+        }
+
         const editBtn = card.querySelector('.edit-goal');
-        if (editBtn) {
-            editBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Verhindere Event-Bubbling
-                this.openGoalForm(goal.id);
+        const inlineEditor = card.querySelector('.goal-inline-editor');
+
+        if (editBtn && inlineEditor) {
+            const deadlineInput = inlineEditor.querySelector('.inline-deadline');
+            const motivationInput = inlineEditor.querySelector('.inline-motivation');
+            const urgencyInput = inlineEditor.querySelector('.inline-urgency');
+            const saveButton = inlineEditor.querySelector('.save-inline');
+            const cancelButton = inlineEditor.querySelector('.cancel-inline');
+
+            const toggleInlineEditor = (open) => {
+                inlineEditor.setAttribute('aria-hidden', open ? 'false' : 'true');
+                editBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                if (open) {
+                    card.classList.add('is-inline-editing');
+                    inlineEditor.classList.add('is-visible');
+                    deadlineInput.value = goal.deadline ? goal.deadline.toISOString().split('T')[0] : '';
+                    motivationInput.value = goal.motivation;
+                    urgencyInput.value = goal.urgency;
+                    deadlineInput.focus();
+                } else {
+                    card.classList.remove('is-inline-editing');
+                    inlineEditor.classList.remove('is-visible');
+                }
+            };
+
+            editBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const isVisible = inlineEditor.classList.contains('is-visible');
+                toggleInlineEditor(!isVisible);
+            });
+
+            saveButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                const updates = {
+                    deadline: deadlineInput.value || null,
+                    motivation: motivationInput.value,
+                    urgency: urgencyInput.value
+                };
+                this.updateGoalInline(goal.id, updates);
+            });
+
+            cancelButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                toggleInlineEditor(false);
             });
         }
 
@@ -613,6 +714,17 @@ class UIController {
             this.priorityCache.set(goal.id, this.app.goalService.calculatePriority(goal));
         });
         this.priorityCacheDirty = false;
+    }
+
+    updateGoalInline(goalId, updates) {
+        try {
+            const { maxActiveGoals } = this.app.settingsService.getSettings();
+            this.app.goalService.updateGoal(goalId, updates, maxActiveGoals);
+            this.invalidatePriorityCache();
+            this.renderViews();
+        } catch (error) {
+            alert(error.message || 'Aktualisierung des Ziels fehlgeschlagen.');
+        }
     }
 }
 

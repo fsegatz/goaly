@@ -308,37 +308,62 @@ describe('UIController', () => {
     });
 
     // Test createGoalCard
-    test('createGoalCard should create a goal card with correct content and buttons', () => {
+    test('createGoalCard should create a goal card with editable description and priority metric', () => {
         const goal = new Goal({ id: '1', title: 'Test Goal', description: 'Test Description', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-11-15') });
         mockGoalService.calculatePriority.mockReturnValue(4.5);
 
         const card = uiController.createGoalCard(goal);
+        const descriptionEl = card.querySelector('.goal-description');
 
         expect(card.className).toBe('goal-card active');
         expect(card.querySelector('.goal-title').textContent).toBe('Test Goal');
-        expect(card.querySelector('.goal-description').textContent).toBe('Test Description');
-        expect(card.querySelector('.metric-value.motivation').textContent).toBe('5/5');
-        expect(card.querySelector('.metric-value.urgency').textContent).toBe('4/5');
+        expect(descriptionEl.textContent).toBe('Test Description');
+        expect(descriptionEl.getAttribute('contenteditable')).toBe('true');
+        expect(card.querySelectorAll('.goal-metrics .metric').length).toBe(1);
         expect(card.querySelector('.metric-value.priority').textContent).toBe('4.5');
+        expect(card.querySelector('.metric-value.motivation')).toBeNull();
+        expect(card.querySelector('.metric-value.urgency')).toBeNull();
         expect(card.querySelector('.goal-deadline').textContent).toContain('In 6 Tagen'); // Assuming today is Nov 9, 2025
+        expect(card.querySelector('.goal-inline-editor')).not.toBeNull();
         expect(card.innerHTML).toContain('btn btn-primary edit-goal');
-        // No pause/activate buttons anymore - status is automatic
+        // No pause/activate buttons anymore - status ist automatisch
         expect(card.innerHTML).not.toContain('pause-goal');
         expect(card.innerHTML).not.toContain('activate-goal');
     });
 
-    test('createGoalCard edit button click should open goal form', () => {
+    test('createGoalCard edit button should toggle inline editor and save changes', () => {
         const goal = new Goal({ id: 'edit-test', title: 'Edit Button', description: '', motivation: 3, urgency: 2, status: 'active', deadline: null });
         mockGoalService.calculatePriority.mockReturnValue(5);
-        const openFormSpy = jest.spyOn(uiController, 'openGoalForm').mockImplementation(() => {});
+        mockGoalService.goals = [goal];
+        mockGoalService.getActiveGoals.mockReturnValue([goal]);
+        mockGoalService.updateGoal.mockImplementation(() => goal);
 
         const card = uiController.createGoalCard(goal);
         const editBtn = card.querySelector('.edit-goal');
+        const inlineEditor = card.querySelector('.goal-inline-editor');
+        const deadlineInput = inlineEditor.querySelector('.inline-deadline');
+        const motivationInput = inlineEditor.querySelector('.inline-motivation');
+        const urgencyInput = inlineEditor.querySelector('.inline-urgency');
+        const saveBtn = inlineEditor.querySelector('.save-inline');
+
         expect(editBtn).not.toBeNull();
+        expect(inlineEditor.classList.contains('is-visible')).toBe(false);
 
         editBtn.click();
-        expect(openFormSpy).toHaveBeenCalledWith('edit-test');
-        openFormSpy.mockRestore();
+        expect(inlineEditor.classList.contains('is-visible')).toBe(true);
+        expect(editBtn.getAttribute('aria-expanded')).toBe('true');
+
+        deadlineInput.value = '2025-11-20';
+        motivationInput.value = '4';
+        urgencyInput.value = '5';
+
+        saveBtn.click();
+
+        expect(mockGoalService.updateGoal).toHaveBeenCalledWith('edit-test', {
+            deadline: '2025-11-20',
+            motivation: '4',
+            urgency: '5'
+        }, 3);
     });
 
     test('createGoalCard should not show pause/activate buttons for any status', () => {
@@ -347,6 +372,26 @@ describe('UIController', () => {
         expect(card.innerHTML).toContain('btn btn-primary edit-goal');
         expect(card.innerHTML).not.toContain('pause-goal');
         expect(card.innerHTML).not.toContain('activate-goal');
+    });
+
+    test('createGoalCard should save description changes on blur', () => {
+        const goal = new Goal({ id: 'desc-test', title: 'Desc Goal', description: 'Initial', motivation: 3, urgency: 2, status: 'active', deadline: null });
+        mockGoalService.calculatePriority.mockReturnValue(6);
+        mockGoalService.goals = [goal];
+        mockGoalService.getActiveGoals.mockReturnValue([goal]);
+        mockGoalService.updateGoal.mockImplementation(() => {
+            goal.description = 'Updated';
+            return goal;
+        });
+
+        const card = uiController.createGoalCard(goal);
+        const descriptionEl = card.querySelector('.goal-description');
+        descriptionEl.textContent = 'Updated';
+
+        const blurEvent = new window.Event('blur');
+        descriptionEl.dispatchEvent(blurEvent);
+
+        expect(mockGoalService.updateGoal).toHaveBeenCalledWith('desc-test', { description: 'Updated' }, 3);
     });
 
     // Test formatDeadline
