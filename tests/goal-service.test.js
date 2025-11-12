@@ -314,4 +314,148 @@ describe('Goal Service', () => {
         expect(goal1.status).toBe('active');
         expect(goal2.status).toBe('paused');
     });
+
+    it('should record history entries when creating and updating goals', () => {
+        const goal = goalService.createGoal({ title: 'History Test', motivation: 2, urgency: 2 }, 3);
+        const creationEntry = goal.history.find(entry => entry.event === 'created');
+        expect(creationEntry).toBeDefined();
+        expect(creationEntry.changes.some(change => change.field === 'title' && change.to === 'History Test')).toBe(true);
+
+        goalService.updateGoal(goal.id, { description: 'Updated description' }, 3);
+        const updateEntry = goal.history.find(entry => entry.event === 'updated' && entry.changes.some(change => change.field === 'description' && change.to === 'Updated description'));
+        expect(updateEntry).toBeDefined();
+    });
+
+    it('should record status change history when auto activating goals', () => {
+        const goal1 = goalService.createGoal({ title: 'Priority 1', motivation: 5, urgency: 5 }, 1);
+        const goal2 = goalService.createGoal({ title: 'Priority 2', motivation: 1, urgency: 1 }, 1);
+
+        // Increase goal2 priority to trigger reactivation
+        goalService.updateGoal(goal2.id, { motivation: 10, urgency: 10 }, 1);
+
+        const goal1StatusEntries = goal1.history.filter(entry => entry.event === 'status-change');
+        const goal2StatusEntries = goal2.history.filter(entry => entry.event === 'status-change');
+
+        expect(goal1StatusEntries.length).toBeGreaterThan(0);
+        expect(goal1StatusEntries[goal1StatusEntries.length - 1].changes[0].field).toBe('status');
+        expect(goal2StatusEntries.length).toBeGreaterThan(0);
+    });
+
+    it('should revert goal to previous history entry and create rollback entry', () => {
+        const goal = goalService.createGoal({ title: 'Rollback Goal', motivation: 2, urgency: 2 }, 3);
+        goalService.updateGoal(goal.id, { description: 'First description' }, 3);
+        const targetEntry = goal.history.find(entry => entry.event === 'updated' && entry.changes.some(change => change.field === 'description'));
+        expect(targetEntry).toBeDefined();
+
+        goalService.updateGoal(goal.id, { description: 'Second description' }, 3);
+        expect(goal.description).toBe('Second description');
+
+        const revertedGoal = goalService.revertGoalToHistoryEntry(goal.id, targetEntry.id, 3);
+        expect(revertedGoal).not.toBeNull();
+        expect(revertedGoal.description).toBe('');
+
+        const rollbackEntry = goal.history.find(entry => entry.event === 'rollback' && entry.meta?.revertedEntryId === targetEntry.id);
+        expect(rollbackEntry).toBeDefined();
+    });
+
+    it('should call saveGoals when revert does not change goal state', () => {
+        const saveSpy = jest.spyOn(goalService, 'saveGoals');
+        const goal = goalService.createGoal({ title: 'No Change Revert', motivation: 2, urgency: 2 }, 3);
+        goalService.updateGoal(goal.id, { description: 'Interim value' }, 3);
+        const historyEntry = goal.history.find(entry => entry.event === 'updated' && entry.changes.some(change => change.field === 'description'));
+        expect(historyEntry).toBeDefined();
+
+        goalService.updateGoal(goal.id, { description: '' }, 3);
+
+        const result = goalService.revertGoalToHistoryEntry(goal.id, historyEntry.id, 3);
+        expect(result).not.toBeNull();
+        expect(result.description).toBe('');
+        expect(saveSpy).toHaveBeenCalled();
+        saveSpy.mockRestore();
+    });
+
+    it('should return null when reverting with invalid history id or missing before snapshot', () => {
+        const goal = goalService.createGoal({ title: 'Invalid Revert', motivation: 2, urgency: 2 }, 3);
+        expect(goalService.revertGoalToHistoryEntry(goal.id, 'does-not-exist', 3)).toBeNull();
+
+        const historyEntry = goal.history.find(entry => entry.event === 'created');
+        expect(historyEntry).toBeDefined();
+        expect(goalService.revertGoalToHistoryEntry(goal.id, historyEntry.id, 3)).toBeNull();
+    });
+
+    it('should treat NaN values as equal when diffing snapshots', () => {
+        const changes = goalService.diffSnapshots({ motivation: NaN }, { motivation: NaN });
+        expect(changes).toEqual([]);
+    });
+
+    it('should not record history when change list is empty', () => {
+        const goal = goalService.createGoal({ title: 'No History', motivation: 1, urgency: 1 }, 3);
+        const initialLength = goal.history.length;
+        goalService.recordHistory(goal, {
+            event: 'updated',
+            timestamp: new Date(),
+            before: {},
+            after: {},
+            changes: []
+        });
+        expect(goal.history.length).toBe(initialLength);
+    });
+
+    it('should initialize history array when appending history to goal without history', () => {
+        const goal = {};
+        const entry = {
+            id: 'init-entry',
+            event: 'updated',
+            timestamp: new Date(),
+            changes: [{ field: 'title', from: null, to: 'Value' }]
+        };
+        goalService.appendHistoryEntry(goal, entry);
+        expect(Array.isArray(goal.history)).toBe(true);
+        expect(goal.history).toHaveLength(1);
+    });
+
+    it('should enforce the history limit when appending entries', () => {
+        const goal = { history: [] };
+        const baseEntry = {
+            event: 'updated',
+            timestamp: new Date(),
+            changes: [{ field: 'title', from: 'A', to: 'B' }]
+        };
+        for (let index = 0; index < 55; index += 1) {
+            goalService.appendHistoryEntry(goal, { ...baseEntry, id: `entry-${index}` });
+        }
+        expect(goal.history.length).toBe(50);
+        expect(goal.history[0].id).toBe('entry-5');
+    });
+
+    it('should update goal properties from snapshot via applySnapshotToGoal', () => {
+        const goal = new (require('../src/domain/goal').default)({ title: 'Snapshot Goal', motivation: 2, urgency: 3, status: 'active' });
+        const snapshot = {
+            title: 'Snapshot Updated',
+            description: 'Snapshot Desc',
+            motivation: null,
+            urgency: 4,
+            deadline: '2025-12-31T00:00:00.000Z',
+            status: 'paused'
+        };
+        goalService.applySnapshotToGoal(goal, snapshot);
+        expect(goal.title).toBe('Snapshot Updated');
+        expect(goal.description).toBe('Snapshot Desc');
+        expect(Number.isNaN(goal.motivation)).toBe(true);
+        expect(goal.urgency).toBe(4);
+        expect(goal.deadline).toBeInstanceOf(Date);
+        expect(goal.status).toBe('paused');
+    });
+
+    it('should return goal unchanged when update data does not modify fields', () => {
+        const goal = goalService.createGoal({ title: 'No Update', motivation: 2, urgency: 2 }, 3);
+        const historyLength = goal.history.length;
+        const result = goalService.updateGoal(goal.id, { title: 'No Update' }, 3);
+        expect(result).toBe(goal);
+        expect(goal.history.length).toBe(historyLength);
+    });
+
+    it('should return null when goal for rollback is missing', () => {
+        expect(goalService.revertGoalToHistoryEntry('unknown-goal', 'entry', 3)).toBeNull();
+    });
 });

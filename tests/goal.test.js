@@ -27,6 +27,7 @@ describe('Goal', () => {
         expect(goal.createdAt).toEqual(new Date(goalData.createdAt));
         expect(goal.lastUpdated).toEqual(new Date(goalData.lastUpdated));
         expect(goal.checkInDates).toEqual(goalData.checkInDates);
+        expect(goal.history).toEqual([]);
     });
 
     test('should create a Goal object with default values for missing data', () => {
@@ -45,6 +46,7 @@ describe('Goal', () => {
         expect(goal.createdAt).toBeInstanceOf(Date);
         expect(goal.lastUpdated).toBeInstanceOf(Date);
         expect(goal.checkInDates).toEqual([]);
+        expect(goal.history).toEqual([]);
     });
 
     test('should correctly parse motivation and urgency as integers', () => {
@@ -69,5 +71,49 @@ describe('Goal', () => {
 
         expect(goal.motivation).toBeNaN();
         expect(goal.urgency).toBeNaN();
+    });
+
+    test('should normalize history entries with timestamps and meta data', () => {
+        const timestamp = '2025-01-05T10:00:00.000Z';
+        const goalData = {
+            title: 'History Goal',
+            motivation: 3,
+            urgency: 2,
+            history: [
+                {
+                    id: 'hist-1',
+                    event: 'updated',
+                    timestamp,
+                    changes: [
+                        {
+                            field: 'title',
+                            from: 'Old',
+                            to: 'New'
+                        }
+                    ],
+                    before: { title: 'Old' },
+                    after: { title: 'New' },
+                    meta: { user: 'tester' }
+                }
+            ]
+        };
+
+        const goal = new Goal(goalData);
+        expect(goal.history).toHaveLength(1);
+        const [entry] = goal.history;
+        expect(entry.id).toBe('hist-1');
+        expect(entry.event).toBe('updated');
+        expect(entry.timestamp).toBeInstanceOf(Date);
+        expect(entry.timestamp.toISOString()).toBe(timestamp);
+        expect(entry.changes).toEqual([
+            {
+                field: 'title',
+                from: 'Old',
+                to: 'New'
+            }
+        ]);
+        expect(entry.before).toEqual({ title: 'Old' });
+        expect(entry.after).toEqual({ title: 'New' });
+        expect(entry.meta).toEqual({ user: 'tester' });
     });
 });

@@ -1,5 +1,22 @@
 // src/ui/ui-controller.js
 
+const HISTORY_FIELD_LABELS = {
+    title: 'Titel',
+    description: 'Beschreibung',
+    motivation: 'Motivation',
+    urgency: 'Dringlichkeit',
+    deadline: 'Deadline',
+    status: 'Status',
+    priority: 'Priorität'
+};
+
+const HISTORY_EVENT_LABELS = {
+    created: 'Erstellt',
+    updated: 'Aktualisiert',
+    'status-change': 'Status angepasst',
+    rollback: 'Zurückgesetzt'
+};
+
 class UIController {
     constructor(app) {
         this.app = app;
@@ -256,8 +273,9 @@ class UIController {
             return;
         }
 
+        let goal = null;
         if (goalId) {
-            const goal = this.app.goalService.goals.find(g => g.id === goalId);
+            goal = this.app.goalService.goals.find(g => g.id === goalId) || null;
             if (goal) {
                 modalTitle.textContent = 'Ziel bearbeiten';
                 document.getElementById('goalId').value = goal.id;
@@ -275,6 +293,12 @@ class UIController {
             form.reset();
             document.getElementById('goalId').value = '';
             deleteBtn.style.display = 'none';
+        }
+
+        if (goal) {
+            this.renderGoalHistory(goal);
+        } else {
+            this.resetGoalHistoryView();
         }
 
         // Zeige Modal über CSS-Klasse
@@ -725,6 +749,162 @@ class UIController {
             this.priorityCache.set(goal.id, this.app.goalService.calculatePriority(goal));
         });
         this.priorityCacheDirty = false;
+    }
+
+    formatHistoryValue(field, rawValue) {
+        if (rawValue === null || rawValue === undefined) {
+            return '—';
+        }
+
+        if (field === 'deadline') {
+            if (!rawValue) {
+                return 'Keine Deadline';
+            }
+            try {
+                const date = new Date(rawValue);
+                if (Number.isNaN(date.getTime())) {
+                    return '—';
+                }
+                return date.toLocaleDateString('de-DE');
+            } catch (error) {
+                return '—';
+            }
+        }
+
+        if (field === 'status') {
+            return this.getStatusText(rawValue);
+        }
+
+        if (field === 'priority') {
+            const numberValue = Number(rawValue);
+            if (!Number.isFinite(numberValue)) {
+                return '—';
+            }
+            return numberValue.toFixed(1);
+        }
+
+        if (field === 'motivation' || field === 'urgency') {
+            const numberValue = Number(rawValue);
+            if (!Number.isFinite(numberValue)) {
+                return '—';
+            }
+            return `${numberValue}`;
+        }
+
+        return `${rawValue}`;
+    }
+
+    resetGoalHistoryView() {
+        const section = document.getElementById('goalHistorySection');
+        const list = document.getElementById('goalHistoryList');
+        if (!section || !list) {
+            return;
+        }
+        section.hidden = true;
+        list.innerHTML = '';
+    }
+
+    renderGoalHistory(goal) {
+        const section = document.getElementById('goalHistorySection');
+        const list = document.getElementById('goalHistoryList');
+        if (!section || !list) {
+            return;
+        }
+
+        section.hidden = false;
+
+        if (!goal || !Array.isArray(goal.history) || goal.history.length === 0) {
+            list.innerHTML = '<p class="goal-history-empty">Noch keine Änderungen protokolliert.</p>';
+            return;
+        }
+
+        list.innerHTML = '';
+
+        const sortedEntries = [...goal.history].sort((a, b) => {
+            const timeA = a?.timestamp?.getTime?.() || 0;
+            const timeB = b?.timestamp?.getTime?.() || 0;
+            return timeB - timeA;
+        });
+
+        sortedEntries.forEach(entry => {
+            const entryElement = document.createElement('article');
+            entryElement.className = 'goal-history-entry';
+
+            const header = document.createElement('div');
+            header.className = 'goal-history-entry__header';
+
+            const eventLabel = document.createElement('span');
+            eventLabel.className = 'goal-history-entry__event';
+            eventLabel.textContent = HISTORY_EVENT_LABELS[entry.event] || 'Änderung';
+
+            const timestamp = document.createElement('time');
+            timestamp.className = 'goal-history-entry__timestamp';
+            timestamp.textContent = this.formatDateTime(entry.timestamp);
+
+            header.appendChild(eventLabel);
+            header.appendChild(timestamp);
+
+            entryElement.appendChild(header);
+
+            if (Array.isArray(entry.changes) && entry.changes.length > 0) {
+                const changesContainer = document.createElement('div');
+                changesContainer.className = 'goal-history-entry__changes';
+
+                entry.changes.forEach(change => {
+                    const row = document.createElement('div');
+                    row.className = 'goal-history-change';
+
+                    const fieldLabel = document.createElement('span');
+                    fieldLabel.className = 'goal-history-change__field';
+                    fieldLabel.textContent = HISTORY_FIELD_LABELS[change.field] || change.field;
+
+                    const valueLabel = document.createElement('span');
+                    valueLabel.className = 'goal-history-change__values';
+                    const fromText = this.formatHistoryValue(change.field, change.from);
+                    const toText = this.formatHistoryValue(change.field, change.to);
+                    valueLabel.textContent = `${fromText} → ${toText}`;
+
+                    row.appendChild(fieldLabel);
+                    row.appendChild(valueLabel);
+                    changesContainer.appendChild(row);
+                });
+
+                entryElement.appendChild(changesContainer);
+            }
+
+            if (entry.before) {
+                const revertButton = document.createElement('button');
+                revertButton.type = 'button';
+                revertButton.className = 'btn btn-secondary btn-compact goal-history-revert';
+                revertButton.textContent = 'Auf diese Version zurücksetzen';
+                revertButton.addEventListener('click', () => {
+                    this.handleHistoryRevert(goal.id, entry.id);
+                });
+                entryElement.appendChild(revertButton);
+            }
+
+            list.appendChild(entryElement);
+        });
+    }
+
+    handleHistoryRevert(goalId, historyEntryId) {
+        if (!goalId || !historyEntryId) {
+            return;
+        }
+
+        if (!window.confirm('Möchtest du dieses Ziel wirklich auf diese Version zurücksetzen?')) {
+            return;
+        }
+
+        const { maxActiveGoals } = this.app.settingsService.getSettings();
+        const revertedGoal = this.app.goalService.revertGoalToHistoryEntry(goalId, historyEntryId, maxActiveGoals);
+        if (!revertedGoal) {
+            alert('Zurücksetzen nicht möglich.');
+            return;
+        }
+
+        this.renderViews();
+        this.openGoalForm(goalId);
     }
 
     updateGoalInline(goalId, updates) {
