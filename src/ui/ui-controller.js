@@ -365,46 +365,52 @@ class UIController {
     }
 
     setupAllGoalsControls() {
-        const statusFilter = document.getElementById('allGoalsStatusFilter');
-        if (statusFilter) {
-            statusFilter.addEventListener('change', () => {
-                this.allGoalsState.statusFilter = statusFilter.value;
-                this.renderAllGoalsTable();
-            });
-        }
+        const controls = [
+            {
+                id: 'allGoalsStatusFilter',
+                event: 'change',
+                key: 'statusFilter',
+                getValue: (element) => element.value
+            },
+            {
+                id: 'allGoalsPriorityFilter',
+                event: 'input',
+                key: 'minPriority',
+                getValue: (element) => {
+                    const parsed = parseInt(element.value, 10);
+                    return Number.isNaN(parsed) ? 0 : parsed;
+                }
+            },
+            {
+                id: 'allGoalsSort',
+                event: 'change',
+                key: 'sort',
+                getValue: (element) => element.value
+            },
+            {
+                id: 'allGoalsToggleCompleted',
+                event: 'change',
+                key: 'includeCompleted',
+                getValue: (element) => element.checked
+            },
+            {
+                id: 'allGoalsToggleArchived',
+                event: 'change',
+                key: 'includeArchived',
+                getValue: (element) => element.checked
+            }
+        ];
 
-        const priorityFilter = document.getElementById('allGoalsPriorityFilter');
-        if (priorityFilter) {
-            priorityFilter.addEventListener('input', () => {
-                const value = parseInt(priorityFilter.value, 10);
-                this.allGoalsState.minPriority = isNaN(value) ? 0 : value;
+        controls.forEach(({ id, event, key, getValue }) => {
+            const element = document.getElementById(id);
+            if (!element) {
+                return;
+            }
+            element.addEventListener(event, () => {
+                this.allGoalsState[key] = getValue(element);
                 this.renderAllGoalsTable();
             });
-        }
-
-        const sortSelect = document.getElementById('allGoalsSort');
-        if (sortSelect) {
-            sortSelect.addEventListener('change', () => {
-                this.allGoalsState.sort = sortSelect.value;
-                this.renderAllGoalsTable();
-            });
-        }
-
-        const toggleCompleted = document.getElementById('allGoalsToggleCompleted');
-        if (toggleCompleted) {
-            toggleCompleted.addEventListener('change', () => {
-                this.allGoalsState.includeCompleted = toggleCompleted.checked;
-                this.renderAllGoalsTable();
-            });
-        }
-
-        const toggleArchived = document.getElementById('allGoalsToggleArchived');
-        if (toggleArchived) {
-            toggleArchived.addEventListener('change', () => {
-                this.allGoalsState.includeArchived = toggleArchived.checked;
-                this.renderAllGoalsTable();
-            });
-        }
+        });
     }
 
     renderAllGoalsTable() {
@@ -464,8 +470,14 @@ class UIController {
                     return a.priority - b.priority;
                 case 'updated-desc':
                 case 'updated-asc': {
-                    const dateA = a.goal.lastUpdated ? new Date(a.goal.lastUpdated).getTime() : 0;
-                    const dateB = b.goal.lastUpdated ? new Date(b.goal.lastUpdated).getTime() : 0;
+                    const getTimestamp = (value) => {
+                        if (!value) {
+                            return 0;
+                        }
+                        return value instanceof Date ? value.getTime() : new Date(value).getTime();
+                    };
+                    const dateA = getTimestamp(a.goal.lastUpdated);
+                    const dateB = getTimestamp(b.goal.lastUpdated);
                     return sortValue === 'updated-desc' ? dateB - dateA : dateA - dateB;
                 }
                 case 'priority-desc':
