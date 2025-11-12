@@ -4,6 +4,7 @@ import GoalService from './domain/goal-service.js';
 import SettingsService from './domain/settings-service.js';
 import CheckInService from './domain/check-in-service.js';
 import UIController from './ui/ui-controller.js';
+import Goal from './domain/goal.js';
 
 class GoalyApp {
     constructor() {
@@ -81,12 +82,8 @@ class GoalyApp {
                 
                 // Dann Ziele laden und migrieren (mit korrektem maxActiveGoals)
                 if (data.goals) {
-                    this.goalService.goals = data.goals.map(goal => ({
-                        ...goal,
-                        createdAt: new Date(goal.createdAt),
-                        lastUpdated: new Date(goal.lastUpdated),
-                        deadline: goal.deadline ? new Date(goal.deadline) : null
-                    }));
+                    this.goalService.goals = data.goals.map(goal => new Goal(goal));
+                    this.checkInService = new CheckInService(this.goalService.goals, this.settingsService.getSettings());
                     // Nach Import automatisch die N Ziele mit höchster Priorität aktivieren
                     this.goalService.migrateGoalsToAutoActivation(this.settingsService.getSettings().maxActiveGoals);
                 }

@@ -73,7 +73,7 @@ beforeEach(() => {
         <form id="goalForm"></form>
         <button id="cancelBtn"></button>
         <button id="deleteBtn"></button>
-        <div id="goalModal">
+        <div id="goalModal" class="modal">
             <span class="close"></span>
             <h2 id="modalTitle"></h2>
             <input type="hidden" id="goalId" />
@@ -82,6 +82,10 @@ beforeEach(() => {
             <input type="number" id="goalMotivation" />
             <input type="number" id="goalUrgency" />
             <input type="date" id="goalDeadline" />
+            <div id="goalHistorySection" class="goal-history" hidden>
+                <h3>Historie</h3>
+                <div id="goalHistoryList" class="goal-history-list"></div>
+            </div>
         </div>
         <button id="exportBtn"></button>
         <button id="importBtn"></button>
@@ -105,6 +109,8 @@ beforeEach(() => {
     global.window = window;
     global.confirm = jest.fn(); // Mock global confirm
     global.alert = jest.fn(); // Mock global alert
+    window.confirm = global.confirm;
+    window.alert = global.alert;
 
     const RealDate = Date; // Store original Date constructor
     jest.useFakeTimers();
@@ -119,6 +125,7 @@ beforeEach(() => {
         deleteGoal: jest.fn(),
         calculatePriority: jest.fn(() => 0),
         autoActivateGoalsByPriority: jest.fn(),
+        revertGoalToHistoryEntry: jest.fn(),
     };
     mockSettingsService = {
         getSettings: jest.fn(() => ({ maxActiveGoals: 3, checkInInterval: 7, checkInsEnabled: true })),
@@ -502,6 +509,109 @@ describe('UIController', () => {
         expect(uiController.getStatusText('unknown')).toBe('unknown'); // Fallback
     });
 
+    test('formatHistoryValue should format different field types correctly', () => {
+        expect(uiController.formatHistoryValue('deadline', '')).toBe('Keine Deadline');
+        expect(uiController.formatHistoryValue('deadline', 'invalid-date')).toBe('—');
+        expect(uiController.formatHistoryValue('priority', 12.345)).toBe('12.3');
+        expect(uiController.formatHistoryValue('priority', 'not-a-number')).toBe('—');
+        expect(uiController.formatHistoryValue('motivation', '4')).toBe('4');
+        expect(uiController.formatHistoryValue('status', 'active')).toBe('Aktiv');
+        expect(uiController.formatHistoryValue('title', 'My Goal')).toBe('My Goal');
+        expect(uiController.formatHistoryValue('description', null)).toBe('—');
+    });
+
+    test('resetGoalHistoryView should return early when history elements are missing', () => {
+        const section = document.getElementById('goalHistorySection');
+        const list = document.getElementById('goalHistoryList');
+        section.remove();
+        list.remove();
+        expect(() => uiController.resetGoalHistoryView()).not.toThrow();
+        expect(() => uiController.renderGoalHistory(null)).not.toThrow();
+
+        const modal = document.getElementById('goalModal');
+        const newSection = document.createElement('div');
+        newSection.id = 'goalHistorySection';
+        newSection.className = 'goal-history';
+        newSection.hidden = true;
+        const heading = document.createElement('h3');
+        heading.textContent = 'Historie';
+        const newList = document.createElement('div');
+        newList.id = 'goalHistoryList';
+        newList.className = 'goal-history-list';
+        newSection.appendChild(heading);
+        newSection.appendChild(newList);
+        modal.appendChild(newSection);
+    });
+
+    test('handleHistoryRevert should abort when identifiers are missing or user cancels', () => {
+        window.confirm.mockReturnValue(false);
+        expect(() => uiController.handleHistoryRevert('', 'entry')).not.toThrow();
+        expect(() => uiController.handleHistoryRevert('goal', '')).not.toThrow();
+        expect(() => uiController.handleHistoryRevert('goal', 'entry')).not.toThrow();
+        expect(window.confirm).toHaveBeenCalled();
+    });
+
+    test('handleHistoryRevert should alert when rollback is not possible', () => {
+        window.confirm.mockReturnValue(true);
+        window.alert.mockClear();
+        mockGoalService.revertGoalToHistoryEntry.mockReturnValue(null);
+        uiController.handleHistoryRevert('missing', 'entry');
+        expect(window.alert).toHaveBeenCalledWith('Zurücksetzen nicht möglich.');
+    });
+
+    test('getControlElement should rebuild cache and ignore stale references', () => {
+        const tempElement = document.createElement('div');
+        tempElement.id = 'tempElement';
+        document.body.appendChild(tempElement);
+
+        uiController.allGoalsControlRefs = null;
+        expect(uiController.getControlElement('tempElement')).toBe(tempElement);
+
+        uiController.allGoalsControlRefs.tempElement = { isConnected: false };
+        expect(uiController.getControlElement('tempElement')).toBe(tempElement);
+
+        document.body.removeChild(tempElement);
+    });
+
+    test('updateGoalInline should show an alert when update throws an error', () => {
+        window.alert.mockClear();
+        mockGoalService.updateGoal.mockImplementationOnce(() => {
+            throw { message: '' };
+        });
+        uiController.updateGoalInline('goal-error', {});
+        expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('Aktualisierung des Ziels fehlgeschlagen.'));
+    });
+
+    test('renderGoalHistory should handle entries without changes or rollback option', () => {
+        const goal = new Goal({
+            id: 'history-none',
+            title: 'History Without Changes',
+            motivation: 2,
+            urgency: 2,
+            status: 'active',
+            history: [
+                {
+                    id: 'entry-none',
+                    event: 'status-change',
+                    timestamp: '2025-11-10T12:00:00.000Z',
+                    changes: [],
+                    before: null,
+                    after: { status: 'active' }
+                }
+            ]
+        });
+        mockGoalService.goals = [goal];
+        window.confirm.mockReturnValue(true);
+        mockGoalService.revertGoalToHistoryEntry.mockReturnValue(goal);
+
+        uiController.openGoalForm('history-none');
+
+        const entry = document.querySelector('.goal-history-entry');
+        expect(entry).not.toBeNull();
+        expect(entry.querySelector('.goal-history-entry__changes')).toBeNull();
+        expect(entry.querySelector('.goal-history-revert')).toBeNull();
+    });
+
     // Test escapeHtml
     test('escapeHtml should escape HTML characters', () => {
         const unsafeString = '<h1>Hello & World</h1><script>alert("xss")</script>';
@@ -520,6 +630,7 @@ describe('UIController', () => {
         expect(document.getElementById('goalId').value).toBe('');
         expect(document.getElementById('deleteBtn').style.display).toBe('none');
         expect(document.getElementById('goalModal').classList.contains('is-visible')).toBe(true);
+        expect(document.getElementById('goalHistorySection').hidden).toBe(true);
     });
 
     // Test openGoalForm for editing existing goal
@@ -538,6 +649,54 @@ describe('UIController', () => {
         expect(document.getElementById('goalDeadline').value).toBe('2025-12-25');
         expect(document.getElementById('deleteBtn').style.display).toBe('inline-block');
         expect(document.getElementById('goalModal').classList.contains('is-visible')).toBe(true);
+        expect(document.getElementById('goalHistorySection').hidden).toBe(false);
+        expect(document.getElementById('goalHistoryList').textContent).toContain('Noch keine Änderungen protokolliert');
+    });
+
+    test('openGoalForm should render history entries and handle rollback action', () => {
+        const historyEntryTimestamp = '2025-11-10T12:00:00.000Z';
+        const historyGoal = new Goal({
+            id: 'hist-1',
+            title: 'History Goal',
+            description: 'Current',
+            motivation: 3,
+            urgency: 2,
+            status: 'active',
+            history: [
+                {
+                    id: 'entry-1',
+                    event: 'updated',
+                    timestamp: historyEntryTimestamp,
+                    changes: [
+                        { field: 'title', from: 'Old Title', to: 'History Goal' }
+                    ],
+                    before: {
+                        title: 'Old Title'
+                    },
+                    after: {
+                        title: 'History Goal'
+                    }
+                }
+            ]
+        });
+
+        mockGoalService.goals = [historyGoal];
+        mockGoalService.revertGoalToHistoryEntry.mockImplementation(() => historyGoal);
+        window.confirm.mockReturnValue(true);
+
+        uiController.openGoalForm('hist-1');
+
+        const historySection = document.getElementById('goalHistorySection');
+        expect(historySection.hidden).toBe(false);
+        const entries = document.querySelectorAll('.goal-history-entry');
+        expect(entries.length).toBe(1);
+        const revertBtn = entries[0].querySelector('.goal-history-revert');
+        expect(revertBtn).not.toBeNull();
+
+        revertBtn.click();
+
+        expect(mockGoalService.revertGoalToHistoryEntry).toHaveBeenCalledWith('hist-1', historyGoal.history[0].id, 3);
+        expect(window.confirm).toHaveBeenCalled();
     });
 
     // Test closeGoalForm
