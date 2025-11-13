@@ -1125,7 +1125,7 @@ class UIController {
 
         diffLines.forEach((entry) => {
             const lineContent = variant === 'new' ? entry.newLine : entry.oldLine;
-            if (lineContent === null || lineContent === undefined) {
+            if (lineContent === null) {
                 return;
             }
 
@@ -1354,9 +1354,6 @@ class UIController {
     }
 
     getMigrationElement(id) {
-        if (!this.migrationModalRefs) {
-            this.migrationModalRefs = {};
-        }
         const cached = this.migrationModalRefs[id];
         if (cached && cached.isConnected) {
             return cached;

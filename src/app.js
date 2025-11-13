@@ -103,15 +103,6 @@ class GoalyApp {
                 return;
             }
 
-            if (!fileVersion || Array.isArray(data)) {
-                this.beginMigration({
-                    originalPayload: data,
-                    sourceVersion: fileVersion,
-                    fileName: file?.name ?? null
-                });
-                return;
-            }
-
             if (isSameVersion(fileVersion, this.currentDataVersion)) {
                 try {
                     this.applyImportedPayload(data);
@@ -145,22 +136,20 @@ class GoalyApp {
     }
 
     applyImportedPayload(payload) {
-        const data = Array.isArray(payload) ? { goals: payload } : payload;
-
-        if (!Array.isArray(data.goals)) {
+        if (!Array.isArray(payload.goals)) {
             throw new Error('Missing goals array in payload.');
         }
 
         // Load settings first when available
-        if (data.settings) {
-            this.settingsService.updateSettings(data.settings);
+        if (payload.settings) {
+            this.settingsService.updateSettings(payload.settings);
             if (this.settingsService.getSettings().language) {
                 this.languageService.setLanguage(this.settingsService.getSettings().language, { notify: false });
             }
             this.startCheckInTimer();
         }
 
-        this.goalService.goals = data.goals.map(goal => new Goal(goal));
+        this.goalService.goals = payload.goals.map(goal => new Goal(goal));
         this.reviewService = new ReviewService(this.goalService, this.settingsService);
         this.goalService.migrateGoalsToAutoActivation(this.settingsService.getSettings().maxActiveGoals);
 
