@@ -630,7 +630,7 @@ class UIController {
 
     handleCheckInSubmit(goalId, ratings) {
         try {
-            const result = this.app.checkInService.recordReview(goalId, ratings);
+            const result = this.app.reviewService.recordReview(goalId, ratings);
             if (!result) {
                 alert(this.translate('errors.goalNotFound'));
                 return;
@@ -1342,7 +1342,7 @@ class UIController {
                 return;
             }
 
-            this.app.checkIns = this.app.checkInService.getCheckIns();
+            this.app.checkIns = this.app.reviewService.getCheckIns();
             this.renderViews();
         } catch (error) {
             alert(error.message || this.translate('errors.statusChangeFailed'));

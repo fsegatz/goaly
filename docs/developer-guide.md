@@ -32,7 +32,7 @@ goaly/
 ├── src/
 │   ├── app.js
 │   ├── domain/
-│   │   ├── check-in-service.js  (review cadence engine)
+│   │   ├── review-service.js  (review cadence engine)
 │   │   ├── goal-service.js
 │   │   ├── goal.js
 │   │   └── settings-service.js

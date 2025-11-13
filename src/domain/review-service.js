@@ -1,4 +1,4 @@
-// src/domain/check-in-service.js
+// src/domain/review-service.js
 
 const DEFAULT_REVIEW_INTERVALS = [7, 14, 30];
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
@@ -32,7 +32,7 @@ function getMostRecentCheckIn(goal) {
     return new Date(Math.max(...timestamps));
 }
 
-class CheckInService {
+class ReviewService {
     constructor(goalService, settingsService) {
         this.goalService = goalService;
         this.settingsService = settingsService;
@@ -180,4 +180,5 @@ class CheckInService {
     }
 }
 
-export default CheckInService;
+export default ReviewService;
+

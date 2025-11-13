@@ -12,7 +12,7 @@ let window;
 let mockApp;
 let mockGoalService;
 let mockSettingsService;
-let mockCheckInService;
+let mockReviewService;
 let languageService;
 
 beforeEach(() => {
@@ -149,9 +149,8 @@ beforeEach(() => {
         updateSettings: jest.fn(),
         getReviewIntervals: jest.fn(() => [30, 14, 7])
     };
-    mockCheckInService = {
+    mockReviewService = {
         getCheckIns: jest.fn(() => []),
-        performCheckIn: jest.fn(),
         recordReview: jest.fn()
     };
 
@@ -162,7 +161,7 @@ beforeEach(() => {
     mockApp = {
         goalService: mockGoalService,
         settingsService: mockSettingsService,
-        checkInService: mockCheckInService,
+        reviewService: mockReviewService,
         languageService,
         checkIns: [], // UIController directly accesses app.checkIns
         exportData: jest.fn(),
@@ -904,7 +903,7 @@ describe('UIController', () => {
         mockApp.checkIns = [
             { goal: goal1, dueAt: new Date(Date.now() - 24 * 60 * 60 * 1000), isOverdue: true, messageArgs: { title: 'Goal 1' } }
         ];
-        mockCheckInService.recordReview.mockReturnValue({ goal: goal1, ratingsMatch: true });
+        mockReviewService.recordReview.mockReturnValue({ goal: goal1, ratingsMatch: true });
         jest.spyOn(uiController, 'renderViews').mockImplementation(() => {});
 
         uiController.renderCheckInView();
@@ -916,7 +915,7 @@ describe('UIController', () => {
         submitBtn.click();
 
         const feedback = document.getElementById('checkInsFeedback');
-        expect(mockCheckInService.recordReview).toHaveBeenCalledWith('g1', expect.objectContaining({
+        expect(mockReviewService.recordReview).toHaveBeenCalledWith('g1', expect.objectContaining({
             motivation: expect.any(String),
             urgency: expect.any(String),
         }));
@@ -956,7 +955,7 @@ describe('UIController', () => {
     });
 
     test('handleCheckInSubmit should alert when review response is null', () => {
-        mockCheckInService.recordReview.mockReturnValue(null);
+        mockReviewService.recordReview.mockReturnValue(null);
         global.alert = jest.fn();
         uiController.handleCheckInSubmit('missing-goal', { motivation: '3', urgency: '3' });
         expect(global.alert).toHaveBeenCalled();
@@ -997,7 +996,7 @@ describe('UIController', () => {
 
     test('handleCheckInSubmit should invalidate cache when ratings change', () => {
         const spy = jest.spyOn(uiController, 'invalidatePriorityCache').mockImplementation(() => {});
-        mockCheckInService.recordReview.mockReturnValue({
+        mockReviewService.recordReview.mockReturnValue({
             goal: { title: 'Goal', reviewIntervalIndex: 0 },
             ratingsMatch: false
         });
