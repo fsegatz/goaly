@@ -1,38 +1,34 @@
-# AGENTS Leitfaden
+# Agents Handbook
 
-Dieser Leitfaden beschreibt komprimiert, wie AI-Coding-Agents oder neue Teammitglieder produktiv mit dem Projekt `goaly` arbeiten.
+This handbook summarises how coding agents and new contributors collaborate productively on the `goaly` project.
 
-## Setup & Entwicklung
+## Setup & Development
+- Run `npm install` once to install dependencies.
+- Serve the app locally with `npx --yes serve -l 8000` (see `README.md` for alternatives).
+- The entry point is `index.html` with `src/app.js`.
 
-- `npm install` einmalig ausführen, um alle Abhängigkeiten zu installieren.
-- Für einen lokalen Testserver reicht z. B. `npx --yes serve -l 8000` (siehe `README.md`).
-- Das Frontend lebt unter `index.html` mit `src/app.js` als Einstiegspunkt.
+## Tests & Quality
+- Execute `npm test` for unit tests; add `-- --coverage` for a coverage report.
+- Maintain the existing high coverage; extend tests for new UI behaviour (`tests/ui-controller.test.js`).
+- After code changes run `read_lints` in Cursor for touched files.
 
-## Tests & Qualität
+## Architecture Overview
+- `src/domain`: pure logic (goal, settings, check-in services).
+- `src/ui/ui-controller.js`: DOM coordination and rendering logic.
+- `styles/styles.css`: global styling with responsive layout.
+- `src/i18n`: language resources and localisation service.
 
-- Unit-Tests laufen via `npm test`; für einen Coverage-Report `npm test -- --coverage`.
-- Die bestehende Testabdeckung ist hoch – neue Features sollten mindestens gleichwertige oder bessere Coverage liefern.
-- UI-spezifische Logik ist in `tests/ui-controller.test.js` abgedeckt; neue UI-Funktionen benötigen begleitende Tests.
+## Working Guidelines
+1. Review existing tests before implementing changes to understand expected behaviour.
+2. Work incrementally; run tests after significant edits.
+3. Do **not** overwrite user changes in a dirty worktree.
+4. Summarise results clearly in commits/PRs and call out next steps.
+5. Raise a PR when work is complete and hand it off for review.
+6. **Naming rule:** Use English-only identifiers, function names and terminology across the codebase and documentation. This ensures consistency and simplifies future contributions.
 
-## Architekturüberblick
-
-- `src/domain`: Enthält reine Logik (Goal-, Settings-, Check-In-Services).
-- `src/ui/ui-controller.js`: Steuert DOM-Interaktionen; Renderer-Logik gehört hierher.
-- `styles/styles.css`: Globale Styles; mobile Responsiveness beachten.
-
-## Arbeitsweise für Agents
-
-1. Vor Änderungen Tests lesen, um gewünschtes Verhalten zu verstehen.
-2. Änderungen inkrementell vornehmen; nach jedem größeren Schritt Tests ausführen.
-3. Keine bestehenden User-Änderungen überschreiben – Worktree kann „dirty“ sein.
-4. Nach Anpassungen `read_lints` (Cursor) für betroffene Dateien prüfen.
-5. Ergebnisse im PR/Commit sauber zusammenfassen und nächste Schritte benennen.
-6. Nach abgeschlossenen Änderungen einen PR erstellen und zur Review vorstellen.
-
-## Kontaktpunkte
-
-- Produktanforderungen stehen primär im `README.md` sowie in `docs/`.
-- Fragen zur Feature-Priorisierung: zuerst vorhandene Docs checken, dann rückfragen.
+## Reference Material
+- Product expectations: `README.md` and the documents in `docs/`.
+- Feature priorities: consult project documents first, then ask if unclear.
 
 Happy hacking! 🚀
 

@@ -1,6 +1,7 @@
 const { JSDOM } = require('jsdom');
 const UIController = require('../src/ui/ui-controller').default;
 const Goal = require('../src/domain/goal').default;
+const LanguageService = require('../src/domain/language-service').default;
 
 // Mock the entire DOM for testing UI interactions
 let dom;
@@ -12,6 +13,7 @@ let mockApp;
 let mockGoalService;
 let mockSettingsService;
 let mockCheckInService;
+let languageService;
 
 beforeEach(() => {
     // Setup JSDOM
@@ -20,53 +22,53 @@ beforeEach(() => {
         <div id="all-goalsView" class="view">
             <div class="all-goals-controls">
                 <label for="allGoalsStatusFilter">
-                    Status
+                    <span>Status</span>
                     <select id="allGoalsStatusFilter">
-                        <option value="all">Alle Status</option>
-                        <option value="active">Aktiv</option>
-                        <option value="paused">Pausiert</option>
-                        <option value="completed">Erreicht</option>
-                        <option value="abandoned">Nicht erreicht</option>
+                        <option value="all">All statuses</option>
+                        <option value="active">Active</option>
+                        <option value="paused">Paused</option>
+                        <option value="completed">Completed</option>
+                        <option value="abandoned">Abandoned</option>
                     </select>
                 </label>
                 <label for="allGoalsPriorityFilter">
-                    Mindestpriorität
+                    <span>Minimum priority</span>
                     <input type="number" id="allGoalsPriorityFilter" value="0" />
                 </label>
                 <label for="allGoalsSort">
-                    Sortierung
+                    <span>Sorting</span>
                     <select id="allGoalsSort">
-                        <option value="priority-desc">Priorität (hoch → niedrig)</option>
-                        <option value="priority-asc">Priorität (niedrig → hoch)</option>
-                        <option value="updated-desc">Letzte Änderung (neu → alt)</option>
-                        <option value="updated-asc">Letzte Änderung (alt → neu)</option>
+                        <option value="priority-desc">Priority (high → low)</option>
+                        <option value="priority-asc">Priority (low → high)</option>
+                        <option value="updated-desc">Last update (new → old)</option>
+                        <option value="updated-asc">Last update (old → new)</option>
                     </select>
                 </label>
                 <label class="toggle-option">
                     <input type="checkbox" id="allGoalsToggleCompleted" checked />
-                    Erreichte anzeigen
+                    Show completed
                 </label>
                 <label class="toggle-option">
                     <input type="checkbox" id="allGoalsToggleAbandoned" checked />
-                    Nicht erreichte anzeigen
+                    Show abandoned
                 </label>
             </div>
             <div class="table-wrapper">
                 <table id="allGoalsTable">
                     <thead>
                         <tr>
-                            <th>Titel</th>
+                            <th>Title</th>
                             <th>Status</th>
-                            <th>Priorität</th>
+                            <th>Priority</th>
                             <th>Motivation</th>
-                            <th>Dringlichkeit</th>
+                            <th>Urgency</th>
                             <th>Deadline</th>
-                            <th>Letzte Änderung</th>
+                            <th>Last updated</th>
                         </tr>
                     </thead>
                     <tbody id="allGoalsTableBody"></tbody>
                 </table>
-                <div id="allGoalsEmptyState" hidden>Keine Ziele vorhanden, die den aktuellen Filtern entsprechen.</div>
+                <div id="allGoalsEmptyState" hidden>No goals match the current filters.</div>
             </div>
         </div>
         <button id="addGoalBtn"></button>
@@ -83,19 +85,19 @@ beforeEach(() => {
             <input type="number" id="goalUrgency" />
             <input type="date" id="goalDeadline" />
             <div id="goalHistorySection" class="goal-history" hidden>
-                <h3>Historie</h3>
+                <h3>History</h3>
                 <div id="goalHistoryList" class="goal-history-list"></div>
             </div>
         </div>
         <div id="completionModal" class="modal">
             <div class="modal-content completion-modal">
                 <span id="completionCloseBtn" class="close"></span>
-                <h2>Ziel abschließen</h2>
-                <p>Hast du dein Ziel erreicht?</p>
+                <h2>Complete goal</h2>
+                <p>Did you achieve your goal?</p>
                 <div class="completion-actions">
-                    <button id="completionSuccessBtn" class="btn btn-primary">Ziel erreicht</button>
-                    <button id="completionFailureBtn" class="btn btn-danger">Nicht erreicht</button>
-                    <button id="completionCancelBtn" class="btn btn-secondary">Abbrechen</button>
+                    <button id="completionSuccessBtn" class="btn btn-primary">Goal completed</button>
+                    <button id="completionFailureBtn" class="btn btn-danger">Not completed</button>
+                    <button id="completionCancelBtn" class="btn btn-secondary">Cancel</button>
                 </div>
             </div>
         </div>
@@ -106,6 +108,7 @@ beforeEach(() => {
         <input type="number" id="maxActiveGoals" value="3" />
         <input type="number" id="checkInInterval" value="7" />
         <input type="checkbox" id="checkInsEnabled" checked />
+        <select id="languageSelect"></select>
         <div id="checkInsPanel">
             <div id="checkInsList"></div>
         </div>
@@ -141,7 +144,7 @@ beforeEach(() => {
         revertGoalToHistoryEntry: jest.fn(),
     };
     mockSettingsService = {
-        getSettings: jest.fn(() => ({ maxActiveGoals: 3, checkInInterval: 7, checkInsEnabled: true })),
+        getSettings: jest.fn(() => ({ maxActiveGoals: 3, checkInInterval: 7, checkInsEnabled: true, language: 'en' })),
         updateSettings: jest.fn(),
     };
     mockCheckInService = {
@@ -150,10 +153,14 @@ beforeEach(() => {
     };
 
     // Mock the app object
+    languageService = new LanguageService();
+    languageService.init('en');
+
     mockApp = {
         goalService: mockGoalService,
         settingsService: mockSettingsService,
         checkInService: mockCheckInService,
+        languageService,
         checkIns: [], // UIController directly accesses app.checkIns
         exportData: jest.fn(),
         importData: jest.fn(),
@@ -184,14 +191,14 @@ describe('UIController', () => {
     });
 
     // Test renderViews with no goals
-    test('renderViews should display "Keine aktiven Ziele" when no active goals', () => {
+    test('renderViews should display "No active goals" when no active goals', () => {
         mockGoalService.getActiveGoals.mockReturnValue([]);
         mockGoalService.goals = []; // Ensure table is also empty
 
         uiController.renderViews();
 
         const dashboardList = document.getElementById('goalsList');
-        expect(dashboardList.innerHTML).toContain('Keine aktiven Ziele. Erstelle dein erstes Ziel!');
+        expect(dashboardList.innerHTML).toContain('No active goals yet. Create your first goal!');
 
         const tableBody = document.getElementById('allGoalsTableBody');
         expect(tableBody.children.length).toBe(0);
@@ -226,7 +233,7 @@ describe('UIController', () => {
         expect(tableRows.length).toBe(7);
         expect(Array.from(tableRows).map(row => row.dataset.goalId)).toEqual(['1', '2', '3', '4', '5', '6', '7']);
         const statusTexts = Array.from(tableRows).map(row => row.querySelector('td[data-label="Status"]').textContent.trim());
-        expect(statusTexts).toEqual(expect.arrayContaining(['Aktiv', 'Pausiert', 'Erreicht', 'Nicht erreicht']));
+        expect(statusTexts).toEqual(expect.arrayContaining(['Active', 'Paused', 'Completed', 'Abandoned']));
     });
 
     describe('All goals table interactions', () => {
@@ -347,7 +354,7 @@ describe('UIController', () => {
         expect(card.querySelector('.metric-value.priority').textContent).toBe('4.5');
         expect(card.querySelector('.metric-value.motivation')).toBeNull();
         expect(card.querySelector('.metric-value.urgency')).toBeNull();
-        expect(card.querySelector('.goal-deadline').textContent).toContain('In 6 Tagen'); // Assuming today is Nov 9, 2025
+        expect(card.querySelector('.goal-deadline').textContent).toContain('In 6 days'); // Assuming today is Nov 9, 2025
         expect(card.querySelector('.goal-inline-editor')).not.toBeNull();
         expect(card.innerHTML).toContain('btn btn-primary edit-goal');
         // No pause/activate buttons anymore - status ist automatisch
@@ -522,7 +529,7 @@ describe('UIController', () => {
         uiController.handleCompletionChoice('completed');
 
         expect(mockGoalService.setGoalStatus).toHaveBeenCalledWith('missing-goal', 'completed', 3);
-        expect(window.alert).toHaveBeenCalledWith('Ziel nicht gefunden.');
+        expect(window.alert).toHaveBeenCalledWith('Goal not found.');
         expect(modal.classList.contains('is-visible')).toBe(false);
     });
 
@@ -623,34 +630,34 @@ describe('UIController', () => {
     });
 
     // Test formatDeadline
-    test('formatDeadline should return "Heute" for today', () => {
+    test('formatDeadline should return "Today" for today', () => {
         const today = new Date('2025-11-09T12:00:00.000Z'); // Fixed date for consistent testing
         const result = uiController.formatDeadline(today);
-        expect(result).toBe('Heute');
+        expect(result).toBe('Today');
     });
 
-    test('formatDeadline should return "Morgen" for tomorrow', () => {
+    test('formatDeadline should return "Tomorrow" for tomorrow', () => {
         const tomorrow = new Date('2025-11-10T12:00:00.000Z');
         const result = uiController.formatDeadline(tomorrow);
-        expect(result).toBe('Morgen');
+        expect(result).toBe('Tomorrow');
     });
 
-    test('formatDeadline should return "In X Tagen" for upcoming deadlines within 7 days', () => {
+    test('formatDeadline should return "In X days" for upcoming deadlines within 7 days', () => {
         const futureDate = new Date('2025-11-12T12:00:00.000Z'); // 3 days from now
         const result = uiController.formatDeadline(futureDate);
-        expect(result).toBe('In 3 Tagen');
+        expect(result).toBe('In 3 days');
     });
 
-    test('formatDeadline should return "Überfällig" for past deadlines', () => {
+    test('formatDeadline should return "Overdue" for past deadlines', () => {
         const pastDate = new Date('2025-11-04T12:00:00.000Z'); // 5 days ago
         const result = uiController.formatDeadline(pastDate);
-        expect(result).toContain('Überfällig (5 Tage)');
+        expect(result).toContain('Overdue (5 days)');
     });
 
     test('formatDeadline should return formatted date for deadlines far in future', () => {
         const farFutureDate = new Date('2026-01-01T12:00:00.000Z');
         const result = uiController.formatDeadline(farFutureDate);
-        expect(result).toBe('1.1.2026'); // Adjust based on locale if needed
+        expect(result).toBe('1/1/2026'); // Adjust based on locale if needed
     });
 
     // Test isDeadlineUrgent
@@ -674,23 +681,23 @@ describe('UIController', () => {
     });
 
     // Test getStatusText
-    test('getStatusText should return correct German text for status', () => {
-        expect(uiController.getStatusText('active')).toBe('Aktiv');
-        expect(uiController.getStatusText('paused')).toBe('Pausiert');
-        expect(uiController.getStatusText('completed')).toBe('Erreicht');
-        expect(uiController.getStatusText('abandoned')).toBe('Nicht erreicht');
+    test('getStatusText should return English labels for status', () => {
+        expect(uiController.getStatusText('active')).toBe('Active');
+        expect(uiController.getStatusText('paused')).toBe('Paused');
+        expect(uiController.getStatusText('completed')).toBe('Completed');
+        expect(uiController.getStatusText('abandoned')).toBe('Abandoned');
         expect(uiController.getStatusText('unknown')).toBe('unknown'); // Fallback
     });
 
     test('formatHistoryValue should format different field types correctly', () => {
-        expect(uiController.formatHistoryValue('deadline', '')).toBe('Keine Deadline');
+        expect(uiController.formatHistoryValue('deadline', '')).toBe('No deadline');
         expect(uiController.formatHistoryValue('deadline', 'invalid-date')).toBe('—');
         expect(uiController.formatHistoryValue('priority', 12.345)).toBe('12.3');
         expect(uiController.formatHistoryValue('priority', 'not-a-number')).toBe('—');
         expect(uiController.formatHistoryValue('motivation', '4')).toBe('4');
-        expect(uiController.formatHistoryValue('status', 'active')).toBe('Aktiv');
-        expect(uiController.formatHistoryValue('status', 'completed')).toBe('Erreicht');
-        expect(uiController.formatHistoryValue('status', 'abandoned')).toBe('Nicht erreicht');
+        expect(uiController.formatHistoryValue('status', 'active')).toBe('Active');
+        expect(uiController.formatHistoryValue('status', 'completed')).toBe('Completed');
+        expect(uiController.formatHistoryValue('status', 'abandoned')).toBe('Abandoned');
         expect(uiController.formatHistoryValue('title', 'My Goal')).toBe('My Goal');
         expect(uiController.formatHistoryValue('description', null)).toBe('—');
     });
@@ -731,7 +738,7 @@ describe('UIController', () => {
         window.alert.mockClear();
         mockGoalService.revertGoalToHistoryEntry.mockReturnValue(null);
         uiController.handleHistoryRevert('missing', 'entry');
-        expect(window.alert).toHaveBeenCalledWith('Zurücksetzen nicht möglich.');
+        expect(window.alert).toHaveBeenCalledWith('Unable to revert this goal.');
     });
 
     test('getControlElement should rebuild cache and ignore stale references', () => {
@@ -754,7 +761,7 @@ describe('UIController', () => {
             throw { message: '' };
         });
         uiController.updateGoalInline('goal-error', {});
-        expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('Aktualisierung des Ziels fehlgeschlagen.'));
+        expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('Updating the goal failed.'));
     });
 
     test('renderGoalHistory should handle entries without changes or rollback option', () => {
@@ -801,7 +808,7 @@ describe('UIController', () => {
         uiController.openGoalForm();
 
         expect(form.reset).toHaveBeenCalled();
-        expect(document.getElementById('modalTitle').textContent).toBe('Neues Ziel');
+        expect(document.getElementById('modalTitle').textContent).toBe('New goal');
         expect(document.getElementById('goalId').value).toBe('');
         expect(document.getElementById('deleteBtn').style.display).toBe('none');
         expect(document.getElementById('goalModal').classList.contains('is-visible')).toBe(true);
@@ -815,7 +822,7 @@ describe('UIController', () => {
 
         uiController.openGoalForm('123');
 
-        expect(document.getElementById('modalTitle').textContent).toBe('Ziel bearbeiten');
+        expect(document.getElementById('modalTitle').textContent).toBe('Edit goal');
         expect(document.getElementById('goalId').value).toBe('123');
         expect(document.getElementById('goalTitle').value).toBe('Edit Goal');
         expect(document.getElementById('goalDescription').value).toBe('Edit Desc');
@@ -825,7 +832,7 @@ describe('UIController', () => {
         expect(document.getElementById('deleteBtn').style.display).toBe('inline-block');
         expect(document.getElementById('goalModal').classList.contains('is-visible')).toBe(true);
         expect(document.getElementById('goalHistorySection').hidden).toBe(false);
-        expect(document.getElementById('goalHistoryList').textContent).toContain('Noch keine Änderungen protokolliert');
+        expect(document.getElementById('goalHistoryList').textContent).toContain('No changes recorded yet.');
     });
 
     test('openGoalForm should render history entries and handle rollback action', () => {
@@ -892,8 +899,8 @@ describe('UIController', () => {
         const goal1 = new Goal({ id: 'g1', title: 'Goal 1', motivation: 1, urgency: 1, status: 'active', deadline: null });
         const goal2 = new Goal({ id: 'g2', title: 'Goal 2', motivation: 1, urgency: 1, status: 'active', deadline: null });
         mockApp.checkIns = [
-            { goal: goal1, message: 'Check-in for Goal 1' },
-            { goal: goal2, message: 'Check-in for Goal 2' },
+            { goal: goal1, messageKey: 'checkIns.prompt', messageArgs: { title: 'Goal 1' } },
+            { goal: goal2, messageKey: 'checkIns.prompt', messageArgs: { title: 'Goal 2' } },
         ];
         mockCheckInService.getCheckIns.mockReturnValue([]);
 
@@ -901,8 +908,8 @@ describe('UIController', () => {
 
         const checkInsList = document.getElementById('checkInsList');
         expect(checkInsList.children.length).toBe(2);
-        expect(checkInsList.innerHTML).toContain('Check-in for Goal 1');
-        expect(checkInsList.innerHTML).toContain('Check-in for Goal 2');
+        expect(checkInsList.innerHTML).toContain('Time for a check-in on "Goal 1".');
+        expect(checkInsList.innerHTML).toContain('Time for a check-in on "Goal 2".');
         expect(document.getElementById('checkInsPanel').style.display).toBe('block');
 
         // Simulate check-in done click
@@ -916,7 +923,7 @@ describe('UIController', () => {
     test('showCheckIns should allow editing goal from check-in', () => {
         const goal1 = new Goal({ id: 'g1', title: 'Goal 1', motivation: 1, urgency: 1, status: 'active', deadline: null });
         mockApp.checkIns = [
-            { goal: goal1, message: 'Check-in for Goal 1' },
+            { goal: goal1, messageKey: 'checkIns.prompt', messageArgs: { title: 'Goal 1' } },
         ];
         mockCheckInService.getCheckIns.mockReturnValue(mockApp.checkIns);
         uiController.openGoalForm = jest.fn();
@@ -1208,7 +1215,7 @@ describe('UIController', () => {
 
         document.getElementById('deleteBtn').click();
 
-        expect(global.confirm).toHaveBeenCalledWith('Möchtest du dieses Ziel wirklich löschen?');
+        expect(global.confirm).toHaveBeenCalledWith('Do you really want to delete this goal?');
         expect(mockGoalService.deleteGoal).toHaveBeenCalledWith('goal-to-delete', 3);
         expect(uiController.closeGoalForm).toHaveBeenCalled();
         expect(uiController.renderViews).toHaveBeenCalled();
@@ -1222,7 +1229,7 @@ describe('UIController', () => {
 
         document.getElementById('deleteBtn').click();
 
-        expect(global.confirm).toHaveBeenCalledWith('Möchtest du dieses Ziel wirklich löschen?');
+        expect(global.confirm).toHaveBeenCalledWith('Do you really want to delete this goal?');
         expect(mockGoalService.deleteGoal).not.toHaveBeenCalled();
         expect(uiController.closeGoalForm).not.toHaveBeenCalled();
         expect(uiController.renderViews).not.toHaveBeenCalled();
@@ -1284,7 +1291,8 @@ describe('UIController', () => {
         expect(mockSettingsService.updateSettings).toHaveBeenCalledWith({
             maxActiveGoals: 5,
             checkInInterval: 10,
-            checkInsEnabled: false
+            checkInsEnabled: false,
+            language: 'en'
         });
         // Should call autoActivateGoalsByPriority when maxActiveGoals changes
         expect(mockGoalService.autoActivateGoalsByPriority).toHaveBeenCalledWith(5);

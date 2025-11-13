@@ -1,239 +1,170 @@
-# Goaly MVP - Zielverfolgungs-App
+# Goaly MVP - Goal Tracking App
 
-Eine einfache, funktionale Webapp zur Zielverfolgung mit Priorisierung und Check-in-System.
+Goaly is a lightweight goal management web application that blends priority scoring with recurring check-ins. It helps you focus on the most impactful goals while keeping everything entirely in the browser.
 
-## 🚀 Schnellstart
+## 🚀 Quick Start
 
 ```bash
-# Installiere Dependencies (einmalig)
+# Install dependencies (one-time)
 npm install
 
-# Starte lokalen Server
+# Launch a static dev server
 npx --yes serve -l 8000
 
-# App erreichbar unter: http://localhost:8000
+# The app is now available at http://localhost:8000
 ```
 
-Alternativen: `python -m http.server 8000` oder `php -S localhost:8000`
+Alternatives for local hosting: `python -m http.server 8000` or `php -S localhost:8000`.
 
-## 📋 Features
+## 📋 Core Features
 
-- ✅ **Goal CRUD**: Ziele erstellen, bearbeiten, löschen und archivieren
-- ✅ **Priorisierung**: Automatische Sortierung nach Motivation, Dringlichkeit und Deadline
-- ✅ **Limit-Management**: Maximale Anzahl aktiver Ziele (Standard: 3)
-- ✅ **Check-in-System**: Erinnerungen zur Überprüfung von Motivation und Dringlichkeit
-- ✅ **Export/Import**: JSON-basierte Datensicherung
-- ✅ **Responsive Design**: Funktioniert auf Desktop und Mobile
+- ✅ **Goal CRUD** - create, edit, archive and delete goals
+- ✅ **Priority scoring** - combines motivation, urgency and deadline bonus
+- ✅ **Active goal limit** - auto-manages a configurable maximum (default: 3)
+- ✅ **Check-in system** - nudges you to re-evaluate motivation and urgency
+- ✅ **Export & import** - JSON-based backups and restores
+- ✅ **Responsive UI** - optimised for desktop and mobile devices
+- ✅ **Language selection** - English (default), German and Swedish with browser auto-detect
 
-## 🧪 Akzeptanztests durchführen
+## 🧪 Acceptance Tests
 
-### Vorbereitung
+### Preparation
 
-1. Öffne die App in einem Browser
-2. Öffne die Entwicklertools (F12) für den Zugriff auf LocalStorage
-3. Optional: Setze das Check-in-Intervall in den Einstellungen auf 1 Minute für schnelle Tests
+1. Open the app in your browser.
+2. Open DevTools (F12) to access LocalStorage if required.
+3. Optionally reduce the check-in interval to one minute in settings for faster feedback.
 
-### Test 1: Goal CRUD
+### Test 1 - Goal CRUD
 
-**Schritte:**
-1. Klicke auf "+ Neues Ziel"
-2. Fülle das Formular aus:
-   - Titel: "Testziel A"
-   - Motivation: 3
-   - Dringlichkeit: 4
-   - Deadline: (optional leer lassen)
-   - Status: Aktiv
-3. Klicke "Speichern"
-4. Prüfe: Ziel erscheint im Dashboard
-5. Klicke "Bearbeiten" am Ziel
-6. Ändere Motivation auf 5
-7. Speichere
-8. Prüfe: Änderung ist sichtbar
-9. Lade die Seite neu (F5)
-10. Prüfe: Änderung ist persistent
-11. Klicke "Bearbeiten" → "Löschen"
-12. Prüfe: Ziel ist entfernt
+**Steps**
+1. Click `+ New goal`.
+2. Complete the form:
+   - Title: `Test goal A`
+   - Motivation: `3`
+   - Urgency: `4`
+   - Deadline: *(optional) leave empty*
+3. Save the form.
+4. Verify the goal appears on the dashboard.
+5. Click `Edit`, change motivation to `5`, save.
+6. Reload the page and confirm the change persists.
+7. Delete the goal via `Edit → Delete` and confirm it disappears.
 
-**Erwartetes Ergebnis:** ✅ Alle CRUD-Operationen funktionieren korrekt
+**Expected outcome:** All CRUD operations behave correctly.
 
-### Test 2: Automatische Aktivierung basierend auf Priorität
+### Test 2 - Automatic activation by priority
 
-**Schritte:**
-1. Stelle sicher, dass das Limit auf 3 steht (Einstellungen → ⚙️)
-2. Erstelle 4 Ziele mit unterschiedlichen Prioritäten:
-   - Ziel 1: Motivation 3, Dringlichkeit 4
-   - Ziel 2: Motivation 4, Dringlichkeit 3
-   - Ziel 3: Motivation 5, Dringlichkeit 2
-   - Ziel 4: Motivation 2, Dringlichkeit 1
-3. Prüfe: Die 3 Ziele mit höchster Priorität (Ziel 3, 2, 1) sind automatisch aktiv
-4. Prüfe: Ziel 4 ist automatisch pausiert
+**Steps**
+1. Ensure the active goal limit is `3`.
+2. Create four goals with varying priority:
+   - Goal 1: Motivation `3`, Urgency `4`
+   - Goal 2: Motivation `4`, Urgency `3`
+   - Goal 3: Motivation `5`, Urgency `2`
+   - Goal 4: Motivation `2`, Urgency `1`
+3. Confirm the three highest priorities (3, 2, 1) are active and goal 4 is paused.
+4. Increase goal 4’s motivation to `10`; it should become active and another goal pause.
+5. Lower the active limit to `2`; only the top two priorities remain active.
 
-**Erwartetes Ergebnis:** ✅ System aktiviert automatisch die N Ziele mit höchster Priorität
+**Expected outcome:** Automatic activation reacts to both priority and limit changes.
 
-**Weitere Schritte:**
-5. Erhöhe die Motivation von Ziel 4 auf 10
-6. Prüfe: Ziel 4 wird automatisch aktiviert, ein anderes Ziel wird pausiert
-7. Ändere das Limit in den Einstellungen auf 2
-8. Prüfe: Nur die 2 Ziele mit höchster Priorität bleiben aktiv
+### Test 3 - Dashboard prioritisation
 
-**Erwartetes Ergebnis:** ✅ Automatische Reaktivierung bei Prioritätsänderungen und Limit-Änderungen
+**Steps**
+1. Create three active goals:
+   - Goal A: Motivation `5`, Urgency `5`, Deadline in 7 days
+   - Goal B: Motivation `3`, Urgency `4`, no deadline
+   - Goal C: Motivation `4`, Urgency `3`, Deadline in 30 days
+2. Open the dashboard and confirm ordering by priority (Goal A first).
+3. Edit Goal B, set motivation to `5`, save and confirm the ordering updates.
 
-### Test 3: Priorisierung / Dashboard
+**Priority formula**
+- Base score: Motivation + Urgency (max 10)
+- Deadline bonus:
+  - ≤ 30 days: `+ (30 - days)`
+  - Overdue: `+5`
 
-**Schritte:**
-1. Erstelle 3 aktive Ziele mit unterschiedlichen Werten:
-   - Ziel A: Motivation 5, Dringlichkeit 5, Deadline: heute + 7 Tage
-   - Ziel B: Motivation 3, Dringlichkeit 4, keine Deadline
-   - Ziel C: Motivation 4, Dringlichkeit 3, Deadline: heute + 30 Tage
-2. Öffne das Dashboard
-3. Prüfe die Reihenfolge der Ziele
-4. Erwartung: Höchste Priorität zuerst (Ziel A sollte oben sein)
-5. Bearbeite Ziel B: Ändere Motivation auf 5
-6. Speichere
-7. Prüfe: Dashboard sortiert neu
+### Test 4 - Export & import
 
-**Erwartetes Ergebnis:** ✅ Ziele werden nach Priorität sortiert (Motivation + Dringlichkeit + Deadline-Bonus)
+**Steps**
+1. Create at least two diverse goals.
+2. Click `Export` and ensure a JSON file downloads.
+3. Clear LocalStorage (`goaly_*` keys) and reload - the goals should disappear.
+4. Click `Import`, choose the backup file and confirm the goals return with correct data.
 
-**Prioritätsformel:**
-- Basis: Motivation + Dringlichkeit (max 10)
-- Deadline-Bonus: 
-  - ≤ 30 Tage: + (30 - Tage) / 10 (max +3)
-  - Überfällig: +5
+**Expected outcome:** Export produces valid JSON, import restores all data.
 
-### Test 4: Export / Import (JSON)
+### Test 5 - Check-in reminders
 
-**Schritte:**
-1. Erstelle mindestens 2 Ziele mit verschiedenen Attributen:
-   - Ziel 1: Titel "Testziel A", Motivation 3, Dringlichkeit 4
-   - Ziel 2: Titel "Testziel B", Motivation 5, Dringlichkeit 2, Deadline: 2026-04-01
-2. Klicke auf "Export"
-3. Prüfe: JSON-Datei wird heruntergeladen
-4. Öffne die Entwicklertools (F12) → Application → Local Storage
-5. Lösche alle `goaly_*` Einträge (oder nutze die Reset-Funktion im Browser)
-6. Lade die Seite neu
-7. Prüfe: Alle Ziele sind weg
-8. Klicke auf "Import"
-9. Wähle die zuvor exportierte JSON-Datei
-10. Prüfe: Alle Ziele sind wiederhergestellt mit korrekten Attributen
+**Preparation**
+1. Open settings.
+2. Set the check-in interval to one minute.
+3. Save.
 
-**Erwartetes Ergebnis:** ✅ Export erzeugt valide JSON-Datei, Import stellt alle Daten korrekt wieder her
+**Steps**
+1. Create a new goal (e.g. *Check-in test* with motivation `3`, urgency `4`).
+2. Wait one minute (or fast-forward browser time).
+3. A check-in banner should appear with the goal and reminder text.
+4. Option A: click `Check-in completed` - the banner disappears.
+5. Option B: click `Edit goal`, adjust values, save - the banner clears once completed.
 
-**Testdaten-Beispiel für Import:**
-```json
-{
-  "goals": [
-    {
-      "id": "1",
-      "title": "Testziel A",
-      "motivation": 3,
-      "urgency": 4,
-      "deadline": null
-    },
-    {
-      "id": "2",
-      "title": "Testziel B",
-      "motivation": 5,
-      "urgency": 2,
-      "deadline": "2026-04-01T00:00:00.000Z"
-    }
-  ]
-}
-```
+**Expected outcome:** Check-ins trigger after the configured intervals (3, 7, 14, 30 units; minutes in dev mode, days in production).
 
-### Test 5: Erinnerungen / Check-ins
+## 🔧 Developer Notes
 
-**Vorbereitung:**
-1. Gehe zu Einstellungen (⚙️)
-2. Setze "Check-in Intervall" auf 1 Minute (für schnelle Tests)
-3. Speichere
-
-**Schritte:**
-1. Erstelle ein neues Ziel:
-   - Titel: "Check-in Test"
-   - Motivation: 3
-   - Dringlichkeit: 4
-   - (Wird automatisch aktiviert, wenn Priorität hoch genug ist)
-2. Warte 1 Minute (oder ändere die Systemzeit im Browser)
-3. Prüfe: Check-in-Panel erscheint automatisch oben auf der Seite
-4. Prüfe: Check-in zeigt das Ziel an mit Nachricht zur Überprüfung
-5. Option A: Klicke "Check-in durchgeführt"
-   - Prüfe: Check-in verschwindet
-6. Option B: Klicke "Ziel bearbeiten"
-   - Prüfe: Zielformular öffnet sich
-   - Ändere Motivation oder Dringlichkeit
-   - Speichere
-   - Prüfe: Check-in verschwindet nach Durchführung
-
-**Erwartetes Ergebnis:** ✅ Check-ins werden angezeigt nach konfiguriertem Intervall (3, 7, 14, 30 Tage bzw. Minuten im Dev-Modus)
-
-**Check-in-Intervalle:**
-- T+3 Tage/Minuten
-- T+7 Tage/Minuten  
-- T+14 Tage/Minuten
-- T+30 Tage/Minuten
-
-## 🔧 Entwickler-Hinweise
-
-### Tests ausführen
-
-Die App verwendet Jest für Unit-Tests:
+- Use English-only identifiers and terminology throughout the codebase.
+- The project uses Jest for unit tests:
 
 ```bash
-# Installiere Dependencies (einmalig)
-npm install
-
-# Führe alle Tests aus
-npm test
-
-# Tests mit Coverage-Report
-npm test -- --coverage
+npm install          # install dependencies
+npm test             # run full test suite
+npm test -- --coverage  # add coverage report
 ```
 
-**Aktuelle Test-Coverage:**
-- Statements: 97.77% | Branches: 80.89% | Functions: 97.18% | Lines: 98.97%
+- Reset browser data via DevTools → Application/Storage → Local Storage → remove `goaly_*`.
+- For speedy testing, keep the check-in interval at one minute; real usage should prefer days.
+- Browser requirements: modern browsers with ES6+, LocalStorage, CSS Grid/Flexbox support.
 
-### LocalStorage zurücksetzen
-
-1. Öffne Entwicklertools (F12)
-2. Gehe zu "Application" (Chrome) oder "Storage" (Firefox)
-3. Wähle "Local Storage" → deine Domain
-4. Lösche alle Einträge mit Präfix `goaly_`
-
-### Check-in-Intervalle für Tests
-
-Für schnelle Tests kannst du das Check-in-Intervall in den Einstellungen auf 1 Minute setzen. In Produktion sollten die Intervalle auf Tage gesetzt werden (3, 7, 14, 30 Tage).
-
-### Browser-Kompatibilität
-
-Die App nutzt:
-- LocalStorage (alle modernen Browser)
-- ES6+ JavaScript (Chrome, Firefox, Safari, Edge - aktuelle Versionen)
-- CSS Grid & Flexbox (alle modernen Browser)
-
-## 📁 Projektstruktur
+## 📁 Project Structure
 
 ```
 goaly/
-├── index.html      # Haupt-HTML-Struktur
-├── styles.css      # Styling und responsive Design
-├── app.js          # Hauptanwendungslogik
-├── mvp.md          # MVP-Spezifikation
-├── acceptance_tests.md  # Detaillierte Akzeptanztests
-└── README.md       # Diese Datei
+├── index.html
+├── styles/
+│   └── styles.css
+├── src/
+│   ├── app.js
+│   ├── domain/
+│   │   ├── check-in-service.js
+│   │   ├── goal-service.js
+│   │   ├── goal.js
+│   │   └── settings-service.js
+│   ├── i18n/
+│   │   ├── en.js
+│   │   ├── de.js
+│   │   ├── sv.js
+│   │   └── language-service.js
+│   └── ui/
+│       └── ui-controller.js
+├── tests/
+│   └── ui-controller.test.js
+└── docs/
+    ├── acceptance_tests.md
+    ├── cache_management.md
+    ├── idee.md
+    ├── mvp.md
+    └── prompt.md
 ```
 
-## 🎯 Nächste Schritte (Post-MVP)
+## 🎯 Post-MVP Ideas
 
-- Backend-Integration für Multi-Device-Sync
-- Authentifizierung
-- E-Mail-Benachrichtigungen
-- Erweiterte Statistiken und Visualisierungen
-- Mobile App
+- Multi-device sync via backend integration
+- Authentication and user management
+- Email or push notifications
+- Extended analytics and visualisations
+- Dedicated mobile app experience
 
-## 📝 Notizen
+## 📝 Notes
 
-- Alle Daten werden lokal im Browser gespeichert (LocalStorage)
-- Keine Server-Kosten, keine Registrierung nötig
-- Export-Funktion für Datensicherung
-- Responsive Design für Desktop und Mobile
+- All data lives in the browser (LocalStorage); no server or signup required.
+- Use JSON export/import for manual backups.
+- The application is responsive and works well on both desktop and mobile.
 

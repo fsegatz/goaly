@@ -1,47 +1,40 @@
 # MVP — Goaly
 
-Ziel
-----
-Schnell eine einfache, nutzbare Webapp liefern, die den Kernnutzen von Goaly zeigt: Nutzer können Ziele anlegen, priorisieren und kurz-/mittelfristig verfolgen.
+## Goal
+Deliver a simple, usable web app that demonstrates Goaly’s core value: users can create goals, prioritise them and track progress in the short and medium term.
 
-Kern-User-Stories
-------------------
-- Als Nutzer möchte ich ein Ziel anlegen können (Titel, Beschreibung, Motivation 1–5, Dringlichkeit 1–5, optionale Deadline), damit ich meine Ziele festhalten kann.
-- Als Nutzer möchte ich maximal N aktive Ziele gleichzeitig festlegen und eine priorisierte Liste im Dashboard sehen, damit ich mich auf das Wichtigste konzentriere.
-- Als Nutzer möchte ich Erinnerungen (simple Benachrichtigungen / E-Mail optional) und die Möglichkeit, Daten zu exportieren/importieren, damit ich informiert bleibe und meine Daten sichern kann.
+## Core User Stories
+- As a user I can create a goal (title, description, motivation 1-5, urgency 1-5, optional deadline) so I can capture my intent.
+- As a user I can limit myself to at most **N** active goals and see a prioritised dashboard, helping me focus on what matters.
+- As a user I receive reminders and can export/import my data to stay informed and safeguard my progress.
 
-Minimal-Feature-Set (Scope MVP)
--------------------------------
-- Goal CRUD: Erstellen, Lesen, Aktualisieren, Löschen von Zielen, Archivierung/Abschluss von Zielen.
-- Attribute: Titel, kurze Beschreibung, Motivation (1–5), Dringlichkeit (1–5), optionale Deadline, Status (aktiv/pausiert/abgeschlossen), Erstellungsdatum, letztes Update-Datum, Aktivitätshistorie.
-- Limit für gleichzeitig verfolgte Ziele (Einstellbar, z.B. default 3).
-- Dashboard: Anzeige der aktuell aktiven Ziele, sortiert nach Priorität (einfache Formel aus Motivation und Dringlichkeit + Deadline-Bonus). Anzeigen der Ziele deren Dringlichkeit oder Motivation überprüft werden sollten (Check-ins).
-- Erinnerungs-Mechanismus: einfache browser-basierte Erinnerungen (oder E-Mail später) für anstehende Deadlines und regelmäßige Check-ins (z.B. T+3 Tage, 7 Tage, 14 Tage).
-- Datenhaltung: lokale Persistenz via LocalStorage für die erste Version; Export/Import (JSON) zur Sicherung.
-- Einfaches UI: responsive statische Webapp (HTML/CSS/JS). Backend optional in späteren Schritten.
-- Jedes Ziel wird als Karte im Dashboard angezeigt mit den wichtigsten Infos (Titel, Deadline, Status, Schritte, Ressourcen, Logbuch).
+## MVP Scope
+- Goal CRUD with archive / completion.
+- Attributes: title, description, motivation, urgency, optional deadline, status (active/paused/completed), timestamps, history.
+- Configurable limit for active goals (default 3).
+- Dashboard showing active goals ordered by priority (motivation + urgency + deadline bonus) and highlighting due check-ins.
+- Reminder loop: browser-based prompts for upcoming deadlines and the 3/7/14/30 day cadence.
+- Persistence via LocalStorage plus JSON export/import.
+- Responsive static UI (HTML/CSS/JS) with a future option to add a backend.
+- Each goal rendered as a card with key information and history.
 
-Akzeptanzkriterien / Tests
---------------------------
-- Nutzer kann ein Ziel mit allen Pflichtfeldern anlegen und in der Liste sehen.
-- Nutzer kann Ziele aktivieren/deaktivieren
-- Dashboard zeigt aktive Ziele in priorisierter Reihenfolge und maximal N Ziele gleichzeitig an.
-- Dashboard zeigt aktive Ziele in erwarteter Prioritätsreihenfolge und aktualisiert nach Änderungen.
-- Erinnerungs-Check-ins sind sichtbar (für MVP lokal simuliert).
-- Export/Import: JSON-Export erzeugt eine Datei/Download; Import stellt Daten wieder her (lokal).
+## Acceptance Criteria
+- Goals can be created with all required fields and appear immediately.
+- Goals can be activated/deactivated and the active limit is enforced.
+- Dashboard reflects the correct priority order and updates after changes.
+- Check-in reminders appear according to the schedule.
+- Export triggers a JSON download; import restores the previous state.
 
-Technische Annahmen für MVP
----------------------------
-- Start als statische Webapp mit LocalStorage (kein Server), um schnell live gehen zu können und keine Kosten zu erzeugen.
-- UI-first: Fokus auf einfacher, funktionaler UX; Backend (Auth/Sync) kommt später, falls nötig.
+## Technical Assumptions
+- Start as a static web app backed by LocalStorage to minimise costs and go live quickly.
+- UX-first delivery; authentication and sync can follow later.
 
-Erfolgskriterien (nach Launch MVP)
----------------------------------
-- Technisch: Export/Import funktioniert zuverlässig und es gibt keine Datenverluste bei normalen Aktionen
-- Ester Prototyp ist live und nutzbar. 
+## Success Criteria
+- Export/import works reliably without data loss.
+- A first prototype is live and usable end to end.
 
-Nächste Schritte
-----------------
-1. Tech-Stack finalisieren (falls persistente Auth/Sync nötig)
-2. Einfacher Prototyp (HTML/CSS/JS) für UI-Flow bauen
-3. Nutzerstudie mit 5–10 Testpersonen
+## Next Steps
+1. Finalise tech stack (evaluate whether sync/auth is needed later).
+2. Build the UI flow with vanilla HTML/CSS/JS.
+3. Run lightweight user testing with 5-10 participants.
+

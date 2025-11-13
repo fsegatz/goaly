@@ -41,11 +41,11 @@ For example, modify your `index.html` to:
 
 ```html
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goaly - Zielverfolgung</title>
+    <title>Goaly - Goal tracking</title>
     <link rel="stylesheet" href="styles/styles.css?v=1.0.0"> <!-- Added version parameter -->
 </head>
 <body>
@@ -55,6 +55,4 @@ For example, modify your `index.html` to:
 </body>
 </html>
 ```
-And then, every time you deploy a new version, just change `v=1.0.0` to `v=1.0.1` (or any new unique string/number).
-
-Would you like me to update your `index.html` with cache busting parameters?
+Each time you deploy a new version, increment the `v` value (e.g. `v=1.0.1`) to bust caches.

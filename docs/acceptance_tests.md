@@ -1,80 +1,81 @@
-# Akzeptanztests — Goaly (MVP)
+# Acceptance Tests — Goaly MVP
 
-Anleitung
---------
-Diese Tests sind für die manuelle Ausführung der MVP-Akzeptanzkriterien konzipiert. Führe sie lokal in der aktuellen Webapp-Version aus. Für Dev-Tests können Intervalle (z. B. Check-ins) auf Minuten statt Tage gestellt werden.
+This checklist summarises the manual verification of the MVP scope. Run the tests locally against the current build. For development runs, shorten the check-in interval to minutes instead of days.
 
-Test 1 — Goal CRUD
--------------------
-Precondition: App geöffnet, lokaler Speicher leer oder mit Testdaten.
+## Test 1 — Goal CRUD
 
-Schritte:
-1. Neues Ziel anlegen mit: Titel="Testziel A", Motivation=3, Dringlichkeit=4, Deadline= (optional).
-2. Prüfe, ob das Ziel in der Liste erscheint.
-3. Editiere das Ziel (ändere Motivation auf 5) und speichere.
-4. Lösche das Ziel.
+**Precondition:** Browser open, LocalStorage empty or seeded with temporary data.
 
-Erwartetes Ergebnis:
-- Nach Schritt 1: Ziel erscheint sofort in der Liste.
-- Nach Schritt 3: Änderungen sind sichtbar und persistent (bei Reload weiterhin vorhanden).
-- Nach Schritt 4: Ziel ist entfernt und nicht mehr sichtbar.
+**Steps**
+1. Create a new goal with title “Test goal A”, motivation `3`, urgency `4`, and leave the deadline empty.
+2. Confirm the goal appears on the dashboard.
+3. Edit the goal, change motivation to `5`, and save.
+4. Delete the goal.
 
-Test 2 — Limit & Aktivierung
-----------------------------
-Precondition: Limit für aktive Ziele = 3 (Default).
+**Expected**
+- After creation the goal shows immediately.
+- After editing the updated values persist across reloads.
+- After deletion the goal is removed from all views.
 
-Schritte:
-1. Erstelle 3 aktive Ziele.
-2. Erstelle ein 4. Ziel und versuche, es aktiv zu schalten (oder aktiviere es, falls Standard inaktiv).
+## Test 2 — Active limit & auto activation
 
-Erwartetes Ergebnis:
-- App verhindert die Aktivierung des 4. Ziels und zeigt einen Hinweis / Vorschlag an (z. B. ein anderes Ziel pausieren oder Limit erhöhen).
+**Precondition:** Active goal limit set to `3` (default).
 
-Test 3 — Priorisierung / Dashboard
-----------------------------------
-Precondition: Mindestens 3 aktive Ziele mit unterschiedlichen Motivations-/Dringlichkeits-Werten und Deadlines.
+**Steps**
+1. Create three active goals.
+2. Create a fourth goal and attempt to activate it.
 
-Schritte:
-1. Öffne Dashboard.
-2. Prüfe Reihenfolge der angezeigten Ziele.
-3. Ändere die Motivation oder Dringlichkeit eines Ziels und beobachte die Neusortierung.
+**Expected**
+- The app blocks the fourth activation and suggests pausing another goal or increasing the limit.
 
-Erwartetes Ergebnis:
-- Dashboard sortiert nach Priorität (Formel dokumentiert oder nachvollziehbar) und aktualisiert live nach Änderungen.
+## Test 3 — Dashboard prioritisation
 
-Test 4 — Export / Import (JSON)
--------------------------------
-Precondition: Mindestens 2 Ziele vorhanden.
+**Precondition:** At least three active goals with different motivation/urgency values and deadlines.
 
-Schritte:
-1. Exportiere die Daten (Download einer JSON-Datei).
-2. Leere den LocalStorage (oder nutze die App-Funktion 'Reset').
-3. Importiere die zuvor exportierte JSON-Datei.
+**Steps**
+1. Open the dashboard.
+2. Confirm ordering by priority.
+3. Adjust motivation or urgency on one goal and observe the resorting.
 
-Erwartetes Ergebnis:
-- Nach Import sind alle Ziele wiederhergestellt mit korrekten Attributen (Titel, Motivation, Dringlichkeit, Deadline, Status).
+**Expected**
+- The ordering follows the documented priority formula and updates immediately.
 
-Test 5 — Erinnerungen / Check-ins (Dev-simuliert)
-------------------------------------------------
-Precondition: Mindestens ein aktives Ziel und Check-in-Mechanismus konfigurierbar (für Dev: Intervall auf 1 Minute setzen).
+## Test 4 — Export / import (JSON)
 
-Schritte:
-1. Starte die App mit einem Test-Checkin Intervall (z. B. T+1 minute für Entwicklertest).
-2. Warte auf das erste Check-in.
+**Precondition:** At least two goals exist.
 
-Erwartetes Ergebnis:
-- Check-in wird in der UI angezeigt (oder als Browser-Notification, falls implementiert). Für MVP reicht sichtbare Anzeige in der App.
+**Steps**
+1. Export data (JSON download).
+2. Clear LocalStorage (or trigger a reset in-app if available).
+3. Import the previously exported file.
 
-Testdaten-Beispiel für Import (JSON)
------------------------------------
+**Expected**
+- All goals return with correct fields (title, motivation, urgency, deadline, status).
+
+## Test 5 — Check-in reminders (dev simulation)
+
+**Precondition:** At least one active goal and the check-in interval configurable (set to one minute for the test).
+
+**Steps**
+1. Launch the app with the short interval.
+2. Wait for the first reminder banner.
+
+**Expected**
+- A visible check-in appears in the UI. Dismissing the reminder hides the banner.
+
+## Sample import data
+
+```json
 {
   "goals": [
-    {"id":"1","title":"Testziel A","motivation":3,"urgency":4,"deadline":null,"status":"active"},
-    {"id":"2","title":"Testziel B","motivation":5,"urgency":2,"deadline":"2026-04-01","status":"paused"}
+    {"id":"1","title":"Test goal A","motivation":3,"urgency":4,"deadline":null,"status":"active"},
+    {"id":"2","title":"Test goal B","motivation":5,"urgency":2,"deadline":"2026-04-01","status":"paused"}
   ]
 }
+```
 
-Hinweise / Ablauf
-------------------
-- Für manuelle Tests: Nutze Entwicklertools (LocalStorage) um Daten schnell zurückzusetzen.
-- Für automatisierte Tests später: Diese Testfälle lassen sich als UI-Tests (z. B. Playwright / Cypress) abbilden.
+## Notes
+
+- Use DevTools → Application/Storage to reset LocalStorage between runs.
+- These scenarios can later be automated with frameworks such as Playwright or Cypress.
+

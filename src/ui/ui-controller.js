@@ -1,25 +1,27 @@
 // src/ui/ui-controller.js
 
-const HISTORY_FIELD_LABELS = {
-    title: 'Titel',
-    description: 'Beschreibung',
-    motivation: 'Motivation',
-    urgency: 'Dringlichkeit',
-    deadline: 'Deadline',
-    status: 'Status',
-    priority: 'Priorität'
+const HISTORY_FIELD_LABEL_KEYS = {
+    title: 'history.fields.title',
+    description: 'history.fields.description',
+    motivation: 'history.fields.motivation',
+    urgency: 'history.fields.urgency',
+    deadline: 'history.fields.deadline',
+    status: 'history.fields.status',
+    priority: 'history.fields.priority'
 };
 
-const HISTORY_EVENT_LABELS = {
-    created: 'Erstellt',
-    updated: 'Aktualisiert',
-    'status-change': 'Status angepasst',
-    rollback: 'Zurückgesetzt'
+const HISTORY_EVENT_LABEL_KEYS = {
+    created: 'history.events.created',
+    updated: 'history.events.updated',
+    'status-change': 'history.events.statusChanged',
+    rollback: 'history.events.rollback'
 };
 
 class UIController {
     constructor(app) {
         this.app = app;
+        this.languageService = app.languageService;
+        this.translate = (key, replacements) => this.languageService.translate(key, replacements);
         this.allGoalsState = {
             statusFilter: 'all',
             minPriority: 0,
@@ -47,12 +49,73 @@ class UIController {
         this.completionModalInitialized = false;
         this.priorityCache = new Map();
         this.priorityCacheDirty = true;
+        this.languageChangeUnsubscribe = this.languageService.onChange(() => {
+            this.applyLanguageUpdates();
+        });
+
+        this.initializeLanguageControls();
         this.setupEventListeners();
+    }
+
+    initializeLanguageControls() {
+        this.updateLanguageOptions();
+        this.syncSettingsForm();
+        this.languageService.applyTranslations(document);
+    }
+
+    applyLanguageUpdates() {
+        this.updateLanguageOptions();
+        this.syncSettingsForm();
+        this.languageService.applyTranslations(document);
+        this.renderViews();
+    }
+
+    updateLanguageOptions() {
+        const languageSelect = document.getElementById('languageSelect');
+        if (!languageSelect) {
+            return;
+        }
+
+        const currentValue = languageSelect.value;
+        languageSelect.innerHTML = '';
+
+        this.languageService.getSupportedLanguages().forEach((languageCode) => {
+            const option = document.createElement('option');
+            option.value = languageCode;
+            option.textContent = this.translate(`language.names.${languageCode}`);
+            option.setAttribute('data-i18n-key', `language.names.${languageCode}`);
+            languageSelect.appendChild(option);
+        });
+
+        const effectiveLanguage = this.app.settingsService.getSettings().language || this.languageService.getLanguage();
+        languageSelect.value = effectiveLanguage;
+    }
+
+    syncSettingsForm() {
+        const settings = this.app.settingsService.getSettings();
+        const maxActiveGoals = document.getElementById('maxActiveGoals');
+        const checkInInterval = document.getElementById('checkInInterval');
+        const checkInsEnabled = document.getElementById('checkInsEnabled');
+        const languageSelect = document.getElementById('languageSelect');
+
+        if (maxActiveGoals) {
+            maxActiveGoals.value = settings.maxActiveGoals;
+        }
+        if (checkInInterval) {
+            checkInInterval.value = settings.checkInInterval;
+        }
+        if (checkInsEnabled) {
+            checkInsEnabled.checked = settings.checkInsEnabled;
+        }
+        if (languageSelect) {
+            languageSelect.value = settings.language;
+        }
     }
 
     renderViews() {
         this.invalidatePriorityCache();
         this.refreshPriorityCache();
+        this.syncSettingsForm();
         const settings = this.app.settingsService.getSettings();
         const activeGoals = this.app.goalService.getActiveGoals();
         const dashboardGoals = activeGoals.slice(0, settings.maxActiveGoals);
@@ -61,7 +124,13 @@ class UIController {
         dashboardList.innerHTML = '';
 
         if (dashboardGoals.length === 0) {
-            dashboardList.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">Keine aktiven Ziele. Erstelle dein erstes Ziel!</p>';
+            const emptyState = document.createElement('p');
+            emptyState.style.textAlign = 'center';
+            emptyState.style.color = '#888';
+            emptyState.style.padding = '40px';
+            emptyState.textContent = this.translate('dashboard.noActiveGoals');
+            emptyState.setAttribute('data-i18n-key', 'dashboard.noActiveGoals');
+            dashboardList.appendChild(emptyState);
         } else {
             dashboardGoals.forEach(goal => {
                 dashboardList.appendChild(this.createGoalCard(goal));
@@ -78,7 +147,7 @@ class UIController {
         const priority = this.app.goalService.calculatePriority(goal);
         const deadlineText = goal.deadline
             ? this.formatDeadline(goal.deadline)
-            : 'Keine Deadline';
+            : this.translate('goalCard.noDeadline');
 
         card.innerHTML = `
             <div class="goal-header">
@@ -87,37 +156,37 @@ class UIController {
                     <span class="goal-status-badge status-${goal.status}">${this.getStatusText(goal.status)}</span>
                 </div>
             </div>
-            <div class="goal-description" contenteditable="true" role="textbox" aria-label="Beschreibung bearbeiten" data-goal-id="${goal.id}" data-placeholder="Beschreibung hinzufügen..."></div>
+            <div class="goal-description" contenteditable="true" role="textbox" aria-label="${this.translate('goalCard.descriptionAria')}" data-goal-id="${goal.id}" data-placeholder="${this.translate('goalCard.descriptionPlaceholder')}"></div>
             <div class="goal-metrics">
                 <div class="metric">
-                    <span class="metric-label">Priorität</span>
+                    <span class="metric-label">${this.translate('goalCard.priorityLabel')}</span>
                     <span class="metric-value priority">${priority.toFixed(1)}</span>
                 </div>
             </div>
             <div class="goal-deadline ${this.isDeadlineUrgent(goal.deadline) ? 'urgent' : ''}">
-                📅 ${deadlineText}
+                ${this.translate('goalCard.deadlinePrefix', { deadline: deadlineText })}
             </div>
             <div class="goal-actions">
-                <button class="btn btn-primary edit-goal" data-id="${goal.id}" aria-expanded="false">Bearbeiten</button>
+                <button class="btn btn-primary edit-goal" data-id="${goal.id}" aria-expanded="false">${this.translate('goalCard.actions.edit')}</button>
             </div>
             <div class="goal-inline-editor" aria-hidden="true">
                 <div class="inline-fields">
                     <label>
-                        <span>Deadline</span>
+                        <span>${this.translate('goalCard.inline.deadline')}</span>
                         <input type="date" class="inline-deadline" value="${goal.deadline ? goal.deadline.toISOString().split('T')[0] : ''}">
                     </label>
                     <label>
-                        <span>Motivation</span>
+                        <span>${this.translate('goalCard.inline.motivation')}</span>
                         <input type="number" class="inline-motivation" min="1" max="5" step="1" value="${goal.motivation}">
                     </label>
                     <label>
-                        <span>Dringlichkeit</span>
+                        <span>${this.translate('goalCard.inline.urgency')}</span>
                         <input type="number" class="inline-urgency" min="1" max="5" step="1" value="${goal.urgency}">
                     </label>
                 </div>
                 <div class="inline-actions">
-                    <button type="button" class="btn btn-primary save-inline">Speichern</button>
-                    <button type="button" class="btn btn-secondary cancel-inline">Abbrechen</button>
+                    <button type="button" class="btn btn-primary save-inline">${this.translate('common.save')}</button>
+                    <button type="button" class="btn btn-secondary cancel-inline">${this.translate('common.cancel')}</button>
                 </div>
             </div>
         `;
@@ -163,7 +232,7 @@ class UIController {
                     this.app.goalService.updateGoal(goal.id, { description: sanitizedValue }, maxActiveGoals);
                     goal.description = sanitizedValue;
                 } catch (error) {
-                    alert(error.message || 'Aktualisierung des Ziels fehlgeschlagen.');
+                    alert(error.message || this.translate('errors.goalUpdateFailed'));
                     resetDescription();
                 }
             });
@@ -182,7 +251,7 @@ class UIController {
             const completeButton = document.createElement('button');
             completeButton.type = 'button';
             completeButton.className = 'btn btn-secondary complete-goal';
-            completeButton.textContent = 'Abschließen';
+            completeButton.textContent = this.translate('goalCard.actions.complete');
             completeButton.addEventListener('click', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -250,17 +319,18 @@ class UIController {
     formatDeadline(deadline) {
         const now = new Date();
         const days = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
-        
+
         if (days < 0) {
-            return `Überfällig (${Math.abs(days)} Tage)`;
+            return this.translate('deadline.overdue', { count: Math.abs(days) });
         } else if (days === 0) {
-            return 'Heute';
+            return this.translate('deadline.today');
         } else if (days === 1) {
-            return 'Morgen';
+            return this.translate('deadline.tomorrow');
         } else if (days <= 7) {
-            return `In ${days} Tagen`;
+            return this.translate('deadline.inDays', { count: days });
         } else {
-            return deadline.toLocaleDateString('de-DE');
+            const locale = this.languageService.getLocale();
+            return deadline.toLocaleDateString(locale);
         }
     }
 
@@ -272,13 +342,9 @@ class UIController {
     }
 
     getStatusText(status) {
-        const statusMap = {
-            active: 'Aktiv',
-            paused: 'Pausiert',
-            completed: 'Erreicht',
-            abandoned: 'Nicht erreicht'
-        };
-        return statusMap[status] || status;
+        const key = `status.${status}`;
+        const translated = this.translate(key);
+        return translated === key ? status : translated;
     }
 
     escapeHtml(text) {
@@ -301,7 +367,7 @@ class UIController {
         if (goalId) {
             goal = this.app.goalService.goals.find(g => g.id === goalId) || null;
             if (goal) {
-                modalTitle.textContent = 'Ziel bearbeiten';
+                modalTitle.textContent = this.translate('goalForm.editTitle');
                 document.getElementById('goalId').value = goal.id;
                 document.getElementById('goalTitle').value = goal.title;
                 document.getElementById('goalDescription').value = goal.description || '';
@@ -313,7 +379,7 @@ class UIController {
                 deleteBtn.style.display = 'inline-block';
             }
         } else {
-            modalTitle.textContent = 'Neues Ziel';
+            modalTitle.textContent = this.translate('goalForm.createTitle');
             form.reset();
             document.getElementById('goalId').value = '';
             deleteBtn.style.display = 'none';
@@ -325,7 +391,7 @@ class UIController {
             this.resetGoalHistoryView();
         }
 
-        // Zeige Modal über CSS-Klasse
+        // Show modal by toggling CSS class
         modal.classList.add('is-visible');
     }
 
@@ -355,16 +421,34 @@ class UIController {
         this.app.checkIns.forEach(checkIn => {
             const item = document.createElement('div');
             item.className = 'check-in-item';
-            item.innerHTML = `
-                <h3>${this.escapeHtml(checkIn.goal.title)}</h3>
-                <p>${checkIn.message}</p>
-                <div class="check-in-actions">
-                    <button class="btn btn-primary check-in-done" data-id="${checkIn.goal.id}">Check-in durchgeführt</button>
-                    <button class="btn btn-secondary edit-check-in-goal" data-id="${checkIn.goal.id}">Ziel bearbeiten</button>
-                </div>
-            `;
-            
-            item.querySelector('.check-in-done').addEventListener('click', () => {
+            const originalTitle = checkIn?.messageArgs?.title || checkIn.goal.title;
+
+            const heading = document.createElement('h3');
+            heading.textContent = originalTitle;
+            item.appendChild(heading);
+
+            const messageParagraph = document.createElement('p');
+            messageParagraph.textContent = this.translate('checkIns.prompt', { title: originalTitle });
+            item.appendChild(messageParagraph);
+
+            const actions = document.createElement('div');
+            actions.className = 'check-in-actions';
+
+            const doneButton = document.createElement('button');
+            doneButton.className = 'btn btn-primary check-in-done';
+            doneButton.dataset.id = checkIn.goal.id;
+            doneButton.textContent = this.translate('checkIns.actions.done');
+            actions.appendChild(doneButton);
+
+            const editButton = document.createElement('button');
+            editButton.className = 'btn btn-secondary edit-check-in-goal';
+            editButton.dataset.id = checkIn.goal.id;
+            editButton.textContent = this.translate('checkIns.actions.edit');
+            actions.appendChild(editButton);
+
+            item.appendChild(actions);
+
+            doneButton.addEventListener('click', () => {
                 this.app.checkInService.performCheckIn(checkIn.goal.id);
                 this.app.checkIns = this.app.checkInService.getCheckIns();
                 this.showCheckIns();
@@ -373,7 +457,7 @@ class UIController {
                 }
             });
             
-            item.querySelector('.edit-check-in-goal').addEventListener('click', () => {
+            editButton.addEventListener('click', () => {
                 this.openGoalForm(checkIn.goal.id);
             });
             
@@ -387,7 +471,7 @@ class UIController {
         const addGoalBtn = document.getElementById('addGoalBtn');
         if (addGoalBtn) {
             addGoalBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Verhindere Event-Bubbling
+                e.stopPropagation(); // Prevent event bubbling
                 this.openGoalForm();
             });
         }
@@ -408,7 +492,7 @@ class UIController {
         const deleteBtn = document.getElementById('deleteBtn');
         if (deleteBtn) {
             deleteBtn.addEventListener('click', () => {
-                if (confirm('Möchtest du dieses Ziel wirklich löschen?')) {
+                if (confirm(this.translate('goalForm.confirmDelete'))) {
                     const id = document.getElementById('goalId').value;
                     this.app.goalService.deleteGoal(id, this.app.settingsService.getSettings().maxActiveGoals);
                     this.closeGoalForm();
@@ -422,17 +506,17 @@ class UIController {
             closeBtn.addEventListener('click', () => this.closeGoalForm());
         }
 
-        // Verwende mousedown statt click, um sicherzustellen, dass das Modal nicht sofort geschlossen wird
+        // Use mousedown instead of click to avoid closing the modal immediately
         window.addEventListener('mousedown', (e) => {
             const modal = document.getElementById('goalModal');
             if (modal) {
                 const isModalVisible = modal.classList.contains('is-visible');
                 
-                // Schließe nur, wenn der Klick außerhalb des Modals ist
+                // Close only when the click happens outside the modal
                 if (isModalVisible && e.target && e.target.nodeType === 1) {
                     try {
                         if (!modal.contains(e.target)) {
-                            // Prüfe, ob der Klick auf einen Button war, der das Modal öffnet
+                            // Check if the click target is a button that opens the modal
                             const clickedElement = e.target;
                             const isAddGoalBtn = clickedElement.id === 'addGoalBtn' || clickedElement.closest('#addGoalBtn');
                             const isEditBtn = clickedElement.classList && (clickedElement.classList.contains('edit-goal') || clickedElement.closest('.edit-goal'));
@@ -476,19 +560,26 @@ class UIController {
         const saveSettingsBtn = document.getElementById('saveSettingsBtn');
         if (saveSettingsBtn) {
             saveSettingsBtn.addEventListener('click', () => {
+                const languageSelect = document.getElementById('languageSelect');
+                const previousLanguage = this.app.settingsService.getSettings().language;
                 const newSettings = {
                     maxActiveGoals: parseInt(document.getElementById('maxActiveGoals').value),
                     checkInInterval: parseInt(document.getElementById('checkInInterval').value),
-                    checkInsEnabled: document.getElementById('checkInsEnabled').checked
+                    checkInsEnabled: document.getElementById('checkInsEnabled').checked,
+                    language: languageSelect ? languageSelect.value : previousLanguage
                 };
                 const oldMaxActiveGoals = this.app.settingsService.getSettings().maxActiveGoals;
                 this.app.settingsService.updateSettings(newSettings);
                 
-                // Wenn sich maxActiveGoals geändert hat, automatisch neu aktivieren
+                // Automatically re-activate goals if maxActiveGoals changed
                 if (newSettings.maxActiveGoals !== oldMaxActiveGoals) {
                     this.app.goalService.autoActivateGoalsByPriority(newSettings.maxActiveGoals);
                 }
                 
+                if (newSettings.language && newSettings.language !== previousLanguage) {
+                    this.app.languageService.setLanguage(newSettings.language);
+                }
+
                 this.app.startCheckInTimer();
                 this.renderViews();
             });
@@ -534,7 +625,7 @@ class UIController {
             this.closeGoalForm();
             this.renderViews();
         } catch (error) {
-            alert(error.message);
+            alert(error.message || this.translate('errors.goalSaveFailed'));
         }
     }
 
@@ -645,6 +736,10 @@ class UIController {
             return;
         }
 
+        if (emptyState) {
+            emptyState.textContent = this.translate('tables.allGoals.emptyState');
+        }
+
         if (statusFilter) {
             statusFilter.value = this.allGoalsState.statusFilter;
         }
@@ -721,44 +816,45 @@ class UIController {
             row.dataset.goalId = goal.id;
             row.tabIndex = 0;
             row.setAttribute('role', 'button');
-            row.setAttribute('aria-label', `${goal.title} öffnen`);
+            row.setAttribute('aria-label', this.translate('allGoals.openGoalAria', { title: goal.title }));
 
             const cells = [
                 {
-                    label: 'Titel',
+                    labelKey: 'tables.allGoals.headers.title',
                     content: this.escapeHtml(goal.title),
                     isHtml: true,
                     className: 'cell-title'
                 },
                 {
-                    label: 'Status',
+                    labelKey: 'tables.allGoals.headers.status',
                     content: `<span class="goal-status-badge status-${goal.status}">${this.getStatusText(goal.status)}</span>`,
                     isHtml: true
                 },
                 {
-                    label: 'Priorität',
+                    labelKey: 'tables.allGoals.headers.priority',
                     content: priority.toFixed(1)
                 },
                 {
-                    label: 'Motivation',
+                    labelKey: 'tables.allGoals.headers.motivation',
                     content: `${goal.motivation}/5`
                 },
                 {
-                    label: 'Dringlichkeit',
+                    labelKey: 'tables.allGoals.headers.urgency',
                     content: `${goal.urgency}/5`
                 },
                 {
-                    label: 'Deadline',
-                    content: goal.deadline ? goal.deadline.toLocaleDateString('de-DE') : 'Keine Deadline'
+                    labelKey: 'tables.allGoals.headers.deadline',
+                    content: goal.deadline ? this.formatDate(goal.deadline) : this.translate('goalCard.noDeadline')
                 },
                 {
-                    label: 'Letzte Änderung',
+                    labelKey: 'tables.allGoals.headers.lastUpdated',
                     content: goal.lastUpdated ? this.formatDateTime(goal.lastUpdated) : '—'
                 }
             ];
 
-            cells.forEach(({ label, content, isHtml, className }) => {
+            cells.forEach(({ labelKey, content, isHtml, className }) => {
                 const cell = document.createElement('td');
+                const label = this.translate(labelKey);
                 cell.dataset.label = label;
                 if (className) {
                     cell.classList.add(className);
@@ -788,9 +884,21 @@ class UIController {
             return '';
         }
         const dateObj = date instanceof Date ? date : new Date(date);
-        return dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+        const locale = this.languageService.getLocale();
+        return (
+            dateObj.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }) +
             ' ' +
-            dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            dateObj.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+        );
+    }
+
+    formatDate(date) {
+        if (!date) {
+            return '';
+        }
+        const dateObj = date instanceof Date ? date : new Date(date);
+        const locale = this.languageService.getLocale();
+        return dateObj.toLocaleDateString(locale);
     }
 
     getControlElement(id) {
@@ -841,14 +949,14 @@ class UIController {
 
         if (field === 'deadline') {
             if (!rawValue) {
-                return 'Keine Deadline';
+                return this.translate('goalCard.noDeadline');
             }
             try {
                 const date = new Date(rawValue);
                 if (Number.isNaN(date.getTime())) {
                     return '—';
                 }
-                return date.toLocaleDateString('de-DE');
+                return this.formatDate(date);
             } catch (error) {
                 return '—';
             }
@@ -897,7 +1005,11 @@ class UIController {
         section.hidden = false;
 
         if (!goal || !Array.isArray(goal.history) || goal.history.length === 0) {
-            list.innerHTML = '<p class="goal-history-empty">Noch keine Änderungen protokolliert.</p>';
+            list.innerHTML = '';
+            const emptyState = document.createElement('p');
+            emptyState.className = 'goal-history-empty';
+            emptyState.textContent = this.translate('history.empty');
+            list.appendChild(emptyState);
             return;
         }
 
@@ -918,7 +1030,8 @@ class UIController {
 
             const eventLabel = document.createElement('span');
             eventLabel.className = 'goal-history-entry__event';
-            eventLabel.textContent = HISTORY_EVENT_LABELS[entry.event] || 'Änderung';
+            const eventKey = HISTORY_EVENT_LABEL_KEYS[entry.event] || 'history.events.generic';
+            eventLabel.textContent = this.translate(eventKey);
 
             const timestamp = document.createElement('time');
             timestamp.className = 'goal-history-entry__timestamp';
@@ -939,7 +1052,8 @@ class UIController {
 
                     const fieldLabel = document.createElement('span');
                     fieldLabel.className = 'goal-history-change__field';
-                    fieldLabel.textContent = HISTORY_FIELD_LABELS[change.field] || change.field;
+                    const fieldKey = HISTORY_FIELD_LABEL_KEYS[change.field];
+                    fieldLabel.textContent = fieldKey ? this.translate(fieldKey) : change.field;
 
                     const valueLabel = document.createElement('span');
                     valueLabel.className = 'goal-history-change__values';
@@ -959,7 +1073,7 @@ class UIController {
                 const revertButton = document.createElement('button');
                 revertButton.type = 'button';
                 revertButton.className = 'btn btn-secondary btn-compact goal-history-revert';
-                revertButton.textContent = 'Auf diese Version zurücksetzen';
+                revertButton.textContent = this.translate('history.revertButton');
                 revertButton.addEventListener('click', () => {
                     this.handleHistoryRevert(goal.id, entry.id);
                 });
@@ -975,14 +1089,14 @@ class UIController {
             return;
         }
 
-        if (!window.confirm('Möchtest du dieses Ziel wirklich auf diese Version zurücksetzen?')) {
+        if (!window.confirm(this.translate('history.confirmRevert'))) {
             return;
         }
 
         const { maxActiveGoals } = this.app.settingsService.getSettings();
         const revertedGoal = this.app.goalService.revertGoalToHistoryEntry(goalId, historyEntryId, maxActiveGoals);
         if (!revertedGoal) {
-            alert('Zurücksetzen nicht möglich.');
+            alert(this.translate('errors.revertNotPossible'));
             return;
         }
 
@@ -1027,14 +1141,14 @@ class UIController {
             const { maxActiveGoals } = this.app.settingsService.getSettings();
             const updatedGoal = this.app.goalService.setGoalStatus(goalId, newStatus, maxActiveGoals);
             if (!updatedGoal) {
-                alert('Ziel nicht gefunden.');
+                alert(this.translate('errors.goalNotFound'));
                 return;
             }
 
             this.app.checkIns = this.app.checkInService.getCheckIns();
             this.renderViews();
         } catch (error) {
-            alert(error.message || 'Statusänderung fehlgeschlagen.');
+            alert(error.message || this.translate('errors.statusChangeFailed'));
         }
     }
 
@@ -1045,7 +1159,7 @@ class UIController {
             this.invalidatePriorityCache();
             this.renderViews();
         } catch (error) {
-            alert(error.message || 'Aktualisierung des Ziels fehlgeschlagen.');
+            alert(error.message || this.translate('errors.goalUpdateFailed'));
             this.renderViews();
         }
     }

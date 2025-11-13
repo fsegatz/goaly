@@ -1,56 +1,50 @@
-### Goaly - Zielverfolgungs-App
+### Goaly - Goal Tracking Concept
 
-Beschreibung: Hilft dir, deine Ziele zu setzen und zu verfolgen.
+**Description:** A focused web application that helps you define, prioritise and follow through on your goals.
 
-Problemstellung und Motivation:
-- Viele Menschen haben Schwierigkeiten, ihre Ziele zu verfolgen und zu erreichen.
-- Zu viele Ziele gleichzeitig können überwältigend sein.
-- Goaly hilft, den Fokus zu behalten und die Motivation aufrechtzuerhalten.
+#### Problem & Motivation
+- People often lose track of their goals or attempt to juggle too many at once.
+- Clear prioritisation makes it easier to stay motivated without feeling overwhelmed.
+- Goaly keeps you focused on the most impactful goals and reminds you to reassess their relevance.
 
-Funktionalität:
-1. Ziele definieren
-2. Ziele quantifizieren: Motivation und Dringlichkeit (1-5) Deadline (Datum)
-3. Wie viele Ziele du gleichzeitig verfolgen willst
-4. Dashboard: 
-    - Übersicht über aktuelle Ziele
-    - Schritte tracken, Resourcen anzeigen, Teilschritte und Bedingungen festlegen
-    - Priorisierung basierend auf Motivation und Dringlichkeit
-    - Zeigt andere Ziele mit gewisser Frequenz an um Motivation und Dringlichkeit zu überprüfen
-        - z.B erstes mal nach 3 Tagen, wenn Dringlichkeit oder Motivation gleich bleiben, dann nach 7 Tagen, dann nach 14 Tagen, dann nach 1 Monat
-5. Benachrichtigungen: Erinnerungen und Updates zu Zielen um Nutzer regemäß zu motivieren
-6. Webapp damit von überall zugänglich
+#### Core Functionality
+1. Define goals with title, description and optional deadline.
+2. Capture motivation and urgency on a 1-5 scale to quantify intent.
+3. Configure how many goals may remain active simultaneously.
+4. Dashboard
+   - Overview of the currently active goals.
+   - Prioritisation driven by motivation, urgency and deadline bonus.
+   - Gentle reminders to revisit dormant goals (after 3, 7, 14 and 30 days by default).
+5. Notifications / reminders to keep motivation high.
+6. Runs as a browser-based web app - accessible from anywhere.
 
-Nutzungsszenario:
-- Nutzer definiert drei Ziele: 
-    - Marathon trainieren (Motivation 2, Dringlichkeit 4, Deadline in 3 Monaten), 
-    - Spanisch lernen (Motivation 4, Dringlichkeit 3, keine Deadline), 
-    - ein Buch schreiben (Motivation 3, Dringlichkeit 2, keine Deadline).
-    - Sixpack bekommen (Motivation 3, Dringlichkeit 5, 6 Monate)
-- Nutzer entscheidet, nur zwei Ziele gleichzeitig zu verfolgen.
-- Im Dashboard sieht der Nutzer die Fortschritte beim Marathontraining und Sixpack bekommen da diese Zeile höchste Dringlichkeit haben. 
-- Nach 3 Tagen wird der Nutzer gefragt, ob die Motivation und Dringlichkeit für das Spanisch lernen noch aktuell sind.
-- Der Nutzer passt die Motivation für das Spanisch lernen auf 5 an, da er kürzlich eine Reise nach Spanien geplant hat
-- Das Dashboard aktualisiert sich und zeigt nun Spanisch lernen anstatt Marathon trainieren, da die Dringlichkeit gleich ist bleibt, aber die Motivation für Spanisch lernen höher ist.
-- Der Nutzer verwendet Goaly täglich für 10 Minuten morgens um seine Fortschritte zu überprüfen und anzupassen.
+#### Usage Scenario
+- A user defines four goals:
+  - Train for a marathon (motivation 2, urgency 4, deadline in 3 months)
+  - Learn Spanish (motivation 4, urgency 3, no deadline)
+  - Write a book (motivation 3, urgency 2, no deadline)
+  - Get a six-pack (motivation 3, urgency 5, deadline in 6 months)
+- The user limits the active goals to two. The dashboard highlights “Marathon training” and “Get a six-pack” because they have the highest urgency.
+- After three days, Goaly checks in about “Learn Spanish”. The user raises motivation to 5 due to an upcoming trip.
+- The dashboard reorders to show “Learn Spanish” instead of “Marathon training”.
+- The user spends ten minutes every morning reviewing progress and adjusting priorities.
 
-Implementierung:
-    - Option 1:
-        - Frontend: Statische Webapp
-        - Backend: Hosted server mit API und Datenbank
-    - Option 2:
-        - Frontend: Statishe Webapp
-        - Datenhaltung: Local Storage des Browsers (Cache), User kann Daten exportieren und importieren um sie zu sichern
-    - Option 3:
-        - Frontend: Statische Webapp
-        - Backend: Firebase (Datenbank und Authentifizierung)
+#### Implementation Options
+- **Option 1**
+  - Frontend: static web app
+  - Backend: hosted API with database
+- **Option 2 (current MVP)**
+  - Frontend: static web app
+  - Data storage: browser LocalStorage with manual export/import for backups
+- **Option 3**
+  - Frontend: static web app
+  - Backend: Firebase (database + authentication)
 
-Blacklist:
-- Streamlit nicht verwenden, weil es keine statische Webapp ist.
+#### Constraints & Wishes
+- No Streamlit (requires a running Python backend).
+- UI should work on desktop and mobile.
+- Build a working prototype quickly; iterate without overengineering.
+- Zero cost infrastructure; avoid paid services.
+- Structure work into modular packages to enable parallel development.
+- Primary objective: practise AI-assisted software development.
 
-Weitere Wünsche:
-- Benutzeroberflächenübergreifende UI (Desktop, Mobile, Web)
-- Heute nen ersten Prototypen bauen und life gehen -> Set priorities
-- Don't overengineer
-- No cost / no paid services 
-- Project in Packages aufteilen -> Parallel entwicklung
-- Zweck: Training von AI-assisted software development

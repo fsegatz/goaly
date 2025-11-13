@@ -38,14 +38,14 @@ class GoalService {
     }
 
     /**
-     * Migriert bestehende Ziele: Aktiviert automatisch die N Ziele mit höchster Priorität.
-     * Sollte beim App-Start aufgerufen werden, um bestehende manuell aktivierte Ziele zu migrieren.
-     * @param {number} maxActiveGoals - Maximale Anzahl aktiver Ziele
+     * Migrates existing goals by automatically activating the top N goals by priority.
+     * Call this during app start to migrate previously manually activated goals.
+     * @param {number} maxActiveGoals - Maximum number of active goals
      */
     migrateGoalsToAutoActivation(maxActiveGoals) {
         if (this.goals.length === 0) return;
         
-        // Automatisch die N Ziele mit höchster Priorität aktivieren
+        // Automatically activate the top N goals by priority
         this.autoActivateGoalsByPriority(maxActiveGoals);
     }
 
@@ -184,8 +184,8 @@ class GoalService {
     }
 
     createGoal(goalData, maxActiveGoals) {
-        // Status wird nicht mehr manuell gesetzt, sondern automatisch bestimmt
-        const goal = new Goal({ ...goalData, status: 'paused' }); // Temporär auf paused setzen
+        // Status is determined automatically rather than set manually
+        const goal = new Goal({ ...goalData, status: 'paused' }); // Temporarily set to paused
         const creationSnapshot = this.createSnapshot(goal);
         const creationChanges = this.diffSnapshots({}, creationSnapshot);
         this.recordHistory(goal, {
@@ -197,7 +197,7 @@ class GoalService {
         });
         this.goals.push(goal);
         
-        // Automatisch die N Ziele mit höchster Priorität aktivieren
+        // Automatically activate the top N goals by priority
         this.autoActivateGoalsByPriority(maxActiveGoals);
         
         return goal;
@@ -248,8 +248,7 @@ class GoalService {
 
         updates.lastUpdated = new Date();
 
-        // Status wird nicht mehr manuell gesetzt, sondern automatisch bestimmt
-        // goalData.status wird ignoriert
+        // Status is determined automatically; ignore goalData.status input
 
         Object.assign(goal, updates);
 
@@ -263,7 +262,7 @@ class GoalService {
             changes
         });
         
-        // Wenn sich die Priorität geändert hat, automatisch neu aktivieren
+        // Automatically re-activate goals if the priority changed
         if (priorityChanged) {
             this.autoActivateGoalsByPriority(maxActiveGoals);
         } else {
@@ -312,7 +311,7 @@ class GoalService {
         const wasActive = this.goals.find(g => g.id === id)?.status === 'active';
         this.goals = this.goals.filter(g => g.id !== id);
         
-        // Wenn ein aktives Ziel gelöscht wurde, automatisch neu aktivieren
+        // Automatically re-activate goals if an active goal was deleted
         if (wasActive) {
             this.autoActivateGoalsByPriority(maxActiveGoals);
         } else {
@@ -345,30 +344,30 @@ class GoalService {
     }
 
     /**
-     * Automatisch die N Ziele mit der höchsten Priorität aktivieren.
-     * Alle anderen nicht-abgeschlossenen Ziele werden pausiert.
-     * @param {number} maxActiveGoals - Maximale Anzahl aktiver Ziele
+     * Automatically activates the top N goals with the highest priority.
+     * All other non-completed goals are paused.
+     * @param {number} maxActiveGoals - Maximum number of active goals
      */
     autoActivateGoalsByPriority(maxActiveGoals) {
-        // Alle nicht-abgeschlossenen Ziele nach Priorität sortieren
+        // Sort all non-completed goals by priority
         const ineligibleStatuses = new Set(['completed', 'abandoned']);
         const eligibleGoals = this.goals
             .filter(g => !ineligibleStatuses.has(g.status))
             .sort((a, b) => {
                 const priorityA = this.calculatePriority(a);
                 const priorityB = this.calculatePriority(b);
-                // Bei gleicher Priorität: ältere Ziele bevorzugen (stabilere Sortierung)
+                // Prefer older goals when priorities tie to keep sorting stable
                 if (priorityA === priorityB) {
                     return a.createdAt - b.createdAt;
                 }
                 return priorityB - priorityA;
             });
 
-        // Die N Ziele mit höchster Priorität aktivieren
+        // Activate the top N goals by priority
         const goalsToActivate = eligibleGoals.slice(0, maxActiveGoals);
         const goalsToPause = eligibleGoals.slice(maxActiveGoals);
 
-        // Status aktualisieren
+        // Update status
         goalsToActivate.forEach(goal => {
             this.handleStatusTransition(goal, 'active');
         });

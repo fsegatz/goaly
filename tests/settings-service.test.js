@@ -23,13 +23,14 @@ describe('Settings Service', () => {
     });
 
     it('should load settings from localStorage', () => {
-        const savedSettings = { maxActiveGoals: 5, checkInInterval: 10, checkInsEnabled: false };
+        const savedSettings = { maxActiveGoals: 5, checkInInterval: 10, checkInsEnabled: false, language: 'de' };
         localStorage.getItem.mockReturnValue(JSON.stringify(savedSettings));
         settingsService.loadSettings();
         const settings = settingsService.getSettings();
         expect(settings.maxActiveGoals).toBe(5);
         expect(settings.checkInInterval).toBe(10);
         expect(settings.checkInsEnabled).toBe(false);
+        expect(settings.language).toBe('de');
     });
 
     it('should not change settings when localStorage is empty', () => {
@@ -53,5 +54,19 @@ describe('Settings Service', () => {
         settingsService.updateSettings({ maxActiveGoals: 5 });
         const settings = settingsService.getSettings();
         expect(settings.maxActiveGoals).toBe(5);
+    });
+
+    it('should default language to en on load when missing', () => {
+        const savedSettings = { language: '' };
+        localStorage.getItem.mockReturnValue(JSON.stringify(savedSettings));
+
+        settingsService.loadSettings();
+
+        expect(settingsService.getSettings().language).toBe('en');
+    });
+
+    it('should default language to en on update when missing', () => {
+        settingsService.updateSettings({ language: '' });
+        expect(settingsService.getSettings().language).toBe('en');
     });
 });
