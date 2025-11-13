@@ -1,5 +1,6 @@
 const { JSDOM } = require('jsdom');
 const LanguageService = require('../src/domain/language-service').default;
+const enTranslations = require('../src/language/en').default;
 
 describe('LanguageService', () => {
     let dom;
@@ -130,6 +131,34 @@ describe('LanguageService', () => {
         languagesSpy.mockRestore();
     });
 
+    test('init falls back to detected browser language', () => {
+        window.localStorage.getItem.mockReturnValue(null);
+        const languageSpy = jest.spyOn(global.navigator, 'language', 'get').mockReturnValue('sv-SE');
+        const languagesSpy = jest.spyOn(global.navigator, 'languages', 'get').mockReturnValue([]);
+
+        const service = new LanguageService();
+        const resolved = service.init();
+
+        expect(resolved).toBe('sv');
+        languageSpy.mockRestore();
+        languagesSpy.mockRestore();
+        window.localStorage.getItem.mockReset();
+    });
+
+    test('init uses default language when no resolver succeeds', () => {
+        window.localStorage.getItem.mockReturnValue(null);
+        const languageSpy = jest.spyOn(global.navigator, 'language', 'get').mockReturnValue('fr-FR');
+        const languagesSpy = jest.spyOn(global.navigator, 'languages', 'get').mockReturnValue([]);
+
+        const service = new LanguageService();
+        const resolved = service.init();
+
+        expect(resolved).toBe('en');
+        languageSpy.mockRestore();
+        languagesSpy.mockRestore();
+        window.localStorage.getItem.mockReset();
+    });
+
     test('applyTranslations updates text content, attributes and handles replacements', () => {
         const service = new LanguageService();
         service.init('en');
@@ -178,6 +207,12 @@ describe('LanguageService', () => {
         expect(() => service.applyTranslations(root)).not.toThrow();
     });
 
+    test('applyTranslations defaults to document when no root provided', () => {
+        const service = new LanguageService();
+        service.init('en');
+        expect(() => service.applyTranslations()).not.toThrow();
+    });
+
     test('getSupportedLanguages returns a copy', () => {
         const service = new LanguageService();
         service.init('en');
@@ -186,6 +221,32 @@ describe('LanguageService', () => {
         supported.push('fr');
 
         expect(service.getSupportedLanguages()).toEqual(['en', 'de', 'sv']);
+    });
+
+    test('setLanguage can skip persistence and notifications', () => {
+        const service = new LanguageService();
+        service.init('en');
+
+        window.localStorage.setItem.mockClear();
+        const callback = jest.fn();
+        service.onChange(callback);
+
+        service.setLanguage('de', { persist: false, notify: false });
+
+        expect(service.getLanguage()).toBe('de');
+        expect(window.localStorage.setItem).not.toHaveBeenCalled();
+        expect(callback).not.toHaveBeenCalled();
+    });
+
+    test('getLocale falls back to default mapping when missing', () => {
+        const service = new LanguageService({
+            translations: { en: enTranslations, de: enTranslations, sv: enTranslations, it: enTranslations },
+            defaultLanguage: 'en',
+            localeMap: { en: 'en-US' }
+        });
+        service.init('en');
+        service.setLanguage('it');
+        expect(service.getLocale()).toBe('en-US');
     });
 
     test('storage methods handle errors gracefully', () => {
@@ -235,6 +296,26 @@ describe('LanguageService', () => {
 
         expect(service.translate('')).toBe('');
         expect(service.translate(null)).toBe('');
+    });
+
+    test('translate falls back to the requested key when missing', () => {
+        const service = new LanguageService();
+        service.init('en');
+        expect(service.translate('missing.translation.key')).toBe('missing.translation.key');
+    });
+
+    test('detectBrowserLanguage handles missing languages list gracefully', () => {
+        const languageSpy = jest.spyOn(global.navigator, 'language', 'get').mockReturnValue('de-DE');
+        const languagesSpy = jest.spyOn(global.navigator, 'languages', 'get').mockReturnValue(undefined);
+        const service = new LanguageService();
+        expect(service.detectBrowserLanguage()).toBe('de');
+        languageSpy.mockRestore();
+        languagesSpy.mockRestore();
+    });
+
+    test('merge preserves array values in custom locale map', () => {
+        const service = new LanguageService({ localeMap: { en: ['en-US'] } });
+        expect(Array.isArray(service.localeMap.en)).toBe(true);
     });
 });
 

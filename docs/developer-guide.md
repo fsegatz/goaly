@@ -23,6 +23,13 @@
 - `styles/styles.css`: global styling with responsive layout.
 - `src/i18n`: localisation resources and language service.
 
+## Data Versioning
+- Goal exports use semantic versioning in the format `Major.Minor.Patch`.
+- The current data version is defined by `GOAL_FILE_VERSION` in `src/domain/versioning.js`; update it when the schema changes.
+- Every exported payload and the local goal storage (`localStorage`) include a top-level `version` field.
+- Importing a file with a newer version is blocked; older versions trigger the migration flow handled by `src/domain/migration-service.js` and the UI migration modals.
+- When adding a new schema revision, extend the migration utilities and update the diff presentation so users can review the upgrade.
+
 ## Project Structure
 ```
 goaly/

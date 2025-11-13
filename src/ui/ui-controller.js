@@ -1,5 +1,7 @@
 // src/ui/ui-controller.js
 
+import { computeLineDiff } from '../domain/diff-utils.js';
+
 const HISTORY_FIELD_LABEL_KEYS = {
     title: 'history.fields.title',
     description: 'history.fields.description',
@@ -52,6 +54,10 @@ class UIController {
         this.priorityCache = new Map();
         this.priorityCacheDirty = true;
         this.latestCheckInFeedback = null;
+        this.migrationModalRefs = {};
+        this.migrationDiffData = null;
+        this.isSyncingMigrationScroll = false;
+        this.migrationScrollBound = false;
         this.languageChangeUnsubscribe = this.languageService.onChange(() => {
             this.applyLanguageUpdates();
         });
@@ -800,6 +806,7 @@ class UIController {
         });
 
         this.setupAllGoalsControls();
+        this.setupMigrationModals();
         this.setupCompletionModal();
     }
 
@@ -875,6 +882,87 @@ class UIController {
         });
     }
 
+    setupMigrationModals() {
+        const promptModal = this.getMigrationElement('migrationPromptModal');
+        const diffModal = this.getMigrationElement('migrationDiffModal');
+
+        if (promptModal) {
+            const reviewBtn = this.getMigrationElement('migrationReviewBtn');
+            if (reviewBtn) {
+                reviewBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    this.closeMigrationPrompt();
+                    this.app.handleMigrationReviewRequest();
+                });
+            }
+
+            const promptCancel = this.getMigrationElement('migrationPromptCancelBtn');
+            if (promptCancel) {
+                promptCancel.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    this.closeMigrationModals();
+                    this.app.cancelMigration();
+                });
+            }
+
+            const promptClose = this.getMigrationElement('migrationPromptClose');
+            if (promptClose) {
+                promptClose.addEventListener('click', () => {
+                    this.closeMigrationModals();
+                    this.app.cancelMigration();
+                });
+            }
+        }
+
+        if (diffModal) {
+            const diffClose = this.getMigrationElement('migrationDiffClose');
+            if (diffClose) {
+                diffClose.addEventListener('click', () => {
+                    this.closeMigrationModals();
+                    this.app.cancelMigration();
+                });
+            }
+
+            const diffCancel = this.getMigrationElement('migrationCancelBtn');
+            if (diffCancel) {
+                diffCancel.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    this.closeMigrationModals();
+                    this.app.cancelMigration();
+                });
+            }
+
+            const diffApply = this.getMigrationElement('migrationApplyBtn');
+            if (diffApply) {
+                diffApply.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    this.app.completeMigration();
+                });
+            }
+
+            if (!this.migrationScrollBound) {
+                const oldView = this.getMigrationElement('migrationDiffOld');
+                const newView = this.getMigrationElement('migrationDiffNew');
+                if (oldView && newView) {
+                    const syncScroll = (source, target) => {
+                        if (this.isSyncingMigrationScroll) {
+                            return;
+                        }
+                        this.isSyncingMigrationScroll = true;
+                        target.scrollTop = source.scrollTop;
+                        target.scrollLeft = source.scrollLeft;
+                        requestAnimationFrame(() => {
+                            this.isSyncingMigrationScroll = false;
+                        });
+                    };
+                    oldView.addEventListener('scroll', () => syncScroll(oldView, newView));
+                    newView.addEventListener('scroll', () => syncScroll(newView, oldView));
+                    this.migrationScrollBound = true;
+                }
+            }
+        }
+    }
+
     setupCompletionModal() {
         if (this.completionModalInitialized) {
             return;
@@ -918,6 +1006,147 @@ class UIController {
         });
 
         this.completionModalInitialized = true;
+    }
+
+    openMigrationPrompt({ fromVersion, toVersion, fileName }) {
+        const modal = this.getMigrationElement('migrationPromptModal');
+        /* istanbul ignore next */
+        if (!modal) {
+            this.app.cancelMigration();
+            return;
+        }
+
+        const title = this.getMigrationElement('migrationPromptTitle');
+        if (title) {
+            title.textContent = this.translate('migration.prompt.title');
+        }
+
+        const messageElement = this.getMigrationElement('migrationPromptMessage');
+        if (messageElement) {
+            const replacements = {
+                fileName: fileName ?? this.translate('migration.prompt.unnamedFile'),
+                fromVersion: fromVersion ?? this.translate('migration.prompt.legacyVersion'),
+                toVersion
+            };
+            const messageKey = fromVersion ? 'migration.prompt.message' : 'migration.prompt.messageLegacy';
+            messageElement.textContent = this.translate(messageKey, replacements);
+        }
+
+        modal.classList.add('is-visible');
+        this.languageService.applyTranslations(modal);
+    }
+
+    openMigrationDiff({ fromVersion, toVersion, originalString, migratedString, fileName }) {
+        const promptModal = this.getMigrationElement('migrationPromptModal');
+        if (promptModal) {
+            promptModal.classList.remove('is-visible');
+        }
+
+        const modal = this.getMigrationElement('migrationDiffModal');
+        /* istanbul ignore next */
+        if (!modal) {
+            this.app.cancelMigration();
+            return;
+        }
+
+        const title = this.getMigrationElement('migrationDiffTitle');
+        if (title) {
+            title.textContent = this.translate('migration.diff.title', {
+                fileName: fileName ?? this.translate('migration.prompt.unnamedFile')
+            });
+        }
+
+        const subtitle = this.getMigrationElement('migrationDiffSubtitle');
+        if (subtitle) {
+            subtitle.textContent = this.translate('migration.diff.subtitle', {
+                fromVersion: fromVersion ?? this.translate('migration.prompt.legacyVersion'),
+                toVersion
+            });
+        }
+
+        const oldLabel = this.getMigrationElement('migrationDiffOldLabel');
+        if (oldLabel) {
+            oldLabel.textContent = this.translate('migration.diff.originalLabel');
+        }
+
+        const newLabel = this.getMigrationElement('migrationDiffNewLabel');
+        if (newLabel) {
+            newLabel.textContent = this.translate('migration.diff.updatedLabel');
+        }
+
+        this.renderMigrationDiff(originalString, migratedString);
+
+        modal.classList.add('is-visible');
+        this.languageService.applyTranslations(modal);
+    }
+
+    closeMigrationPrompt() {
+        const modal = this.getMigrationElement('migrationPromptModal');
+        if (modal) {
+            modal.classList.remove('is-visible');
+        }
+    }
+
+    closeMigrationDiff() {
+        const modal = this.getMigrationElement('migrationDiffModal');
+        if (modal) {
+            modal.classList.remove('is-visible');
+        }
+        this.migrationDiffData = null;
+        this.isSyncingMigrationScroll = false;
+    }
+
+    closeMigrationModals() {
+        this.closeMigrationPrompt();
+        this.closeMigrationDiff();
+    }
+
+    renderMigrationDiff(originalString, migratedString) {
+        const diffLines = computeLineDiff(originalString, migratedString);
+        this.migrationDiffData = diffLines;
+
+        const oldContainer = this.getMigrationElement('migrationDiffOld');
+        const newContainer = this.getMigrationElement('migrationDiffNew');
+
+        if (oldContainer) {
+            this.renderMigrationDiffColumn(oldContainer, diffLines, 'old');
+            oldContainer.scrollTop = 0;
+            oldContainer.scrollLeft = 0;
+        }
+        if (newContainer) {
+            this.renderMigrationDiffColumn(newContainer, diffLines, 'new');
+            newContainer.scrollTop = 0;
+            newContainer.scrollLeft = 0;
+        }
+    }
+
+    renderMigrationDiffColumn(container, diffLines, variant) {
+        container.innerHTML = '';
+
+        diffLines.forEach((entry) => {
+            const lineContent = variant === 'new' ? entry.newLine : entry.oldLine;
+            if (lineContent === null || lineContent === undefined) {
+                return;
+            }
+
+            let highlightType = 'unchanged';
+            if (entry.type !== 'unchanged') {
+                if (variant === 'new' && entry.type === 'added') {
+                    highlightType = 'added';
+                } else if (variant === 'old' && entry.type === 'removed') {
+                    highlightType = 'removed';
+                }
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('diff-line', `diff-line--${highlightType}`);
+
+            const code = document.createElement('code');
+            code.textContent = lineContent === '' ? '\u00a0' : lineContent;
+
+            wrapper.appendChild(code);
+            container.appendChild(wrapper);
+        });
     }
 
     renderAllGoalsTable() {
@@ -1124,6 +1353,19 @@ class UIController {
         return element || null;
     }
 
+    getMigrationElement(id) {
+        if (!this.migrationModalRefs) {
+            this.migrationModalRefs = {};
+        }
+        const cached = this.migrationModalRefs[id];
+        if (cached && cached.isConnected) {
+            return cached;
+        }
+        const element = document.getElementById(id);
+        this.migrationModalRefs[id] = element || null;
+        return element || null;
+    }
+
     invalidatePriorityCache() {
         this.priorityCacheDirty = true;
     }
@@ -1154,6 +1396,7 @@ class UIController {
                     return '—';
                 }
                 return this.formatDate(date);
+            /* istanbul ignore next */
             } catch (error) {
                 return '—';
             }

@@ -194,7 +194,32 @@ const sv = {
     },
     import: {
         success: 'Data importerades utan problem!',
-        error: 'Importen misslyckades: {{message}}'
+        error: 'Importen misslyckades: {{message}}',
+        invalidJson: 'Importen misslyckades: Filen innehåller inte giltig JSON.',
+        invalidStructure: 'Importen misslyckades: Filformatet är inte kompatibelt.',
+        invalidVersionFormat: 'Importen misslyckades: Okänd version "{{version}}".',
+        versionTooNew: 'Import blockeras: Filversion {{fileVersion}} är nyare än den stödda versionen {{currentVersion}}.',
+        incompatible: 'Importen misslyckades: Filen är inte kompatibel med denna version av Goaly.',
+        migrationCancelled: 'Importen avbröts. Filen migrerades inte.'
+    },
+    migration: {
+        prompt: {
+            title: 'Migration krävs',
+            message: '”{{fileName}}” använder version {{fromVersion}}. Vill du migrera den till {{toVersion}} innan import?',
+            messageLegacy: '”{{fileName}}” saknar versionsinformation. Vill du migrera den till {{toVersion}} innan import?',
+            reviewCta: 'Granska ändringar',
+            cancel: 'Avbryt',
+            unnamedFile: 'Namnlös export',
+            legacyVersion: 'ett äldre format'
+        },
+        diff: {
+            title: 'Migrationsöversikt för {{fileName}}',
+            subtitle: 'Jämför {{fromVersion}} → {{toVersion}}',
+            originalLabel: 'Original',
+            updatedLabel: 'Migrerad version',
+            applyCta: 'Använd migration',
+            cancel: 'Avbryt'
+        }
     }
 };
 

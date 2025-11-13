@@ -89,6 +89,38 @@ beforeEach(() => {
                 <div id="goalHistoryList" class="goal-history-list"></div>
             </div>
         </div>
+        <div id="migrationPromptModal" class="modal">
+            <div class="modal-content migration-modal">
+                <span id="migrationPromptClose" class="close"></span>
+                <h2 id="migrationPromptTitle"></h2>
+                <p id="migrationPromptMessage"></p>
+                <div class="modal-actions">
+                    <button id="migrationReviewBtn"></button>
+                    <button id="migrationPromptCancelBtn"></button>
+                </div>
+            </div>
+        </div>
+        <div id="migrationDiffModal" class="modal">
+            <div class="modal-content migration-diff-modal">
+                <span id="migrationDiffClose" class="close"></span>
+                <h2 id="migrationDiffTitle"></h2>
+                <p id="migrationDiffSubtitle"></p>
+                <div class="migration-diff-columns">
+                    <div class="diff-column">
+                        <h3 id="migrationDiffOldLabel"></h3>
+                        <div id="migrationDiffOld" class="diff-view"></div>
+                    </div>
+                    <div class="diff-column">
+                        <h3 id="migrationDiffNewLabel"></h3>
+                        <div id="migrationDiffNew" class="diff-view"></div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="migrationApplyBtn"></button>
+                    <button id="migrationCancelBtn"></button>
+                </div>
+            </div>
+        </div>
         <div id="completionModal" class="modal">
             <div class="modal-content completion-modal">
                 <span id="completionCloseBtn" class="close"></span>
@@ -168,6 +200,9 @@ beforeEach(() => {
         importData: jest.fn(),
         startCheckInTimer: jest.fn(),
         refreshCheckIns: jest.fn(),
+        handleMigrationReviewRequest: jest.fn(),
+        cancelMigration: jest.fn(),
+        completeMigration: jest.fn()
     };
 });
 
@@ -1423,5 +1458,173 @@ describe('UIController', () => {
 
         expect(uiController.closeGoalForm).toHaveBeenCalled();
         document.body.removeChild(outsideElement);
+    });
+
+    test('openMigrationPrompt displays prompt modal with translated content', () => {
+        uiController.openMigrationPrompt({
+            fromVersion: null,
+            toVersion: '1.0.0',
+            fileName: 'legacy.json'
+        });
+
+        const promptModal = document.getElementById('migrationPromptModal');
+        expect(promptModal.classList.contains('is-visible')).toBe(true);
+        const promptMessage = document.getElementById('migrationPromptMessage').textContent;
+        expect(promptMessage).toContain('legacy');
+        uiController.closeMigrationModals();
+
+        uiController.openMigrationPrompt({
+            fromVersion: '0.9.0',
+            toVersion: '1.0.0',
+            fileName: 'current.json'
+        });
+        const promptMessageNew = document.getElementById('migrationPromptMessage').textContent;
+        expect(promptMessageNew).toContain('0.9.0');
+        uiController.closeMigrationModals();
+    });
+
+    test('openMigrationDiff renders diff columns and synchronises scroll', () => {
+        const originalRAF = global.requestAnimationFrame;
+        global.requestAnimationFrame = (callback) => {
+            callback();
+            return 0;
+        };
+
+        uiController.openMigrationDiff({
+            fromVersion: '0.9.0',
+            toVersion: '1.0.0',
+            originalString: 'line-a\nremove-me\ncommon',
+            migratedString: 'line-a\nadd-me\ncommon',
+            fileName: 'export.json'
+        });
+
+        const diffModal = document.getElementById('migrationDiffModal');
+        expect(diffModal.classList.contains('is-visible')).toBe(true);
+
+        const oldLines = Array.from(document.querySelectorAll('#migrationDiffOld .diff-line'));
+        const newLines = Array.from(document.querySelectorAll('#migrationDiffNew .diff-line'));
+        expect(oldLines.some((line) => line.classList.contains('diff-line--removed'))).toBe(true);
+        expect(newLines.some((line) => line.classList.contains('diff-line--added'))).toBe(true);
+
+        const oldView = document.getElementById('migrationDiffOld');
+        const newView = document.getElementById('migrationDiffNew');
+        oldView.scrollTop = 45;
+        oldView.scrollLeft = 10;
+        oldView.dispatchEvent(new dom.window.Event('scroll'));
+        expect(newView.scrollTop).toBe(45);
+        expect(newView.scrollLeft).toBe(10);
+
+        newView.scrollTop = 12;
+        newView.scrollLeft = 5;
+        newView.dispatchEvent(new dom.window.Event('scroll'));
+        expect(oldView.scrollTop).toBe(12);
+        expect(oldView.scrollLeft).toBe(5);
+
+        uiController.closeMigrationModals();
+        expect(uiController.migrationDiffData).toBeNull();
+
+        if (originalRAF) {
+            global.requestAnimationFrame = originalRAF;
+        } else {
+            delete global.requestAnimationFrame;
+        }
+
+        uiController.setupMigrationModals();
+    });
+
+    test('migration prompt actions trigger app handlers', () => {
+        mockApp.handleMigrationReviewRequest.mockClear();
+        mockApp.cancelMigration.mockClear();
+
+        const promptModal = document.getElementById('migrationPromptModal');
+        promptModal.classList.add('is-visible');
+        document.getElementById('migrationReviewBtn').click();
+        expect(mockApp.handleMigrationReviewRequest).toHaveBeenCalled();
+
+        promptModal.classList.add('is-visible');
+        document.getElementById('migrationPromptCancelBtn').click();
+        expect(mockApp.cancelMigration).toHaveBeenCalled();
+
+        promptModal.classList.add('is-visible');
+        document.getElementById('migrationPromptClose').click();
+        expect(mockApp.cancelMigration).toHaveBeenCalledTimes(2);
+    });
+
+    test('migration diff actions trigger app handlers', () => {
+        mockApp.cancelMigration.mockClear();
+        mockApp.completeMigration.mockClear();
+
+        const diffModal = document.getElementById('migrationDiffModal');
+        diffModal.classList.add('is-visible');
+        document.getElementById('migrationCancelBtn').click();
+        expect(mockApp.cancelMigration).toHaveBeenCalledTimes(1);
+
+        diffModal.classList.add('is-visible');
+        document.getElementById('migrationDiffClose').click();
+        expect(mockApp.cancelMigration).toHaveBeenCalledTimes(2);
+
+        diffModal.classList.add('is-visible');
+        document.getElementById('migrationApplyBtn').click();
+        expect(mockApp.completeMigration).toHaveBeenCalled();
+    });
+
+    test('openCompletionModal no-ops when modal missing', () => {
+        const completionModal = document.getElementById('completionModal');
+        completionModal.remove();
+        expect(() => uiController.openCompletionModal('goal-1')).not.toThrow();
+    });
+
+    test('handleCompletionChoice returns early when no pending goal', () => {
+        uiController.pendingCompletionGoalId = null;
+        const statusSpy = jest.spyOn(uiController, 'changeGoalStatus').mockImplementation(() => {});
+        uiController.handleCompletionChoice('completed');
+        expect(statusSpy).not.toHaveBeenCalled();
+        statusSpy.mockRestore();
+    });
+
+    test('changeGoalStatus handles thrown errors and shows alert', () => {
+        const alertSpy = jest.spyOn(global, 'alert').mockImplementation(() => {});
+        mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3 });
+        mockGoalService.setGoalStatus.mockImplementation(() => {
+            throw new Error('boom');
+        });
+
+        uiController.changeGoalStatus('goal-1', 'completed');
+
+        expect(alertSpy).toHaveBeenCalledWith('boom');
+        alertSpy.mockRestore();
+        mockGoalService.setGoalStatus.mockReset();
+    });
+
+    test('formatHistoryValue handles numeric branches and fallbacks', () => {
+        expect(uiController.formatHistoryValue('priority', 'not-a-number')).toBe('—');
+        expect(uiController.formatHistoryValue('motivation', 'not-a-number')).toBe('—');
+        expect(uiController.formatHistoryValue('priority', 3)).toBe('3.0');
+        expect(uiController.formatHistoryValue('status', 'active')).toBe('Active');
+        expect(uiController.formatHistoryValue('deadline', '')).toBe('No deadline');
+        expect(uiController.formatHistoryValue('other', null)).toBe('—');
+    });
+
+    test('renderGoalHistory sorts entries and renders fallback', () => {
+        const goal = {
+            history: [
+                { event: 'updated', timestamp: undefined, changes: [] },
+                { event: 'created', timestamp: new Date('2025-01-01T00:00:00Z'), changes: [] }
+            ]
+        };
+
+        uiController.renderGoalHistory(goal);
+
+        const historySection = document.getElementById('goalHistorySection');
+        expect(historySection.hidden).toBe(false);
+        const entries = historySection.querySelectorAll('.goal-history-entry');
+        expect(entries.length).toBe(2);
+    });
+
+    test('getMigrationElement caches connected nodes', () => {
+        const firstCall = uiController.getMigrationElement('migrationDiffModal');
+        expect(firstCall).not.toBeNull();
+        const secondCall = uiController.getMigrationElement('migrationDiffModal');
+        expect(secondCall).toBe(firstCall);
     });
 });
