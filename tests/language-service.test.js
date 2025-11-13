@@ -6,10 +6,27 @@ describe('LanguageService', () => {
 
     beforeEach(() => {
         dom = new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>', { url: 'http://localhost' });
+
+        const createStorageMock = () => {
+            let store = {};
+            return {
+                getItem: jest.fn((key) => (key in store ? store[key] : null)),
+                setItem: jest.fn((key, value) => { store[key] = value; }),
+                removeItem: jest.fn((key) => { delete store[key]; }),
+                clear: jest.fn(() => { store = {}; })
+            };
+        };
+
+        const storageMock = createStorageMock();
+        Object.defineProperty(dom.window, 'localStorage', {
+            configurable: true,
+            value: storageMock
+        });
+
         global.window = dom.window;
         global.document = dom.window.document;
         global.navigator = dom.window.navigator;
-        global.localStorage = dom.window.localStorage;
+        global.localStorage = storageMock;
 
         window.localStorage.clear();
         document.documentElement.setAttribute('lang', '');
@@ -175,33 +192,15 @@ describe('LanguageService', () => {
         const service = new LanguageService();
         service.init('en');
 
-        const originalStorage = window.localStorage;
-        const originalDescriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
-        const failingStorage = {
-            getItem: () => { throw new Error('blocked'); },
-            setItem: () => { throw new Error('blocked'); }
-        };
-
-        Object.defineProperty(window, 'localStorage', {
-            configurable: true,
-            get() {
-                return failingStorage;
-            }
-        });
-        global.localStorage = failingStorage;
+        const storage = window.localStorage;
+        const getItemSpy = jest.spyOn(storage, 'getItem').mockImplementation(() => { throw new Error('blocked'); });
+        const setItemSpy = jest.spyOn(storage, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
 
         expect(service.getStoredLanguage()).toBeNull();
         expect(() => service.persistLanguage('de')).not.toThrow();
 
-        if (originalDescriptor) {
-            Object.defineProperty(window, 'localStorage', originalDescriptor);
-            global.localStorage = originalDescriptor.get
-                ? originalDescriptor.get.call(window)
-                : originalDescriptor.value;
-        } else {
-            window.localStorage = originalStorage;
-            global.localStorage = originalStorage;
-        }
+        getItemSpy.mockRestore();
+        setItemSpy.mockRestore();
     });
 
     test('onChange returns a noop unsubscribe for non-functions', () => {
