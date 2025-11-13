@@ -14,7 +14,7 @@
             <nav class="menu">
                 <button class="menu-btn active" data-view="dashboard" data-i18n-key="navigation.dashboard">Dashboard</button>
                 <button class="menu-btn" data-view="all-goals" data-i18n-key="navigation.allGoals">All goals</button>
-                <button class="menu-btn" data-view="check-in" data-i18n-key="navigation.checkIn">Check-in</button>
+                <button class="menu-btn" data-view="check-in" data-i18n-key="navigation.checkIn">Review</button>
                 <button class="menu-btn" data-view="settings" data-i18n-key="navigation.settings">Settings</button>
             </nav>
             <div class="header-actions">
@@ -86,9 +86,11 @@
             </div>
 
             <div id="check-inView" class="view">
-                <h2 data-i18n-key="sections.checkIn">Check-in</h2>
+                <h2 data-i18n-key="sections.checkIn">Review</h2>
                 <div class="check-ins-panel" id="checkInsPanel">
-                    <div id="checkInsList"></div>
+                    <div id="checkInsFeedback" class="check-in-feedback" hidden></div>
+                    <div id="checkInsList" class="check-ins-list"></div>
+                    <div id="checkInsEmptyState" class="check-ins-empty" hidden data-i18n-key="checkIns.emptyState">All goals are up to date. Come back later for the next review.</div>
                 </div>
             </div>
 
@@ -100,14 +102,9 @@
                         <input type="number" id="maxActiveGoals" min="1" max="10" value="3">
                     </div>
                     <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="checkInsEnabled" checked>
-                            <span data-i18n-key="settingsPanel.checkInsEnabled">Enable check-ins</span>
-                        </label>
-                    </div>
-                    <div class="setting-item">
-                        <label for="checkInInterval" data-i18n-key="settingsPanel.checkInInterval">Check-in interval (minutes for dev testing):</label>
-                        <input type="number" id="checkInInterval" min="1" value="1">
+                        <label for="reviewIntervals" data-i18n-key="settingsPanel.reviewIntervals">Review intervals (days, longest to shortest):</label>
+                        <input type="text" id="reviewIntervals" placeholder="30, 14, 7">
+                        <p class="setting-help" data-i18n-key="settingsPanel.reviewIntervalsHelp">Separate days with commas, e.g. 30, 14, 7.</p>
                     </div>
                     <div class="setting-item">
                         <label for="languageSelect" data-i18n-key="settingsPanel.languageLabel">Language</label>

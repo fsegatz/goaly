@@ -13,7 +13,7 @@ This handbook summarises how coding agents and new contributors collaborate prod
 - After code changes run `read_lints` in Cursor for touched files.
 
 ## Architecture Overview
-- `src/domain`: pure logic (goal, settings, check-in services).
+- `src/domain`: pure logic (goal, settings, review services).
 - `src/ui/ui-controller.js`: DOM coordination and rendering logic.
 - `styles/styles.css`: global styling with responsive layout.
 - `src/i18n`: language resources and localisation service.

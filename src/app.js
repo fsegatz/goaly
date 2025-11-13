@@ -29,9 +29,10 @@ class GoalyApp {
         this.goalService.loadGoals();
         // Migrate existing goals to automatic activation
         this.goalService.migrateGoalsToAutoActivation(this.settingsService.getSettings().maxActiveGoals);
-        this.checkInService = new CheckInService(this.goalService.goals, this.settingsService.getSettings());
+        this.checkInService = new CheckInService(this.goalService, this.settingsService);
         this.uiController = new UIController(this);
         this.uiController.renderViews();
+        this.refreshCheckIns();
         this.startCheckInTimer();
     }
 
@@ -40,13 +41,16 @@ class GoalyApp {
             clearInterval(this.checkInTimer);
         }
 
-        if (this.settingsService.getSettings().checkInsEnabled) {
-            this.checkInTimer = setInterval(() => {
-                this.checkIns = this.checkInService.getCheckIns();
-                if (this.checkIns.length > 0) {
-                    this.uiController.showCheckIns();
-                }
-            }, 60000);
+        this.refreshCheckIns();
+        this.checkInTimer = setInterval(() => {
+            this.refreshCheckIns();
+        }, 60000);
+    }
+
+    refreshCheckIns({ render = true } = {}) {
+        this.checkIns = this.checkInService.getCheckIns();
+        if (render && this.uiController && typeof this.uiController.renderCheckInView === 'function') {
+            this.uiController.renderCheckInView();
         }
     }
 
@@ -91,12 +95,13 @@ class GoalyApp {
                 // Then load goals and migrate them with the current maxActiveGoals value
                 if (data.goals) {
                     this.goalService.goals = data.goals.map(goal => new Goal(goal));
-                    this.checkInService = new CheckInService(this.goalService.goals, this.settingsService.getSettings());
+                    this.checkInService = new CheckInService(this.goalService, this.settingsService);
                     // Activate the top N goals by priority right after import
                     this.goalService.migrateGoalsToAutoActivation(this.settingsService.getSettings().maxActiveGoals);
                 }
 
                 this.uiController.renderViews();
+                this.refreshCheckIns();
                 this.languageService.applyTranslations(document);
                 alert(this.languageService.translate('import.success'));
             } catch (error) {

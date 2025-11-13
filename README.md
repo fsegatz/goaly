@@ -1,6 +1,6 @@
 # Goaly MVP - Goal Tracking App
 
-Goaly is a lightweight goal management web application that blends priority scoring with recurring check-ins. It helps you focus on the most impactful goals while keeping everything entirely in the browser.
+Goaly is a lightweight goal management web application that blends priority scoring with recurring reviews. It helps you focus on the most impactful goals while keeping everything entirely in the browser.
 
 ## Quick Start
 

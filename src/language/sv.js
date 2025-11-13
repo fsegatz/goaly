@@ -12,7 +12,7 @@ const sv = {
     navigation: {
         dashboard: 'Dashboard',
         allGoals: 'Alla mål',
-        checkIn: 'Check-in',
+        checkIn: 'Review',
         settings: 'Inställningar'
     },
     actions: {
@@ -23,7 +23,7 @@ const sv = {
     sections: {
         dashboard: 'Dashboard',
         allGoals: 'Alla mål',
-        checkIn: 'Check-in',
+        checkIn: 'Review',
         settings: 'Inställningar'
     },
     common: {
@@ -71,8 +71,8 @@ const sv = {
     },
     settingsPanel: {
         maxActiveGoals: 'Maximalt antal aktiva mål:',
-        checkInsEnabled: 'Aktivera check-ins',
-        checkInInterval: 'Check-in-intervall (minuter för dev-test):',
+        reviewIntervals: 'Utvärderingsintervall (stöd för suffix d/h/m/s):',
+        reviewIntervalsHelp: 'Exempel: 30d, 14d, 12h, 45m, 30s.',
         languageLabel: 'Språk',
         save: 'Spara'
     },
@@ -111,10 +111,35 @@ const sv = {
         abandoned: 'Avbruten'
     },
     checkIns: {
-        prompt: 'Dags för en check-in för "{{title}}". Granska motivation och brådska.',
+        prompt: 'Dags för ett review för "{{title}}". Bekräfta motivation och brådska.',
+        emptyState: 'Alla mål är uppdaterade. Titta in igen senare.',
+        sequence: 'Mål {{current}} av {{total}}',
+        fields: {
+            motivation: 'Motivation',
+            urgency: 'Brådska'
+        },
+        status: {
+            stable: 'Stabil bedömning'
+        },
+        due: {
+            unknown: 'Granskning planerad',
+            today: 'Förfaller idag',
+            overdue: 'Försenad med {{count}} dagar'
+        },
+        feedback: {
+            stable: 'Bedömningarna för "{{title}}" är stabila. Nästa uppföljning om {{interval}}.',
+            updated: 'Bedömningarna för "{{title}}" har uppdaterats. Nästa uppföljning om {{interval}}.'
+        },
         actions: {
-            done: 'Check-in slutförd',
+            done: 'Review slutfört',
             edit: 'Redigera mål'
+        },
+        interval: {
+            unknown: 'snart',
+            days: 'om cirka {{count}} dag(ar)',
+            hours: 'om cirka {{count}} timme/timmar',
+            minutes: 'om cirka {{count}} minut(er)',
+            seconds: 'om cirka {{count}} sekund(er)'
         }
     },
     history: {

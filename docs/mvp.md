@@ -12,7 +12,7 @@ Deliver a simple, usable web app that demonstrates Goaly’s core value: users c
 - Goal CRUD with archive / completion.
 - Attributes: title, description, motivation, urgency, optional deadline, status (active/paused/completed), timestamps, history.
 - Configurable limit for active goals (default 3).
-- Dashboard showing active goals ordered by priority (motivation + urgency + deadline bonus) and highlighting due check-ins.
+- Dashboard showing active goals ordered by priority (motivation + urgency + deadline bonus) and highlighting due reviews.
 - Reminder loop: browser-based prompts for upcoming deadlines and the 3/7/14/30 day cadence.
 - Persistence via LocalStorage plus JSON export/import.
 - Responsive static UI (HTML/CSS/JS) with a future option to add a backend.
@@ -22,7 +22,7 @@ Deliver a simple, usable web app that demonstrates Goaly’s core value: users c
 - Goals can be created with all required fields and appear immediately.
 - Goals can be activated/deactivated and the active limit is enforced.
 - Dashboard reflects the correct priority order and updates after changes.
-- Check-in reminders appear according to the schedule.
+- Review reminders appear according to the schedule.
 - Export triggers a JSON download; import restores the previous state.
 
 ## Technical Assumptions

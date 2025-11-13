@@ -12,7 +12,7 @@ const de = {
     navigation: {
         dashboard: 'Dashboard',
         allGoals: 'Alle Ziele',
-        checkIn: 'Check-in',
+        checkIn: 'Review',
         settings: 'Einstellungen'
     },
     actions: {
@@ -23,7 +23,7 @@ const de = {
     sections: {
         dashboard: 'Dashboard',
         allGoals: 'Alle Ziele',
-        checkIn: 'Check-in',
+        checkIn: 'Review',
         settings: 'Einstellungen'
     },
     common: {
@@ -71,8 +71,8 @@ const de = {
     },
     settingsPanel: {
         maxActiveGoals: 'Maximale aktive Ziele:',
-        checkInsEnabled: 'Check-ins aktivieren',
-        checkInInterval: 'Check-in Intervall (Minuten für Dev-Tests):',
+        reviewIntervals: 'Review-Intervalle (Suffixe d/h/m/s erlaubt):',
+        reviewIntervalsHelp: 'Beispiele: 30d, 14d, 12h, 45m, 30s.',
         languageLabel: 'Sprache',
         save: 'Speichern'
     },
@@ -111,10 +111,35 @@ const de = {
         abandoned: 'Nicht erreicht'
     },
     checkIns: {
-        prompt: 'Zeit für einen Check-in zu "{{title}}". Bitte überprüfe Motivation und Dringlichkeit.',
+        prompt: 'Zeit für ein Review zu "{{title}}". Bitte bestätige Motivation und Dringlichkeit.',
+        emptyState: 'Alle Ziele sind auf dem neuesten Stand. Schau später noch einmal vorbei.',
+        sequence: 'Ziel {{current}} von {{total}}',
+        fields: {
+            motivation: 'Motivation',
+            urgency: 'Dringlichkeit'
+        },
+        status: {
+            stable: 'Bewertung stabil'
+        },
+        due: {
+            unknown: 'Review geplant',
+            today: 'Heute fällig',
+            overdue: 'Überfällig seit {{count}} Tagen'
+        },
+        feedback: {
+            stable: 'Bewertungen für "{{title}}" bleiben stabil. Nächstes Review in {{interval}}.',
+            updated: 'Bewertungen für "{{title}}" aktualisiert. Nächstes Review in {{interval}}.'
+        },
         actions: {
-            done: 'Check-in durchgeführt',
+            done: 'Review abgeschlossen',
             edit: 'Ziel bearbeiten'
+        },
+        interval: {
+            unknown: 'bald',
+            days: 'in etwa {{count}} Tag(en)',
+            hours: 'in etwa {{count}} Stunde(n)',
+            minutes: 'in etwa {{count}} Minute(n)',
+            seconds: 'in etwa {{count}} Sekunde(n)'
         }
     },
     history: {

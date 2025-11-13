@@ -1,12 +1,12 @@
 # Product Overview
 
-Goaly helps you manage a focused set of goals by combining priority scoring, recurring check-ins, and lightweight data storage that stays in the browser.
+Goaly helps you manage a focused set of goals by combining priority scoring, recurring reviews, and lightweight data storage that stays in the browser.
 
 ## Core Features
 - **Goal CRUD**: create, edit, archive, and delete goals.
 - **Priority scoring**: combines motivation, urgency, and deadline bonus.
 - **Active goal limit**: enforces a configurable maximum (default: 3).
-- **Check-in reminders**: prompts periodic reassessment of goals.
+- **Review reminders**: prompts periodic reassessment of goals.
 - **Export and import**: JSON-based backups and restores.
 - **Responsive UI**: optimised for desktop and mobile devices.
 - **Language selection**: English, German, and Swedish with browser auto-detect.
@@ -22,7 +22,7 @@ Goaly helps you manage a focused set of goals by combining priority scoring, rec
 ## Usage Notes
 - All data lives in LocalStorage; no backend or signup is required.
 - Use JSON export/import for manual backups.
-- For development, you can shorten the check-in interval to one minute; production usage typically uses days.
+- For development, you can shorten the review interval to one minute (or even seconds with suffixes); production usage typically uses days.
 
 ## Post-MVP Ideas
 - Multi-device sync via backend integration.

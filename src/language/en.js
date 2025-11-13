@@ -12,7 +12,7 @@ const en = {
     navigation: {
         dashboard: 'Dashboard',
         allGoals: 'All goals',
-        checkIn: 'Check-in',
+        checkIn: 'Review',
         settings: 'Settings'
     },
     actions: {
@@ -23,7 +23,7 @@ const en = {
     sections: {
         dashboard: 'Dashboard',
         allGoals: 'All goals',
-        checkIn: 'Check-in',
+        checkIn: 'Review',
         settings: 'Settings'
     },
     common: {
@@ -71,8 +71,8 @@ const en = {
     },
     settingsPanel: {
         maxActiveGoals: 'Maximum active goals:',
-        checkInsEnabled: 'Enable check-ins',
-        checkInInterval: 'Check-in interval (minutes for dev testing):',
+        reviewIntervals: 'Review intervals (use d/h/m/s suffixes):',
+        reviewIntervalsHelp: 'Examples: 30d, 14d, 12h, 45m, 30s.',
         languageLabel: 'Language',
         save: 'Save'
     },
@@ -111,10 +111,35 @@ const en = {
         abandoned: 'Abandoned'
     },
     checkIns: {
-        prompt: 'Time for a check-in on "{{title}}". Please review motivation and urgency.',
+        prompt: 'Time for a review on "{{title}}". Please confirm motivation and urgency.',
+        emptyState: 'All goals are up to date. Come back later for the next review.',
+        sequence: 'Goal {{current}} of {{total}}',
+        fields: {
+            motivation: 'Motivation',
+            urgency: 'Urgency'
+        },
+        status: {
+            stable: 'Stable rating'
+        },
+        due: {
+            unknown: 'Review scheduled',
+            today: 'Due today',
+            overdue: 'Overdue by {{count}} days'
+        },
+        feedback: {
+            stable: 'Stable ratings confirmed for "{{title}}". Next review in {{interval}}.',
+            updated: 'Ratings updated for "{{title}}". Next review in {{interval}}.'
+        },
         actions: {
-            done: 'Check-in completed',
+            done: 'Review completed',
             edit: 'Edit goal'
+        },
+        interval: {
+            unknown: 'soon',
+            days: 'about {{count}} day(s)',
+            hours: 'about {{count}} hour(s)',
+            minutes: 'about {{count}} minute(s)',
+            seconds: 'about {{count}} second(s)'
         }
     },
     history: {

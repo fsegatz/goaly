@@ -106,11 +106,12 @@ beforeEach(() => {
         <input type="file" id="importFile" />
         <button id="saveSettingsBtn"></button>
         <input type="number" id="maxActiveGoals" value="3" />
-        <input type="number" id="checkInInterval" value="7" />
-        <input type="checkbox" id="checkInsEnabled" checked />
+        <input type="text" id="reviewIntervals" value="30, 14, 7" />
         <select id="languageSelect"></select>
         <div id="checkInsPanel">
+            <div id="checkInsFeedback" hidden></div>
             <div id="checkInsList"></div>
+            <div id="checkInsEmptyState" hidden></div>
         </div>
         <button class="menu-btn active" data-view="dashboard"></button>
         <button class="menu-btn" data-view="all-goals"></button>
@@ -144,12 +145,14 @@ beforeEach(() => {
         revertGoalToHistoryEntry: jest.fn(),
     };
     mockSettingsService = {
-        getSettings: jest.fn(() => ({ maxActiveGoals: 3, checkInInterval: 7, checkInsEnabled: true, language: 'en' })),
+        getSettings: jest.fn(() => ({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] })),
         updateSettings: jest.fn(),
+        getReviewIntervals: jest.fn(() => [30, 14, 7])
     };
     mockCheckInService = {
         getCheckIns: jest.fn(() => []),
         performCheckIn: jest.fn(),
+        recordReview: jest.fn()
     };
 
     // Mock the app object
@@ -165,6 +168,7 @@ beforeEach(() => {
         exportData: jest.fn(),
         importData: jest.fn(),
         startCheckInTimer: jest.fn(),
+        refreshCheckIns: jest.fn(),
     };
 });
 
@@ -894,46 +898,112 @@ describe('UIController', () => {
     });
 
 
-    // Test showCheckIns
-    test('showCheckIns should display check-ins and attach event listeners', () => {
-        const goal1 = new Goal({ id: 'g1', title: 'Goal 1', motivation: 1, urgency: 1, status: 'active', deadline: null });
-        const goal2 = new Goal({ id: 'g2', title: 'Goal 2', motivation: 1, urgency: 1, status: 'active', deadline: null });
+    // Test renderCheckInView
+    test('renderCheckInView should display check-ins and submit reviews', () => {
+        const goal1 = new Goal({ id: 'g1', title: 'Goal 1', motivation: 3, urgency: 3, status: 'active', deadline: null });
         mockApp.checkIns = [
-            { goal: goal1, messageKey: 'checkIns.prompt', messageArgs: { title: 'Goal 1' } },
-            { goal: goal2, messageKey: 'checkIns.prompt', messageArgs: { title: 'Goal 2' } },
+            { goal: goal1, dueAt: new Date(Date.now() - 24 * 60 * 60 * 1000), isOverdue: true, messageArgs: { title: 'Goal 1' } }
         ];
-        mockCheckInService.getCheckIns.mockReturnValue([]);
+        mockCheckInService.recordReview.mockReturnValue({ goal: goal1, ratingsMatch: true });
+        jest.spyOn(uiController, 'renderViews').mockImplementation(() => {});
 
-        uiController.showCheckIns();
+        uiController.renderCheckInView();
 
         const checkInsList = document.getElementById('checkInsList');
-        expect(checkInsList.children.length).toBe(2);
-        expect(checkInsList.innerHTML).toContain('Time for a check-in on "Goal 1".');
-        expect(checkInsList.innerHTML).toContain('Time for a check-in on "Goal 2".');
-        expect(document.getElementById('checkInsPanel').style.display).toBe('block');
+        expect(checkInsList.children.length).toBe(1);
 
-        // Simulate check-in done click
-        const checkInDoneBtn = checkInsList.querySelector('.check-in-done');
-        checkInDoneBtn.click();
-        expect(mockCheckInService.performCheckIn).toHaveBeenCalledWith('g1');
-        expect(document.getElementById('checkInsPanel').style.display).toBe('none');
+        const submitBtn = checkInsList.querySelector('button[type="submit"]');
+        submitBtn.click();
+
+        const feedback = document.getElementById('checkInsFeedback');
+        expect(mockCheckInService.recordReview).toHaveBeenCalledWith('g1', expect.objectContaining({
+            motivation: expect.any(String),
+            urgency: expect.any(String),
+        }));
+        expect(mockApp.refreshCheckIns).toHaveBeenCalledWith({ render: false });
+
+        uiController.renderViews.mockRestore();
     });
 
-
-    test('showCheckIns should allow editing goal from check-in', () => {
-        const goal1 = new Goal({ id: 'g1', title: 'Goal 1', motivation: 1, urgency: 1, status: 'active', deadline: null });
+    test('renderCheckInView should allow editing goal from card', () => {
+        const goal1 = new Goal({ id: 'g1', title: 'Goal 1', motivation: 3, urgency: 3, status: 'active', deadline: null });
         mockApp.checkIns = [
-            { goal: goal1, messageKey: 'checkIns.prompt', messageArgs: { title: 'Goal 1' } },
+            { goal: goal1, dueAt: new Date(), isOverdue: true, messageArgs: { title: 'Goal 1' } }
         ];
-        mockCheckInService.getCheckIns.mockReturnValue(mockApp.checkIns);
         uiController.openGoalForm = jest.fn();
 
-        uiController.showCheckIns();
-        const checkInsList = document.getElementById('checkInsList');
-        const editBtn = checkInsList.querySelector('.edit-check-in-goal');
-        
+        uiController.renderCheckInView();
+
+        const editBtn = document.querySelector('.check-in-card__actions .btn.btn-secondary');
         editBtn.click();
+
         expect(uiController.openGoalForm).toHaveBeenCalledWith('g1');
+    });
+
+    test('formatReviewIntervalDisplay should render correct units', () => {
+        expect(uiController.formatReviewIntervalDisplay(2)).toContain('day');
+        expect(uiController.formatReviewIntervalDisplay(1 / 24)).toContain('hour');
+        expect(uiController.formatReviewIntervalDisplay(1 / (24 * 60))).toContain('minute');
+        expect(uiController.formatReviewIntervalDisplay(1 / (24 * 60 * 60))).toContain('second');
+        expect(uiController.formatReviewIntervalDisplay(NaN)).toBe(uiController.translate('checkIns.interval.unknown'));
+    });
+
+    test('formatCheckInDueLabel should reflect overdue and today cases', () => {
+        const today = new Date();
+        const overdue = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+        expect(uiController.formatCheckInDueLabel(today)).toBe(uiController.translate('checkIns.due.today'));
+        expect(uiController.formatCheckInDueLabel(overdue)).toContain('Overdue');
+    });
+
+    test('handleCheckInSubmit should alert when review response is null', () => {
+        mockCheckInService.recordReview.mockReturnValue(null);
+        global.alert = jest.fn();
+        uiController.handleCheckInSubmit('missing-goal', { motivation: '3', urgency: '3' });
+        expect(global.alert).toHaveBeenCalled();
+    });
+
+    test('renderCheckInView should display latest feedback message', () => {
+        uiController.latestCheckInFeedback = {
+            messageKey: 'checkIns.feedback.stable',
+            messageArgs: { interval: 'soon', title: 'Goal' },
+            type: 'success'
+        };
+        mockApp.checkIns = [];
+
+        uiController.renderCheckInView();
+
+        const feedback = document.getElementById('checkInsFeedback');
+        expect(feedback.hidden).toBe(false);
+        expect(feedback.textContent).toContain('Next review');
+        expect(feedback.dataset.state).toBe('success');
+    });
+
+    test('createCheckInCard toggles stability indicator', () => {
+        const goal = new Goal({ id: 'stable', title: 'Stable Goal', motivation: 3, urgency: 3, status: 'active' });
+        const card = uiController.createCheckInCard({ goal, dueAt: new Date(), isOverdue: false }, 1, 1);
+        const motivationInput = card.querySelector('.check-in-card__field-input[name="motivation"]');
+        const statusPill = card.querySelector('.check-in-card__status');
+
+        // Initially stable
+        expect(card.classList.contains('is-stable')).toBe(true);
+        expect(statusPill.hidden).toBe(false);
+
+        // Change value to make unstable
+        motivationInput.value = '5';
+        motivationInput.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+        expect(card.classList.contains('is-stable')).toBe(false);
+        expect(statusPill.hidden).toBe(true);
+    });
+
+    test('handleCheckInSubmit should invalidate cache when ratings change', () => {
+        const spy = jest.spyOn(uiController, 'invalidatePriorityCache').mockImplementation(() => {});
+        mockCheckInService.recordReview.mockReturnValue({
+            goal: { title: 'Goal', reviewIntervalIndex: 0 },
+            ratingsMatch: false
+        });
+        uiController.handleCheckInSubmit('goal-id', { motivation: '5', urgency: '5' });
+        expect(spy).toHaveBeenCalled();
+        spy.mockRestore();
     });
 
     test('createGoalCard should handle missing edit button gracefully', () => {
@@ -1029,17 +1099,13 @@ describe('UIController', () => {
         expect(() => uiController.openGoalForm()).not.toThrow();
     });
 
-    test('showCheckIns should hide panel when check-ins are empty', () => {
-        // Test with empty check-ins
+    test('renderCheckInView should show empty state when check-ins are empty', () => {
         mockApp.checkIns = [];
-        mockCheckInService.getCheckIns.mockReturnValue([]);
-        
-        uiController.showCheckIns();
-        
-        // Panel should be hidden when no check-ins
-        expect(document.getElementById('checkInsPanel').style.display).toBe('none');
-    });
+        uiController.renderCheckInView();
 
+        const emptyState = document.getElementById('checkInsEmptyState');
+        expect(emptyState.hidden).toBe(false);
+    });
 
     test('window mousedown should close modal when clicking outside', () => {
         const modal = document.getElementById('goalModal');
@@ -1280,9 +1346,8 @@ describe('UIController', () => {
     // Test setupEventListeners - saveSettingsBtn
     test('saveSettingsBtn click should update settings, start check-in timer, and re-render views', () => {
         document.getElementById('maxActiveGoals').value = '5';
-        document.getElementById('checkInInterval').value = '10';
-        document.getElementById('checkInsEnabled').checked = false;
-        mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3, checkInInterval: 7, checkInsEnabled: true });
+        document.getElementById('reviewIntervals').value = '45, 15, 7';
+        mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] });
 
         uiController.renderViews = jest.fn();
 
@@ -1290,9 +1355,8 @@ describe('UIController', () => {
 
         expect(mockSettingsService.updateSettings).toHaveBeenCalledWith({
             maxActiveGoals: 5,
-            checkInInterval: 10,
-            checkInsEnabled: false,
-            language: 'en'
+            language: 'en',
+            reviewIntervals: '45, 15, 7'
         });
         // Should call autoActivateGoalsByPriority when maxActiveGoals changes
         expect(mockGoalService.autoActivateGoalsByPriority).toHaveBeenCalledWith(5);
@@ -1302,9 +1366,8 @@ describe('UIController', () => {
 
     test('saveSettingsBtn click should not call autoActivateGoalsByPriority when maxActiveGoals unchanged', () => {
         document.getElementById('maxActiveGoals').value = '3';
-        document.getElementById('checkInInterval').value = '10';
-        document.getElementById('checkInsEnabled').checked = false;
-        mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3, checkInInterval: 7, checkInsEnabled: true });
+        document.getElementById('reviewIntervals').value = '30, 14, 7';
+        mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] });
 
         uiController.renderViews = jest.fn();
 
