@@ -24,7 +24,6 @@ class GoalyApp {
         if (resolvedLanguage !== this.settingsService.getSettings().language) {
             this.settingsService.updateSettings({ language: resolvedLanguage });
         }
-        this.languageService.setLanguage(resolvedLanguage, { persist: true, notify: false });
         this.languageService.applyTranslations(document);
 
         this.goalService.loadGoals();
@@ -84,7 +83,7 @@ class GoalyApp {
                 if (data.settings) {
                     this.settingsService.updateSettings(data.settings);
                     if (this.settingsService.getSettings().language) {
-                        this.languageService.setLanguage(this.settingsService.getSettings().language);
+                        this.languageService.setLanguage(this.settingsService.getSettings().language, { notify: false });
                     }
                     this.startCheckInTimer();
                 }

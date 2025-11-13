@@ -77,10 +77,13 @@ Alternatives for local hosting: `python -m http.server 8000` or `php -S localhos
 3. Edit Goal B, set motivation to `5`, save and confirm the ordering updates.
 
 **Priority formula**
-- Base score: Motivation + Urgency (max 10)
+- Base score: `motivation + (urgency * 10)` (range 11-55)
 - Deadline bonus:
-  - ≤ 30 days: `+ (30 - days)`
-  - Overdue: `+5`
+  - > 30 days remaining: `+0`
+  - ≤ 30 days remaining: `+ (30 - daysRemaining)`
+- Notes:
+  - The deadline bonus keeps increasing for overdue goals (e.g. 1 day overdue adds 31).
+  - No upper cap is enforced; priority can exceed 55 when a deadline is near or overdue.
 
 ### Test 4 - Export & import
 
