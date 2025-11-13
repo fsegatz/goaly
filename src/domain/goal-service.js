@@ -1,6 +1,7 @@
 // src/domain/goal-service.js
 
 import Goal from './goal.js';
+import { prepareGoalsStoragePayload } from './migration-service.js';
 
 const HISTORY_LIMIT = 50;
 const HISTORY_EVENTS = {
@@ -33,7 +34,22 @@ class GoalService {
     loadGoals() {
         const saved = localStorage.getItem('goaly_goals');
         if (saved) {
-            this.goals = JSON.parse(saved).map(goal => new Goal(goal));
+            try {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed)) {
+                    this.goals = parsed.map(goal => new Goal(goal));
+                    this.saveGoals();
+                    return;
+                }
+                if (parsed && Array.isArray(parsed.goals)) {
+                    this.goals = parsed.goals.map(goal => new Goal(goal));
+                    if (!parsed.version) {
+                        this.saveGoals();
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load goals from storage', error);
+            }
         }
     }
 
@@ -50,7 +66,8 @@ class GoalService {
     }
 
     saveGoals() {
-        localStorage.setItem('goaly_goals', JSON.stringify(this.goals));
+        const payload = prepareGoalsStoragePayload(this.goals);
+        localStorage.setItem('goaly_goals', JSON.stringify(payload));
     }
 
     generateHistoryId() {

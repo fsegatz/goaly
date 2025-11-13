@@ -194,7 +194,32 @@ const de = {
     },
     import: {
         success: 'Daten erfolgreich importiert!',
-        error: 'Fehler beim Importieren: {{message}}'
+        error: 'Fehler beim Importieren: {{message}}',
+        invalidJson: 'Import fehlgeschlagen: Die Datei enthält kein gültiges JSON.',
+        invalidStructure: 'Import fehlgeschlagen: Das Dateiformat ist nicht kompatibel.',
+        invalidVersionFormat: 'Import fehlgeschlagen: Unbekannte Version "{{version}}".',
+        versionTooNew: 'Import blockiert: Die Datei-Version {{fileVersion}} ist neuer als die unterstützte Version {{currentVersion}}.',
+        incompatible: 'Import fehlgeschlagen: Die Datei ist mit dieser Goaly-Version nicht kompatibel.',
+        migrationCancelled: 'Import abgebrochen. Die Datei wurde nicht migriert.'
+    },
+    migration: {
+        prompt: {
+            title: 'Migration erforderlich',
+            message: '„{{fileName}}“ verwendet Version {{fromVersion}}. Soll die Datei vor dem Import auf {{toVersion}} migriert werden?',
+            messageLegacy: '„{{fileName}}“ enthält keine Versionsinformation. Soll die Datei vor dem Import auf {{toVersion}} migriert werden?',
+            reviewCta: 'Änderungen prüfen',
+            cancel: 'Abbrechen',
+            unnamedFile: 'Unbenannter Export',
+            legacyVersion: 'einem älteren Format'
+        },
+        diff: {
+            title: 'Migrationsvorschau für {{fileName}}',
+            subtitle: 'Vergleich {{fromVersion}} → {{toVersion}}',
+            originalLabel: 'Original',
+            updatedLabel: 'Migrierte Version',
+            applyCta: 'Migration anwenden',
+            cancel: 'Abbrechen'
+        }
     }
 };
 

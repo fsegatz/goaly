@@ -164,6 +164,40 @@
         </div>
     </div>
 
+    <div id="migrationPromptModal" class="modal">
+        <div class="modal-content migration-modal">
+            <span id="migrationPromptClose" class="close">&times;</span>
+            <h2 id="migrationPromptTitle">Migration required</h2>
+            <p id="migrationPromptMessage"></p>
+            <div class="modal-actions">
+                <button id="migrationReviewBtn" class="btn btn-primary" data-i18n-key="migration.prompt.reviewCta">Review changes</button>
+                <button id="migrationPromptCancelBtn" class="btn btn-secondary" data-i18n-key="migration.prompt.cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="migrationDiffModal" class="modal">
+        <div class="modal-content migration-diff-modal">
+            <span id="migrationDiffClose" class="close">&times;</span>
+            <h2 id="migrationDiffTitle">Migration preview</h2>
+            <p id="migrationDiffSubtitle"></p>
+            <div class="migration-diff-columns">
+                <div class="diff-column">
+                    <h3 id="migrationDiffOldLabel">Original</h3>
+                    <div id="migrationDiffOld" class="diff-view"></div>
+                </div>
+                <div class="diff-column">
+                    <h3 id="migrationDiffNewLabel">Migrated</h3>
+                    <div id="migrationDiffNew" class="diff-view"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="migrationApplyBtn" class="btn btn-primary" data-i18n-key="migration.diff.applyCta">Apply migration</button>
+                <button id="migrationCancelBtn" class="btn btn-secondary" data-i18n-key="migration.diff.cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <div id="completionModal" class="modal">
         <div class="modal-content completion-modal">
             <span id="completionCloseBtn" class="close">&times;</span>

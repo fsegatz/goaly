@@ -600,6 +600,96 @@ main {
     position: relative;
 }
 
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.modal-actions .btn {
+    min-width: 140px;
+}
+
+.migration-modal {
+    max-width: 480px;
+}
+
+.migration-diff-modal {
+    max-width: 960px;
+}
+
+.migration-diff-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.diff-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.diff-view {
+    background-color: #0f172a;
+    border-radius: 10px;
+    padding: 12px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.9rem;
+    color: #e2e8f0;
+    max-height: 280px;
+    overflow: auto;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.diff-line {
+    padding: 4px 8px;
+    border-radius: 6px;
+    margin-bottom: 2px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.diff-line--unchanged {
+    opacity: 0.75;
+}
+
+.diff-line--added {
+    background: rgba(72, 187, 120, 0.18);
+    color: #48bb78;
+}
+
+.diff-line--removed {
+    background: rgba(229, 62, 62, 0.2);
+    color: #f56565;
+}
+
+.diff-view.is-syncing {
+    scroll-behavior: auto;
+}
+
+.migration-modal .modal-actions,
+.migration-diff-modal .modal-actions {
+    justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+    .migration-diff-modal {
+        max-width: 95%;
+    }
+
+    .migration-diff-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .diff-view {
+        max-height: 240px;
+    }
+}
+
 .close {
     color: #aaa;
     float: right;

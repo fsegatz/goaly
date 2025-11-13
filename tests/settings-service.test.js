@@ -80,6 +80,26 @@ describe('Settings Service', () => {
         expect(settingsService.getSettings().reviewIntervals).toEqual([7, 14, 30]);
     });
 
+    it('should fallback to defaults when intervals string only contains whitespace', () => {
+        settingsService.updateSettings({ reviewIntervals: '    ' });
+        expect(settingsService.getSettings().reviewIntervals).toEqual([7, 14, 30]);
+    });
+
+    it('should ignore non-positive interval values', () => {
+        settingsService.updateSettings({ reviewIntervals: '0d, -3, 5' });
+        expect(settingsService.getSettings().reviewIntervals).toEqual([5]);
+    });
+
+    it('should ignore intervals with unsupported units', () => {
+        settingsService.updateSettings({ reviewIntervals: '5w, 10d' });
+        expect(settingsService.getSettings().reviewIntervals).toEqual([10]);
+    });
+
+    it('should accept direct numeric interval inputs', () => {
+        settingsService.updateSettings({ reviewIntervals: 21 });
+        expect(settingsService.getSettings().reviewIntervals).toEqual([21]);
+    });
+
     it('should handle numeric inputs and uppercase suffixes', () => {
         settingsService.updateSettings({ reviewIntervals: '1H, 0.5d, 90M, 45s' });
         const intervals = settingsService.getSettings().reviewIntervals;
