@@ -23,8 +23,9 @@ This handbook summarises how coding agents and new contributors collaborate prod
 2. Work incrementally; run tests after significant edits.
 3. Do **not** overwrite user changes in a dirty worktree.
 4. Summarise results clearly in commits/PRs and call out next steps.
-5. Raise a PR when work is complete and hand it off for review.
-6. **Naming rule:** Use English-only identifiers, function names and terminology across the codebase and documentation. This ensures consistency and simplifies future contributions.
+5. Update the documentation whenever functionality changes.
+6. Raise a PR when work is complete and hand it off for review.
+7. **Naming rule:** Use English-only identifiers, function names and terminology across the codebase and documentation. This ensures consistency and simplifies future contributions.
 
 ## Reference Material
 - Product expectations: `README.md` and the documents in `docs/`.

@@ -1,13 +1,13 @@
-# Acceptance Tests — Goaly MVP
+# Acceptance Tests - Goaly MVP
 
 This checklist summarises the manual verification of the MVP scope. Run the tests locally against the current build. For development runs, shorten the check-in interval to minutes instead of days.
 
-## Test 1 — Goal CRUD
+## Test 1 - Goal CRUD
 
 **Precondition:** Browser open, LocalStorage empty or seeded with temporary data.
 
 **Steps**
-1. Create a new goal with title “Test goal A”, motivation `3`, urgency `4`, and leave the deadline empty.
+1. Create a new goal with title "Test goal A", motivation `3`, urgency `4`, and leave the deadline empty.
 2. Confirm the goal appears on the dashboard.
 3. Edit the goal, change motivation to `5`, and save.
 4. Delete the goal.
@@ -17,7 +17,7 @@ This checklist summarises the manual verification of the MVP scope. Run the test
 - After editing the updated values persist across reloads.
 - After deletion the goal is removed from all views.
 
-## Test 2 — Active limit & auto activation
+## Test 2 - Active limit and auto activation
 
 **Precondition:** Active goal limit set to `3` (default).
 
@@ -28,7 +28,7 @@ This checklist summarises the manual verification of the MVP scope. Run the test
 **Expected**
 - The app blocks the fourth activation and suggests pausing another goal or increasing the limit.
 
-## Test 3 — Dashboard prioritisation
+## Test 3 - Dashboard prioritisation
 
 **Precondition:** At least three active goals with different motivation/urgency values and deadlines.
 
@@ -40,7 +40,7 @@ This checklist summarises the manual verification of the MVP scope. Run the test
 **Expected**
 - The ordering follows the documented priority formula and updates immediately.
 
-## Test 4 — Export / import (JSON)
+## Test 4 - Export / import (JSON)
 
 **Precondition:** At least two goals exist.
 
@@ -52,7 +52,7 @@ This checklist summarises the manual verification of the MVP scope. Run the test
 **Expected**
 - All goals return with correct fields (title, motivation, urgency, deadline, status).
 
-## Test 5 — Check-in reminders (dev simulation)
+## Test 5 - Check-in reminders (dev simulation)
 
 **Precondition:** At least one active goal and the check-in interval configurable (set to one minute for the test).
 
@@ -76,6 +76,6 @@ This checklist summarises the manual verification of the MVP scope. Run the test
 
 ## Notes
 
-- Use DevTools → Application/Storage to reset LocalStorage between runs.
+- Use DevTools -> Application/Storage to reset LocalStorage between runs.
 - These scenarios can later be automated with frameworks such as Playwright or Cypress.
 
