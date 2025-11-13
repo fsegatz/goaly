@@ -5,13 +5,13 @@ import SettingsService from './domain/settings-service.js';
 import CheckInService from './domain/check-in-service.js';
 import UIController from './ui/ui-controller.js';
 import Goal from './domain/goal.js';
+import LanguageService from './domain/language-service.js';
 
 class GoalyApp {
     constructor() {
         this.settingsService = new SettingsService();
+        this.languageService = new LanguageService();
         this.goalService = new GoalService();
-        this.checkInService = new CheckInService(this.goalService.goals, this.settingsService.getSettings());
-        this.uiController = new UIController(this);
         
         this.checkIns = [];
         this.checkInTimer = null;
@@ -20,9 +20,17 @@ class GoalyApp {
 
     init() {
         this.settingsService.loadSettings();
+        const resolvedLanguage = this.languageService.init(this.settingsService.getSettings().language);
+        if (resolvedLanguage !== this.settingsService.getSettings().language) {
+            this.settingsService.updateSettings({ language: resolvedLanguage });
+        }
+        this.languageService.applyTranslations(document);
+
         this.goalService.loadGoals();
-        // Migriere bestehende Ziele zur automatischen Aktivierung
+        // Migrate existing goals to automatic activation
         this.goalService.migrateGoalsToAutoActivation(this.settingsService.getSettings().maxActiveGoals);
+        this.checkInService = new CheckInService(this.goalService.goals, this.settingsService.getSettings());
+        this.uiController = new UIController(this);
         this.uiController.renderViews();
         this.startCheckInTimer();
     }
@@ -71,27 +79,28 @@ class GoalyApp {
             try {
                 const data = JSON.parse(e.target.result);
                 
-                // Zuerst Einstellungen laden, falls vorhanden
+                // Load settings first when available
                 if (data.settings) {
                     this.settingsService.updateSettings(data.settings);
-                    document.getElementById('maxActiveGoals').value = this.settingsService.getSettings().maxActiveGoals;
-                    document.getElementById('checkInInterval').value = this.settingsService.getSettings().checkInInterval;
-                    document.getElementById('checkInsEnabled').checked = this.settingsService.getSettings().checkInsEnabled !== false;
+                    if (this.settingsService.getSettings().language) {
+                        this.languageService.setLanguage(this.settingsService.getSettings().language, { notify: false });
+                    }
                     this.startCheckInTimer();
                 }
                 
-                // Dann Ziele laden und migrieren (mit korrektem maxActiveGoals)
+                // Then load goals and migrate them with the current maxActiveGoals value
                 if (data.goals) {
                     this.goalService.goals = data.goals.map(goal => new Goal(goal));
                     this.checkInService = new CheckInService(this.goalService.goals, this.settingsService.getSettings());
-                    // Nach Import automatisch die N Ziele mit höchster Priorität aktivieren
+                    // Activate the top N goals by priority right after import
                     this.goalService.migrateGoalsToAutoActivation(this.settingsService.getSettings().maxActiveGoals);
                 }
 
                 this.uiController.renderViews();
-                alert('Daten erfolgreich importiert!');
+                this.languageService.applyTranslations(document);
+                alert(this.languageService.translate('import.success'));
             } catch (error) {
-                alert('Fehler beim Importieren: ' + error.message);
+                alert(this.languageService.translate('import.error', { message: error.message }));
             }
         };
         reader.readAsText(file);

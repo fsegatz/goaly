@@ -41,7 +41,10 @@ class CheckInService {
             .filter(g => this.shouldCheckIn(g))
             .map(goal => ({
                 goal,
-                message: `Zeit für ein Check-in: "${goal.title}". Bitte überprüfe Motivation und Dringlichkeit.`
+                messageKey: 'checkIns.prompt',
+                messageArgs: {
+                    title: goal.title
+                }
             }));
     }
 

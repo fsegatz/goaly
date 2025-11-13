@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goaly - Zielverfolgung</title>
+    <title data-i18n-key="meta.title">Goaly - Goal tracking</title>
     <link rel="icon" type="image/png" href="styles/icon/favicon.png">
     <link rel="stylesheet" href="styles/styles.css">
 </head>
@@ -12,81 +12,81 @@
         <header>
             <h1>🎯 Goaly</h1>
             <nav class="menu">
-                <button class="menu-btn active" data-view="dashboard">Dashboard</button>
-                <button class="menu-btn" data-view="all-goals">Alle Ziele</button>
-                <button class="menu-btn" data-view="check-in">Check-In</button>
-                <button class="menu-btn" data-view="settings">Settings</button>
+                <button class="menu-btn active" data-view="dashboard" data-i18n-key="navigation.dashboard">Dashboard</button>
+                <button class="menu-btn" data-view="all-goals" data-i18n-key="navigation.allGoals">All goals</button>
+                <button class="menu-btn" data-view="check-in" data-i18n-key="navigation.checkIn">Check-in</button>
+                <button class="menu-btn" data-view="settings" data-i18n-key="navigation.settings">Settings</button>
             </nav>
             <div class="header-actions">
-                <button id="exportBtn" class="btn btn-secondary">Export</button>
-                <button id="importBtn" class="btn btn-secondary">Import</button>
-                <button id="addGoalBtn" class="btn btn-primary">+ Neues Ziel</button>
+                <button id="exportBtn" class="btn btn-secondary" data-i18n-key="actions.export">Export</button>
+                <button id="importBtn" class="btn btn-secondary" data-i18n-key="actions.import">Import</button>
+                <button id="addGoalBtn" class="btn btn-primary" data-i18n-key="actions.addGoal">+ New goal</button>
                 <input type="file" id="importFile" accept=".json" style="display: none;">
             </div>
         </header>
 
         <main>
             <div id="dashboardView" class="view active">
-                <h2>Dashboard</h2>
+                <h2 data-i18n-key="sections.dashboard">Dashboard</h2>
                 <div id="goalsList" class="goals-list"></div>
             </div>
 
             <div id="all-goalsView" class="view">
-                <h2>Alle Ziele</h2>
+                <h2 data-i18n-key="sections.allGoals">All goals</h2>
                 <div class="all-goals-controls">
                     <label for="allGoalsStatusFilter">
-                        Status
+                        <span data-i18n-key="filters.statusLabel">Status</span>
                         <select id="allGoalsStatusFilter">
-                            <option value="all">Alle Status</option>
-                            <option value="active">Aktiv</option>
-                            <option value="paused">Pausiert</option>
-                            <option value="completed">Erreicht</option>
-                            <option value="abandoned">Nicht erreicht</option>
+                            <option value="all" data-i18n-key="filters.statusOptions.all">All statuses</option>
+                            <option value="active" data-i18n-key="filters.statusOptions.active">Active</option>
+                            <option value="paused" data-i18n-key="filters.statusOptions.paused">Paused</option>
+                            <option value="completed" data-i18n-key="filters.statusOptions.completed">Completed</option>
+                            <option value="abandoned" data-i18n-key="filters.statusOptions.abandoned">Abandoned</option>
                         </select>
                     </label>
                     <label for="allGoalsPriorityFilter">
-                        Mindestpriorität
+                        <span data-i18n-key="filters.minPriorityLabel">Minimum priority</span>
                         <input type="number" id="allGoalsPriorityFilter" min="0" step="1" value="0">
                     </label>
                     <label for="allGoalsSort">
-                        Sortierung
+                        <span data-i18n-key="filters.sortLabel">Sorting</span>
                         <select id="allGoalsSort">
-                            <option value="priority-desc">Priorität (hoch → niedrig)</option>
-                            <option value="priority-asc">Priorität (niedrig → hoch)</option>
-                            <option value="updated-desc">Letzte Änderung (neu → alt)</option>
-                            <option value="updated-asc">Letzte Änderung (alt → neu)</option>
+                            <option value="priority-desc" data-i18n-key="filters.sortOptions.priorityDesc">Priority (high → low)</option>
+                            <option value="priority-asc" data-i18n-key="filters.sortOptions.priorityAsc">Priority (low → high)</option>
+                            <option value="updated-desc" data-i18n-key="filters.sortOptions.updatedDesc">Last update (new → old)</option>
+                            <option value="updated-asc" data-i18n-key="filters.sortOptions.updatedAsc">Last update (old → new)</option>
                         </select>
                     </label>
                     <label class="toggle-option">
                         <input type="checkbox" id="allGoalsToggleCompleted" checked>
-                        Erreichte anzeigen
+                        <span data-i18n-key="filters.includeCompleted">Show completed</span>
                     </label>
                     <label class="toggle-option">
                         <input type="checkbox" id="allGoalsToggleAbandoned" checked>
-                        Nicht erreichte anzeigen
+                        <span data-i18n-key="filters.includeAbandoned">Show abandoned</span>
                     </label>
                 </div>
                 <div class="table-wrapper">
                     <table id="allGoalsTable" class="goals-table">
                         <thead>
                             <tr>
-                                <th>Titel</th>
-                                <th>Status</th>
-                                <th>Priorität</th>
-                                <th>Motivation</th>
-                                <th>Dringlichkeit</th>
-                                <th>Deadline</th>
-                                <th>Letzte Änderung</th>
+                                <th data-i18n-key="tables.allGoals.headers.title">Title</th>
+                                <th data-i18n-key="tables.allGoals.headers.status">Status</th>
+                                <th data-i18n-key="tables.allGoals.headers.priority">Priority</th>
+                                <th data-i18n-key="tables.allGoals.headers.motivation">Motivation</th>
+                                <th data-i18n-key="tables.allGoals.headers.urgency">Urgency</th>
+                                <th data-i18n-key="tables.allGoals.headers.deadline">Deadline</th>
+                                <th data-i18n-key="tables.allGoals.headers.lastUpdated">Last updated</th>
                             </tr>
                         </thead>
                         <tbody id="allGoalsTableBody"></tbody>
                     </table>
-                    <div id="allGoalsEmptyState" class="empty-state" hidden>Keine Ziele vorhanden, die den aktuellen Filtern entsprechen.</div>
+                    <div id="allGoalsEmptyState" class="empty-state" hidden data-i18n-key="tables.allGoals.emptyState">No goals match the current filters.</div>
                 </div>
             </div>
 
             <div id="check-inView" class="view">
-                <h2>Check-In</h2>
+                <h2 data-i18n-key="sections.checkIn">Check-in</h2>
                 <div class="check-ins-panel" id="checkInsPanel">
                     <div id="checkInsList"></div>
                 </div>
@@ -94,22 +94,26 @@
 
             <div id="settingsView" class="view">
                 <div class="settings-panel" id="settingsPanel">
-                    <h2>Settings</h2>
+                    <h2 data-i18n-key="sections.settings">Settings</h2>
                     <div class="setting-item">
-                        <label for="maxActiveGoals">Maximale aktive Ziele:</label>
+                        <label for="maxActiveGoals" data-i18n-key="settingsPanel.maxActiveGoals">Maximum active goals:</label>
                         <input type="number" id="maxActiveGoals" min="1" max="10" value="3">
                     </div>
                     <div class="setting-item">
                         <label>
                             <input type="checkbox" id="checkInsEnabled" checked>
-                            Check-ins aktivieren
+                            <span data-i18n-key="settingsPanel.checkInsEnabled">Enable check-ins</span>
                         </label>
                     </div>
                     <div class="setting-item">
-                        <label for="checkInInterval">Check-in Intervall (Minuten für Dev-Tests):</label>
+                        <label for="checkInInterval" data-i18n-key="settingsPanel.checkInInterval">Check-in interval (minutes for dev testing):</label>
                         <input type="number" id="checkInInterval" min="1" value="1">
                     </div>
-                    <button id="saveSettingsBtn" class="btn btn-primary">Speichern</button>
+                    <div class="setting-item">
+                        <label for="languageSelect" data-i18n-key="settingsPanel.languageLabel">Language</label>
+                        <select id="languageSelect"></select>
+                    </div>
+                    <button id="saveSettingsBtn" class="btn btn-primary" data-i18n-key="settingsPanel.save">Save</button>
                 </div>
             </div>
         </main>
@@ -117,61 +121,61 @@
 
     <!-- Goal Form Modal -->
     <div id="goalModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2 id="modalTitle">Neues Ziel</h2>
-                <form id="goalForm">
-                    <input type="hidden" id="goalId">
-                    
-                    <div class="form-group">
-                        <label for="goalTitle">Titel *</label>
-                        <input type="text" id="goalTitle" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="goalDescription">Beschreibung</label>
-                        <textarea id="goalDescription" rows="3"></textarea>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="goalMotivation">Motivation (1-5) *</label>
-                            <input type="number" id="goalMotivation" min="1" max="5" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="goalUrgency">Dringlichkeit (1-5) *</label>
-                            <input type="number" id="goalUrgency" min="1" max="5" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="goalDeadline">Deadline (optional)</label>
-                        <input type="date" id="goalDeadline">
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Speichern</button>
-                        <button type="button" id="cancelBtn" class="btn btn-secondary">Abbrechen</button>
-                        <button type="button" id="deleteBtn" class="btn btn-danger" style="display: none;">Löschen</button>
-                    </div>
-                </form>
-                <div id="goalHistorySection" class="goal-history" hidden>
-                    <h3>Historie</h3>
-                    <div id="goalHistoryList" class="goal-history-list"></div>
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle" data-i18n-key="goalForm.createTitle">New goal</h2>
+            <form id="goalForm">
+                <input type="hidden" id="goalId">
+                
+                <div class="form-group">
+                    <label for="goalTitle" data-i18n-key="goalModal.titleLabel">Title *</label>
+                    <input type="text" id="goalTitle" required>
                 </div>
+
+                <div class="form-group">
+                    <label for="goalDescription" data-i18n-key="goalModal.descriptionLabel">Description</label>
+                    <textarea id="goalDescription" rows="3"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="goalMotivation" data-i18n-key="goalModal.motivationLabel">Motivation (1-5) *</label>
+                        <input type="number" id="goalMotivation" min="1" max="5" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="goalUrgency" data-i18n-key="goalModal.urgencyLabel">Urgency (1-5) *</label>
+                        <input type="number" id="goalUrgency" min="1" max="5" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="goalDeadline" data-i18n-key="goalModal.deadlineLabel">Deadline (optional)</label>
+                    <input type="date" id="goalDeadline">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" data-i18n-key="goalModal.actions.save">Save</button>
+                    <button type="button" id="cancelBtn" class="btn btn-secondary" data-i18n-key="goalModal.actions.cancel">Cancel</button>
+                    <button type="button" id="deleteBtn" class="btn btn-danger" style="display: none;" data-i18n-key="goalModal.actions.delete">Delete</button>
+                </div>
+            </form>
+            <div id="goalHistorySection" class="goal-history" hidden>
+                <h3 data-i18n-key="goalHistory.title">History</h3>
+                <div id="goalHistoryList" class="goal-history-list"></div>
             </div>
         </div>
+    </div>
 
     <div id="completionModal" class="modal">
         <div class="modal-content completion-modal">
             <span id="completionCloseBtn" class="close">&times;</span>
-            <h2>Ziel abschließen</h2>
-            <p>Hast du dein Ziel erreicht?</p>
+            <h2 data-i18n-key="completionModal.title">Complete goal</h2>
+            <p data-i18n-key="completionModal.question">Did you achieve your goal?</p>
             <div class="completion-actions">
-                <button id="completionSuccessBtn" class="btn btn-primary">Ziel erreicht</button>
-                <button id="completionFailureBtn" class="btn btn-danger">Nicht erreicht</button>
-                <button id="completionCancelBtn" class="btn btn-secondary">Abbrechen</button>
+                <button id="completionSuccessBtn" class="btn btn-primary" data-i18n-key="completionModal.success">Goal completed</button>
+                <button id="completionFailureBtn" class="btn btn-danger" data-i18n-key="completionModal.failure">Not completed</button>
+                <button id="completionCancelBtn" class="btn btn-secondary" data-i18n-key="completionModal.cancel">Cancel</button>
             </div>
         </div>
     </div>
