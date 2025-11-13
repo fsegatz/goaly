@@ -13,8 +13,12 @@
 5. Update documentation whenever functionality changes (see the release checklist).
 6. Use English-only identifiers, function names, and terminology across code and docs.
 
+## Manual Verification
+- Before releases (or major UI changes), run the smoke checklist in `docs/acceptance_tests.md` (specifically Test 6 – Review view smoke test).
+- Record findings (browser/OS, time per section, defects) and share them in the team channel.
+
 ## Architecture Overview
-- `src/domain`: pure logic (goal, settings, and check-in services).
+- `src/domain`: pure logic (goal, settings, and review services).
 - `src/ui/ui-controller.js`: DOM coordination and rendering.
 - `styles/styles.css`: global styling with responsive layout.
 - `src/i18n`: localisation resources and language service.
@@ -28,7 +32,7 @@ goaly/
 ├── src/
 │   ├── app.js
 │   ├── domain/
-│   │   ├── check-in-service.js
+│   │   ├── review-service.js  (review cadence engine)
 │   │   ├── goal-service.js
 │   │   ├── goal.js
 │   │   └── settings-service.js

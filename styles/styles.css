@@ -113,6 +113,12 @@ header h1 {
     border-color: #667eea;
 }
 
+.setting-help {
+    margin-top: 6px;
+    font-size: 0.85rem;
+    color: #777;
+}
+
 main {
     background: white;
     padding: 30px;
@@ -656,27 +662,147 @@ main {
     min-width: 100px;
 }
 
-.check-in-item {
-    background: #fff3cd;
-    border-left: 4px solid #ffc107;
-    padding: 15px;
-    margin-bottom: 15px;
+.check-in-feedback {
     border-radius: 8px;
+    padding: 12px 16px;
+    background: #f1f5ff;
+    border-left: 4px solid #667eea;
+    color: #2f3b68;
+    font-size: 0.95rem;
+    margin-bottom: 18px;
 }
 
-.check-in-item h3 {
-    margin-bottom: 8px;
-    color: #856404;
+.check-in-feedback[data-state="success"] {
+    background: #f0f9f5;
+    border-left-color: #2d9f6f;
+    color: #1f6a4c;
 }
 
-.check-in-item p {
-    color: #856404;
-    margin-bottom: 10px;
+.check-in-feedback[data-state="info"] {
+    background: #f1f5ff;
+    border-left-color: #667eea;
+    color: #2f3b68;
 }
 
-.check-in-actions {
+.check-ins-list {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.check-ins-empty {
+    padding: 24px;
+    text-align: center;
+    color: #777;
+    font-size: 0.95rem;
+    border: 2px dashed #e0e0e0;
+    border-radius: 12px;
+    background: #fafaff;
+}
+
+.check-in-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    padding: 20px;
+    box-shadow: 0 6px 14px rgba(102, 126, 234, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.check-in-card.is-stable {
+    border-color: #38a169;
+    box-shadow: 0 10px 20px rgba(56, 161, 105, 0.18);
+}
+
+.check-in-card__header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.check-in-card__title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2d2d2d;
+    flex: 1 1 auto;
+}
+
+.check-in-card__sequence {
+    font-size: 0.85rem;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.check-in-card__due {
+    font-size: 0.9rem;
+    color: #a94442;
+    font-weight: 500;
+    width: 100%;
+}
+
+.check-in-card__fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    align-items: end;
+}
+
+.check-in-card__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.check-in-card__field-label {
+    font-size: 0.9rem;
+    color: #555;
+    font-weight: 500;
+}
+
+.check-in-card__field-input {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #d0d0d0;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.check-in-card__field-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
+}
+
+.check-in-card__status {
+    align-self: flex-start;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #e6f9f0;
+    color: #20744a;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.check-in-card__actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.check-in-card__actions .btn {
+    flex: 1;
+    min-width: 120px;
+}
+
+@media (max-width: 600px) {
+    .check-in-card__actions .btn {
+        min-width: 100%;
+    }
 }
 
 @media (max-width: 768px) {

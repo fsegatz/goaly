@@ -36,7 +36,12 @@ class Goal {
         this.status = goalData.status || 'active';
         this.createdAt = goalData.createdAt ? new Date(goalData.createdAt) : new Date();
         this.lastUpdated = goalData.lastUpdated ? new Date(goalData.lastUpdated) : new Date();
-        this.checkInDates = goalData.checkInDates || [];
+        this.checkInDates = Array.isArray(goalData.checkInDates) ? [...goalData.checkInDates] : [];
+        this.lastCheckInAt = goalData.lastCheckInAt ? new Date(goalData.lastCheckInAt) : null;
+        this.nextCheckInAt = goalData.nextCheckInAt ? new Date(goalData.nextCheckInAt) : null;
+        this.reviewIntervalIndex = Number.isInteger(goalData.reviewIntervalIndex)
+            ? goalData.reviewIntervalIndex
+            : null;
         const history = Array.isArray(goalData.history) ? goalData.history.map(normalizeHistoryEntry).filter(Boolean) : [];
         this.history = history;
     }
