@@ -155,10 +155,16 @@ beforeEach(() => {
 
     global.document = document;
     global.window = window;
+    global.navigator = window.navigator || { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
     global.confirm = jest.fn();
     global.alert = jest.fn();
     window.confirm = global.confirm;
     window.alert = global.alert;
+    
+    // Ensure navigator is available on window
+    if (!window.navigator) {
+        window.navigator = global.navigator;
+    }
 
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2025-11-09T12:00:00.000Z'));
@@ -206,6 +212,7 @@ beforeEach(() => {
 afterEach(() => {
     delete global.document;
     delete global.window;
+    delete global.navigator;
     delete global.confirm;
     delete global.alert;
     jest.useRealTimers();

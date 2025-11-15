@@ -147,10 +147,16 @@ function setupTestEnvironment() {
     // Make document and window available globally for the UIController
     global.document = document;
     global.window = window;
+    global.navigator = window.navigator || { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
     global.confirm = jest.fn(); // Mock global confirm
     global.alert = jest.fn(); // Mock global alert
     window.confirm = global.confirm;
     window.alert = global.alert;
+    
+    // Ensure navigator is available on window
+    if (!window.navigator) {
+        window.navigator = global.navigator;
+    }
 
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2025-11-09T12:00:00.000Z')); // Set a fixed system time
@@ -203,6 +209,7 @@ function cleanupTestEnvironment() {
     // Clean up global DOM elements
     delete global.document;
     delete global.window;
+    delete global.navigator;
     delete global.confirm;
     delete global.alert;
     jest.useRealTimers();
