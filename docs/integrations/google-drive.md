@@ -61,22 +61,33 @@ The Google Drive sync integration allows users to:
 
 5. **Configure Goaly**
 
-   You need to provide the API key and Client ID to Goaly. There are two ways to do this:
+   You need to provide the API key and Client ID to Goaly. The recommended approach is to use a local configuration file for development:
 
-   **Option A: Environment Variables (for development)**
-   ```bash
-   export GOOGLE_API_KEY="your-api-key"
-   export GOOGLE_CLIENT_ID="your-client-id"
-   ```
+   **For Local Development:**
+   
+   1. Copy the example configuration file:
+      ```bash
+      cp config.local.js.example config.local.js
+      ```
+   
+   2. Edit `config.local.js` and add your credentials:
+      ```javascript
+      window.GOOGLE_API_KEY = "your-api-key-here";
+      window.GOOGLE_CLIENT_ID = "your-client-id.apps.googleusercontent.com";
+      ```
+   
+   **Note:** `config.local.js` is in `.gitignore` and will not be committed to version control. The application will automatically load this file if it exists.
 
-   **Option B: Window Configuration (for production)**
-   Add the following script to your HTML before loading the app:
-   ```html
-   <script>
-       window.GOOGLE_API_KEY = "your-api-key";
-       window.GOOGLE_CLIENT_ID = "your-client-id";
-   </script>
-   ```
+   **For Production/CI/CD:**
+   
+   The credentials are automatically injected during deployment using GitHub Actions secrets:
+   
+   1. Go to your GitHub repository: Settings > Secrets and variables > Actions
+   2. Add the following secrets:
+      - `GOOGLE_API_KEY` - Your Google API key
+      - `GOOGLE_CLIENT_ID` - Your Google OAuth 2.0 Client ID
+   
+   The GitHub Actions workflow (`.github/workflows/static.yml`) will automatically inject these credentials into `config.local.js` during deployment to GitHub Pages.
 
    **Note:** For production, consider using environment-specific configuration or a secure configuration service.
 

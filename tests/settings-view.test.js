@@ -49,6 +49,14 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    // Clear any pending timers
+    if (settingsView && settingsView.statusTimeout) {
+        clearTimeout(settingsView.statusTimeout);
+        settingsView.statusTimeout = null;
+    }
+    jest.clearAllTimers();
+    jest.useRealTimers();
+    
     delete global.document;
     delete global.window;
     jest.restoreAllMocks();
@@ -523,11 +531,18 @@ describe('SettingsView', () => {
         expect(updateGoogleDriveUISpy).toHaveBeenCalled();
 
         updateGoogleDriveUISpy.mockRestore();
+        
+        // Clear any remaining timers
+        if (settingsView.statusTimeout) {
+            clearTimeout(settingsView.statusTimeout);
+            settingsView.statusTimeout = null;
+        }
+        jest.clearAllTimers();
         jest.useRealTimers();
         document.body.removeChild(statusDiv);
     });
 
-    test('showGoogleDriveStatus should not clear status if message changed', (done) => {
+    test('showGoogleDriveStatus should not clear status if message changed', () => {
         jest.useFakeTimers();
         const statusDiv = document.createElement('div');
         statusDiv.id = 'googleDriveAuthStatus';
@@ -545,9 +560,14 @@ describe('SettingsView', () => {
         // updateGoogleDriveUI should not be called because message changed
         expect(statusDiv.textContent).toBe('Different message');
 
+        // Clear any remaining timers
+        if (settingsView.statusTimeout) {
+            clearTimeout(settingsView.statusTimeout);
+            settingsView.statusTimeout = null;
+        }
+        jest.clearAllTimers();
         jest.useRealTimers();
         document.body.removeChild(statusDiv);
-        done();
     });
 
     test('syncSettingsForm should handle non-array reviewIntervals', () => {

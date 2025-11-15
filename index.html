@@ -6,9 +6,15 @@
     <title data-i18n-key="meta.title">Goaly - Goal tracking</title>
     <link rel="icon" type="image/png" href="styles/icon/favicon.png">
     <link rel="stylesheet" href="styles/styles.css">
+    <!-- Load local config for development (if available) -->
+    <script src="config.local.js" onerror="console.log('config.local.js not found - using defaults or environment variables')"></script>
     <script>
-        window.GOOGLE_API_KEY = "AIzaSyDOTFM9TtaDMAH9sdeYsX99Lpezot98934";
-        window.GOOGLE_CLIENT_ID = "624500774734-vlgtv1l0de4g3kksrh90bvjp6ke0raqi.apps.googleusercontent.com";
+        // Google API credentials are loaded from:
+        // 1. config.local.js (for local development, not in version control)
+        // 2. Environment variables (for CI/CD and production)
+        // 3. Default to empty strings if not set
+        window.GOOGLE_API_KEY = window.GOOGLE_API_KEY || "";
+        window.GOOGLE_CLIENT_ID = window.GOOGLE_CLIENT_ID || "";
     </script>
 </head>
 <body>

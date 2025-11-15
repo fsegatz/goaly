@@ -210,12 +210,15 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    // Clear any pending timers
+    jest.clearAllTimers();
+    jest.useRealTimers();
+    
     delete global.document;
     delete global.window;
     delete global.navigator;
     delete global.confirm;
     delete global.alert;
-    jest.useRealTimers();
 });
 
 describe('UIController', () => {

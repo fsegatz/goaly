@@ -76,12 +76,25 @@ class GoalyApp {
                 // Visual feedback
                 logo.style.transform = 'scale(1.1)';
                 logo.style.transition = 'transform 0.2s';
-                setTimeout(() => {
+                const visualFeedbackTimer = setTimeout(() => {
                     logo.style.transform = 'scale(1)';
                 }, 200);
-                // Show notification
-                alert('Developer mode enabled!');
+                // Use unref() to prevent timer from keeping Node.js process alive (for testing)
+                if (typeof visualFeedbackTimer?.unref === 'function') {
+                    visualFeedbackTimer.unref();
+                }
+                // Show non-blocking notification
+                const statusView = this.uiController.settingsView;
+                if (statusView) {
+                    statusView.showGoogleDriveStatus('Developer mode enabled!', false);
+                }
+                pressTimer = null;
             }, PRESS_DURATION);
+            
+            // Use unref() to prevent timer from keeping Node.js process alive (for testing)
+            if (typeof pressTimer?.unref === 'function') {
+                pressTimer.unref();
+            }
         };
 
         const cancelPress = () => {
@@ -127,12 +140,25 @@ class GoalyApp {
     startCheckInTimer() {
         if (this.checkInTimer) {
             clearInterval(this.checkInTimer);
+            this.checkInTimer = null;
         }
 
         this.refreshCheckIns();
         this.checkInTimer = setInterval(() => {
             this.refreshCheckIns();
         }, 60000);
+        
+        // Use unref() to prevent timer from keeping Node.js process alive (for testing)
+        if (typeof this.checkInTimer.unref === 'function') {
+            this.checkInTimer.unref();
+        }
+    }
+    
+    stopCheckInTimer() {
+        if (this.checkInTimer) {
+            clearInterval(this.checkInTimer);
+            this.checkInTimer = null;
+        }
     }
 
     refreshCheckIns({ render = true } = {}) {

@@ -5,6 +5,7 @@ import { BaseUIController } from './base-ui-controller.js';
 export class SettingsView extends BaseUIController {
     constructor(app) {
         super(app);
+        this.statusTimeout = null;
     }
 
     initializeLanguageControls() {
@@ -221,6 +222,11 @@ export class SettingsView extends BaseUIController {
             return;
         }
 
+        // Clear any existing timeout to prevent race conditions
+        if (this.statusTimeout) {
+            clearTimeout(this.statusTimeout);
+        }
+
         statusDiv.hidden = false;
         statusDiv.textContent = message;
         statusDiv.className = isError 
@@ -228,11 +234,15 @@ export class SettingsView extends BaseUIController {
             : 'google-drive-status google-drive-status-info';
 
         // Clear status after 5 seconds
-        setTimeout(() => {
-            if (statusDiv.textContent === message) {
-                this.updateGoogleDriveUI();
-            }
+        this.statusTimeout = setTimeout(() => {
+            this.updateGoogleDriveUI();
+            this.statusTimeout = null;
         }, 5000);
+        
+        // Use unref() to prevent timer from keeping Node.js process alive (for testing)
+        if (typeof this.statusTimeout.unref === 'function') {
+            this.statusTimeout.unref();
+        }
     }
 }
 

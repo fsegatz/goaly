@@ -59,10 +59,13 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    // Clear all timers
+    jest.clearAllTimers();
+    jest.useRealTimers();
+    
     delete global.document;
     delete global.window;
     delete global.alert;
-    jest.useRealTimers();
     jest.restoreAllMocks();
 });
 

@@ -209,7 +209,7 @@ const de = {
     migration: {
         prompt: {
             title: 'Migration erforderlich',
-            message: '„{{fileName}}" verwendet Version {{fromVersion}}. Soll die Datei vor dem Import auf {{toVersion}} migriert werden?',
+            message: '„{{fileName}}“ verwendet Version {{fromVersion}}. Soll die Datei vor dem Import auf {{toVersion}} migriert werden?',
             messageLegacy: '„{{fileName}}" enthält keine Versionsinformation. Soll die Datei vor dem Import auf {{toVersion}} migriert werden?',
             reviewCta: 'Änderungen prüfen',
             cancel: 'Abbrechen',
