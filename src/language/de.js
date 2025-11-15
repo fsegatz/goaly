@@ -76,6 +76,8 @@ const de = {
         languageLabel: 'Sprache',
         dataManagement: 'Datenverwaltung',
         dataManagementHelp: 'Exportieren Sie Ihre Daten zur Sicherung oder importieren Sie zuvor exportierte Daten.',
+        googleDriveSync: 'Google Drive Synchronisation',
+        googleDriveSyncHelp: 'Synchronisieren Sie Ihre Zieldaten mit Google Drive für Backup und Multi-Device-Zugriff.',
         save: 'Speichern'
     },
     goalModal: {
@@ -208,7 +210,7 @@ const de = {
         prompt: {
             title: 'Migration erforderlich',
             message: '„{{fileName}}“ verwendet Version {{fromVersion}}. Soll die Datei vor dem Import auf {{toVersion}} migriert werden?',
-            messageLegacy: '„{{fileName}}“ enthält keine Versionsinformation. Soll die Datei vor dem Import auf {{toVersion}} migriert werden?',
+            messageLegacy: '„{{fileName}}" enthält keine Versionsinformation. Soll die Datei vor dem Import auf {{toVersion}} migriert werden?',
             reviewCta: 'Änderungen prüfen',
             cancel: 'Abbrechen',
             unnamedFile: 'Unbenannter Export',
@@ -222,6 +224,27 @@ const de = {
             applyCta: 'Migration anwenden',
             cancel: 'Abbrechen'
         }
+    },
+    googleDrive: {
+        signIn: 'Mit Google anmelden',
+        signOut: 'Abmelden',
+        syncNow: 'Jetzt synchronisieren',
+        authenticated: 'Mit Google authentifiziert',
+        lastSynced: 'Zuletzt synchronisiert: {{time}}',
+        syncing: 'Synchronisiere...',
+        syncSuccess: 'Synchronisation erfolgreich abgeschlossen',
+        syncError: 'Synchronisation fehlgeschlagen: {{message}}',
+        uploadSuccess: 'Daten zu Google Drive hochgeladen',
+        downloadSuccess: 'Daten von Google Drive heruntergeladen',
+        conflictDetected: 'Konflikt erkannt: {{message}}',
+        conflictNewerRemote: 'Remote-Daten sind neuer. Herunterladen, um lokale Daten zu überschreiben?',
+        conflictOlderVersion: 'Remote-Daten verwenden eine ältere Version. Hochladen, um Remote-Daten zu überschreiben?',
+        conflictNewerVersion: 'Remote-Daten verwenden eine neuere Version. Herunterladen, um lokale Daten zu aktualisieren?',
+        notConfigured: 'Google Drive Synchronisation ist nicht konfiguriert. Bitte GOOGLE_API_KEY und GOOGLE_CLIENT_ID setzen.',
+        authError: 'Authentifizierung fehlgeschlagen: {{message}}',
+        uploadError: 'Upload fehlgeschlagen: {{message}}',
+        downloadError: 'Download fehlgeschlagen: {{message}}',
+        testerOnly: 'Google Drive Synchronisation ist derzeit nur für Tester verfügbar. Senden Sie Ihr Google-E-Mail-Konto an den Entwickler, um Testzugang zu erhalten.'
     }
 };
 

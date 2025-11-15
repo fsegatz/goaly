@@ -6,6 +6,8 @@ import ReviewService from './domain/review-service.js';
 import UIController from './ui/ui-controller.js';
 import Goal from './domain/goal.js';
 import LanguageService from './domain/language-service.js';
+import GoogleDriveSyncService from './domain/google-drive-sync-service.js';
+import DeveloperModeService from './domain/developer-mode-service.js';
 import { prepareExportPayload, migratePayloadToCurrent } from './domain/migration-service.js';
 import {
     GOAL_FILE_VERSION,
@@ -20,6 +22,7 @@ class GoalyApp {
         this.settingsService = new SettingsService();
         this.languageService = new LanguageService();
         this.goalService = new GoalService();
+        this.developerModeService = new DeveloperModeService();
         this.currentDataVersion = GOAL_FILE_VERSION;
         this.pendingMigration = null;
         
@@ -41,21 +44,121 @@ class GoalyApp {
         // Migrate existing goals to automatic activation
         this.goalService.migrateGoalsToAutoActivation(this.settingsService.getSettings().maxActiveGoals);
         this.reviewService = new ReviewService(this.goalService, this.settingsService);
+        
+        // Initialize Google Drive sync service if credentials are available
+        this.googleDriveSyncService = null;
+        this.initGoogleDriveSync();
+        
         this.uiController = new UIController(this);
         this.uiController.renderViews();
         this.refreshCheckIns();
         this.startCheckInTimer();
+        this.setupDeveloperMode();
+    }
+
+    setupDeveloperMode() {
+        const logo = document.getElementById('goalyLogo');
+        if (!logo) {
+            return;
+        }
+
+        let pressTimer = null;
+        let pressStartTime = null;
+        const PRESS_DURATION = 5000; // 5 seconds
+
+        const startPress = (e) => {
+            e.preventDefault();
+            pressStartTime = Date.now();
+            pressTimer = setTimeout(() => {
+                // 5 seconds have passed
+                this.developerModeService.enable();
+                this.uiController.settingsView.updateDeveloperModeVisibility();
+                // Visual feedback
+                logo.style.transform = 'scale(1.1)';
+                logo.style.transition = 'transform 0.2s';
+                const visualFeedbackTimer = setTimeout(() => {
+                    logo.style.transform = 'scale(1)';
+                }, 200);
+                // Use unref() to prevent timer from keeping Node.js process alive (for testing)
+                if (typeof visualFeedbackTimer?.unref === 'function') {
+                    visualFeedbackTimer.unref();
+                }
+                // Show non-blocking notification
+                const statusView = this.uiController.settingsView;
+                if (statusView) {
+                    statusView.showGoogleDriveStatus('Developer mode enabled!', false);
+                }
+                pressTimer = null;
+            }, PRESS_DURATION);
+            
+            // Use unref() to prevent timer from keeping Node.js process alive (for testing)
+            if (typeof pressTimer?.unref === 'function') {
+                pressTimer.unref();
+            }
+        };
+
+        const cancelPress = () => {
+            if (pressTimer) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+            }
+            pressStartTime = null;
+        };
+
+        // Mouse events (for desktop)
+        logo.addEventListener('mousedown', startPress);
+        logo.addEventListener('mouseup', cancelPress);
+        logo.addEventListener('mouseleave', cancelPress);
+
+        // Touch events (for mobile)
+        logo.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startPress(e);
+        });
+        logo.addEventListener('touchend', cancelPress);
+        logo.addEventListener('touchcancel', cancelPress);
+        logo.addEventListener('touchmove', cancelPress);
+
+        // Update visibility on load
+        this.uiController.settingsView.updateDeveloperModeVisibility();
+    }
+
+    initGoogleDriveSync() {
+        // Get credentials from environment or window config
+        const apiKey = window.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY;
+        const clientId = window.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+
+        if (apiKey && clientId) {
+            this.googleDriveSyncService = new GoogleDriveSyncService();
+            this.googleDriveSyncService.initialize(apiKey, clientId).catch(error => {
+                console.error('Failed to initialize Google Drive sync:', error);
+                this.googleDriveSyncService = null;
+            });
+        }
     }
 
     startCheckInTimer() {
         if (this.checkInTimer) {
             clearInterval(this.checkInTimer);
+            this.checkInTimer = null;
         }
 
         this.refreshCheckIns();
         this.checkInTimer = setInterval(() => {
             this.refreshCheckIns();
         }, 60000);
+        
+        // Use unref() to prevent timer from keeping Node.js process alive (for testing)
+        if (typeof this.checkInTimer.unref === 'function') {
+            this.checkInTimer.unref();
+        }
+    }
+    
+    stopCheckInTimer() {
+        if (this.checkInTimer) {
+            clearInterval(this.checkInTimer);
+            this.checkInTimer = null;
+        }
     }
 
     refreshCheckIns({ render = true } = {}) {
@@ -226,6 +329,177 @@ class GoalyApp {
 
     alertImportError(messageKey, replacements) {
         alert(this.languageService.translate(messageKey, replacements));
+    }
+
+    async authenticateGoogleDrive() {
+        if (!this.googleDriveSyncService) {
+            this.showGoogleDriveError('googleDrive.notConfigured');
+            return;
+        }
+
+        try {
+            await this.googleDriveSyncService.authenticate();
+            this.uiController.settingsView.updateGoogleDriveUI();
+            this.uiController.settingsView.showGoogleDriveStatus(
+                this.languageService.translate('googleDrive.authenticated'),
+                false
+            );
+        } catch (error) {
+            console.error('Google Drive authentication error:', error);
+            // Show the actual error message from the service
+            const errorMessage = error.message || 'Unknown error occurred';
+            this.showGoogleDriveError('googleDrive.authError', { message: errorMessage });
+        }
+    }
+
+    signOutGoogleDrive() {
+        if (!this.googleDriveSyncService) {
+            return;
+        }
+
+        this.googleDriveSyncService.signOut();
+        this.uiController.settingsView.updateGoogleDriveUI();
+    }
+
+    async syncWithGoogleDrive() {
+        if (!this.googleDriveSyncService) {
+            this.showGoogleDriveError('googleDrive.notConfigured');
+            return;
+        }
+
+        if (!this.googleDriveSyncService.isAuthenticated()) {
+            this.showGoogleDriveError('googleDrive.authError', { message: 'Not authenticated' });
+            return;
+        }
+
+        const statusView = this.uiController.settingsView;
+        statusView.showGoogleDriveStatus(
+            this.languageService.translate('googleDrive.syncing'),
+            false
+        );
+
+        try {
+            // Get current local data
+            const localGoals = this.goalService.goals || [];
+            const localHasData = localGoals.length > 0;
+            
+            const localPayload = prepareExportPayload(
+                localGoals,
+                this.settingsService.getSettings()
+            );
+            const localVersion = localPayload.version;
+            const localExportDate = localPayload.exportDate;
+
+            // Check sync direction (always sync toward older state)
+            const syncDirection = await this.googleDriveSyncService.checkSyncDirection(
+                localVersion,
+                localExportDate,
+                localHasData
+            );
+
+            if (syncDirection.shouldUpload) {
+                // Local is newer or remote doesn't exist - upload local
+                await this.googleDriveSyncService.uploadData(
+                    this.goalService.goals,
+                    this.settingsService.getSettings()
+                );
+                statusView.showGoogleDriveStatus(
+                    this.languageService.translate('googleDrive.uploadSuccess'),
+                    false
+                );
+            } else {
+                // Remote is newer or local is empty - download remote
+                await this.downloadFromGoogleDrive();
+                statusView.showGoogleDriveStatus(
+                    this.languageService.translate('googleDrive.downloadSuccess'),
+                    false
+                );
+            }
+
+            statusView.updateGoogleDriveUI();
+        } catch (error) {
+            this.showGoogleDriveError('googleDrive.syncError', { message: error.message });
+        }
+    }
+
+    // Legacy method - kept for backward compatibility but no longer used
+    // Sync now always happens automatically toward older state
+    async handleSyncConflict(conflictCheck, localPayload) {
+        // This method is deprecated - sync is now automatic
+        // Keeping for backward compatibility
+        const statusView = this.uiController.settingsView;
+        
+        if (conflictCheck.shouldUpload) {
+            await this.googleDriveSyncService.uploadData(
+                this.goalService.goals,
+                this.settingsService.getSettings()
+            );
+            statusView.showGoogleDriveStatus(
+                this.languageService.translate('googleDrive.uploadSuccess'),
+                false
+            );
+        } else {
+            await this.downloadFromGoogleDrive();
+            statusView.showGoogleDriveStatus(
+                this.languageService.translate('googleDrive.downloadSuccess'),
+                false
+            );
+        }
+
+        statusView.updateGoogleDriveUI();
+    }
+
+    async downloadFromGoogleDrive() {
+        if (!this.googleDriveSyncService || !this.googleDriveSyncService.isAuthenticated()) {
+            return;
+        }
+
+        const statusView = this.uiController.settingsView;
+
+        try {
+            const result = await this.googleDriveSyncService.downloadData();
+            const data = result.data;
+
+            // Validate and import the data
+            const fileVersion = Array.isArray(data) ? null : data.version ?? null;
+
+            if (fileVersion && !isValidVersion(fileVersion)) {
+                this.showGoogleDriveError('import.invalidVersionFormat', { version: fileVersion });
+                return;
+            }
+
+            if (isSameVersion(fileVersion, this.currentDataVersion)) {
+                this.applyImportedPayload(data);
+                statusView.showGoogleDriveStatus(
+                    this.languageService.translate('googleDrive.downloadSuccess'),
+                    false
+                );
+            } else if (isOlderVersion(fileVersion, this.currentDataVersion)) {
+                this.beginMigration({
+                    originalPayload: data,
+                    sourceVersion: fileVersion,
+                    fileName: 'Google Drive'
+                });
+            } else if (isNewerVersion(fileVersion, this.currentDataVersion)) {
+                this.showGoogleDriveError('import.versionTooNew', {
+                    fileVersion,
+                    currentVersion: this.currentDataVersion
+                });
+            } else {
+                this.showGoogleDriveError('import.incompatible');
+            }
+        } catch (error) {
+            this.showGoogleDriveError('googleDrive.downloadError', { message: error.message });
+        }
+    }
+
+    showGoogleDriveError(messageKey, replacements = {}) {
+        const message = this.languageService.translate(messageKey, replacements);
+        if (this.uiController && this.uiController.settingsView) {
+            this.uiController.settingsView.showGoogleDriveStatus(message, true);
+        } else {
+            alert(message);
+        }
     }
 }
 

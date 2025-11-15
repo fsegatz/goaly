@@ -76,6 +76,8 @@ const en = {
         languageLabel: 'Language',
         dataManagement: 'Data Management',
         dataManagementHelp: 'Export your data for backup or import previously exported data.',
+        googleDriveSync: 'Google Drive Sync',
+        googleDriveSyncHelp: 'Sync your goal data with Google Drive for backup and multi-device access.',
         save: 'Save'
     },
     goalModal: {
@@ -207,8 +209,8 @@ const en = {
     migration: {
         prompt: {
             title: 'Migration required',
-            message: '“{{fileName}}” uses version {{fromVersion}}. Migrate it to {{toVersion}} before importing?',
-            messageLegacy: '“{{fileName}}” has no version information. Migrate it to {{toVersion}} before importing?',
+            message: '"{{fileName}}" uses version {{fromVersion}}. Migrate it to {{toVersion}} before importing?',
+            messageLegacy: '"{{fileName}}" has no version information. Migrate it to {{toVersion}} before importing?',
             reviewCta: 'Review changes',
             cancel: 'Cancel',
             unnamedFile: 'Untitled export',
@@ -222,6 +224,27 @@ const en = {
             applyCta: 'Apply migration',
             cancel: 'Cancel'
         }
+    },
+    googleDrive: {
+        signIn: 'Sign in with Google',
+        signOut: 'Sign out',
+        syncNow: 'Sync Now',
+        authenticated: 'Authenticated with Google',
+        lastSynced: 'Last synced: {{time}}',
+        syncing: 'Syncing...',
+        syncSuccess: 'Sync completed successfully',
+        syncError: 'Sync failed: {{message}}',
+        uploadSuccess: 'Data uploaded to Google Drive',
+        downloadSuccess: 'Data downloaded from Google Drive',
+        conflictDetected: 'Conflict detected: {{message}}',
+        conflictNewerRemote: 'Remote data is newer. Download to overwrite local data?',
+        conflictOlderVersion: 'Remote data uses an older version. Upload to overwrite remote data?',
+        conflictNewerVersion: 'Remote data uses a newer version. Download to update local data?',
+        notConfigured: 'Google Drive sync is not configured. Please set GOOGLE_API_KEY and GOOGLE_CLIENT_ID.',
+        authError: 'Authentication failed: {{message}}',
+        uploadError: 'Upload failed: {{message}}',
+        downloadError: 'Download failed: {{message}}',
+        testerOnly: 'Google Drive sync is currently only available to testers. Send your Google email account to the developer to grant testing access.'
     }
 };
 

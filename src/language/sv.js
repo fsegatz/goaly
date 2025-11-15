@@ -76,6 +76,8 @@ const sv = {
         languageLabel: 'Språk',
         dataManagement: 'Datahantering',
         dataManagementHelp: 'Exportera dina data för säkerhetskopiering eller importera tidigare exporterade data.',
+        googleDriveSync: 'Google Drive-synkronisering',
+        googleDriveSyncHelp: 'Synkronisera dina måldata med Google Drive för säkerhetskopiering och flerenhetsåtkomst.',
         save: 'Spara'
     },
     goalModal: {
@@ -207,8 +209,8 @@ const sv = {
     migration: {
         prompt: {
             title: 'Migration krävs',
-            message: '”{{fileName}}” använder version {{fromVersion}}. Vill du migrera den till {{toVersion}} innan import?',
-            messageLegacy: '”{{fileName}}” saknar versionsinformation. Vill du migrera den till {{toVersion}} innan import?',
+            message: '"{{fileName}}" använder version {{fromVersion}}. Vill du migrera den till {{toVersion}} innan import?',
+            messageLegacy: '"{{fileName}}" saknar versionsinformation. Vill du migrera den till {{toVersion}} innan import?',
             reviewCta: 'Granska ändringar',
             cancel: 'Avbryt',
             unnamedFile: 'Namnlös export',
@@ -222,6 +224,27 @@ const sv = {
             applyCta: 'Använd migration',
             cancel: 'Avbryt'
         }
+    },
+    googleDrive: {
+        signIn: 'Logga in med Google',
+        signOut: 'Logga ut',
+        syncNow: 'Synkronisera nu',
+        authenticated: 'Autentiserad med Google',
+        lastSynced: 'Senast synkroniserad: {{time}}',
+        syncing: 'Synkroniserar...',
+        syncSuccess: 'Synkronisering slutförd',
+        syncError: 'Synkronisering misslyckades: {{message}}',
+        uploadSuccess: 'Data uppladdad till Google Drive',
+        downloadSuccess: 'Data nedladdad från Google Drive',
+        conflictDetected: 'Konflikt upptäckt: {{message}}',
+        conflictNewerRemote: 'Fjärrdata är nyare. Ladda ner för att skriva över lokal data?',
+        conflictOlderVersion: 'Fjärrdata använder en äldre version. Ladda upp för att skriva över fjärrdata?',
+        conflictNewerVersion: 'Fjärrdata använder en nyare version. Ladda ner för att uppdatera lokal data?',
+        notConfigured: 'Google Drive-synkronisering är inte konfigurerad. Vänligen ange GOOGLE_API_KEY och GOOGLE_CLIENT_ID.',
+        authError: 'Autentisering misslyckades: {{message}}',
+        uploadError: 'Uppladdning misslyckades: {{message}}',
+        downloadError: 'Nedladdning misslyckades: {{message}}',
+        testerOnly: 'Google Drive-synkronisering är för närvarande endast tillgänglig för testare. Skicka ditt Google-e-postkonto till utvecklaren för att bevilja teståtkomst.'
     }
 };
 

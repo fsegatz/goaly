@@ -5,6 +5,7 @@ import { BaseUIController } from './base-ui-controller.js';
 export class SettingsView extends BaseUIController {
     constructor(app) {
         super(app);
+        this.statusTimeout = null;
     }
 
     initializeLanguageControls() {
@@ -109,6 +110,138 @@ export class SettingsView extends BaseUIController {
                     e.target.value = '';
                 }
             });
+        }
+
+        // Google Drive sync event listeners
+        const googleDriveAuthBtn = document.getElementById('googleDriveAuthBtn');
+        if (googleDriveAuthBtn) {
+            googleDriveAuthBtn.addEventListener('click', () => {
+                this.app.authenticateGoogleDrive();
+            });
+        }
+
+        const googleDriveSignOutBtn = document.getElementById('googleDriveSignOutBtn');
+        if (googleDriveSignOutBtn) {
+            googleDriveSignOutBtn.addEventListener('click', () => {
+                this.app.signOutGoogleDrive();
+            });
+        }
+
+        const googleDriveSyncBtn = document.getElementById('googleDriveSyncBtn');
+        if (googleDriveSyncBtn) {
+            googleDriveSyncBtn.addEventListener('click', () => {
+                this.app.syncWithGoogleDrive();
+            });
+        }
+
+        // Update Google Drive UI state
+        this.updateGoogleDriveUI();
+    }
+
+    updateGoogleDriveUI() {
+        if (!this.app.googleDriveSyncService) {
+            return;
+        }
+
+        const authBtn = document.getElementById('googleDriveAuthBtn');
+        const signOutBtn = document.getElementById('googleDriveSignOutBtn');
+        const syncBtn = document.getElementById('googleDriveSyncBtn');
+        const statusDiv = document.getElementById('googleDriveAuthStatus');
+
+        if (!authBtn || !signOutBtn || !syncBtn || !statusDiv) {
+            return;
+        }
+
+        const isAuthenticated = this.app.googleDriveSyncService.isAuthenticated();
+
+        if (isAuthenticated) {
+            authBtn.hidden = true;
+            signOutBtn.hidden = false;
+            syncBtn.hidden = false;
+            statusDiv.hidden = false;
+            statusDiv.className = 'google-drive-status google-drive-status-authenticated';
+            statusDiv.textContent = this.translate('googleDrive.authenticated');
+            
+            // Update sync status asynchronously
+            this.app.googleDriveSyncService.getSyncStatus().then(status => {
+                if (status.synced && status.lastSyncTime) {
+                    const syncDate = new Date(status.lastSyncTime);
+                    statusDiv.textContent = this.translate('googleDrive.lastSynced', {
+                        time: syncDate.toLocaleString()
+                    });
+                }
+            }).catch(() => {
+                // Ignore errors when checking status
+            });
+        } else {
+            authBtn.hidden = false;
+            signOutBtn.hidden = true;
+            syncBtn.hidden = true;
+            statusDiv.hidden = true;
+        }
+    }
+
+    syncSettingsForm() {
+        const settings = this.app.settingsService.getSettings();
+        const maxActiveGoals = document.getElementById('maxActiveGoals');
+        const languageSelect = document.getElementById('languageSelect');
+        const reviewIntervals = document.getElementById('reviewIntervals');
+
+        if (maxActiveGoals) {
+            maxActiveGoals.value = settings.maxActiveGoals;
+        }
+        if (languageSelect) {
+            languageSelect.value = settings.language;
+        }
+        if (reviewIntervals) {
+            const intervals = Array.isArray(settings.reviewIntervals) ? settings.reviewIntervals : [];
+            reviewIntervals.value = intervals
+                .map((interval) => this.formatReviewIntervalInput(interval))
+                .filter(Boolean)
+                .join(', ');
+        }
+
+        // Update Google Drive UI
+        this.updateGoogleDriveUI();
+        
+        // Update developer mode visibility
+        this.updateDeveloperModeVisibility();
+    }
+
+    updateDeveloperModeVisibility() {
+        const dataManagementItem = document.getElementById('dataManagementSection');
+        if (dataManagementItem) {
+            const isDeveloperMode = this.app.developerModeService.isDeveloperMode();
+            dataManagementItem.style.display = isDeveloperMode ? 'block' : 'none';
+        }
+    }
+
+    showGoogleDriveStatus(message, isError = false) {
+        const statusDiv = document.getElementById('googleDriveAuthStatus');
+        if (!statusDiv) {
+            return;
+        }
+
+        // Clear any existing timeout to prevent race conditions
+        if (this.statusTimeout) {
+            clearTimeout(this.statusTimeout);
+        }
+
+        statusDiv.hidden = false;
+        statusDiv.textContent = message;
+        statusDiv.className = isError 
+            ? 'google-drive-status google-drive-status-error'
+            : 'google-drive-status google-drive-status-info';
+
+        // Clear status after 5 seconds
+        this.statusTimeout = setTimeout(() => {
+            this.updateGoogleDriveUI();
+            this.statusTimeout = null;
+        }, 5000);
+        
+        // Use unref() to prevent timer from keeping Node.js process alive (for testing)
+        if (typeof this.statusTimeout.unref === 'function') {
+            this.statusTimeout.unref();
         }
     }
 }

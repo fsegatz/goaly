@@ -6,6 +6,16 @@
     <title data-i18n-key="meta.title">Goaly - Goal tracking</title>
     <link rel="icon" type="image/png" href="styles/icon/favicon.png">
     <link rel="stylesheet" href="styles/styles.css">
+    <!-- Load local config for development (if available) -->
+    <script src="config.local.js" onerror="console.log('config.local.js not found - using defaults or environment variables')"></script>
+    <script>
+        // Google API credentials are loaded from:
+        // 1. config.local.js (for local development, not in version control)
+        // 2. Environment variables (for CI/CD and production)
+        // 3. Default to empty strings if not set
+        window.GOOGLE_API_KEY = window.GOOGLE_API_KEY || "";
+        window.GOOGLE_CLIENT_ID = window.GOOGLE_CLIENT_ID || "";
+    </script>
 </head>
 <body>
     <div class="container">
@@ -16,7 +26,7 @@
                     <span></span>
                 </button>
             </div>
-            <h1>🎯 Goaly</h1>
+            <h1 id="goalyLogo" style="cursor: pointer; user-select: none;">🎯 Goaly</h1>
             <nav class="menu desktop-menu">
                 <button class="menu-btn active" data-view="dashboard" data-i18n-key="navigation.dashboard">Dashboard</button>
                 <button class="menu-btn" data-view="all-goals" data-i18n-key="navigation.allGoals">All goals</button>
@@ -119,7 +129,7 @@
                         <label for="languageSelect" data-i18n-key="settingsPanel.languageLabel">Language</label>
                         <select id="languageSelect"></select>
                     </div>
-                    <div class="setting-item">
+                    <div class="setting-item" id="dataManagementSection" style="display: none;">
                         <label data-i18n-key="settingsPanel.dataManagement">Data Management</label>
                         <div class="data-management-actions">
                             <button id="exportBtn" class="btn btn-secondary" data-i18n-key="actions.export">Export</button>
@@ -127,6 +137,21 @@
                             <input type="file" id="importFile" accept=".json" style="display: none;">
                         </div>
                         <p class="setting-help" data-i18n-key="settingsPanel.dataManagementHelp">Export your data for backup or import previously exported data.</p>
+                    </div>
+                    <div class="setting-item">
+                        <label data-i18n-key="settingsPanel.googleDriveSync">Google Drive Sync</label>
+                        <div id="googleDriveSyncContainer">
+                            <div id="googleDriveTesterInfo" class="google-drive-tester-info">
+                                <p data-i18n-key="googleDrive.testerOnly">Google Drive sync is currently only available to testers. Send your Google email account to the developer to grant testing access.</p>
+                            </div>
+                            <div id="googleDriveAuthStatus" class="google-drive-status" hidden></div>
+                            <div class="data-management-actions">
+                                <button id="googleDriveAuthBtn" class="btn btn-secondary" data-i18n-key="googleDrive.signIn">Sign in with Google</button>
+                                <button id="googleDriveSignOutBtn" class="btn btn-secondary" data-i18n-key="googleDrive.signOut" hidden>Sign out</button>
+                                <button id="googleDriveSyncBtn" class="btn btn-secondary" data-i18n-key="googleDrive.syncNow" hidden>Sync Now</button>
+                            </div>
+                            <p class="setting-help" data-i18n-key="settingsPanel.googleDriveSyncHelp">Sync your goal data with Google Drive for backup and multi-device access.</p>
+                        </div>
                     </div>
                     <button id="saveSettingsBtn" class="btn btn-primary" data-i18n-key="settingsPanel.save">Save</button>
                 </div>

@@ -59,10 +59,13 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    // Clear all timers
+    jest.clearAllTimers();
+    jest.useRealTimers();
+    
     delete global.document;
     delete global.window;
     delete global.alert;
-    jest.useRealTimers();
     jest.restoreAllMocks();
 });
 
@@ -208,6 +211,77 @@ describe('CheckInView', () => {
     test('formatCheckInDueLabel should handle invalid date', () => {
         const result = checkInView.formatCheckInDueLabel('invalid-date');
         expect(result).toBe(checkInView.translate('checkIns.due.unknown'));
+    });
+
+    test('handleCheckInSubmit should handle error with message', () => {
+        mockReviewService.recordReview = jest.fn(() => {
+            throw new Error('Network error');
+        });
+        
+        const renderViews = jest.fn();
+        checkInView.handleCheckInSubmit('goal-id', { motivation: '3', urgency: '3' }, renderViews);
+        
+        expect(global.alert).toHaveBeenCalledWith('Network error');
+    });
+
+    test('handleCheckInSubmit should handle error without message', () => {
+        mockReviewService.recordReview = jest.fn(() => {
+            throw new Error();
+        });
+        
+        const renderViews = jest.fn();
+        checkInView.handleCheckInSubmit('goal-id', { motivation: '3', urgency: '3' }, renderViews);
+        
+        expect(global.alert).toHaveBeenCalled();
+    });
+
+    test('handleCheckInSubmit should use getReviewIntervals method when available', () => {
+        const goal = new Goal('goal-id', 'Test goal');
+        mockGoalService.goals = [goal];
+        mockReviewService.recordReview = jest.fn(() => ({
+            goal,
+            ratingsMatch: true,
+            goal: { ...goal, reviewIntervalIndex: 0 }
+        }));
+        mockSettingsService.getReviewIntervals = jest.fn(() => [30, 14, 7]);
+        
+        const renderViews = jest.fn();
+        checkInView.handleCheckInSubmit('goal-id', { motivation: '3', urgency: '3' }, renderViews);
+        
+        expect(mockSettingsService.getReviewIntervals).toHaveBeenCalled();
+    });
+
+    test('handleCheckInSubmit should handle empty intervals array', () => {
+        const goal = new Goal('goal-id', 'Test goal');
+        mockGoalService.goals = [goal];
+        mockReviewService.recordReview = jest.fn(() => ({
+            goal,
+            ratingsMatch: true,
+            goal: { ...goal, reviewIntervalIndex: 0 }
+        }));
+        mockSettingsService.getReviewIntervals = jest.fn(() => []);
+        mockSettingsService.getSettings = jest.fn(() => ({ reviewIntervals: [] }));
+        
+        const renderViews = jest.fn();
+        checkInView.handleCheckInSubmit('goal-id', { motivation: '3', urgency: '3' }, renderViews);
+        
+        expect(renderViews).toHaveBeenCalled();
+    });
+
+    test('handleCheckInSubmit should handle interval index out of bounds', () => {
+        const goal = new Goal('goal-id', 'Test goal');
+        mockGoalService.goals = [goal];
+        mockReviewService.recordReview = jest.fn(() => ({
+            goal,
+            ratingsMatch: true,
+            goal: { ...goal, reviewIntervalIndex: 10 } // Out of bounds
+        }));
+        mockSettingsService.getReviewIntervals = jest.fn(() => [30, 14, 7]);
+        
+        const renderViews = jest.fn();
+        checkInView.handleCheckInSubmit('goal-id', { motivation: '3', urgency: '3' }, renderViews);
+        
+        expect(renderViews).toHaveBeenCalled();
     });
 });
 

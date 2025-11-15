@@ -1,0 +1,7 @@
+// config.local.js.example
+// Copy this file to config.local.js and add your Google API credentials
+// config.local.js is in .gitignore and will not be committed to version control
+
+window.GOOGLE_API_KEY = "AIzaSyDOTFM9TtaDMAH9sdeYsX99Lpezot98934";
+window.GOOGLE_CLIENT_ID = "624500774734-vlgtv1l0de4g3kksrh90bvjp6ke0raqi.apps.googleusercontent.com";
+
