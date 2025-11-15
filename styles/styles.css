@@ -28,17 +28,67 @@ header {
     align-items: center;
     flex-wrap: wrap;
     gap: 15px;
+    position: sticky;
+    top: 10px;
+    z-index: 100;
 }
 
 header h1 {
     font-size: 2rem;
     color: #667eea;
+    margin: 0;
+    flex-shrink: 0;
 }
 
 .header-actions {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+}
+
+.header-actions-desktop {
+    display: none;
+}
+
+.desktop-menu {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+}
+
+@media (min-width: 901px) {
+    .header-actions {
+        display: none;
+    }
+
+    .header-actions-desktop {
+        display: flex;
+        flex-shrink: 0;
+    }
+
+    header {
+        justify-content: space-between;
+    }
+
+    header h1 {
+        order: 1;
+    }
+
+    .desktop-menu {
+        order: 2;
+        flex: 1;
+        justify-content: center;
+        overflow: hidden;
+        overflow-x: hidden;
+    }
+
+    .header-actions-desktop {
+        order: 3;
+    }
+}
+
+.mobile-add-button {
+    display: none;
 }
 
 .btn {
@@ -87,6 +137,9 @@ header h1 {
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin-bottom: 30px;
+    overflow-x: auto;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .setting-item {
@@ -119,6 +172,18 @@ header h1 {
     color: #777;
 }
 
+.data-management-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.data-management-actions .btn {
+    flex: 1;
+    min-width: 120px;
+}
+
 main {
     background: white;
     padding: 30px;
@@ -131,6 +196,15 @@ main {
     gap: 10px;
     flex-grow: 1;
     justify-content: center;
+    flex-wrap: wrap;
+}
+
+.mobile-menu {
+    display: none;
+    position: relative;
+    z-index: 101;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .menu-btn {
@@ -144,6 +218,8 @@ main {
     border-bottom: 3px solid transparent;
     transition: all 0.3s ease;
     margin-bottom: -2px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .menu-btn:hover {
@@ -208,6 +284,126 @@ main {
     background: #fff;
     font-size: 0.95rem;
     min-width: 160px;
+}
+
+/* Mobile menu styles */
+.mobile-menu-toggle {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    z-index: 101;
+    flex-shrink: 0;
+}
+
+.mobile-menu-toggle span {
+    width: 100%;
+    height: 3px;
+    background: #667eea;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.mobile-add-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    z-index: 101;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.mobile-add-button span {
+    position: absolute;
+    background: #667eea;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.mobile-add-button span:nth-child(1) {
+    width: 100%;
+    height: 3px;
+}
+
+.mobile-add-button span:nth-child(2) {
+    width: 3px;
+    height: 100%;
+}
+
+.mobile-menu-toggle[aria-expanded="true"] span:nth-child(1) {
+    transform: rotate(45deg) translate(8px, 8px);
+}
+
+.mobile-menu-toggle[aria-expanded="true"] span:nth-child(2) {
+    opacity: 0;
+}
+
+.mobile-menu-toggle[aria-expanded="true"] span:nth-child(3) {
+    transform: rotate(-45deg) translate(8px, -8px);
+}
+
+.mobile-menu-dropdown {
+    position: fixed;
+    top: 0;
+    right: 10px;
+    left: auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    min-width: 200px;
+    max-width: calc(100vw - 20px);
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease, max-height 0.3s ease;
+    z-index: 1000;
+}
+
+.mobile-menu-dropdown[aria-hidden="false"] {
+    max-height: 400px;
+    opacity: 1;
+    visibility: visible;
+    padding: 10px 0;
+}
+
+.mobile-menu-btn {
+    display: block;
+    width: 100%;
+    padding: 12px 20px;
+    border: none;
+    background: transparent;
+    color: #666;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mobile-menu-btn:hover {
+    background: #f8f9ff;
+    color: #667eea;
+}
+
+.mobile-menu-btn.active {
+    background: #f8f9ff;
+    color: #667eea;
+    font-weight: 600;
+    border-left: 3px solid #667eea;
 }
 
 .all-goals-controls .toggle-option {
@@ -516,7 +712,7 @@ main {
     justify-content: center;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .goals-table {
         min-width: 100%;
     }
@@ -676,7 +872,7 @@ main {
     justify-content: flex-end;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .migration-diff-modal {
         max-width: 95%;
     }
@@ -895,18 +1091,75 @@ main {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
+    body {
+        padding: 10px;
+    }
+
     header {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: row;
+        align-items: center;
+        padding: 12px;
+        gap: 0;
+        top: 10px;
+        margin-bottom: 20px;
+        position: relative;
+        justify-content: space-between;
+    }
+
+    header h1 {
+        font-size: 1.3rem;
+        margin: 0;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        pointer-events: none;
+        white-space: nowrap;
+        z-index: 0;
+        padding: 0;
+    }
+
+    .desktop-menu {
+        display: none;
+    }
+
+    .mobile-menu {
+        display: flex;
+        flex-shrink: 0;
+        z-index: 2;
+        position: relative;
+        min-width: 42px;
+        height: 42px;
+        align-items: center;
+        justify-content: flex-end;
+        order: 3;
     }
 
     .header-actions {
-        width: 100%;
+        flex-shrink: 0;
+        z-index: 2;
+        position: relative;
+        order: 1;
     }
 
     .header-actions .btn {
-        flex: 1;
+        display: none;
+    }
+
+    .mobile-add-button {
+        display: flex;
+    }
+
+    .menu-btn {
+        padding: 0px 0px;
+        font-size: 0.9rem;
+    }
+
+    .header-actions .btn {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        white-space: nowrap;
     }
 
     .dashboard-header {
@@ -930,6 +1183,71 @@ main {
         width: 95%;
         margin: 10% auto;
         padding: 20px;
+    }
+
+    .settings-panel {
+        padding: 20px 15px;
+    }
+
+    .setting-item {
+        margin-bottom: 18px;
+    }
+
+    .setting-item input,
+    .setting-item select {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .data-management-actions {
+        flex-direction: column;
+    }
+
+    .data-management-actions .btn {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .all-goals-controls {
+        flex-direction: row;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding: 8px;
+        background: #f8f9ff;
+        border-radius: 8px;
+    }
+
+    .all-goals-controls label {
+        width: auto;
+        flex: 1;
+        min-width: 0;
+        font-size: 0.75rem;
+        gap: 4px;
+    }
+
+    .all-goals-controls label span {
+        font-size: 0.7rem;
+    }
+
+    .all-goals-controls select,
+    .all-goals-controls input[type="number"] {
+        width: 100%;
+        min-width: 0;
+        padding: 6px 8px;
+        font-size: 0.85rem;
+    }
+
+    .all-goals-controls .toggle-option {
+        flex-direction: row;
+        align-items: center;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    .all-goals-controls .toggle-option input {
+        width: auto;
+        margin: 0;
     }
 }
 
@@ -1012,5 +1330,166 @@ main {
 
 .goal-history-revert {
     align-self: flex-start;
+}
+
+/* Mobile-specific styles */
+.mobile-only {
+    display: none;
+}
+
+.desktop-only {
+    display: block;
+}
+
+.mobile-goals-container.mobile-only {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .mobile-goals-container.mobile-only {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 20px;
+    }
+}
+
+.mobile-goal-card {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.mobile-goal-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.mobile-goal-card:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+.mobile-goal-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    gap: 12px;
+}
+
+.mobile-goal-card__title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+    flex: 1;
+    line-height: 1.3;
+}
+
+.mobile-goal-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mobile-goal-card__metrics {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.mobile-goal-card__metric {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 60px;
+}
+
+.mobile-goal-card__metric-label {
+    font-size: 0.75rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-weight: 600;
+}
+
+.mobile-goal-card__metric-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.mobile-goal-card__details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.mobile-goal-card__detail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.mobile-goal-card__detail-label {
+    color: #666;
+    font-weight: 500;
+}
+
+.mobile-goal-card__detail-value {
+    color: #333;
+    text-align: right;
+}
+
+.mobile-goals-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #777;
+    font-size: 0.95rem;
+    background: #fafaff;
+    border: 2px dashed #e0e0e0;
+    border-radius: 12px;
+}
+
+@media (max-width: 900px) {
+    .mobile-only {
+        display: block;
+    }
+
+    .desktop-only {
+        display: none;
+    }
+
+    .mobile-goal-card {
+        padding: 14px;
+    }
+
+    .mobile-goal-card__title {
+        font-size: 1rem;
+    }
+
+    .mobile-goal-card__metrics {
+        gap: 12px;
+    }
+
+    .mobile-goal-card__metric {
+        min-width: 50px;
+    }
+
+    .mobile-goal-card__metric-label {
+        font-size: 0.7rem;
+    }
+
+    .mobile-goal-card__metric-value {
+        font-size: 0.95rem;
+    }
 }
 

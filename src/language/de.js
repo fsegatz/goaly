@@ -74,6 +74,8 @@ const de = {
         reviewIntervals: 'Review-Intervalle (Suffixe d/h/m/s erlaubt):',
         reviewIntervalsHelp: 'Beispiele: 30d, 14d, 12h, 45m, 30s.',
         languageLabel: 'Sprache',
+        dataManagement: 'Datenverwaltung',
+        dataManagementHelp: 'Exportieren Sie Ihre Daten zur Sicherung oder importieren Sie zuvor exportierte Daten.',
         save: 'Speichern'
     },
     goalModal: {

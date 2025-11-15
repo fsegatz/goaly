@@ -74,6 +74,8 @@ const sv = {
         reviewIntervals: 'Utvärderingsintervall (stöd för suffix d/h/m/s):',
         reviewIntervalsHelp: 'Exempel: 30d, 14d, 12h, 45m, 30s.',
         languageLabel: 'Språk',
+        dataManagement: 'Datahantering',
+        dataManagementHelp: 'Exportera dina data för säkerhetskopiering eller importera tidigare exporterade data.',
         save: 'Spara'
     },
     goalModal: {
