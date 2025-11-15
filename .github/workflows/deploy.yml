@@ -1,5 +1,5 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+name: deploy
 
 on:
   # Runs on pushes targeting the default branch
@@ -32,7 +32,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Inject Google API credentials
-        if: secrets.GOOGLE_API_KEY != '' && secrets.GOOGLE_CLIENT_ID != ''
         run: |
           cat > config.local.js << EOF
           window.GOOGLE_API_KEY = "${{ secrets.GOOGLE_API_KEY }}";
@@ -48,3 +47,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
