@@ -101,7 +101,7 @@ describe('DashboardView', () => {
         expect(dashboardList.innerHTML).not.toContain('Active Goal 3');
     });
 
-    test('createGoalCard should create a goal card with editable description and priority metric', () => {
+    test('createGoalCard should create a goal card with editable description without priority metric or status badge', () => {
         const goal = new Goal({ id: '1', title: 'Test Goal', description: 'Test Description', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-11-15') });
         mockGoalService.calculatePriority.mockReturnValue(4.5);
         const openCompletionModal = jest.fn();
@@ -114,10 +114,12 @@ describe('DashboardView', () => {
         expect(card.querySelector('.goal-title').textContent).toBe('Test Goal');
         expect(descriptionEl.textContent).toBe('Test Description');
         expect(descriptionEl.getAttribute('contenteditable')).toBe('true');
-        expect(card.querySelectorAll('.goal-metrics .metric').length).toBe(1);
-        expect(card.querySelector('.metric-value.priority').textContent).toBe('4.5');
-        expect(card.querySelector('.metric-value.motivation')).toBeNull();
-        expect(card.querySelector('.metric-value.urgency')).toBeNull();
+        expect(descriptionEl.classList.contains('dashboard-description')).toBe(true);
+        // Priority metric should not be present on dashboard cards
+        expect(card.querySelectorAll('.goal-metrics .metric').length).toBe(0);
+        expect(card.querySelector('.metric-value.priority')).toBeNull();
+        // Status badge should not be present on dashboard cards
+        expect(card.querySelector('.goal-status-badge')).toBeNull();
         expect(card.querySelector('.goal-deadline').textContent).toContain('In 6 days');
         expect(card.querySelector('.goal-inline-editor')).not.toBeNull();
         expect(card.innerHTML).toContain('btn btn-primary edit-goal');

@@ -40,6 +40,22 @@ header h1 {
     flex-shrink: 0;
 }
 
+.mobile-view-divider {
+    width: 1px;
+    height: 24px;
+    background: #ddd;
+    margin: 0 12px;
+    flex-shrink: 0;
+}
+
+.mobile-view-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+    flex-shrink: 0;
+}
+
 .header-actions {
     display: flex;
     gap: 10px;
@@ -64,6 +80,10 @@ header h1 {
     .header-actions-desktop {
         display: flex;
         flex-shrink: 0;
+    }
+
+    .mobile-only {
+        display: none !important;
     }
 
     header {
@@ -528,6 +548,9 @@ main {
     padding: 20px;
     transition: all 0.3s ease;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
 }
 
 .goal-card:hover {
@@ -604,6 +627,26 @@ main {
     white-space: pre-wrap;
 }
 
+.goal-description.dashboard-description {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-word;
+    flex: 1;
+    margin-bottom: 15px;
+}
+
+.goal-description.dashboard-description.is-editing {
+    display: block;
+    -webkit-line-clamp: unset;
+    -webkit-box-orient: unset;
+    overflow: visible;
+    white-space: pre-wrap;
+}
+
 .goal-description[contenteditable="true"] {
     border: 1px dashed transparent;
     border-radius: 8px;
@@ -661,10 +704,18 @@ main {
     color: #764ba2;
 }
 
+.goal-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    order: 5;
+}
+
 .goal-deadline {
-    margin-bottom: 15px;
     font-size: 0.9rem;
     color: #666;
+    margin-bottom: 0;
 }
 
 .goal-deadline.urgent {
@@ -685,6 +736,7 @@ main {
     display: none;
     gap: 12px;
     flex-direction: column;
+    order: 10;
 }
 
 .goal-inline-editor.is-visible {
@@ -728,6 +780,7 @@ main {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+    margin-top: 0;
 }
 
 .goal-actions .btn {
@@ -1384,6 +1437,14 @@ main {
 }
 
 @media (max-width: 900px) {
+    .mobile-only {
+        display: block;
+    }
+
+    .desktop-only {
+        display: none;
+    }
+
     .mobile-goals-container.mobile-only {
         display: flex;
         flex-direction: column;

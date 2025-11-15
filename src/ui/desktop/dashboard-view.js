@@ -36,7 +36,6 @@ export class DashboardView extends BaseUIController {
         const card = document.createElement('div');
         card.className = `goal-card ${goal.status}`;
 
-        const priority = this.app.goalService.calculatePriority(goal);
         const deadlineText = goal.deadline
             ? this.formatDeadline(goal.deadline)
             : this.translate('goalCard.noDeadline');
@@ -45,21 +44,16 @@ export class DashboardView extends BaseUIController {
             <div class="goal-header">
                 <div>
                     <div class="goal-title">${this.escapeHtml(goal.title)}</div>
-                    <span class="goal-status-badge status-${goal.status}">${this.getStatusText(goal.status)}</span>
                 </div>
             </div>
-            <div class="goal-description" contenteditable="true" role="textbox" aria-label="${this.translate('goalCard.descriptionAria')}" data-goal-id="${goal.id}" data-placeholder="${this.translate('goalCard.descriptionPlaceholder')}"></div>
-            <div class="goal-metrics">
-                <div class="metric">
-                    <span class="metric-label">${this.translate('goalCard.priorityLabel')}</span>
-                    <span class="metric-value priority">${priority.toFixed(1)}</span>
+            <div class="goal-description dashboard-description" contenteditable="true" role="textbox" aria-label="${this.translate('goalCard.descriptionAria')}" data-goal-id="${goal.id}" data-placeholder="${this.translate('goalCard.descriptionPlaceholder')}"></div>
+            <div class="goal-footer">
+                <div class="goal-deadline ${this.isDeadlineUrgent(goal.deadline) ? 'urgent' : ''}">
+                    ${this.translate('goalCard.deadlinePrefix', { deadline: deadlineText })}
                 </div>
-            </div>
-            <div class="goal-deadline ${this.isDeadlineUrgent(goal.deadline) ? 'urgent' : ''}">
-                ${this.translate('goalCard.deadlinePrefix', { deadline: deadlineText })}
-            </div>
-            <div class="goal-actions">
-                <button class="btn btn-primary edit-goal" data-id="${goal.id}" aria-expanded="false">${this.translate('goalCard.actions.edit')}</button>
+                <div class="goal-actions">
+                    <button class="btn btn-primary edit-goal" data-id="${goal.id}" aria-expanded="false">${this.translate('goalCard.actions.edit')}</button>
+                </div>
             </div>
             <div class="goal-inline-editor" aria-hidden="true">
                 <div class="inline-fields">
