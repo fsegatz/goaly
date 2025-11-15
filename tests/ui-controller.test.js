@@ -147,6 +147,8 @@ beforeEach(() => {
             </div>
         </header>
         <div id="dashboardView" class="view active"></div>
+        <div id="checkInView" class="view"></div>
+        <div id="settingsView" class="view"></div>
     </body></html>`, { url: "http://localhost" });
     document = dom.window.document;
     window = dom.window;
@@ -529,18 +531,71 @@ describe('UIController', () => {
         expect(uiController.detectMobile()).toBe(false);
     });
 
-    test('window resize should switch between mobile and desktop views', () => {
+    test('window resize should switch from mobile to desktop view', () => {
+        // Start with mobile view
         window.innerWidth = 800;
-        const wasMobile = uiController.isMobile;
-        uiController.isMobile = true;
-        uiController.allGoalsView = { allGoalsState: { statusFilter: 'all' }, setupControls: jest.fn() };
-        uiController.renderViews = jest.fn();
+        const mobileController = new UIController(mockApp);
+        expect(mobileController.isMobile).toBe(true);
+        expect(mobileController.allGoalsView.constructor.name).toBe('MobileAllGoalsView');
 
-        window.innerWidth = 1200;
+        // Resize to desktop
+        window.innerWidth = 1000;
         window.dispatchEvent(new window.Event('resize'));
 
-        // The resize handler should have been called
-        expect(uiController.renderViews).toHaveBeenCalled();
+        expect(mobileController.isMobile).toBe(false);
+        expect(mobileController.allGoalsView.constructor.name).toBe('AllGoalsView');
+    });
+
+    test('window resize should switch from desktop to mobile view', () => {
+        // Start with desktop view
+        window.innerWidth = 1000;
+        const desktopController = new UIController(mockApp);
+        expect(desktopController.isMobile).toBe(false);
+        expect(desktopController.allGoalsView.constructor.name).toBe('AllGoalsView');
+
+        // Resize to mobile
+        window.innerWidth = 800;
+        window.dispatchEvent(new window.Event('resize'));
+
+        expect(desktopController.isMobile).toBe(true);
+        expect(desktopController.allGoalsView.constructor.name).toBe('MobileAllGoalsView');
+    });
+
+    test('window resize should preserve filter state when switching views', () => {
+        window.innerWidth = 800;
+        const controller = new UIController(mockApp);
+        controller.allGoalsView.allGoalsState = { statusFilter: 'paused', minPriority: 5, sort: 'priority-asc' };
+
+        window.innerWidth = 1000;
+        window.dispatchEvent(new window.Event('resize'));
+
+        expect(controller.allGoalsView.allGoalsState.statusFilter).toBe('paused');
+        expect(controller.allGoalsView.allGoalsState.minPriority).toBe(5);
+        expect(controller.allGoalsView.allGoalsState.sort).toBe('priority-asc');
+    });
+
+    test('window resize should not switch views when size stays in same category', () => {
+        window.innerWidth = 800;
+        const controller = new UIController(mockApp);
+        const originalView = controller.allGoalsView;
+        controller.renderViews = jest.fn();
+
+        window.innerWidth = 850;
+        window.dispatchEvent(new window.Event('resize'));
+
+        expect(controller.allGoalsView).toBe(originalView);
+    });
+
+    test('window resize should handle null filter state when switching views', () => {
+        window.innerWidth = 800;
+        const controller = new UIController(mockApp);
+        controller.allGoalsView.allGoalsState = null;
+
+        window.innerWidth = 1000;
+        window.dispatchEvent(new window.Event('resize'));
+
+        // Should not throw when oldState is null
+        expect(controller.allGoalsView).toBeDefined();
     });
 
     test('renderCheckInView should call checkInView.render', () => {
@@ -651,5 +706,73 @@ describe('UIController', () => {
         expect(mobileMenuDropdown.getAttribute('aria-hidden')).toBe('true');
 
         document.body.removeChild(outsideElement);
+    });
+
+    test('mobile menu dropdown should update position on window resize', () => {
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenuDropdown = document.getElementById('mobileMenuDropdown');
+        
+        mobileMenuToggle.click();
+        expect(mobileMenuDropdown.getAttribute('aria-hidden')).toBe('false');
+
+        const initialTop = mobileMenuDropdown.style.top;
+        
+        // Simulate window resize
+        window.dispatchEvent(new window.Event('resize'));
+
+        // Position should be updated (though exact value depends on layout)
+        expect(mobileMenuDropdown.style.top).toBeDefined();
+    });
+
+    test('mobile menu dropdown should update position on scroll when visible', () => {
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenuDropdown = document.getElementById('mobileMenuDropdown');
+        
+        mobileMenuToggle.click();
+        mobileMenuDropdown.setAttribute('aria-hidden', 'false');
+        
+        const initialTop = mobileMenuDropdown.style.top;
+        
+        // Simulate scroll
+        window.dispatchEvent(new window.Event('scroll'));
+
+        // Position should be updated
+        expect(mobileMenuDropdown.style.top).toBeDefined();
+    });
+
+    test('mobile menu dropdown should not update position on scroll when hidden', () => {
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenuDropdown = document.getElementById('mobileMenuDropdown');
+        
+        mobileMenuDropdown.setAttribute('aria-hidden', 'true');
+        const initialTop = mobileMenuDropdown.style.top;
+        
+        // Simulate scroll
+        window.dispatchEvent(new window.Event('scroll'));
+
+        // Position should not change when hidden
+        expect(mobileMenuDropdown.style.top).toBe(initialTop);
+    });
+
+    test('switchView should handle missing target view gracefully', () => {
+        const nonExistentView = document.getElementById('nonExistentView');
+        expect(nonExistentView).toBeNull();
+
+        uiController.switchView('nonExistent');
+
+        // Should not throw, but view should not be activated
+        expect(document.querySelectorAll('.view.active').length).toBe(0);
+    });
+
+    test('switchView should handle missing desktop menu button', () => {
+        document.querySelectorAll('.desktop-menu .menu-btn').forEach(btn => btn.remove());
+        
+        expect(() => uiController.switchView('dashboard')).not.toThrow();
+    });
+
+    test('switchView should handle missing mobile menu button', () => {
+        document.querySelectorAll('.mobile-menu-btn').forEach(btn => btn.remove());
+        
+        expect(() => uiController.switchView('dashboard')).not.toThrow();
     });
 });

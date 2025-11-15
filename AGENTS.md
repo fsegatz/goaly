@@ -6,9 +6,11 @@ This handbook summarises how coding agents and new contributors collaborate prod
 - Run `npm install` once to install dependencies.
 - Serve the app locally with `npx --yes serve -l 8000` (see `README.md` for alternatives).
 - The entry point is `index.html` with `src/app.js`.
+- **Windows Note:** On Windows, Cursor should use `cmd` instead of PowerShell for terminal commands. Use `cmd /c <command>` when running commands on Windows.
 
 ## Tests & Quality
 - Execute `npm test` for unit tests; add `-- --coverage` for a coverage report.
+- **Important:** Always run `npm test` directly without piping output through filters (e.g., `findstr`, `grep`) for parsing. This ensures accurate test results and coverage reporting.
 - Maintain the existing high coverage; extend tests for new UI behaviour (`tests/ui-controller.test.js`).
 - After code changes run `read_lints` in Cursor for touched files.
 
