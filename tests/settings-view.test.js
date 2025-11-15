@@ -91,6 +91,71 @@ describe('SettingsView', () => {
         expect(importFile.value).toBe('');
     });
 
+    test('importFile change should handle empty files array', () => {
+        const importFile = document.getElementById('importFile');
+        Object.defineProperty(importFile, 'files', {
+            value: [],
+            writable: true,
+        });
+        const renderViews = jest.fn();
+        const startCheckInTimer = jest.fn();
+        settingsView.setupEventListeners(renderViews, startCheckInTimer);
+
+        importFile.dispatchEvent(new dom.window.Event('change'));
+        expect(mockApp.importData).not.toHaveBeenCalled();
+    });
+
+    test('setupEventListeners should handle missing exportBtn', () => {
+        const exportBtn = document.getElementById('exportBtn');
+        exportBtn.remove();
+        
+        const renderViews = jest.fn();
+        const startCheckInTimer = jest.fn();
+        
+        expect(() => settingsView.setupEventListeners(renderViews, startCheckInTimer)).not.toThrow();
+    });
+
+    test('setupEventListeners should handle missing importBtn', () => {
+        const importBtn = document.getElementById('importBtn');
+        importBtn.remove();
+        
+        const renderViews = jest.fn();
+        const startCheckInTimer = jest.fn();
+        
+        expect(() => settingsView.setupEventListeners(renderViews, startCheckInTimer)).not.toThrow();
+    });
+
+    test('setupEventListeners should handle missing importFile', () => {
+        const importFile = document.getElementById('importFile');
+        importFile.remove();
+        
+        const renderViews = jest.fn();
+        const startCheckInTimer = jest.fn();
+        
+        expect(() => settingsView.setupEventListeners(renderViews, startCheckInTimer)).not.toThrow();
+    });
+
+    test('setupEventListeners should handle missing googleDriveAuthBtn', () => {
+        const renderViews = jest.fn();
+        const startCheckInTimer = jest.fn();
+        
+        expect(() => settingsView.setupEventListeners(renderViews, startCheckInTimer)).not.toThrow();
+    });
+
+    test('setupEventListeners should handle missing googleDriveSignOutBtn', () => {
+        const renderViews = jest.fn();
+        const startCheckInTimer = jest.fn();
+        
+        expect(() => settingsView.setupEventListeners(renderViews, startCheckInTimer)).not.toThrow();
+    });
+
+    test('setupEventListeners should handle missing googleDriveSyncBtn', () => {
+        const renderViews = jest.fn();
+        const startCheckInTimer = jest.fn();
+        
+        expect(() => settingsView.setupEventListeners(renderViews, startCheckInTimer)).not.toThrow();
+    });
+
     test('saveSettingsBtn click should update settings, start check-in timer, and call renderViews', () => {
         document.getElementById('maxActiveGoals').value = '5';
         document.getElementById('reviewIntervals').value = '45, 15, 7';
@@ -109,6 +174,51 @@ describe('SettingsView', () => {
         expect(mockApp.goalService.autoActivateGoalsByPriority).toHaveBeenCalledWith(5);
         expect(startCheckInTimer).toHaveBeenCalled();
         expect(renderViews).toHaveBeenCalled();
+    });
+
+    test('saveSettingsBtn click should call autoActivateGoalsByPriority when maxActiveGoals changes', () => {
+        document.getElementById('maxActiveGoals').value = '7';
+        document.getElementById('reviewIntervals').value = '30, 14, 7';
+        mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] });
+        const renderViews = jest.fn();
+        const startCheckInTimer = jest.fn();
+        settingsView.setupEventListeners(renderViews, startCheckInTimer);
+
+        document.getElementById('saveSettingsBtn').click();
+
+        expect(mockApp.goalService.autoActivateGoalsByPriority).toHaveBeenCalledWith(7);
+    });
+
+    test('saveSettingsBtn click should handle language change', () => {
+        document.getElementById('maxActiveGoals').value = '3';
+        document.getElementById('reviewIntervals').value = '30, 14, 7';
+        const languageSelect = document.getElementById('languageSelect');
+        languageSelect.innerHTML = '<option value="en">English</option><option value="de">German</option>';
+        languageSelect.value = 'de';
+        
+        mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] });
+        const renderViews = jest.fn();
+        const startCheckInTimer = jest.fn();
+        
+        // Mock renderViews on settingsView to prevent error
+        settingsView.renderViews = renderViews;
+        settingsView.setupEventListeners(renderViews, startCheckInTimer);
+
+        document.getElementById('saveSettingsBtn').click();
+
+        expect(mockSettingsService.updateSettings).toHaveBeenCalledWith(
+            expect.objectContaining({ language: 'de' })
+        );
+    });
+
+    test('saveSettingsBtn click should handle missing saveSettingsBtn gracefully', () => {
+        const saveBtn = document.getElementById('saveSettingsBtn');
+        saveBtn.remove();
+        
+        const renderViews = jest.fn();
+        const startCheckInTimer = jest.fn();
+        
+        expect(() => settingsView.setupEventListeners(renderViews, startCheckInTimer)).not.toThrow();
     });
 
     test('saveSettingsBtn click should not call autoActivateGoalsByPriority when maxActiveGoals unchanged', () => {
@@ -133,6 +243,26 @@ describe('SettingsView', () => {
         document.getElementById('languageSelect').remove();
 
         expect(() => settingsView.syncSettingsForm()).not.toThrow();
+    });
+
+    test('updateLanguageOptions should handle missing languageSelect', () => {
+        const languageSelect = document.getElementById('languageSelect');
+        languageSelect.remove();
+
+        expect(() => settingsView.updateLanguageOptions()).not.toThrow();
+    });
+
+    test('updateLanguageOptions should preserve current language selection', () => {
+        const languageSelect = document.getElementById('languageSelect');
+        languageSelect.innerHTML = '<option value="en">English</option><option value="de">German</option>';
+        languageSelect.value = 'de';
+        
+        // Mock settings to return 'de' as the language
+        mockSettingsService.getSettings.mockReturnValue({ language: 'de' });
+
+        settingsView.updateLanguageOptions();
+
+        expect(languageSelect.value).toBe('de');
     });
 
     test('updateDeveloperModeVisibility should hide data management section when developer mode is disabled', () => {
@@ -290,6 +420,173 @@ describe('SettingsView', () => {
         document.body.removeChild(signOutBtn);
         document.body.removeChild(syncBtn);
         document.body.removeChild(statusDiv);
+    });
+
+    test('updateGoogleDriveUI should handle missing buttons gracefully', () => {
+        // Only create some buttons, not all
+        const authBtn = document.createElement('button');
+        authBtn.id = 'googleDriveAuthBtn';
+        document.body.appendChild(authBtn);
+
+        mockApp.googleDriveSyncService = {
+            isAuthenticated: jest.fn(() => false)
+        };
+
+        expect(() => settingsView.updateGoogleDriveUI()).not.toThrow();
+
+        document.body.removeChild(authBtn);
+    });
+
+    test('updateGoogleDriveUI should handle sync status without lastSyncTime', async () => {
+        const authBtn = document.createElement('button');
+        authBtn.id = 'googleDriveAuthBtn';
+        const signOutBtn = document.createElement('button');
+        signOutBtn.id = 'googleDriveSignOutBtn';
+        const syncBtn = document.createElement('button');
+        syncBtn.id = 'googleDriveSyncBtn';
+        const statusDiv = document.createElement('div');
+        statusDiv.id = 'googleDriveAuthStatus';
+        document.body.appendChild(authBtn);
+        document.body.appendChild(signOutBtn);
+        document.body.appendChild(syncBtn);
+        document.body.appendChild(statusDiv);
+
+        mockApp.googleDriveSyncService = {
+            isAuthenticated: jest.fn(() => true),
+            getSyncStatus: jest.fn(() => Promise.resolve({ 
+                authenticated: true, 
+                synced: false
+                // No lastSyncTime
+            }))
+        };
+
+        await settingsView.updateGoogleDriveUI();
+
+        expect(statusDiv.textContent).toBe(settingsView.translate('googleDrive.authenticated'));
+
+        document.body.removeChild(authBtn);
+        document.body.removeChild(signOutBtn);
+        document.body.removeChild(syncBtn);
+        document.body.removeChild(statusDiv);
+    });
+
+    test('updateGoogleDriveUI should handle getSyncStatus error', async () => {
+        const authBtn = document.createElement('button');
+        authBtn.id = 'googleDriveAuthBtn';
+        const signOutBtn = document.createElement('button');
+        signOutBtn.id = 'googleDriveSignOutBtn';
+        const syncBtn = document.createElement('button');
+        syncBtn.id = 'googleDriveSyncBtn';
+        const statusDiv = document.createElement('div');
+        statusDiv.id = 'googleDriveAuthStatus';
+        document.body.appendChild(authBtn);
+        document.body.appendChild(signOutBtn);
+        document.body.appendChild(syncBtn);
+        document.body.appendChild(statusDiv);
+
+        mockApp.googleDriveSyncService = {
+            isAuthenticated: jest.fn(() => true),
+            getSyncStatus: jest.fn(() => Promise.reject(new Error('Network error')))
+        };
+
+        await settingsView.updateGoogleDriveUI();
+
+        // Should not throw, error should be caught
+        expect(statusDiv.textContent).toBe(settingsView.translate('googleDrive.authenticated'));
+
+        document.body.removeChild(authBtn);
+        document.body.removeChild(signOutBtn);
+        document.body.removeChild(syncBtn);
+        document.body.removeChild(statusDiv);
+    });
+
+    test('showGoogleDriveStatus should clear status after timeout if message unchanged', () => {
+        jest.useFakeTimers();
+        const statusDiv = document.createElement('div');
+        statusDiv.id = 'googleDriveAuthStatus';
+        statusDiv.textContent = 'old message';
+        document.body.appendChild(statusDiv);
+
+        mockApp.googleDriveSyncService = {
+            isAuthenticated: jest.fn(() => false)
+        };
+        
+        const updateGoogleDriveUISpy = jest.spyOn(settingsView, 'updateGoogleDriveUI');
+
+        settingsView.showGoogleDriveStatus('Test message', false);
+        expect(statusDiv.textContent).toBe('Test message');
+
+        // Fast-forward time
+        jest.advanceTimersByTime(5000);
+
+        // updateGoogleDriveUI should be called
+        expect(updateGoogleDriveUISpy).toHaveBeenCalled();
+
+        updateGoogleDriveUISpy.mockRestore();
+        jest.useRealTimers();
+        document.body.removeChild(statusDiv);
+    });
+
+    test('showGoogleDriveStatus should not clear status if message changed', (done) => {
+        jest.useFakeTimers();
+        const statusDiv = document.createElement('div');
+        statusDiv.id = 'googleDriveAuthStatus';
+        document.body.appendChild(statusDiv);
+
+        settingsView.showGoogleDriveStatus('Test message', false);
+        expect(statusDiv.textContent).toBe('Test message');
+
+        // Change message before timeout
+        statusDiv.textContent = 'Different message';
+
+        // Fast-forward time
+        jest.advanceTimersByTime(5000);
+
+        // updateGoogleDriveUI should not be called because message changed
+        expect(statusDiv.textContent).toBe('Different message');
+
+        jest.useRealTimers();
+        document.body.removeChild(statusDiv);
+        done();
+    });
+
+    test('syncSettingsForm should handle non-array reviewIntervals', () => {
+        const reviewIntervals = document.createElement('input');
+        reviewIntervals.id = 'reviewIntervals';
+        reviewIntervals.type = 'text';
+        document.body.appendChild(reviewIntervals);
+
+        mockSettingsService.getSettings.mockReturnValue({
+            maxActiveGoals: 3,
+            language: 'en',
+            reviewIntervals: 'invalid' // Not an array
+        });
+
+        settingsView.syncSettingsForm();
+
+        expect(reviewIntervals.value).toBe('');
+
+        document.body.removeChild(reviewIntervals);
+    });
+
+    test('syncSettingsForm should call updateGoogleDriveUI and updateDeveloperModeVisibility', () => {
+        mockApp.developerModeService = {
+            isDeveloperMode: jest.fn(() => false)
+        };
+        mockApp.googleDriveSyncService = {
+            isAuthenticated: jest.fn(() => false)
+        };
+
+        const updateGoogleDriveUISpy = jest.spyOn(settingsView, 'updateGoogleDriveUI');
+        const updateDeveloperModeVisibilitySpy = jest.spyOn(settingsView, 'updateDeveloperModeVisibility');
+
+        settingsView.syncSettingsForm();
+
+        expect(updateGoogleDriveUISpy).toHaveBeenCalled();
+        expect(updateDeveloperModeVisibilitySpy).toHaveBeenCalled();
+
+        updateGoogleDriveUISpy.mockRestore();
+        updateDeveloperModeVisibilitySpy.mockRestore();
     });
 });
 
