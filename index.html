@@ -10,19 +10,35 @@
 <body>
     <div class="container">
         <header>
+            <div class="header-actions">
+                <button id="addGoalBtn" class="mobile-add-button" data-i18n-key="actions.addGoal" data-i18n-attr="aria-label">
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
             <h1>🎯 Goaly</h1>
-            <nav class="menu">
+            <nav class="menu desktop-menu">
                 <button class="menu-btn active" data-view="dashboard" data-i18n-key="navigation.dashboard">Dashboard</button>
                 <button class="menu-btn" data-view="all-goals" data-i18n-key="navigation.allGoals">All goals</button>
                 <button class="menu-btn" data-view="check-in" data-i18n-key="navigation.checkIn">Review</button>
                 <button class="menu-btn" data-view="settings" data-i18n-key="navigation.settings">Settings</button>
             </nav>
-            <div class="header-actions">
-                <button id="exportBtn" class="btn btn-secondary" data-i18n-key="actions.export">Export</button>
-                <button id="importBtn" class="btn btn-secondary" data-i18n-key="actions.import">Import</button>
-                <button id="addGoalBtn" class="btn btn-primary" data-i18n-key="actions.addGoal">+ New goal</button>
-                <input type="file" id="importFile" accept=".json" style="display: none;">
+            <div class="header-actions-desktop">
+                <button id="addGoalBtnDesktop" class="btn btn-primary" data-i18n-key="actions.addGoal">New goal</button>
             </div>
+            <nav class="menu mobile-menu">
+                <button id="mobileMenuToggle" class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="mobile-menu-dropdown" id="mobileMenuDropdown" aria-hidden="true">
+                    <button class="mobile-menu-btn active" data-view="dashboard" data-i18n-key="navigation.dashboard">Dashboard</button>
+                    <button class="mobile-menu-btn" data-view="all-goals" data-i18n-key="navigation.allGoals">All goals</button>
+                    <button class="mobile-menu-btn" data-view="check-in" data-i18n-key="navigation.checkIn">Review</button>
+                    <button class="mobile-menu-btn" data-view="settings" data-i18n-key="navigation.settings">Settings</button>
+                </div>
+            </nav>
         </header>
 
         <main>
@@ -57,16 +73,8 @@
                             <option value="updated-asc" data-i18n-key="filters.sortOptions.updatedAsc">Last update (old → new)</option>
                         </select>
                     </label>
-                    <label class="toggle-option">
-                        <input type="checkbox" id="allGoalsToggleCompleted" checked>
-                        <span data-i18n-key="filters.includeCompleted">Show completed</span>
-                    </label>
-                    <label class="toggle-option">
-                        <input type="checkbox" id="allGoalsToggleAbandoned" checked>
-                        <span data-i18n-key="filters.includeAbandoned">Show abandoned</span>
-                    </label>
                 </div>
-                <div class="table-wrapper">
+                <div class="table-wrapper desktop-only">
                     <table id="allGoalsTable" class="goals-table">
                         <thead>
                             <tr>
@@ -83,6 +91,7 @@
                     </table>
                     <div id="allGoalsEmptyState" class="empty-state" hidden data-i18n-key="tables.allGoals.emptyState">No goals match the current filters.</div>
                 </div>
+                <div id="allGoalsMobileContainer" class="mobile-goals-container mobile-only"></div>
             </div>
 
             <div id="check-inView" class="view">
@@ -109,6 +118,15 @@
                     <div class="setting-item">
                         <label for="languageSelect" data-i18n-key="settingsPanel.languageLabel">Language</label>
                         <select id="languageSelect"></select>
+                    </div>
+                    <div class="setting-item">
+                        <label data-i18n-key="settingsPanel.dataManagement">Data Management</label>
+                        <div class="data-management-actions">
+                            <button id="exportBtn" class="btn btn-secondary" data-i18n-key="actions.export">Export</button>
+                            <button id="importBtn" class="btn btn-secondary" data-i18n-key="actions.import">Import</button>
+                            <input type="file" id="importFile" accept=".json" style="display: none;">
+                        </div>
+                        <p class="setting-help" data-i18n-key="settingsPanel.dataManagementHelp">Export your data for backup or import previously exported data.</p>
                     </div>
                     <button id="saveSettingsBtn" class="btn btn-primary" data-i18n-key="settingsPanel.save">Save</button>
                 </div>

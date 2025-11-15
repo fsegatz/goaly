@@ -1,0 +1,219 @@
+const { JSDOM } = require('jsdom');
+const LanguageService = require('../../src/domain/language-service').default;
+
+// Mock the entire DOM for testing UI interactions
+let dom;
+let document;
+let window;
+
+// Mock the app object and its services
+let mockApp;
+let mockGoalService;
+let mockSettingsService;
+let mockReviewService;
+let languageService;
+
+function setupTestEnvironment() {
+    // Setup JSDOM
+    dom = new JSDOM(`<!DOCTYPE html><html><body>
+        <div id="goalsList"></div>
+        <div id="all-goalsView" class="view">
+            <div class="all-goals-controls">
+                <label for="allGoalsStatusFilter">
+                    <span>Status</span>
+                    <select id="allGoalsStatusFilter">
+                        <option value="all">All statuses</option>
+                        <option value="active">Active</option>
+                        <option value="paused">Paused</option>
+                        <option value="completed">Completed</option>
+                        <option value="abandoned">Abandoned</option>
+                    </select>
+                </label>
+                <label for="allGoalsPriorityFilter">
+                    <span>Minimum priority</span>
+                    <input type="number" id="allGoalsPriorityFilter" value="0" />
+                </label>
+                <label for="allGoalsSort">
+                    <span>Sorting</span>
+                    <select id="allGoalsSort">
+                        <option value="priority-desc">Priority (high → low)</option>
+                        <option value="priority-asc">Priority (low → high)</option>
+                        <option value="updated-desc">Last update (new → old)</option>
+                        <option value="updated-asc">Last update (old → new)</option>
+                    </select>
+                </label>
+            </div>
+            <div class="table-wrapper desktop-only">
+                <table id="allGoalsTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Motivation</th>
+                            <th>Urgency</th>
+                            <th>Deadline</th>
+                            <th>Last updated</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allGoalsTableBody"></tbody>
+                </table>
+                <div id="allGoalsEmptyState" hidden>No goals match the current filters.</div>
+            </div>
+            <div id="allGoalsMobileContainer" class="mobile-goals-container mobile-only"></div>
+        </div>
+        <button id="addGoalBtn"></button>
+        <button id="addGoalBtnDesktop"></button>
+        <form id="goalForm"></form>
+        <button id="cancelBtn"></button>
+        <button id="deleteBtn"></button>
+        <div id="goalModal" class="modal">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <input type="hidden" id="goalId" />
+            <input type="text" id="goalTitle" />
+            <textarea id="goalDescription"></textarea>
+            <input type="number" id="goalMotivation" />
+            <input type="number" id="goalUrgency" />
+            <input type="date" id="goalDeadline" />
+            <div id="goalHistorySection" class="goal-history" hidden>
+                <h3>History</h3>
+                <div id="goalHistoryList" class="goal-history-list"></div>
+            </div>
+        </div>
+        <div id="migrationPromptModal" class="modal">
+            <div class="modal-content migration-modal">
+                <span id="migrationPromptClose" class="close">&times;</span>
+                <h2 id="migrationPromptTitle"></h2>
+                <p id="migrationPromptMessage"></p>
+                <div class="modal-actions">
+                    <button id="migrationReviewBtn"></button>
+                    <button id="migrationPromptCancelBtn"></button>
+                </div>
+            </div>
+        </div>
+        <div id="migrationDiffModal" class="modal">
+            <div class="modal-content migration-diff-modal">
+                <span id="migrationDiffClose" class="close">&times;</span>
+                <h2 id="migrationDiffTitle"></h2>
+                <p id="migrationDiffSubtitle"></p>
+                <div class="migration-diff-columns">
+                    <div class="diff-column">
+                        <h3 id="migrationDiffOldLabel"></h3>
+                        <div id="migrationDiffOld" class="diff-view"></div>
+                    </div>
+                    <div class="diff-column">
+                        <h3 id="migrationDiffNewLabel"></h3>
+                        <div id="migrationDiffNew" class="diff-view"></div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="migrationApplyBtn"></button>
+                    <button id="migrationCancelBtn"></button>
+                </div>
+            </div>
+        </div>
+        <div id="completionModal" class="modal">
+            <div class="modal-content completion-modal">
+                <span id="completionCloseBtn" class="close">&times;</span>
+                <h2>Complete goal</h2>
+                <p>Did you achieve your goal?</p>
+                <div class="completion-actions">
+                    <button id="completionSuccessBtn" class="btn btn-primary">Goal completed</button>
+                    <button id="completionFailureBtn" class="btn btn-danger">Not completed</button>
+                    <button id="completionCancelBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <button id="exportBtn"></button>
+        <button id="importBtn"></button>
+        <input type="file" id="importFile" />
+        <button id="saveSettingsBtn"></button>
+        <input type="number" id="maxActiveGoals" value="3" />
+        <input type="text" id="reviewIntervals" value="30, 14, 7" />
+        <select id="languageSelect"></select>
+        <div id="checkInsPanel">
+            <div id="checkInsFeedback" hidden></div>
+            <div id="checkInsList"></div>
+            <div id="checkInsEmptyState" hidden></div>
+        </div>
+        <button class="menu-btn active" data-view="dashboard"></button>
+        <button class="menu-btn" data-view="all-goals"></button>
+        <div id="dashboardView" class="view active"></div>
+    </body></html>`, { url: "http://localhost" });
+    document = dom.window.document;
+    window = dom.window;
+
+    // Make document and window available globally for the UIController
+    global.document = document;
+    global.window = window;
+    global.navigator = window.navigator || { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
+    global.confirm = jest.fn(); // Mock global confirm
+    global.alert = jest.fn(); // Mock global alert
+    window.confirm = global.confirm;
+    window.alert = global.alert;
+    
+    // Ensure navigator is available on window
+    if (!window.navigator) {
+        window.navigator = global.navigator;
+    }
+
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2025-11-09T12:00:00.000Z')); // Set a fixed system time
+
+    // Mock services
+    mockGoalService = {
+        goals: [],
+        getActiveGoals: jest.fn(() => []),
+        createGoal: jest.fn(),
+        updateGoal: jest.fn(),
+        setGoalStatus: jest.fn(),
+        deleteGoal: jest.fn(),
+        calculatePriority: jest.fn(() => 0),
+        autoActivateGoalsByPriority: jest.fn(),
+        revertGoalToHistoryEntry: jest.fn(),
+    };
+    mockSettingsService = {
+        getSettings: jest.fn(() => ({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] })),
+        updateSettings: jest.fn(),
+        getReviewIntervals: jest.fn(() => [30, 14, 7])
+    };
+    mockReviewService = {
+        getCheckIns: jest.fn(() => []),
+        recordReview: jest.fn()
+    };
+
+    // Mock the app object
+    languageService = new LanguageService();
+    languageService.init('en');
+
+    mockApp = {
+        goalService: mockGoalService,
+        settingsService: mockSettingsService,
+        reviewService: mockReviewService,
+        languageService,
+        checkIns: [],
+        exportData: jest.fn(),
+        importData: jest.fn(),
+        startCheckInTimer: jest.fn(),
+        refreshCheckIns: jest.fn(),
+        handleMigrationReviewRequest: jest.fn(),
+        cancelMigration: jest.fn(),
+        completeMigration: jest.fn()
+    };
+
+    return { dom, document, window, mockApp, mockGoalService, mockSettingsService, mockReviewService, languageService };
+}
+
+function cleanupTestEnvironment() {
+    // Clean up global DOM elements
+    delete global.document;
+    delete global.window;
+    delete global.navigator;
+    delete global.confirm;
+    delete global.alert;
+    jest.useRealTimers();
+}
+
+module.exports = { setupTestEnvironment, cleanupTestEnvironment };
+

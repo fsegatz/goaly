@@ -74,6 +74,8 @@ const en = {
         reviewIntervals: 'Review intervals (use d/h/m/s suffixes):',
         reviewIntervalsHelp: 'Examples: 30d, 14d, 12h, 45m, 30s.',
         languageLabel: 'Language',
+        dataManagement: 'Data Management',
+        dataManagementHelp: 'Export your data for backup or import previously exported data.',
         save: 'Save'
     },
     goalModal: {
