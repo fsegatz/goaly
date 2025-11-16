@@ -51,15 +51,6 @@ export class DashboardView extends BaseUIController {
             `).join('')
             : `<li class="steps-empty">${this.translate('goalCard.steps.empty')}</li>`;
 
-        const resourcesHtml = (goal.resources || []).length > 0
-            ? (goal.resources || []).map(resource => `
-                <li class="goal-resource" data-resource-id="${resource.id}">
-                    <span class="resource-text" contenteditable="true">${this.escapeHtml(resource.text)}</span>
-                    <button type="button" class="resource-delete" aria-label="${this.translate('goalCard.resources.delete')}">×</button>
-                </li>
-            `).join('')
-            : `<li class="resources-empty">${this.translate('goalCard.resources.empty')}</li>`;
-
         card.innerHTML = `
             <div class="goal-header">
                 <div>
@@ -73,13 +64,6 @@ export class DashboardView extends BaseUIController {
                     <button type="button" class="btn btn-small add-step" aria-label="${this.translate('goalCard.steps.add')}">+</button>
                 </div>
                 <ul class="goal-steps-list">${stepsHtml}</ul>
-            </div>
-            <div class="goal-resources-section">
-                <div class="goal-resources-header">
-                    <h4>${this.translate('goalCard.resources.title')}</h4>
-                    <button type="button" class="btn btn-small add-resource" aria-label="${this.translate('goalCard.resources.add')}">+</button>
-                </div>
-                <ul class="goal-resources-list">${resourcesHtml}</ul>
             </div>
             <div class="goal-footer">
                 <div class="goal-deadline ${this.isDeadlineUrgent(goal.deadline) ? 'urgent' : ''} clickable-deadline" role="button" tabindex="0" aria-label="${this.translate('goalCard.deadlineClickable')}">
@@ -245,9 +229,6 @@ export class DashboardView extends BaseUIController {
         // Setup steps functionality
         this.setupSteps(card, goal, updateGoalInline);
 
-        // Setup resources functionality
-        this.setupResources(card, goal, updateGoalInline);
-
         return card;
     }
 
@@ -345,7 +326,9 @@ export class DashboardView extends BaseUIController {
                 }
             });
 
-            deleteBtn.addEventListener('click', () => {
+            deleteBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
                 const stepId = stepEl.dataset.stepId;
                 if (goal.steps) {
                     goal.steps = goal.steps.filter(s => s.id !== stepId);
@@ -358,100 +341,5 @@ export class DashboardView extends BaseUIController {
         });
     }
 
-    setupResources(card, goal, updateGoalInline) {
-        const resourcesList = card.querySelector('.goal-resources-list');
-        const addResourceBtn = card.querySelector('.add-resource');
-
-        const saveResources = () => {
-            const resources = Array.from(resourcesList.querySelectorAll('.goal-resource')).map(el => {
-                const resourceId = el.dataset.resourceId;
-                const textEl = el.querySelector('.resource-text');
-                return {
-                    id: resourceId,
-                    text: textEl.textContent.trim(),
-                    type: 'general'
-                };
-            }).filter(resource => resource.text.length > 0);
-
-            const { maxActiveGoals } = this.app.settingsService.getSettings();
-            this.app.goalService.updateGoal(goal.id, { resources }, maxActiveGoals);
-            goal.resources = resources;
-        };
-
-        const renderResources = () => {
-            if ((goal.resources || []).length === 0) {
-                resourcesList.innerHTML = `<li class="resources-empty">${this.translate('goalCard.resources.empty')}</li>`;
-            } else {
-                resourcesList.innerHTML = (goal.resources || []).map(resource => `
-                    <li class="goal-resource" data-resource-id="${resource.id}">
-                        <span class="resource-text" contenteditable="true">${this.escapeHtml(resource.text)}</span>
-                        <button type="button" class="resource-delete" aria-label="${this.translate('goalCard.resources.delete')}">×</button>
-                    </li>
-                `).join('');
-                this.attachResourceListeners(resourcesList, saveResources, card, goal, updateGoalInline);
-            }
-        };
-
-        addResourceBtn.addEventListener('click', () => {
-            const newResource = {
-                id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
-                text: '',
-                type: 'general'
-            };
-            if (!goal.resources) goal.resources = [];
-            goal.resources.push(newResource);
-            renderResources();
-            const newResourceEl = resourcesList.querySelector(`[data-resource-id="${newResource.id}"]`);
-            if (newResourceEl) {
-                const textEl = newResourceEl.querySelector('.resource-text');
-                textEl.focus();
-                const range = document.createRange();
-                range.selectNodeContents(textEl);
-                const sel = window.getSelection();
-                sel.removeAllRanges();
-                sel.addRange(range);
-            }
-        });
-
-        this.attachResourceListeners(resourcesList, saveResources, card, goal, updateGoalInline);
-    }
-
-    attachResourceListeners(resourcesList, saveResources, card, goal, updateGoalInline) {
-        resourcesList.querySelectorAll('.goal-resource').forEach(resourceEl => {
-            const textEl = resourceEl.querySelector('.resource-text');
-            const deleteBtn = resourceEl.querySelector('.resource-delete');
-
-            textEl.addEventListener('blur', () => {
-                if (!textEl.textContent.trim()) {
-                    const resourceId = resourceEl.dataset.resourceId;
-                    if (goal.resources) {
-                        goal.resources = goal.resources.filter(r => r.id !== resourceId);
-                    }
-                    saveResources();
-                    this.setupResources(card, goal, updateGoalInline);
-                } else {
-                    saveResources();
-                }
-            });
-
-            textEl.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    textEl.blur();
-                }
-            });
-
-            deleteBtn.addEventListener('click', () => {
-                const resourceId = resourceEl.dataset.resourceId;
-                if (goal.resources) {
-                    goal.resources = goal.resources.filter(r => r.id !== resourceId);
-                }
-                // Save based on goal object, not DOM, since DOM hasn't updated yet
-                const { maxActiveGoals } = this.app.settingsService.getSettings();
-                this.app.goalService.updateGoal(goal.id, { resources: goal.resources }, maxActiveGoals);
-                this.setupResources(card, goal, updateGoalInline);
-            });
-        });
-    }
 }
 
