@@ -355,5 +355,50 @@ describe('ModalsView', () => {
             fileName: 'test.json'
         })).not.toThrow();
     });
+
+    test('openMigrationDiff should return early when modal is missing', () => {
+        const modal = document.getElementById('migrationDiffModal');
+        modal.remove();
+        modalsView.migrationModalRefs = { migrationDiffModal: null };
+
+        expect(() => modalsView.openMigrationDiff({
+            fromVersion: '0.9.0',
+            toVersion: '1.0.0',
+            originalString: 'old',
+            migratedString: 'new',
+            fileName: 'test.json'
+        })).not.toThrow();
+    });
+
+    test('openMigrationDiff scroll sync should guard against recursive sync', () => {
+        modalsView.setupMigrationModals(
+            () => mockApp.cancelMigration(),
+            () => mockApp.handleMigrationReviewRequest(),
+            () => mockApp.completeMigration()
+        );
+
+        modalsView.openMigrationDiff({
+            fromVersion: '0.9.0',
+            toVersion: '1.0.0',
+            originalString: 'old',
+            migratedString: 'new',
+            fileName: 'test.json'
+        });
+
+        const oldView = document.getElementById('migrationDiffOld');
+        const newView = document.getElementById('migrationDiffNew');
+        
+        // Manually set the flag to simulate an ongoing sync
+        modalsView.isSyncingMigrationScroll = true;
+        
+        // Trigger scroll - should return early due to guard
+        oldView.scrollTop = 50;
+        oldView.dispatchEvent(new dom.window.Event('scroll'));
+        
+        // The newView should not have been updated because of the guard
+        expect(newView.scrollTop).not.toBe(50);
+        
+        modalsView.closeMigrationModals();
+    });
 });
 

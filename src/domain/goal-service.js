@@ -278,6 +278,12 @@ class GoalService {
                 priorityChanged = true;
             }
         }
+        if (goalData.steps !== undefined) {
+            updates.steps = Array.isArray(goalData.steps) ? goalData.steps : [];
+        }
+        if (goalData.resources !== undefined) {
+            updates.resources = Array.isArray(goalData.resources) ? goalData.resources : [];
+        }
 
         if (Object.keys(updates).length === 0) {
             return goal;

@@ -40,6 +40,17 @@ export class DashboardView extends BaseUIController {
             ? this.formatDeadline(goal.deadline)
             : this.translate('goalCard.noDeadline');
 
+        const sortedSteps = [...(goal.steps || [])].sort((a, b) => (a.order || 0) - (b.order || 0));
+        const stepsHtml = sortedSteps.length > 0
+            ? sortedSteps.map(step => `
+                <li class="goal-step ${step.completed ? 'completed' : ''}" data-step-id="${step.id}">
+                    <input type="checkbox" class="step-checkbox" ${step.completed ? 'checked' : ''} aria-label="Toggle step completion">
+                    <span class="step-text" contenteditable="true">${this.escapeHtml(step.text)}</span>
+                    <button type="button" class="step-delete" aria-label="${this.translate('goalCard.steps.delete')}">×</button>
+                </li>
+            `).join('')
+            : `<li class="steps-empty">${this.translate('goalCard.steps.empty')}</li>`;
+
         card.innerHTML = `
             <div class="goal-header">
                 <div>
@@ -47,32 +58,19 @@ export class DashboardView extends BaseUIController {
                 </div>
             </div>
             <div class="goal-description dashboard-description" contenteditable="true" role="textbox" aria-label="${this.translate('goalCard.descriptionAria')}" data-goal-id="${goal.id}" data-placeholder="${this.translate('goalCard.descriptionPlaceholder')}"></div>
+            <div class="goal-steps-section">
+                <div class="goal-steps-header">
+                    <h4>${this.translate('goalCard.steps.title')}</h4>
+                    <button type="button" class="btn btn-small add-step" aria-label="${this.translate('goalCard.steps.add')}">+</button>
+                </div>
+                <ul class="goal-steps-list">${stepsHtml}</ul>
+            </div>
             <div class="goal-footer">
-                <div class="goal-deadline ${this.isDeadlineUrgent(goal.deadline) ? 'urgent' : ''}">
-                    ${this.translate('goalCard.deadlinePrefix', { deadline: deadlineText })}
+                <div class="goal-deadline-wrapper">
+                    <span class="goal-deadline-label ${this.isDeadlineUrgent(goal.deadline) ? 'urgent' : ''}">${this.translate('goalCard.deadlinePrefix', { deadline: deadlineText })}</span>
+                    <input type="date" class="goal-deadline-input" value="${goal.deadline ? goal.deadline.toISOString().split('T')[0] : ''}" aria-label="${this.translate('goalCard.deadlineClickable')}">
                 </div>
                 <div class="goal-actions">
-                    <button class="btn btn-primary edit-goal" data-id="${goal.id}" aria-expanded="false">${this.translate('goalCard.actions.edit')}</button>
-                </div>
-            </div>
-            <div class="goal-inline-editor" aria-hidden="true">
-                <div class="inline-fields">
-                    <label>
-                        <span>${this.translate('goalCard.inline.deadline')}</span>
-                        <input type="date" class="inline-deadline" value="${goal.deadline ? goal.deadline.toISOString().split('T')[0] : ''}">
-                    </label>
-                    <label>
-                        <span>${this.translate('goalCard.inline.motivation')}</span>
-                        <input type="number" class="inline-motivation" min="1" max="5" step="1" value="${goal.motivation}">
-                    </label>
-                    <label>
-                        <span>${this.translate('goalCard.inline.urgency')}</span>
-                        <input type="number" class="inline-urgency" min="1" max="5" step="1" value="${goal.urgency}">
-                    </label>
-                </div>
-                <div class="inline-actions">
-                    <button type="button" class="btn btn-primary save-inline">${this.translate('common.save')}</button>
-                    <button type="button" class="btn btn-secondary cancel-inline">${this.translate('common.cancel')}</button>
                 </div>
             </div>
         `;
@@ -146,60 +144,170 @@ export class DashboardView extends BaseUIController {
             actionsContainer.appendChild(completeButton);
         }
 
-        const editBtn = card.querySelector('.edit-goal');
-        const inlineEditor = card.querySelector('.goal-inline-editor');
+        // Make deadline editable directly via date input
+        const deadlineLabel = card.querySelector('.goal-deadline-label');
+        const deadlineInput = card.querySelector('.goal-deadline-input');
 
-        if (editBtn && inlineEditor) {
-            const deadlineInput = inlineEditor.querySelector('.inline-deadline');
-            const motivationInput = inlineEditor.querySelector('.inline-motivation');
-            const urgencyInput = inlineEditor.querySelector('.inline-urgency');
-            const saveButton = inlineEditor.querySelector('.save-inline');
-            const cancelButton = inlineEditor.querySelector('.cancel-inline');
-
-            const toggleInlineEditor = (open) => {
-                inlineEditor.setAttribute('aria-hidden', open ? 'false' : 'true');
-                editBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-                if (open) {
-                    card.classList.add('is-inline-editing');
-                    inlineEditor.classList.add('is-visible');
-                    deadlineInput.value = goal.deadline ? goal.deadline.toISOString().split('T')[0] : '';
-                    motivationInput.value = goal.motivation;
-                    urgencyInput.value = goal.urgency;
-                    deadlineInput.focus();
-                } else {
-                    card.classList.remove('is-inline-editing');
-                    inlineEditor.classList.remove('is-visible');
-                }
-            };
-
-            editBtn.addEventListener('click', (event) => {
+        if (deadlineLabel && deadlineInput) {
+            // Click on label opens the date picker
+            deadlineLabel.addEventListener('click', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                const isVisible = inlineEditor.classList.contains('is-visible');
-                toggleInlineEditor(!isVisible);
+                deadlineInput.showPicker();
             });
 
-            saveButton.addEventListener('click', (event) => {
-                event.preventDefault();
-                const parseOrFallback = (value, fallback) => {
-                    const parsed = Number.parseInt(value, 10);
-                    return Number.isNaN(parsed) ? fallback : parsed;
-                };
+            deadlineLabel.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    deadlineInput.showPicker();
+                }
+            });
+
+            // Update deadline when date input changes
+            deadlineInput.addEventListener('change', (event) => {
+                const deadlineValue = deadlineInput.value || null;
                 const updates = {
-                    deadline: deadlineInput.value || null,
-                    motivation: parseOrFallback(motivationInput.value, goal.motivation),
-                    urgency: parseOrFallback(urgencyInput.value, goal.urgency)
+                    deadline: deadlineValue || null
                 };
                 updateGoalInline(goal.id, updates);
             });
 
-            cancelButton.addEventListener('click', (event) => {
-                event.preventDefault();
-                toggleInlineEditor(false);
+            // Update the label when deadline changes (for immediate visual feedback)
+            deadlineInput.addEventListener('input', () => {
+                if (deadlineInput.value) {
+                    const newDate = new Date(deadlineInput.value);
+                    const newDeadlineText = this.formatDeadline(newDate);
+                    deadlineLabel.textContent = this.translate('goalCard.deadlinePrefix', { deadline: newDeadlineText });
+                    deadlineLabel.classList.toggle('urgent', this.isDeadlineUrgent(newDate));
+                } else {
+                    deadlineLabel.textContent = this.translate('goalCard.deadlinePrefix', { deadline: this.translate('goalCard.noDeadline') });
+                    deadlineLabel.classList.remove('urgent');
+                }
             });
         }
 
+        // Setup steps functionality
+        this.setupSteps(card, goal, updateGoalInline);
+
         return card;
     }
+
+    setupSteps(card, goal, updateGoalInline) {
+        const stepsList = card.querySelector('.goal-steps-list');
+        const addStepBtn = card.querySelector('.add-step');
+
+        const saveSteps = () => {
+            const steps = Array.from(stepsList.querySelectorAll('.goal-step')).map((el, index) => {
+                const stepId = el.dataset.stepId;
+                const checkbox = el.querySelector('.step-checkbox');
+                const textEl = el.querySelector('.step-text');
+                return {
+                    id: stepId,
+                    text: textEl.textContent.trim(),
+                    completed: checkbox.checked,
+                    order: index
+                };
+            }).filter(step => step.text.length > 0);
+
+            const { maxActiveGoals } = this.app.settingsService.getSettings();
+            this.app.goalService.updateGoal(goal.id, { steps }, maxActiveGoals);
+            goal.steps = steps;
+        };
+
+        const renderSteps = () => {
+            const sortedSteps = [...(goal.steps || [])].sort((a, b) => (a.order || 0) - (b.order || 0));
+            if (sortedSteps.length === 0) {
+                stepsList.innerHTML = `<li class="steps-empty">${this.translate('goalCard.steps.empty')}</li>`;
+            } else {
+                stepsList.innerHTML = sortedSteps.map(step => `
+                    <li class="goal-step ${step.completed ? 'completed' : ''}" data-step-id="${step.id}">
+                        <input type="checkbox" class="step-checkbox" ${step.completed ? 'checked' : ''} aria-label="Toggle step completion">
+                        <span class="step-text" contenteditable="true">${this.escapeHtml(step.text)}</span>
+                        <button type="button" class="step-delete" aria-label="${this.translate('goalCard.steps.delete')}">×</button>
+                    </li>
+                `).join('');
+                this.attachStepListeners(stepsList, saveSteps, card, goal, updateGoalInline);
+            }
+        };
+
+        // Remove existing event listeners by cloning the button
+        const newAddStepBtn = addStepBtn.cloneNode(true);
+        addStepBtn.parentNode.replaceChild(newAddStepBtn, addStepBtn);
+
+        newAddStepBtn.addEventListener('click', () => {
+            const newStep = {
+                id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
+                text: '',
+                completed: false,
+                order: (goal.steps || []).length
+            };
+            if (!goal.steps) goal.steps = [];
+            goal.steps.push(newStep);
+            renderSteps();
+            const newStepEl = stepsList.querySelector(`[data-step-id="${newStep.id}"]`);
+            if (newStepEl) {
+                const textEl = newStepEl.querySelector('.step-text');
+                textEl.focus();
+                const range = document.createRange();
+                range.selectNodeContents(textEl);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        });
+
+        // Initial render
+        renderSteps();
+    }
+
+    attachStepListeners(stepsList, saveSteps, card, goal, updateGoalInline) {
+        stepsList.querySelectorAll('.goal-step').forEach(stepEl => {
+            const checkbox = stepEl.querySelector('.step-checkbox');
+            const textEl = stepEl.querySelector('.step-text');
+            const deleteBtn = stepEl.querySelector('.step-delete');
+
+            checkbox.addEventListener('change', () => {
+                stepEl.classList.toggle('completed', checkbox.checked);
+                saveSteps();
+            });
+
+            textEl.addEventListener('blur', () => {
+                if (!textEl.textContent.trim()) {
+                    const stepId = stepEl.dataset.stepId;
+                    if (goal.steps) {
+                        goal.steps = goal.steps.filter(s => s.id !== stepId);
+                    }
+                    // Save based on goal object, not DOM, since DOM hasn't updated yet
+                    const { maxActiveGoals } = this.app.settingsService.getSettings();
+                    this.app.goalService.updateGoal(goal.id, { steps: goal.steps }, maxActiveGoals);
+                    this.setupSteps(card, goal, updateGoalInline);
+                } else {
+                    saveSteps();
+                }
+            });
+
+            textEl.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    textEl.blur();
+                }
+            });
+
+            deleteBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const stepId = stepEl.dataset.stepId;
+                if (goal.steps) {
+                    goal.steps = goal.steps.filter(s => s.id !== stepId);
+                }
+                // Save based on goal object, not DOM, since DOM hasn't updated yet
+                const { maxActiveGoals } = this.app.settingsService.getSettings();
+                this.app.goalService.updateGoal(goal.id, { steps: goal.steps }, maxActiveGoals);
+                // Re-render the steps list immediately by calling setupSteps again
+                this.setupSteps(card, goal, updateGoalInline);
+            });
+        });
+    }
+
 }
 
