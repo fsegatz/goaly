@@ -277,7 +277,9 @@ export class DashboardView extends BaseUIController {
                     if (goal.steps) {
                         goal.steps = goal.steps.filter(s => s.id !== stepId);
                     }
-                    saveSteps();
+                    // Save based on goal object, not DOM, since DOM hasn't updated yet
+                    const { maxActiveGoals } = this.app.settingsService.getSettings();
+                    this.app.goalService.updateGoal(goal.id, { steps: goal.steps }, maxActiveGoals);
                     this.setupSteps(card, goal, updateGoalInline);
                 } else {
                     saveSteps();

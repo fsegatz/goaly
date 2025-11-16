@@ -61,18 +61,18 @@ When implementing a GitHub issue, follow this structured process:
 **Example workflow:**
 ```bash
 # 1. Create feature branch
-git checkout -b feature/issue-43
+git checkout -b feature/issue-<number>
 
 # 2. Implement changes and make first commit
 git add -A
-git commit -m "Implement issue #43: Description of changes"
+git commit -m "Implement issue #<number>: Description of changes"
 
 # 3. Review, improve, and make second commit
 git add -A
 git commit -m "Review and improve: Add additional test coverage"
 
 # 4. Push and create PR
-git push origin feature/issue-43
+git push origin feature/issue-<number>
 # Then create PR on GitHub
 ```
 
