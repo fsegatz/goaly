@@ -29,6 +29,53 @@ This handbook summarises how coding agents and new contributors collaborate prod
 6. Raise a PR when work is complete and hand it off for review.
 7. **Naming rule:** Use English-only identifiers, function names and terminology across the codebase and documentation. This ensures consistency and simplifies future contributions.
 
+## Process for Fixing Issues
+
+When implementing a GitHub issue, follow this structured process:
+
+1. **Initial Implementation**
+   - Read and understand the issue requirements
+   - Create a TODO list to track progress
+   - Implement the required changes
+   - Update tests to cover new functionality
+   - Run `npm test` to ensure all tests pass
+   - Check test coverage threshold (80% for statements, branches, functions, and lines)
+   - Make the first commit with a descriptive message
+
+2. **Review and Improve**
+   - Review the implementation for potential improvements
+   - Add additional test coverage for edge cases
+   - Ensure test coverage threshold is met (run `npm test` to verify)
+   - Make a second commit with improvements
+
+3. **Create PR and Push**
+   - Create a feature branch (if not already on one)
+   - Push the branch to GitHub
+   - Create a Pull Request with a clear description of changes
+   - Reference the issue number in the PR description
+
+4. **Documentation**
+   - Update `AGENTS.md` or relevant documentation if the process changes
+   - Ensure all changes are properly documented
+
+**Example workflow:**
+```bash
+# 1. Create feature branch
+git checkout -b feature/issue-<number>
+
+# 2. Implement changes and make first commit
+git add -A
+git commit -m "Implement issue #<number>: Description of changes"
+
+# 3. Review, improve, and make second commit
+git add -A
+git commit -m "Review and improve: Add additional test coverage"
+
+# 4. Push and create PR
+git push origin feature/issue-<number>
+# Then create PR on GitHub
+```
+
 ## Reference Material
 - Product expectations: `README.md` and the documents in `docs/`.
 - Feature priorities: consult project documents first, then ask if unclear.
