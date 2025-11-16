@@ -44,6 +44,17 @@ class Goal {
             : null;
         const history = Array.isArray(goalData.history) ? goalData.history.map(normalizeHistoryEntry).filter(Boolean) : [];
         this.history = history;
+        this.steps = Array.isArray(goalData.steps) ? goalData.steps.map((step, index) => ({
+            id: step.id || `${Date.now()}-${index}-${Math.random().toString(16).slice(2, 10)}`,
+            text: step.text || '',
+            completed: Boolean(step.completed),
+            order: Number.isInteger(step.order) ? step.order : index
+        })) : [];
+        this.resources = Array.isArray(goalData.resources) ? goalData.resources.map((resource, index) => ({
+            id: resource.id || `${Date.now()}-${index}-${Math.random().toString(16).slice(2, 10)}`,
+            text: resource.text || '',
+            type: resource.type || 'general'
+        })) : [];
     }
 }
 

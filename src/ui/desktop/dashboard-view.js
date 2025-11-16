@@ -40,6 +40,26 @@ export class DashboardView extends BaseUIController {
             ? this.formatDeadline(goal.deadline)
             : this.translate('goalCard.noDeadline');
 
+        const sortedSteps = [...(goal.steps || [])].sort((a, b) => (a.order || 0) - (b.order || 0));
+        const stepsHtml = sortedSteps.length > 0
+            ? sortedSteps.map(step => `
+                <li class="goal-step ${step.completed ? 'completed' : ''}" data-step-id="${step.id}">
+                    <input type="checkbox" class="step-checkbox" ${step.completed ? 'checked' : ''} aria-label="Toggle step completion">
+                    <span class="step-text" contenteditable="true">${this.escapeHtml(step.text)}</span>
+                    <button type="button" class="step-delete" aria-label="${this.translate('goalCard.steps.delete')}">×</button>
+                </li>
+            `).join('')
+            : `<li class="steps-empty">${this.translate('goalCard.steps.empty')}</li>`;
+
+        const resourcesHtml = (goal.resources || []).length > 0
+            ? (goal.resources || []).map(resource => `
+                <li class="goal-resource" data-resource-id="${resource.id}">
+                    <span class="resource-text" contenteditable="true">${this.escapeHtml(resource.text)}</span>
+                    <button type="button" class="resource-delete" aria-label="${this.translate('goalCard.resources.delete')}">×</button>
+                </li>
+            `).join('')
+            : `<li class="resources-empty">${this.translate('goalCard.resources.empty')}</li>`;
+
         card.innerHTML = `
             <div class="goal-header">
                 <div>
@@ -47,12 +67,25 @@ export class DashboardView extends BaseUIController {
                 </div>
             </div>
             <div class="goal-description dashboard-description" contenteditable="true" role="textbox" aria-label="${this.translate('goalCard.descriptionAria')}" data-goal-id="${goal.id}" data-placeholder="${this.translate('goalCard.descriptionPlaceholder')}"></div>
+            <div class="goal-steps-section">
+                <div class="goal-steps-header">
+                    <h4>${this.translate('goalCard.steps.title')}</h4>
+                    <button type="button" class="btn btn-small add-step" aria-label="${this.translate('goalCard.steps.add')}">+</button>
+                </div>
+                <ul class="goal-steps-list">${stepsHtml}</ul>
+            </div>
+            <div class="goal-resources-section">
+                <div class="goal-resources-header">
+                    <h4>${this.translate('goalCard.resources.title')}</h4>
+                    <button type="button" class="btn btn-small add-resource" aria-label="${this.translate('goalCard.resources.add')}">+</button>
+                </div>
+                <ul class="goal-resources-list">${resourcesHtml}</ul>
+            </div>
             <div class="goal-footer">
-                <div class="goal-deadline ${this.isDeadlineUrgent(goal.deadline) ? 'urgent' : ''}">
+                <div class="goal-deadline ${this.isDeadlineUrgent(goal.deadline) ? 'urgent' : ''} clickable-deadline" role="button" tabindex="0" aria-label="${this.translate('goalCard.deadlineClickable')}">
                     ${this.translate('goalCard.deadlinePrefix', { deadline: deadlineText })}
                 </div>
                 <div class="goal-actions">
-                    <button class="btn btn-primary edit-goal" data-id="${goal.id}" aria-expanded="false">${this.translate('goalCard.actions.edit')}</button>
                 </div>
             </div>
             <div class="goal-inline-editor" aria-hidden="true">
@@ -146,10 +179,11 @@ export class DashboardView extends BaseUIController {
             actionsContainer.appendChild(completeButton);
         }
 
-        const editBtn = card.querySelector('.edit-goal');
+        // Make deadline clickable to open inline editor
+        const deadlineEl = card.querySelector('.clickable-deadline');
         const inlineEditor = card.querySelector('.goal-inline-editor');
 
-        if (editBtn && inlineEditor) {
+        if (deadlineEl && inlineEditor) {
             const deadlineInput = inlineEditor.querySelector('.inline-deadline');
             const motivationInput = inlineEditor.querySelector('.inline-motivation');
             const urgencyInput = inlineEditor.querySelector('.inline-urgency');
@@ -158,7 +192,7 @@ export class DashboardView extends BaseUIController {
 
             const toggleInlineEditor = (open) => {
                 inlineEditor.setAttribute('aria-hidden', open ? 'false' : 'true');
-                editBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                deadlineEl.setAttribute('aria-expanded', open ? 'true' : 'false');
                 if (open) {
                     card.classList.add('is-inline-editing');
                     inlineEditor.classList.add('is-visible');
@@ -172,11 +206,19 @@ export class DashboardView extends BaseUIController {
                 }
             };
 
-            editBtn.addEventListener('click', (event) => {
+            const handleDeadlineClick = (event) => {
                 event.preventDefault();
                 event.stopPropagation();
                 const isVisible = inlineEditor.classList.contains('is-visible');
                 toggleInlineEditor(!isVisible);
+            };
+
+            deadlineEl.addEventListener('click', handleDeadlineClick);
+            deadlineEl.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    handleDeadlineClick(event);
+                }
             });
 
             saveButton.addEventListener('click', (event) => {
@@ -191,6 +233,7 @@ export class DashboardView extends BaseUIController {
                     urgency: parseOrFallback(urgencyInput.value, goal.urgency)
                 };
                 updateGoalInline(goal.id, updates);
+                toggleInlineEditor(false);
             });
 
             cancelButton.addEventListener('click', (event) => {
@@ -199,7 +242,216 @@ export class DashboardView extends BaseUIController {
             });
         }
 
+        // Setup steps functionality
+        this.setupSteps(card, goal, updateGoalInline);
+
+        // Setup resources functionality
+        this.setupResources(card, goal, updateGoalInline);
+
         return card;
+    }
+
+    setupSteps(card, goal, updateGoalInline) {
+        const stepsList = card.querySelector('.goal-steps-list');
+        const addStepBtn = card.querySelector('.add-step');
+
+        const saveSteps = () => {
+            const steps = Array.from(stepsList.querySelectorAll('.goal-step')).map((el, index) => {
+                const stepId = el.dataset.stepId;
+                const checkbox = el.querySelector('.step-checkbox');
+                const textEl = el.querySelector('.step-text');
+                return {
+                    id: stepId,
+                    text: textEl.textContent.trim(),
+                    completed: checkbox.checked,
+                    order: index
+                };
+            }).filter(step => step.text.length > 0);
+
+            const { maxActiveGoals } = this.app.settingsService.getSettings();
+            this.app.goalService.updateGoal(goal.id, { steps }, maxActiveGoals);
+            goal.steps = steps;
+        };
+
+        const renderSteps = () => {
+            const sortedSteps = [...(goal.steps || [])].sort((a, b) => (a.order || 0) - (b.order || 0));
+            if (sortedSteps.length === 0) {
+                stepsList.innerHTML = `<li class="steps-empty">${this.translate('goalCard.steps.empty')}</li>`;
+            } else {
+                stepsList.innerHTML = sortedSteps.map(step => `
+                    <li class="goal-step ${step.completed ? 'completed' : ''}" data-step-id="${step.id}">
+                        <input type="checkbox" class="step-checkbox" ${step.completed ? 'checked' : ''} aria-label="Toggle step completion">
+                        <span class="step-text" contenteditable="true">${this.escapeHtml(step.text)}</span>
+                        <button type="button" class="step-delete" aria-label="${this.translate('goalCard.steps.delete')}">×</button>
+                    </li>
+                `).join('');
+                this.attachStepListeners(stepsList, saveSteps, card, goal, updateGoalInline);
+            }
+        };
+
+        addStepBtn.addEventListener('click', () => {
+            const newStep = {
+                id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
+                text: '',
+                completed: false,
+                order: (goal.steps || []).length
+            };
+            if (!goal.steps) goal.steps = [];
+            goal.steps.push(newStep);
+            renderSteps();
+            const newStepEl = stepsList.querySelector(`[data-step-id="${newStep.id}"]`);
+            if (newStepEl) {
+                const textEl = newStepEl.querySelector('.step-text');
+                textEl.focus();
+                const range = document.createRange();
+                range.selectNodeContents(textEl);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        });
+
+        this.attachStepListeners(stepsList, saveSteps, card, goal, updateGoalInline);
+    }
+
+    attachStepListeners(stepsList, saveSteps, card, goal, updateGoalInline) {
+        stepsList.querySelectorAll('.goal-step').forEach(stepEl => {
+            const checkbox = stepEl.querySelector('.step-checkbox');
+            const textEl = stepEl.querySelector('.step-text');
+            const deleteBtn = stepEl.querySelector('.step-delete');
+
+            checkbox.addEventListener('change', () => {
+                stepEl.classList.toggle('completed', checkbox.checked);
+                saveSteps();
+            });
+
+            textEl.addEventListener('blur', () => {
+                if (!textEl.textContent.trim()) {
+                    const stepId = stepEl.dataset.stepId;
+                    if (goal.steps) {
+                        goal.steps = goal.steps.filter(s => s.id !== stepId);
+                    }
+                    saveSteps();
+                    this.setupSteps(card, goal, updateGoalInline);
+                } else {
+                    saveSteps();
+                }
+            });
+
+            textEl.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    textEl.blur();
+                }
+            });
+
+            deleteBtn.addEventListener('click', () => {
+                const stepId = stepEl.dataset.stepId;
+                if (goal.steps) {
+                    goal.steps = goal.steps.filter(s => s.id !== stepId);
+                }
+                // Save based on goal object, not DOM, since DOM hasn't updated yet
+                const { maxActiveGoals } = this.app.settingsService.getSettings();
+                this.app.goalService.updateGoal(goal.id, { steps: goal.steps }, maxActiveGoals);
+                this.setupSteps(card, goal, updateGoalInline);
+            });
+        });
+    }
+
+    setupResources(card, goal, updateGoalInline) {
+        const resourcesList = card.querySelector('.goal-resources-list');
+        const addResourceBtn = card.querySelector('.add-resource');
+
+        const saveResources = () => {
+            const resources = Array.from(resourcesList.querySelectorAll('.goal-resource')).map(el => {
+                const resourceId = el.dataset.resourceId;
+                const textEl = el.querySelector('.resource-text');
+                return {
+                    id: resourceId,
+                    text: textEl.textContent.trim(),
+                    type: 'general'
+                };
+            }).filter(resource => resource.text.length > 0);
+
+            const { maxActiveGoals } = this.app.settingsService.getSettings();
+            this.app.goalService.updateGoal(goal.id, { resources }, maxActiveGoals);
+            goal.resources = resources;
+        };
+
+        const renderResources = () => {
+            if ((goal.resources || []).length === 0) {
+                resourcesList.innerHTML = `<li class="resources-empty">${this.translate('goalCard.resources.empty')}</li>`;
+            } else {
+                resourcesList.innerHTML = (goal.resources || []).map(resource => `
+                    <li class="goal-resource" data-resource-id="${resource.id}">
+                        <span class="resource-text" contenteditable="true">${this.escapeHtml(resource.text)}</span>
+                        <button type="button" class="resource-delete" aria-label="${this.translate('goalCard.resources.delete')}">×</button>
+                    </li>
+                `).join('');
+                this.attachResourceListeners(resourcesList, saveResources, card, goal, updateGoalInline);
+            }
+        };
+
+        addResourceBtn.addEventListener('click', () => {
+            const newResource = {
+                id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
+                text: '',
+                type: 'general'
+            };
+            if (!goal.resources) goal.resources = [];
+            goal.resources.push(newResource);
+            renderResources();
+            const newResourceEl = resourcesList.querySelector(`[data-resource-id="${newResource.id}"]`);
+            if (newResourceEl) {
+                const textEl = newResourceEl.querySelector('.resource-text');
+                textEl.focus();
+                const range = document.createRange();
+                range.selectNodeContents(textEl);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        });
+
+        this.attachResourceListeners(resourcesList, saveResources, card, goal, updateGoalInline);
+    }
+
+    attachResourceListeners(resourcesList, saveResources, card, goal, updateGoalInline) {
+        resourcesList.querySelectorAll('.goal-resource').forEach(resourceEl => {
+            const textEl = resourceEl.querySelector('.resource-text');
+            const deleteBtn = resourceEl.querySelector('.resource-delete');
+
+            textEl.addEventListener('blur', () => {
+                if (!textEl.textContent.trim()) {
+                    const resourceId = resourceEl.dataset.resourceId;
+                    if (goal.resources) {
+                        goal.resources = goal.resources.filter(r => r.id !== resourceId);
+                    }
+                    saveResources();
+                    this.setupResources(card, goal, updateGoalInline);
+                } else {
+                    saveResources();
+                }
+            });
+
+            textEl.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    textEl.blur();
+                }
+            });
+
+            deleteBtn.addEventListener('click', () => {
+                const resourceId = resourceEl.dataset.resourceId;
+                if (goal.resources) {
+                    goal.resources = goal.resources.filter(r => r.id !== resourceId);
+                }
+                // Save based on goal object, not DOM, since DOM hasn't updated yet
+                const { maxActiveGoals } = this.app.settingsService.getSettings();
+                this.app.goalService.updateGoal(goal.id, { resources: goal.resources }, maxActiveGoals);
+                this.setupResources(card, goal, updateGoalInline);
+            });
+        });
     }
 }
 
