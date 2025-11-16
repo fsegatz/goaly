@@ -244,7 +244,17 @@ const de = {
         authError: 'Authentifizierung fehlgeschlagen: {{message}}',
         uploadError: 'Upload fehlgeschlagen: {{message}}',
         downloadError: 'Download fehlgeschlagen: {{message}}',
-        testerOnly: 'Google Drive Synchronisation ist derzeit nur für Tester verfügbar. Senden Sie Ihr Google-E-Mail-Konto an den Entwickler, um Testzugang zu erhalten.'
+        testerOnly: 'Google Drive Synchronisation ist derzeit nur für Tester verfügbar. Senden Sie Ihr Google-E-Mail-Konto an den Entwickler, um Testzugang zu erhalten.',
+        noChanges: 'Keine Änderungen zum Synchronisieren. Alles ist auf dem neuesten Stand.',
+        status: {
+            buildingLocalPayload: 'Lokale Daten für die Synchronisation werden vorbereitet…',
+            checkingRemote: 'Remote-Daten werden geprüft…',
+            remoteFound: 'Remote-Daten gefunden und erfolgreich heruntergeladen.',
+            noRemote: 'Keine Remote-Daten gefunden. Es wird eine neue Sicherung erstellt.',
+            merging: 'Änderungen werden zusammengeführt (lokal/remote/basis)…',
+            applying: 'Zusammengeführte Daten werden lokal angewendet…',
+            uploading: 'Zusammengeführte Daten werden zu Google Drive hochgeladen…'
+        }
     }
 };
 

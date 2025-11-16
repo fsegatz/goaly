@@ -244,7 +244,17 @@ const sv = {
         authError: 'Autentisering misslyckades: {{message}}',
         uploadError: 'Uppladdning misslyckades: {{message}}',
         downloadError: 'Nedladdning misslyckades: {{message}}',
-        testerOnly: 'Google Drive-synkronisering är för närvarande endast tillgänglig för testare. Skicka ditt Google-e-postkonto till utvecklaren för att bevilja teståtkomst.'
+        testerOnly: 'Google Drive-synkronisering är för närvarande endast tillgänglig för testare. Skicka ditt Google-e-postkonto till utvecklaren för att bevilja teståtkomst.',
+        noChanges: 'Inga ändringar att synkronisera. Allt är uppdaterat.',
+        status: {
+            buildingLocalPayload: 'Förbereder lokal data för synkronisering…',
+            checkingRemote: 'Kontrollerar fjärrdata…',
+            remoteFound: 'Fjärrdata hittades och har laddats ner.',
+            noRemote: 'Ingen fjärrdata hittades. En ny säkerhetskopia skapas.',
+            merging: 'Slår samman ändringar (lokal/fjärr/bas)…',
+            applying: 'Tillämpa sammanslagen data lokalt…',
+            uploading: 'Laddar upp sammanslagen data till Google Drive…'
+        }
     }
 };
 

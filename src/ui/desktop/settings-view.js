@@ -6,6 +6,7 @@ export class SettingsView extends BaseUIController {
     constructor(app) {
         super(app);
         this.statusTimeout = null;
+        this.statusLocked = false;
     }
 
     initializeLanguageControls() {
@@ -158,21 +159,25 @@ export class SettingsView extends BaseUIController {
             authBtn.hidden = true;
             signOutBtn.hidden = false;
             syncBtn.hidden = false;
-            statusDiv.hidden = false;
-            statusDiv.className = 'google-drive-status google-drive-status-authenticated';
-            statusDiv.textContent = this.translate('googleDrive.authenticated');
-            
-            // Update sync status asynchronously
-            this.app.googleDriveSyncService.getSyncStatus().then(status => {
-                if (status.synced && status.lastSyncTime) {
-                    const syncDate = new Date(status.lastSyncTime);
-                    statusDiv.textContent = this.translate('googleDrive.lastSynced', {
-                        time: syncDate.toLocaleString()
-                    });
-                }
-            }).catch(() => {
-                // Ignore errors when checking status
-            });
+
+            // When an explicit status message is active, avoid overwriting it.
+            if (!this.statusLocked) {
+                statusDiv.hidden = false;
+                statusDiv.className = 'google-drive-status google-drive-status-authenticated';
+                statusDiv.textContent = this.translate('googleDrive.authenticated');
+                
+                // Update sync status asynchronously
+                this.app.googleDriveSyncService.getSyncStatus().then(status => {
+                    if (status.synced && status.lastSyncTime && !this.statusLocked) {
+                        const syncDate = new Date(status.lastSyncTime);
+                        statusDiv.textContent = this.translate('googleDrive.lastSynced', {
+                            time: syncDate.toLocaleString()
+                        });
+                    }
+                }).catch(() => {
+                    // Ignore errors when checking status
+                });
+            }
         } else {
             authBtn.hidden = false;
             signOutBtn.hidden = true;
@@ -216,7 +221,7 @@ export class SettingsView extends BaseUIController {
         }
     }
 
-    showGoogleDriveStatus(message, isError = false) {
+    showGoogleDriveStatus(message, isError = false, isSuccess = false) {
         const statusDiv = document.getElementById('googleDriveAuthStatus');
         if (!statusDiv) {
             return;
@@ -229,15 +234,21 @@ export class SettingsView extends BaseUIController {
 
         statusDiv.hidden = false;
         statusDiv.textContent = message;
-        statusDiv.className = isError 
+        statusDiv.className = isError
             ? 'google-drive-status google-drive-status-error'
-            : 'google-drive-status google-drive-status-info';
+            : (isSuccess
+                ? 'google-drive-status google-drive-status-authenticated'
+                : 'google-drive-status google-drive-status-info');
 
-        // Clear status after 5 seconds
+        // Mark status as locked so regular UI refreshes do not overwrite it
+        this.statusLocked = true;
+
+        // Clear status after a delay
         this.statusTimeout = setTimeout(() => {
+            this.statusLocked = false;
             this.updateGoogleDriveUI();
             this.statusTimeout = null;
-        }, 5000);
+        }, isSuccess ? 10000 : 5000);
         
         // Use unref() to prevent timer from keeping Node.js process alive (for testing)
         if (typeof this.statusTimeout.unref === 'function') {

@@ -10,6 +10,13 @@ const STORAGE_KEY_FILE_ID = 'goaly_gdrive_file_id';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 
+export class GoogleDriveFileNotFoundError extends Error {
+    constructor(message = 'No data file found in Google Drive') {
+        super(message);
+        this.name = 'GoogleDriveFileNotFoundError';
+    }
+}
+
 class GoogleDriveSyncService {
     constructor() {
         this.tokenClient = null;
@@ -439,7 +446,7 @@ class GoogleDriveSyncService {
         const file = await this.findDataFile(folderId);
 
         if (!file) {
-            throw new Error('No data file found in Google Drive');
+            throw new GoogleDriveFileNotFoundError();
         }
 
         this.fileId = file.id;
@@ -594,7 +601,7 @@ class GoogleDriveSyncService {
             }
         } catch (error) {
             // If file doesn't exist, upload local (unless local is empty)
-            if (error.message.includes('No data file found')) {
+            if (error instanceof GoogleDriveFileNotFoundError) {
                 return {
                     shouldUpload: localHasData,
                     reason: localHasData ? 'remote_not_found' : 'remote_not_found_local_empty',
@@ -644,8 +651,22 @@ class GoogleDriveSyncService {
         }
 
         try {
-            const folderId = await this.findOrCreateFolder();
-            const file = await this.findDataFile(folderId);
+            // Do not create folder on status check; list by name instead
+            const folderList = await window.gapi.client.drive.files.list({
+                q: `name='${GOOGLE_DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+                fields: 'files(id, name)',
+                spaces: 'drive'
+            });
+            const folderId = (folderList.result.files && folderList.result.files[0]?.id) || null;
+            let file = null;
+            if (folderId) {
+                const fileList = await window.gapi.client.drive.files.list({
+                    q: `name='${GOOGLE_DRIVE_FILE_NAME}' and '${folderId}' in parents and trashed=false`,
+                    fields: 'files(id, name, modifiedTime)',
+                    spaces: 'drive'
+                });
+                file = (fileList.result.files && fileList.result.files[0]) || null;
+            }
             return {
                 authenticated: true,
                 synced: !!file,
