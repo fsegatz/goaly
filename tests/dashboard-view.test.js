@@ -120,17 +120,17 @@ describe('DashboardView', () => {
         expect(card.querySelector('.metric-value.priority')).toBeNull();
         // Status badge should not be present on dashboard cards
         expect(card.querySelector('.goal-status-badge')).toBeNull();
-        expect(card.querySelector('.goal-deadline').textContent).toContain('In 6 days');
-        expect(card.querySelector('.goal-inline-editor')).not.toBeNull();
+        expect(card.querySelector('.goal-deadline-label').textContent).toContain('In 6 days');
+        expect(card.querySelector('.goal-deadline-input')).not.toBeNull();
         expect(card.querySelector('.edit-goal')).toBeNull();
-        expect(card.querySelector('.clickable-deadline')).not.toBeNull();
+        expect(card.querySelector('.goal-deadline-label')).not.toBeNull();
         expect(card.innerHTML).not.toContain('pause-goal');
         expect(card.innerHTML).not.toContain('activate-goal');
         expect(card.querySelector('.complete-goal')).not.toBeNull();
         expect(card.querySelector('.goal-steps-section')).not.toBeNull();
     });
 
-    test('createGoalCard clickable deadline should toggle inline editor and save changes', () => {
+    test('createGoalCard clickable deadline should open date picker and save changes', () => {
         const goal = new Goal({ id: 'edit-test', title: 'Edit Button', description: '', motivation: 3, urgency: 2, status: 'active', deadline: null });
         mockGoalService.calculatePriority.mockReturnValue(5);
         mockGoalService.goals = [goal];
@@ -140,30 +140,26 @@ describe('DashboardView', () => {
         const updateGoalInline = jest.fn();
 
         const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
-        const deadlineEl = card.querySelector('.clickable-deadline');
-        const inlineEditor = card.querySelector('.goal-inline-editor');
-        const deadlineInput = inlineEditor.querySelector('.inline-deadline');
-        const motivationInput = inlineEditor.querySelector('.inline-motivation');
-        const urgencyInput = inlineEditor.querySelector('.inline-urgency');
-        const saveBtn = inlineEditor.querySelector('.save-inline');
+        const deadlineLabel = card.querySelector('.goal-deadline-label');
+        const deadlineInput = card.querySelector('.goal-deadline-input');
 
-        expect(deadlineEl).not.toBeNull();
-        expect(inlineEditor.classList.contains('is-visible')).toBe(false);
+        expect(deadlineLabel).not.toBeNull();
+        expect(deadlineInput).not.toBeNull();
 
-        deadlineEl.click();
-        expect(inlineEditor.classList.contains('is-visible')).toBe(true);
-        expect(deadlineEl.getAttribute('aria-expanded')).toBe('true');
+        // Mock showPicker if not available
+        if (!deadlineInput.showPicker) {
+            deadlineInput.showPicker = jest.fn();
+        }
+
+        deadlineLabel.click();
+        expect(deadlineInput.showPicker).toHaveBeenCalled();
 
         deadlineInput.value = '2025-11-20';
-        motivationInput.value = '4';
-        urgencyInput.value = '5';
-
-        saveBtn.click();
+        const changeEvent = new window.Event('change');
+        deadlineInput.dispatchEvent(changeEvent);
 
         expect(updateGoalInline).toHaveBeenCalledWith('edit-test', {
-            deadline: '2025-11-20',
-            motivation: 4,
-            urgency: 5
+            deadline: '2025-11-20'
         });
     });
 
@@ -263,36 +259,42 @@ describe('DashboardView', () => {
         expect(result).toBe('11/9/2025');
     });
 
-    test('createGoalCard should have clickable deadline', () => {
+    test('createGoalCard should have clickable deadline label', () => {
         const goal = new Goal({ id: '1', title: 'Test Goal', description: 'Test Description', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-11-15') });
         mockGoalService.calculatePriority.mockReturnValue(4.5);
         const openCompletionModal = jest.fn();
         const updateGoalInline = jest.fn();
 
         const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
-        const deadlineEl = card.querySelector('.clickable-deadline');
+        const deadlineLabel = card.querySelector('.goal-deadline-label');
+        const deadlineInput = card.querySelector('.goal-deadline-input');
         
-        // Should have clickable deadline
-        expect(deadlineEl).not.toBeNull();
+        // Should have clickable deadline label and hidden input
+        expect(deadlineLabel).not.toBeNull();
+        expect(deadlineInput).not.toBeNull();
         expect(card).toBeDefined();
     });
 
-    test('createGoalCard cancel button should close inline editor', () => {
+    test('createGoalCard deadline label should be clickable', () => {
         const goal = new Goal({ id: 'cancel-test', title: 'Cancel Test', description: '', motivation: 3, urgency: 2, status: 'active', deadline: null });
         mockGoalService.calculatePriority.mockReturnValue(5);
         const openCompletionModal = jest.fn();
         const updateGoalInline = jest.fn();
 
         const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
-        const deadlineEl = card.querySelector('.clickable-deadline');
-        const inlineEditor = card.querySelector('.goal-inline-editor');
-        const cancelBtn = inlineEditor.querySelector('.cancel-inline');
+        const deadlineLabel = card.querySelector('.goal-deadline-label');
+        const deadlineInput = card.querySelector('.goal-deadline-input');
 
-        deadlineEl.click();
-        expect(inlineEditor.classList.contains('is-visible')).toBe(true);
+        expect(deadlineLabel).not.toBeNull();
+        expect(deadlineInput).not.toBeNull();
 
-        cancelBtn.click();
-        expect(inlineEditor.classList.contains('is-visible')).toBe(false);
+        // Mock showPicker if not available
+        if (!deadlineInput.showPicker) {
+            deadlineInput.showPicker = jest.fn();
+        }
+
+        deadlineLabel.click();
+        expect(deadlineInput.showPicker).toHaveBeenCalled();
     });
 
     test('createGoalCard should revert description when update fails', () => {
@@ -525,18 +527,18 @@ describe('DashboardView', () => {
         const updateGoalInline = jest.fn();
 
         const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
-        const deadlineEl = card.querySelector('.clickable-deadline');
-        const inlineEditor = card.querySelector('.goal-inline-editor');
+        const deadlineLabel = card.querySelector('.goal-deadline-label');
+        const deadlineInput = card.querySelector('.goal-deadline-input');
+
+        // Mock showPicker if not available
+        if (!deadlineInput.showPicker) {
+            deadlineInput.showPicker = jest.fn();
+        }
 
         const enterEvent = new window.KeyboardEvent('keydown', { key: 'Enter' });
-        deadlineEl.dispatchEvent(enterEvent);
+        deadlineLabel.dispatchEvent(enterEvent);
 
-        expect(inlineEditor.classList.contains('is-visible')).toBe(true);
-
-        const spaceEvent = new window.KeyboardEvent('keydown', { key: ' ' });
-        deadlineEl.dispatchEvent(spaceEvent);
-
-        expect(inlineEditor.classList.contains('is-visible')).toBe(false);
+        expect(deadlineInput.showPicker).toHaveBeenCalled();
     });
 
     test('createGoalCard should handle step text blur with non-empty text', () => {

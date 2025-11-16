@@ -723,21 +723,40 @@ main {
     font-weight: 600;
 }
 
-.goal-deadline.clickable-deadline {
+.goal-deadline-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.goal-deadline-label {
+    font-size: 0.9rem;
+    color: #666;
     cursor: pointer;
     padding: 4px 8px;
     border-radius: 6px;
     transition: background-color 0.2s ease, color 0.2s ease;
+    display: inline-block;
 }
 
-.goal-deadline.clickable-deadline:hover {
+.goal-deadline-label:hover {
     background-color: #f0f0f0;
     color: #667eea;
 }
 
-.goal-deadline.clickable-deadline:focus {
-    outline: 2px solid #667eea;
-    outline-offset: 2px;
+.goal-deadline-label.urgent {
+    color: #e74c3c;
+    font-weight: 600;
+}
+
+.goal-deadline-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    border: none;
+    padding: 0;
+    margin: 0;
+    pointer-events: none;
 }
 
 .goal-steps-section,
@@ -860,12 +879,12 @@ main {
 }
 
 .goal-card.is-editing-description,
-.goal-card.is-inline-editing {
+.goal-card.is-editing-deadline {
     border-color: #764ba2;
     box-shadow: 0 8px 20px rgba(118, 75, 162, 0.15);
 }
 
-.goal-inline-editor {
+.goal-deadline-editor {
     margin-top: 15px;
     padding-top: 15px;
     border-top: 1px dashed #ddd;
@@ -875,17 +894,17 @@ main {
     order: 10;
 }
 
-.goal-inline-editor.is-visible {
+.goal-deadline-editor.is-visible {
     display: flex;
 }
 
-.goal-inline-editor .inline-fields {
-    display: grid;
+.goal-deadline-editor .inline-fields {
+    display: flex;
     gap: 12px;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    flex-direction: column;
 }
 
-.goal-inline-editor label {
+.goal-deadline-editor label {
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -893,20 +912,20 @@ main {
     color: #555;
 }
 
-.goal-inline-editor input {
+.goal-deadline-editor input {
     padding: 8px 10px;
     border: 1px solid #d0d0d0;
     border-radius: 8px;
     font-size: 0.95rem;
 }
 
-.goal-inline-editor input:focus {
+.goal-deadline-editor input:focus {
     outline: none;
     border-color: #764ba2;
     box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.15);
 }
 
-.goal-inline-editor .inline-actions {
+.goal-deadline-editor .inline-actions {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;

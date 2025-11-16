@@ -66,30 +66,11 @@ export class DashboardView extends BaseUIController {
                 <ul class="goal-steps-list">${stepsHtml}</ul>
             </div>
             <div class="goal-footer">
-                <div class="goal-deadline ${this.isDeadlineUrgent(goal.deadline) ? 'urgent' : ''} clickable-deadline" role="button" tabindex="0" aria-label="${this.translate('goalCard.deadlineClickable')}">
-                    ${this.translate('goalCard.deadlinePrefix', { deadline: deadlineText })}
+                <div class="goal-deadline-wrapper">
+                    <span class="goal-deadline-label ${this.isDeadlineUrgent(goal.deadline) ? 'urgent' : ''}">${this.translate('goalCard.deadlinePrefix', { deadline: deadlineText })}</span>
+                    <input type="date" class="goal-deadline-input" value="${goal.deadline ? goal.deadline.toISOString().split('T')[0] : ''}" aria-label="${this.translate('goalCard.deadlineClickable')}">
                 </div>
                 <div class="goal-actions">
-                </div>
-            </div>
-            <div class="goal-inline-editor" aria-hidden="true">
-                <div class="inline-fields">
-                    <label>
-                        <span>${this.translate('goalCard.inline.deadline')}</span>
-                        <input type="date" class="inline-deadline" value="${goal.deadline ? goal.deadline.toISOString().split('T')[0] : ''}">
-                    </label>
-                    <label>
-                        <span>${this.translate('goalCard.inline.motivation')}</span>
-                        <input type="number" class="inline-motivation" min="1" max="5" step="1" value="${goal.motivation}">
-                    </label>
-                    <label>
-                        <span>${this.translate('goalCard.inline.urgency')}</span>
-                        <input type="number" class="inline-urgency" min="1" max="5" step="1" value="${goal.urgency}">
-                    </label>
-                </div>
-                <div class="inline-actions">
-                    <button type="button" class="btn btn-primary save-inline">${this.translate('common.save')}</button>
-                    <button type="button" class="btn btn-secondary cancel-inline">${this.translate('common.cancel')}</button>
                 </div>
             </div>
         `;
@@ -163,66 +144,45 @@ export class DashboardView extends BaseUIController {
             actionsContainer.appendChild(completeButton);
         }
 
-        // Make deadline clickable to open inline editor
-        const deadlineEl = card.querySelector('.clickable-deadline');
-        const inlineEditor = card.querySelector('.goal-inline-editor');
+        // Make deadline editable directly via date input
+        const deadlineLabel = card.querySelector('.goal-deadline-label');
+        const deadlineInput = card.querySelector('.goal-deadline-input');
 
-        if (deadlineEl && inlineEditor) {
-            const deadlineInput = inlineEditor.querySelector('.inline-deadline');
-            const motivationInput = inlineEditor.querySelector('.inline-motivation');
-            const urgencyInput = inlineEditor.querySelector('.inline-urgency');
-            const saveButton = inlineEditor.querySelector('.save-inline');
-            const cancelButton = inlineEditor.querySelector('.cancel-inline');
-
-            const toggleInlineEditor = (open) => {
-                inlineEditor.setAttribute('aria-hidden', open ? 'false' : 'true');
-                deadlineEl.setAttribute('aria-expanded', open ? 'true' : 'false');
-                if (open) {
-                    card.classList.add('is-inline-editing');
-                    inlineEditor.classList.add('is-visible');
-                    deadlineInput.value = goal.deadline ? goal.deadline.toISOString().split('T')[0] : '';
-                    motivationInput.value = goal.motivation;
-                    urgencyInput.value = goal.urgency;
-                    deadlineInput.focus();
-                } else {
-                    card.classList.remove('is-inline-editing');
-                    inlineEditor.classList.remove('is-visible');
-                }
-            };
-
-            const handleDeadlineClick = (event) => {
+        if (deadlineLabel && deadlineInput) {
+            // Click on label opens the date picker
+            deadlineLabel.addEventListener('click', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                const isVisible = inlineEditor.classList.contains('is-visible');
-                toggleInlineEditor(!isVisible);
-            };
+                deadlineInput.showPicker();
+            });
 
-            deadlineEl.addEventListener('click', handleDeadlineClick);
-            deadlineEl.addEventListener('keydown', (event) => {
+            deadlineLabel.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
-                    handleDeadlineClick(event);
+                    deadlineInput.showPicker();
                 }
             });
 
-            saveButton.addEventListener('click', (event) => {
-                event.preventDefault();
-                const parseOrFallback = (value, fallback) => {
-                    const parsed = Number.parseInt(value, 10);
-                    return Number.isNaN(parsed) ? fallback : parsed;
-                };
+            // Update deadline when date input changes
+            deadlineInput.addEventListener('change', (event) => {
+                const deadlineValue = deadlineInput.value || null;
                 const updates = {
-                    deadline: deadlineInput.value || null,
-                    motivation: parseOrFallback(motivationInput.value, goal.motivation),
-                    urgency: parseOrFallback(urgencyInput.value, goal.urgency)
+                    deadline: deadlineValue || null
                 };
                 updateGoalInline(goal.id, updates);
-                toggleInlineEditor(false);
             });
 
-            cancelButton.addEventListener('click', (event) => {
-                event.preventDefault();
-                toggleInlineEditor(false);
+            // Update the label when deadline changes (for immediate visual feedback)
+            deadlineInput.addEventListener('input', () => {
+                if (deadlineInput.value) {
+                    const newDate = new Date(deadlineInput.value);
+                    const newDeadlineText = this.formatDeadline(newDate);
+                    deadlineLabel.textContent = this.translate('goalCard.deadlinePrefix', { deadline: newDeadlineText });
+                    deadlineLabel.classList.toggle('urgent', this.isDeadlineUrgent(newDate));
+                } else {
+                    deadlineLabel.textContent = this.translate('goalCard.deadlinePrefix', { deadline: this.translate('goalCard.noDeadline') });
+                    deadlineLabel.classList.remove('urgent');
+                }
             });
         }
 
@@ -270,7 +230,11 @@ export class DashboardView extends BaseUIController {
             }
         };
 
-        addStepBtn.addEventListener('click', () => {
+        // Remove existing event listeners by cloning the button
+        const newAddStepBtn = addStepBtn.cloneNode(true);
+        addStepBtn.parentNode.replaceChild(newAddStepBtn, addStepBtn);
+
+        newAddStepBtn.addEventListener('click', () => {
             const newStep = {
                 id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
                 text: '',
@@ -292,7 +256,8 @@ export class DashboardView extends BaseUIController {
             }
         });
 
-        this.attachStepListeners(stepsList, saveSteps, card, goal, updateGoalInline);
+        // Initial render
+        renderSteps();
     }
 
     attachStepListeners(stepsList, saveSteps, card, goal, updateGoalInline) {
@@ -336,6 +301,7 @@ export class DashboardView extends BaseUIController {
                 // Save based on goal object, not DOM, since DOM hasn't updated yet
                 const { maxActiveGoals } = this.app.settingsService.getSettings();
                 this.app.goalService.updateGoal(goal.id, { steps: goal.steps }, maxActiveGoals);
+                // Re-render the steps list immediately by calling setupSteps again
                 this.setupSteps(card, goal, updateGoalInline);
             });
         });
