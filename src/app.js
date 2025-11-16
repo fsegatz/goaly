@@ -9,6 +9,7 @@ import LanguageService from './domain/language-service.js';
 import GoogleDriveSyncService from './domain/google-drive-sync-service.js';
 import DeveloperModeService from './domain/developer-mode-service.js';
 import { prepareExportPayload, migratePayloadToCurrent } from './domain/migration-service.js';
+import { mergePayloads } from './domain/sync-merge-service.js';
 import {
     GOAL_FILE_VERSION,
     isValidVersion,
@@ -29,6 +30,8 @@ class GoalyApp {
         this.checkIns = [];
         this.reviewService = null;
         this.checkInTimer = null;
+        this.googleDriveSyncTimer = null;
+        this.googleDriveSyncDebounce = null;
         this.init();
     }
 
@@ -44,6 +47,7 @@ class GoalyApp {
         // Migrate existing goals to automatic activation
         this.goalService.migrateGoalsToAutoActivation(this.settingsService.getSettings().maxActiveGoals);
         this.reviewService = new ReviewService(this.goalService, this.settingsService);
+        this.hookGoalSavesForBackgroundSync();
         
         // Initialize Google Drive sync service if credentials are available
         this.googleDriveSyncService = null;
@@ -123,6 +127,14 @@ class GoalyApp {
         this.uiController.settingsView.updateDeveloperModeVisibility();
     }
 
+    hookGoalSavesForBackgroundSync() {
+        const originalSave = this.goalService.saveGoals.bind(this.goalService);
+        this.goalService.saveGoals = () => {
+            originalSave();
+            this.scheduleBackgroundSyncSoon();
+        };
+    }
+
     initGoogleDriveSync() {
         // Get credentials from environment or window config
         const apiKey = window.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY;
@@ -134,6 +146,41 @@ class GoalyApp {
                 console.error('Failed to initialize Google Drive sync:', error);
                 this.googleDriveSyncService = null;
             });
+        }
+    }
+
+    startGoogleDriveBackgroundSync() {
+        if (this.googleDriveSyncTimer) {
+            clearInterval(this.googleDriveSyncTimer);
+            this.googleDriveSyncTimer = null;
+        }
+        if (!this.googleDriveSyncService || !this.googleDriveSyncService.isAuthenticated()) {
+            return;
+        }
+        // Periodic background sync every 2 minutes
+        this.googleDriveSyncTimer = setInterval(() => {
+            this.syncWithGoogleDrive({ background: true }).catch(() => {});
+        }, 120000);
+        if (typeof this.googleDriveSyncTimer?.unref === 'function') {
+            this.googleDriveSyncTimer.unref();
+        }
+        // Also sync when window regains focus
+        window.addEventListener('focus', () => this.syncWithGoogleDrive({ background: true }).catch(() => {}));
+    }
+
+    scheduleBackgroundSyncSoon() {
+        if (!this.googleDriveSyncService || !this.googleDriveSyncService.isAuthenticated()) {
+            return;
+        }
+        if (this.googleDriveSyncDebounce) {
+            clearTimeout(this.googleDriveSyncDebounce);
+        }
+        this.googleDriveSyncDebounce = setTimeout(() => {
+            this.syncWithGoogleDrive({ background: true }).catch(() => {});
+            this.googleDriveSyncDebounce = null;
+        }, 5000);
+        if (typeof this.googleDriveSyncDebounce?.unref === 'function') {
+            this.googleDriveSyncDebounce.unref();
         }
     }
 
@@ -340,6 +387,7 @@ class GoalyApp {
         try {
             await this.googleDriveSyncService.authenticate();
             this.uiController.settingsView.updateGoogleDriveUI();
+            this.startGoogleDriveBackgroundSync();
             this.uiController.settingsView.showGoogleDriveStatus(
                 this.languageService.translate('googleDrive.authenticated'),
                 false
@@ -361,7 +409,7 @@ class GoalyApp {
         this.uiController.settingsView.updateGoogleDriveUI();
     }
 
-    async syncWithGoogleDrive() {
+    async syncWithGoogleDrive({ background = false } = {}) {
         if (!this.googleDriveSyncService) {
             this.showGoogleDriveError('googleDrive.notConfigured');
             return;
@@ -373,50 +421,70 @@ class GoalyApp {
         }
 
         const statusView = this.uiController.settingsView;
-        statusView.showGoogleDriveStatus(
-            this.languageService.translate('googleDrive.syncing'),
-            false
-        );
+        if (!background) {
+            statusView.showGoogleDriveStatus(
+                this.languageService.translate('googleDrive.syncing'),
+                false
+            );
+        }
 
         try {
-            // Get current local data
-            const localGoals = this.goalService.goals || [];
-            const localHasData = localGoals.length > 0;
-            
+            // Build local payload
             const localPayload = prepareExportPayload(
-                localGoals,
+                this.goalService.goals || [],
                 this.settingsService.getSettings()
             );
-            const localVersion = localPayload.version;
-            const localExportDate = localPayload.exportDate;
 
-            // Check sync direction (always sync toward older state)
-            const syncDirection = await this.googleDriveSyncService.checkSyncDirection(
-                localVersion,
-                localExportDate,
-                localHasData
+            // Download remote if exists
+            let remotePayload = null;
+            try {
+                const downloaded = await this.googleDriveSyncService.downloadData();
+                remotePayload = downloaded?.data ?? null;
+            } catch (e) {
+                // If no file found, proceed with local as source
+                if (!String(e?.message || '').includes('No data file found')) {
+                    throw e;
+                }
+            }
+
+            // Load base from last successful sync
+            let basePayload = null;
+            try {
+                const baseStr = localStorage.getItem('goaly_gdrive_last_sync');
+                if (baseStr) basePayload = JSON.parse(baseStr);
+            } catch {}
+
+            // Merge (three-way if possible)
+            const merged = mergePayloads({
+                base: basePayload,
+                local: localPayload,
+                remote: remotePayload ?? localPayload
+            });
+
+            // Apply merged locally
+            this.applyImportedPayload(merged);
+
+            // Upload merged to remote to converge
+            await this.googleDriveSyncService.uploadData(
+                this.goalService.goals,
+                this.settingsService.getSettings()
             );
 
-            if (syncDirection.shouldUpload) {
-                // Local is newer or remote doesn't exist - upload local
-                await this.googleDriveSyncService.uploadData(
-                    this.goalService.goals,
-                    this.settingsService.getSettings()
-                );
+            // Persist last sync base for future merges
+            localStorage.setItem('goaly_gdrive_last_sync', JSON.stringify(prepareExportPayload(
+                this.goalService.goals,
+                this.settingsService.getSettings()
+            )));
+
+            if (!background) {
                 statusView.showGoogleDriveStatus(
                     this.languageService.translate('googleDrive.uploadSuccess'),
-                    false
-                );
-            } else {
-                // Remote is newer or local is empty - download remote
-                await this.downloadFromGoogleDrive();
-                statusView.showGoogleDriveStatus(
-                    this.languageService.translate('googleDrive.downloadSuccess'),
                     false
                 );
             }
 
             statusView.updateGoogleDriveUI();
+            this.startGoogleDriveBackgroundSync();
         } catch (error) {
             this.showGoogleDriveError('googleDrive.syncError', { message: error.message });
         }

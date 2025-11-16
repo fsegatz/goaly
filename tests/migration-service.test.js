@@ -57,5 +57,24 @@ describe('migration service', () => {
         expect(payload.goals).toHaveLength(1);
         expect(payload.goals[0]).toHaveProperty('title', 'Goal');
     });
+
+    test('migratePayloadToCurrent handles missing goals by setting empty array', () => {
+        const migrated = migratePayloadToCurrent({ settings: sampleSettings });
+        expect(Array.isArray(migrated.goals)).toBe(true);
+        expect(migrated.goals).toHaveLength(0);
+    });
+
+    test('migratePayloadToCurrent handles non-array goals by resetting to empty array', () => {
+        const migrated = migratePayloadToCurrent({ goals: {}, settings: sampleSettings });
+        expect(Array.isArray(migrated.goals)).toBe(true);
+        expect(migrated.goals).toHaveLength(0);
+    });
+
+    test('prepareExportPayload handles non-array goals input by producing empty goals', () => {
+        const payload = prepareExportPayload({}, sampleSettings);
+        expect(Array.isArray(payload.goals)).toBe(true);
+        expect(payload.goals).toHaveLength(0);
+        expect(payload.version).toBe(GOAL_FILE_VERSION);
+    });
 });
 
