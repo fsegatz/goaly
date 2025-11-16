@@ -76,5 +76,12 @@ describe('migration service', () => {
         expect(payload.goals).toHaveLength(0);
         expect(payload.version).toBe(GOAL_FILE_VERSION);
     });
+
+    test('prepareExportPayload handles undefined goals input by producing empty goals', () => {
+        const payload = prepareExportPayload(undefined, sampleSettings);
+        expect(Array.isArray(payload.goals)).toBe(true);
+        expect(payload.goals).toHaveLength(0);
+        expect(payload.version).toBe(GOAL_FILE_VERSION);
+    });
 });
 

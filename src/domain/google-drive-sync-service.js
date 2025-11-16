@@ -644,8 +644,22 @@ class GoogleDriveSyncService {
         }
 
         try {
-            const folderId = await this.findOrCreateFolder();
-            const file = await this.findDataFile(folderId);
+            // Do not create folder on status check; list by name instead
+            const folderList = await window.gapi.client.drive.files.list({
+                q: `name='${GOOGLE_DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+                fields: 'files(id, name)',
+                spaces: 'drive'
+            });
+            const folderId = (folderList.result.files && folderList.result.files[0]?.id) || null;
+            let file = null;
+            if (folderId) {
+                const fileList = await window.gapi.client.drive.files.list({
+                    q: `name='${GOOGLE_DRIVE_FILE_NAME}' and '${folderId}' in parents and trashed=false`,
+                    fields: 'files(id, name, modifiedTime)',
+                    spaces: 'drive'
+                });
+                file = (fileList.result.files && fileList.result.files[0]) || null;
+            }
             return {
                 authenticated: true,
                 synced: !!file,

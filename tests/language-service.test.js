@@ -317,5 +317,16 @@ describe('LanguageService', () => {
         const service = new LanguageService({ localeMap: { en: ['en-US'] } });
         expect(Array.isArray(service.localeMap.en)).toBe(true);
     });
+
+    test('constructor falls back to default language when configured default is unsupported', () => {
+        const service = new LanguageService({
+            translations: { en: enTranslations },
+            defaultLanguage: 'fr'
+        });
+
+        // Only "en" is available, so defaultLanguage should fall back to "en"
+        expect(service.defaultLanguage).toBe('en');
+        expect(service.getLanguage()).toBe('en');
+    });
 });
 

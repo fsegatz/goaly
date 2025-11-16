@@ -32,6 +32,9 @@ class GoalyApp {
         this.checkInTimer = null;
         this.googleDriveSyncTimer = null;
         this.googleDriveSyncDebounce = null;
+        this._focusSyncHandler = null;
+        this._isSyncing = false;
+        this._suppressAutoSync = false;
         this.init();
     }
 
@@ -131,7 +134,9 @@ class GoalyApp {
         const originalSave = this.goalService.saveGoals.bind(this.goalService);
         this.goalService.saveGoals = () => {
             originalSave();
-            this.scheduleBackgroundSyncSoon();
+            if (!this._suppressAutoSync) {
+                this.scheduleBackgroundSyncSoon();
+            }
         };
     }
 
@@ -142,34 +147,41 @@ class GoalyApp {
 
         if (apiKey && clientId) {
             this.googleDriveSyncService = new GoogleDriveSyncService();
-            this.googleDriveSyncService.initialize(apiKey, clientId).catch(error => {
-                console.error('Failed to initialize Google Drive sync:', error);
-                this.googleDriveSyncService = null;
-            });
+            this.googleDriveSyncService.initialize(apiKey, clientId)
+                .then(() => {
+                    // If already authenticated at startup, perform a one-time background sync
+                    if (this.googleDriveSyncService.isAuthenticated()) {
+                        this.syncWithGoogleDrive({ background: true }).catch(() => {});
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to initialize Google Drive sync:', error);
+                    this.googleDriveSyncService = null;
+                });
         }
     }
 
     startGoogleDriveBackgroundSync() {
+        // Convert to a one-time sync trigger (no intervals, no focus listeners)
         if (this.googleDriveSyncTimer) {
             clearInterval(this.googleDriveSyncTimer);
             this.googleDriveSyncTimer = null;
         }
+        if (this._focusSyncHandler) {
+            window.removeEventListener('focus', this._focusSyncHandler);
+            this._focusSyncHandler = null;
+        }
         if (!this.googleDriveSyncService || !this.googleDriveSyncService.isAuthenticated()) {
             return;
         }
-        // Periodic background sync every 2 minutes
-        this.googleDriveSyncTimer = setInterval(() => {
-            this.syncWithGoogleDrive({ background: true }).catch(() => {});
-        }, 120000);
-        if (typeof this.googleDriveSyncTimer?.unref === 'function') {
-            this.googleDriveSyncTimer.unref();
-        }
-        // Also sync when window regains focus
-        window.addEventListener('focus', () => this.syncWithGoogleDrive({ background: true }).catch(() => {}));
+        this.syncWithGoogleDrive({ background: true }).catch(() => {});
     }
 
     scheduleBackgroundSyncSoon() {
         if (!this.googleDriveSyncService || !this.googleDriveSyncService.isAuthenticated()) {
+            return;
+        }
+        if (this._isSyncing || this._suppressAutoSync) {
             return;
         }
         if (this.googleDriveSyncDebounce) {
@@ -387,7 +399,8 @@ class GoalyApp {
         try {
             await this.googleDriveSyncService.authenticate();
             this.uiController.settingsView.updateGoogleDriveUI();
-            this.startGoogleDriveBackgroundSync();
+            // Perform a one-time sync after successful authentication
+            this.syncWithGoogleDrive({ background: true }).catch(() => {});
             this.uiController.settingsView.showGoogleDriveStatus(
                 this.languageService.translate('googleDrive.authenticated'),
                 false
@@ -406,7 +419,25 @@ class GoalyApp {
         }
 
         this.googleDriveSyncService.signOut();
+        // Cleanup timers and listeners on sign-out
+        if (this.googleDriveSyncTimer) {
+            clearInterval(this.googleDriveSyncTimer);
+            this.googleDriveSyncTimer = null;
+        }
+        if (this.googleDriveSyncDebounce) {
+            clearTimeout(this.googleDriveSyncDebounce);
+            this.googleDriveSyncDebounce = null;
+        }
+        if (this._focusSyncHandler) {
+            window.removeEventListener('focus', this._focusSyncHandler);
+            this._focusSyncHandler = null;
+        }
         this.uiController.settingsView.updateGoogleDriveUI();
+    }
+
+    getLastSyncStorageKey() {
+        const fileId = this.googleDriveSyncService?.fileId || localStorage.getItem('goaly_gdrive_file_id') || 'unknown';
+        return `goaly_gdrive_last_sync_${fileId}`;
     }
 
     async syncWithGoogleDrive({ background = false } = {}) {
@@ -426,9 +457,18 @@ class GoalyApp {
                 this.languageService.translate('googleDrive.syncing'),
                 false
             );
+            // Early verbose hint
+            statusView.showGoogleDriveStatus(this.languageService.translate('googleDrive.status.buildingLocalPayload') || 'Building local payload…', false);
         }
 
         try {
+            if (this._isSyncing) {
+                // Drop overlapping syncs; background triggers are frequent
+                return;
+            }
+            this._isSyncing = true;
+            this._suppressAutoSync = true;
+
             // Build local payload
             const localPayload = prepareExportPayload(
                 this.goalService.goals || [],
@@ -438,23 +478,35 @@ class GoalyApp {
             // Download remote if exists
             let remotePayload = null;
             try {
+                if (!background) {
+                    statusView.showGoogleDriveStatus(this.languageService.translate('googleDrive.status.checkingRemote') || 'Checking remote data…', false);
+                }
                 const downloaded = await this.googleDriveSyncService.downloadData();
                 remotePayload = downloaded?.data ?? null;
+                if (!background) {
+                    statusView.showGoogleDriveStatus(this.languageService.translate('googleDrive.status.remoteFound') || 'Remote data found. Downloaded successfully.', false);
+                }
             } catch (e) {
                 // If no file found, proceed with local as source
                 if (!String(e?.message || '').includes('No data file found')) {
                     throw e;
+                }
+                if (!background) {
+                    statusView.showGoogleDriveStatus(this.languageService.translate('googleDrive.status.noRemote') || 'No remote data found. Will create it on upload.', false);
                 }
             }
 
             // Load base from last successful sync
             let basePayload = null;
             try {
-                const baseStr = localStorage.getItem('goaly_gdrive_last_sync');
+                const baseStr = localStorage.getItem(this.getLastSyncStorageKey());
                 if (baseStr) basePayload = JSON.parse(baseStr);
             } catch {}
 
             // Merge (three-way if possible)
+            if (!background) {
+                statusView.showGoogleDriveStatus(this.languageService.translate('googleDrive.status.merging') || 'Merging data (base/local/remote)…', false);
+            }
             const merged = mergePayloads({
                 base: basePayload,
                 local: localPayload,
@@ -462,31 +514,69 @@ class GoalyApp {
             });
 
             // Apply merged locally
+            if (!background) {
+                statusView.showGoogleDriveStatus(this.languageService.translate('googleDrive.status.applying') || 'Applying merged data locally…', false);
+            }
             this.applyImportedPayload(merged);
 
-            // Upload merged to remote to converge
-            await this.googleDriveSyncService.uploadData(
-                this.goalService.goals,
-                this.settingsService.getSettings()
-            );
+            // Determine if upload is necessary (skip if no content changes)
+            const canonicalize = (payload) => {
+                if (!payload) return null;
+                const migrated = migratePayloadToCurrent(payload);
+                const goals = Array.isArray(migrated.goals) ? migrated.goals.map(g => {
+                    const c = { ...g };
+                    if (c.createdAt instanceof Date) c.createdAt = c.createdAt.toISOString();
+                    if (c.lastUpdated instanceof Date) c.lastUpdated = c.lastUpdated.toISOString();
+                    if (c.deadline instanceof Date) c.deadline = c.deadline.toISOString();
+                    return c;
+                }).sort((a, b) => (a.id || '').localeCompare(b.id || '')) : [];
+                return {
+                    version: migrated.version,
+                    exportDate: null,
+                    goals,
+                    settings: migrated.settings || {}
+                };
+            };
+            
+            const mergedCanonical = canonicalize(merged);
+            const remoteCanonical = canonicalize(remotePayload);
+            const shouldUpload =
+                !remoteCanonical ||
+                JSON.stringify(mergedCanonical) !== JSON.stringify(remoteCanonical);
+
+            if (shouldUpload) {
+                if (!background) {
+                    statusView.showGoogleDriveStatus(this.languageService.translate('googleDrive.status.uploading') || 'Uploading merged data to Google Drive…', false);
+                }
+                await this.googleDriveSyncService.uploadData(
+                    this.goalService.goals,
+                    this.settingsService.getSettings()
+                );
+            }
 
             // Persist last sync base for future merges
-            localStorage.setItem('goaly_gdrive_last_sync', JSON.stringify(prepareExportPayload(
+            localStorage.setItem(this.getLastSyncStorageKey(), JSON.stringify(prepareExportPayload(
                 this.goalService.goals,
                 this.settingsService.getSettings()
             )));
 
             if (!background) {
+                const finalKey = shouldUpload ? 'googleDrive.uploadSuccess' : 'googleDrive.noChanges';
                 statusView.showGoogleDriveStatus(
-                    this.languageService.translate('googleDrive.uploadSuccess'),
-                    false
+                    this.languageService.translate(finalKey),
+                    false,
+                    true
                 );
             }
 
-            statusView.updateGoogleDriveUI();
-            this.startGoogleDriveBackgroundSync();
+            // Do not immediately overwrite the explicit status message here.
+            // The status view will revert to the default \"last synced\" state
+            // automatically after its own timeout.
         } catch (error) {
             this.showGoogleDriveError('googleDrive.syncError', { message: error.message });
+        } finally {
+            this._isSyncing = false;
+            this._suppressAutoSync = false;
         }
     }
 

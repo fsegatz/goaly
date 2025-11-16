@@ -244,7 +244,17 @@ const en = {
         authError: 'Authentication failed: {{message}}',
         uploadError: 'Upload failed: {{message}}',
         downloadError: 'Download failed: {{message}}',
-        testerOnly: 'Google Drive sync is currently only available to testers. Send your Google email account to the developer to grant testing access.'
+        testerOnly: 'Google Drive sync is currently only available to testers. Send your Google email account to the developer to grant testing access.',
+        noChanges: 'No changes to sync. Everything is up to date.',
+        status: {
+            buildingLocalPayload: 'Preparing local data for sync…',
+            checkingRemote: 'Checking remote data…',
+            remoteFound: 'Remote data found. Downloaded successfully.',
+            noRemote: 'No remote data found. A new backup will be created.',
+            merging: 'Merging changes (local/remote/base)…',
+            applying: 'Applying merged data locally…',
+            uploading: 'Uploading merged data to Google Drive…'
+        }
     }
 };
 
