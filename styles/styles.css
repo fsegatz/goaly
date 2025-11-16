@@ -723,168 +723,13 @@ main {
     font-weight: 600;
 }
 
-.goal-deadline-wrapper {
-    position: relative;
-    display: inline-block;
-}
-
-.goal-deadline-label {
-    font-size: 0.9rem;
-    color: #666;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 6px;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    display: inline-block;
-}
-
-.goal-deadline-label:hover {
-    background-color: #f0f0f0;
-    color: #667eea;
-}
-
-.goal-deadline-label.urgent {
-    color: #e74c3c;
-    font-weight: 600;
-}
-
-.goal-deadline-input {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-    border: none;
-    padding: 0;
-    margin: 0;
-    pointer-events: none;
-}
-
-.goal-steps-section,
-.goal-resources-section {
-    margin: 15px 0;
-    order: 3;
-}
-
-.goal-steps-header,
-.goal-resources-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.goal-steps-header h4,
-.goal-resources-header h4 {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #555;
-    margin: 0;
-}
-
-.btn-small {
-    padding: 4px 8px;
-    font-size: 0.85rem;
-    min-width: auto;
-    flex: 0 0 auto;
-}
-
-.goal-steps-list,
-.goal-resources-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.goal-step,
-.goal-resource {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-}
-
-.goal-step:hover,
-.goal-resource:hover {
-    border-color: #667eea;
-    background: #f8f9ff;
-}
-
-.goal-step.completed {
-    opacity: 0.6;
-    text-decoration: line-through;
-}
-
-.step-checkbox {
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
-.step-text,
-.resource-text {
-    flex: 1;
-    font-size: 0.9rem;
-    color: #333;
-    border: 1px dashed transparent;
-    border-radius: 4px;
-    padding: 2px 4px;
-    min-height: 20px;
-    transition: border-color 0.2s ease;
-}
-
-.step-text:focus,
-.resource-text:focus {
-    outline: none;
-    border-color: #667eea;
-    background: #fff;
-}
-
-.step-text[contenteditable="true"]:empty::before,
-.resource-text[contenteditable="true"]:empty::before {
-    content: attr(data-placeholder);
-    color: #999;
-}
-
-.step-delete,
-.resource-delete {
-    background: transparent;
-    border: none;
-    color: #999;
-    font-size: 1.2rem;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0 4px;
-    flex-shrink: 0;
-    transition: color 0.2s ease;
-}
-
-.step-delete:hover,
-.resource-delete:hover {
-    color: #e74c3c;
-}
-
-.steps-empty,
-.resources-empty {
-    padding: 8px;
-    color: #999;
-    font-size: 0.85rem;
-    font-style: italic;
-    text-align: center;
-}
-
 .goal-card.is-editing-description,
-.goal-card.is-editing-deadline {
+.goal-card.is-inline-editing {
     border-color: #764ba2;
     box-shadow: 0 8px 20px rgba(118, 75, 162, 0.15);
 }
 
-.goal-deadline-editor {
+.goal-inline-editor {
     margin-top: 15px;
     padding-top: 15px;
     border-top: 1px dashed #ddd;
@@ -894,17 +739,17 @@ main {
     order: 10;
 }
 
-.goal-deadline-editor.is-visible {
+.goal-inline-editor.is-visible {
     display: flex;
 }
 
-.goal-deadline-editor .inline-fields {
-    display: flex;
+.goal-inline-editor .inline-fields {
+    display: grid;
     gap: 12px;
-    flex-direction: column;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 }
 
-.goal-deadline-editor label {
+.goal-inline-editor label {
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -912,20 +757,20 @@ main {
     color: #555;
 }
 
-.goal-deadline-editor input {
+.goal-inline-editor input {
     padding: 8px 10px;
     border: 1px solid #d0d0d0;
     border-radius: 8px;
     font-size: 0.95rem;
 }
 
-.goal-deadline-editor input:focus {
+.goal-inline-editor input:focus {
     outline: none;
     border-color: #764ba2;
     box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.15);
 }
 
-.goal-deadline-editor .inline-actions {
+.goal-inline-editor .inline-actions {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;

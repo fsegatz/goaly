@@ -59,7 +59,6 @@ const en = {
         priorityLabel: 'Priority',
         deadlinePrefix: '📅 {{deadline}}',
         noDeadline: 'No deadline',
-        deadlineClickable: 'Click to edit deadline',
         actions: {
             edit: 'Edit',
             complete: 'Complete'
@@ -68,28 +67,6 @@ const en = {
             deadline: 'Deadline',
             motivation: 'Motivation',
             urgency: 'Urgency'
-        },
-        steps: {
-            title: 'Steps',
-            add: 'Add step',
-            placeholder: 'Enter a step...',
-            empty: 'No steps yet',
-            delete: 'Delete step'
-        },
-        resources: {
-            title: 'Resources',
-            add: 'Add resource',
-            placeholder: 'Enter a resource...',
-            empty: 'No resources yet',
-            delete: 'Delete resource',
-            types: {
-                general: 'General',
-                contact: 'Contact',
-                group: 'Group',
-                institution: 'Institution',
-                knowledge: 'Knowledge',
-                financial: 'Financial'
-            }
         }
     },
     settingsPanel: {
