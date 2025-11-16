@@ -772,5 +772,57 @@ describe('DashboardView', () => {
 
         expect(mockGoalService.updateGoal).toHaveBeenCalled();
     });
+
+    test('createGoalCard should handle renderSteps with empty steps list', () => {
+        const goal = new Goal({
+            id: 'empty-render-test',
+            title: 'Empty Render Test',
+            description: '',
+            motivation: 3,
+            urgency: 2,
+            status: 'active',
+            deadline: null,
+            steps: []
+        });
+        mockGoalService.calculatePriority.mockReturnValue(5);
+        mockGoalService.goals = [goal];
+        mockGoalService.getActiveGoals.mockReturnValue([goal]);
+        mockGoalService.updateGoal.mockImplementation(() => goal);
+        const openCompletionModal = jest.fn();
+        const updateGoalInline = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
+        const stepsList = card.querySelector('.goal-steps-list');
+        
+        // Should show empty state initially
+        expect(stepsList.querySelector('.steps-empty')).not.toBeNull();
+        expect(stepsList.textContent).toContain('No steps yet');
+    });
+
+    test('createGoalCard should handle renderResources with empty resources list', () => {
+        const goal = new Goal({
+            id: 'empty-resources-render-test',
+            title: 'Empty Resources Render Test',
+            description: '',
+            motivation: 3,
+            urgency: 2,
+            status: 'active',
+            deadline: null,
+            resources: []
+        });
+        mockGoalService.calculatePriority.mockReturnValue(5);
+        mockGoalService.goals = [goal];
+        mockGoalService.getActiveGoals.mockReturnValue([goal]);
+        mockGoalService.updateGoal.mockImplementation(() => goal);
+        const openCompletionModal = jest.fn();
+        const updateGoalInline = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
+        const resourcesList = card.querySelector('.goal-resources-list');
+        
+        // Should show empty state initially
+        expect(resourcesList.querySelector('.resources-empty')).not.toBeNull();
+        expect(resourcesList.textContent).toContain('No resources yet');
+    });
 });
 
