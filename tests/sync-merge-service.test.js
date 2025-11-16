@@ -16,7 +16,10 @@ describe('sync-merge-service', () => {
             status: 'active',
             createdAt: '2025-01-01T00:00:00.000Z',
             lastUpdated: '2025-01-01T01:00:00.000Z',
-            history: [{ id: 'h1', event: 'CREATED', timestamp: '2025-01-01T00:00:00.000Z', changes: [] }]
+            history: [
+                { id: 'h0', event: 'PREV_UPDATE', timestamp: '2025-01-01T00:30:00.000Z', changes: [] },
+                { id: 'h1', event: 'CREATED', timestamp: '2025-01-01T00:00:00.000Z', changes: [] }
+            ]
         }]
     };
 
@@ -35,7 +38,8 @@ describe('sync-merge-service', () => {
 
         const merged = mergePayloads({ base: basePayload, local, remote });
         expect(merged.goals.find(g => g.id === 'g1').title).toBe('Remote New');
-        expect(merged.goals.find(g => g.id === 'g1').history.length).toBe(2);
+        const hist = merged.goals.find(g => g.id === 'g1').history;
+        expect(hist.map(h => h.id)).toEqual(['h1', 'h0', 'h2']);
     });
 
     test('latest edit wins when both diverged from base', () => {
@@ -126,7 +130,7 @@ describe('sync-merge-service', () => {
         };
         const merged = mergePayloads({ base: basePayload, local, remote });
         const hist = merged.goals.find(g => g.id === 'g1').history;
-        expect(hist.map(h => h.id)).toEqual(['h1', 'h2', 'h3']);
+        expect(hist.map(h => h.id)).toEqual(['h1', 'h0', 'h2', 'h3']);
     });
 
     test('settings fall back to local when local exportDate newer', () => {

@@ -6,7 +6,7 @@ import ReviewService from './domain/review-service.js';
 import UIController from './ui/ui-controller.js';
 import Goal from './domain/goal.js';
 import LanguageService from './domain/language-service.js';
-import GoogleDriveSyncService from './domain/google-drive-sync-service.js';
+import GoogleDriveSyncService, { GoogleDriveFileNotFoundError } from './domain/google-drive-sync-service.js';
 import DeveloperModeService from './domain/developer-mode-service.js';
 import { prepareExportPayload, migratePayloadToCurrent } from './domain/migration-service.js';
 import { mergePayloads } from './domain/sync-merge-service.js';
@@ -131,13 +131,14 @@ class GoalyApp {
     }
 
     hookGoalSavesForBackgroundSync() {
-        const originalSave = this.goalService.saveGoals.bind(this.goalService);
-        this.goalService.saveGoals = () => {
-            originalSave();
+        if (!this.goalService || typeof this.goalService.onAfterSave !== 'function') {
+            return;
+        }
+        this.goalService.onAfterSave(() => {
             if (!this._suppressAutoSync) {
                 this.scheduleBackgroundSyncSoon();
             }
-        };
+        });
     }
 
     initGoogleDriveSync() {
@@ -151,7 +152,9 @@ class GoalyApp {
                 .then(() => {
                     // If already authenticated at startup, perform a one-time background sync
                     if (this.googleDriveSyncService.isAuthenticated()) {
-                        this.syncWithGoogleDrive({ background: true }).catch(() => {});
+                        this.syncWithGoogleDrive({ background: true }).catch(error => {
+                            console.error('Background sync failed during initialization:', error);
+                        });
                     }
                 })
                 .catch(error => {
@@ -174,7 +177,9 @@ class GoalyApp {
         if (!this.googleDriveSyncService || !this.googleDriveSyncService.isAuthenticated()) {
             return;
         }
-        this.syncWithGoogleDrive({ background: true }).catch(() => {});
+        this.syncWithGoogleDrive({ background: true }).catch(error => {
+            console.error('Background sync failed for one-time trigger:', error);
+        });
     }
 
     scheduleBackgroundSyncSoon() {
@@ -188,7 +193,9 @@ class GoalyApp {
             clearTimeout(this.googleDriveSyncDebounce);
         }
         this.googleDriveSyncDebounce = setTimeout(() => {
-            this.syncWithGoogleDrive({ background: true }).catch(() => {});
+            this.syncWithGoogleDrive({ background: true }).catch(error => {
+                console.error('Background sync failed (debounced):', error);
+            });
             this.googleDriveSyncDebounce = null;
         }, 5000);
         if (typeof this.googleDriveSyncDebounce?.unref === 'function') {
@@ -488,7 +495,7 @@ class GoalyApp {
                 }
             } catch (e) {
                 // If no file found, proceed with local as source
-                if (!String(e?.message || '').includes('No data file found')) {
+                if (!(e instanceof GoogleDriveFileNotFoundError)) {
                     throw e;
                 }
                 if (!background) {
@@ -501,7 +508,10 @@ class GoalyApp {
             try {
                 const baseStr = localStorage.getItem(this.getLastSyncStorageKey());
                 if (baseStr) basePayload = JSON.parse(baseStr);
-            } catch {}
+            } catch (e) {
+                console.error('Failed to parse base payload from localStorage; clearing corrupted entry.', e);
+                localStorage.removeItem(this.getLastSyncStorageKey());
+            }
 
             // Merge (three-way if possible)
             if (!background) {
@@ -510,7 +520,7 @@ class GoalyApp {
             const merged = mergePayloads({
                 base: basePayload,
                 local: localPayload,
-                remote: remotePayload ?? localPayload
+                remote: remotePayload
             });
 
             // Apply merged locally

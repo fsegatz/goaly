@@ -10,6 +10,13 @@ const STORAGE_KEY_FILE_ID = 'goaly_gdrive_file_id';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 
+export class GoogleDriveFileNotFoundError extends Error {
+    constructor(message = 'No data file found in Google Drive') {
+        super(message);
+        this.name = 'GoogleDriveFileNotFoundError';
+    }
+}
+
 class GoogleDriveSyncService {
     constructor() {
         this.tokenClient = null;
@@ -439,7 +446,7 @@ class GoogleDriveSyncService {
         const file = await this.findDataFile(folderId);
 
         if (!file) {
-            throw new Error('No data file found in Google Drive');
+            throw new GoogleDriveFileNotFoundError();
         }
 
         this.fileId = file.id;
@@ -594,7 +601,7 @@ class GoogleDriveSyncService {
             }
         } catch (error) {
             // If file doesn't exist, upload local (unless local is empty)
-            if (error.message.includes('No data file found')) {
+            if (error instanceof GoogleDriveFileNotFoundError) {
                 return {
                     shouldUpload: localHasData,
                     reason: localHasData ? 'remote_not_found' : 'remote_not_found_local_empty',

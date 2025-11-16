@@ -28,8 +28,27 @@ function valuesEqual(a, b) {
 
 class GoalService {
     constructor(goals = []) {
-        this.goals = goals.map(g => new Goal(g));
+		this.goals = goals.map(g => new Goal(g));
+		this._listeners = { afterSave: [] };
     }
+
+	onAfterSave(listener) {
+		if (typeof listener === 'function') {
+			this._listeners.afterSave.push(listener);
+		}
+	}
+
+	_notifyAfterSave() {
+		const listeners = this._listeners?.afterSave || [];
+		for (const fn of listeners) {
+			try {
+				fn();
+			} catch (error) {
+				// Log and continue so one faulty listener does not break others
+				console.error('GoalService afterSave listener error', error);
+			}
+		}
+	}
 
     loadGoals() {
         const saved = localStorage.getItem('goaly_goals');
@@ -68,6 +87,7 @@ class GoalService {
     saveGoals() {
         const payload = prepareGoalsStoragePayload(this.goals);
         localStorage.setItem('goaly_goals', JSON.stringify(payload));
+		this._notifyAfterSave();
     }
 
     generateHistoryId() {

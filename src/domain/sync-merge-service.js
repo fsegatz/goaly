@@ -9,15 +9,6 @@ function parseDate(value) {
 	return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function pickLatestDateIso(a, b) {
-	const da = parseDate(a);
-	const db = parseDate(b);
-	if (!da && !db) return null;
-	if (!da) return b;
-	if (!db) return a;
-	return da >= db ? a : b;
-}
-
 function indexById(array) {
 	const map = new Map();
 	if (Array.isArray(array)) {
@@ -39,7 +30,7 @@ function normalizeGoalForMerge(raw) {
 	return clone;
 }
 
-function mergeGoalHistories(aHist, bHist, limit = 100) {
+function mergeGoalHistories(hists, limit = 100) {
 	const seen = new Set();
 	const merged = [];
 	const add = (entry) => {
@@ -48,8 +39,11 @@ function mergeGoalHistories(aHist, bHist, limit = 100) {
 		seen.add(entry.id);
 		merged.push(entry);
 	};
-	(aHist || []).forEach(add);
-	(bHist || []).forEach(add);
+
+	for (const hist of (hists || [])) {
+		(hist || []).forEach(add);
+	}
+
 	merged.sort((x, y) => {
 		const dx = parseDate(x.timestamp)?.getTime() ?? 0;
 		const dy = parseDate(y.timestamp)?.getTime() ?? 0;
@@ -95,8 +89,12 @@ function mergeGoal(localRaw, remoteRaw, baseRaw) {
 	const picked = latestGoal(local, remote, base);
 	if (!picked) return null;
 
-	// Merge histories to preserve audit trail
-	const mergedHistory = mergeGoalHistories(local?.history, remote?.history);
+	// Merge histories from all three sides to preserve audit trail
+	const mergedHistory = mergeGoalHistories([
+		local?.history,
+		remote?.history,
+		base?.history
+	]);
 	const result = { ...picked, history: mergedHistory };
 	return result;
 }
