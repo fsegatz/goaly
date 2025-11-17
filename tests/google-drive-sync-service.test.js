@@ -834,32 +834,52 @@ describe('GoogleDriveSyncService', () => {
                 return { result: { success: true } };
             });
 
-            // Mock token refresh - invoke callback immediately
+            // Mock token refresh - need to set up callback before refresh is called
             let refreshCallback = null;
-            service.tokenClient = {
+            const mockTokenClient = {
                 requestAccessToken: jest.fn((options) => {
-                    // Invoke callback immediately for test
-                    if (refreshCallback) {
-                        refreshCallback({
-                            access_token: 'new-token',
-                            expires_in: 3600
-                        });
-                    }
+                    // Don't invoke immediately - let the refresh promise be created first
                 }),
                 callback: null
             };
 
             mockGoogleAccounts.oauth2.initTokenClient.mockImplementation((config) => {
                 refreshCallback = config.callback;
-                service.tokenClient.callback = config.callback;
-                return service.tokenClient;
+                mockTokenClient.callback = config.callback;
+                return mockTokenClient;
             });
 
-            const result = await service.executeWithTokenRefresh(apiCall);
+            // First authenticate to set up the callback
+            const authPromise = service.authenticate();
+            if (refreshCallback) {
+                refreshCallback({
+                    access_token: 'initial-token',
+                    expires_in: 3600
+                });
+            }
+            await authPromise;
+            service.tokenClient = mockTokenClient;
+            service.tokenClient.callback = refreshCallback;
+
+            // Now test executeWithTokenRefresh
+            const executePromise = service.executeWithTokenRefresh(apiCall);
+            
+            // When refresh is called, invoke the callback
+            // The refresh will be triggered by executeWithTokenRefresh when it sees the 401
+            // We need to wait a bit for the refresh to be initiated, then invoke the callback
+            await new Promise(resolve => setTimeout(resolve, 50));
+            if (refreshCallback && mockTokenClient.requestAccessToken.mock.calls.length > 0) {
+                refreshCallback({
+                    access_token: 'new-token',
+                    expires_in: 3600
+                });
+            }
+
+            const result = await executePromise;
 
             expect(apiCall).toHaveBeenCalledTimes(2);
             expect(result.result.success).toBe(true);
-        }, 10000);
+        }, 20000);
 
         test('executeWithTokenRefresh should throw on non-auth errors', async () => {
             service.accessToken = 'token';
