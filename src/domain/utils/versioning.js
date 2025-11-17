@@ -9,7 +9,7 @@ export function isValidVersion(version) {
     return SEMVER_REGEX.test(version.trim());
 }
 
-export function parseVersion(version) {
+function parseVersion(version) {
     if (!isValidVersion(version)) {
         return null;
     }

@@ -140,7 +140,7 @@ export class SettingsView extends BaseUIController {
     }
 
     updateGoogleDriveUI() {
-        if (!this.app.googleDriveSyncService) {
+        if (!this.app.syncManager || !this.app.syncManager.isAvailable()) {
             return;
         }
 
@@ -153,7 +153,7 @@ export class SettingsView extends BaseUIController {
             return;
         }
 
-        const isAuthenticated = this.app.googleDriveSyncService.isAuthenticated();
+        const isAuthenticated = this.app.syncManager.isAuthenticated();
 
         if (isAuthenticated) {
             authBtn.hidden = true;
@@ -167,7 +167,7 @@ export class SettingsView extends BaseUIController {
                 statusDiv.textContent = this.translate('googleDrive.authenticated');
                 
                 // Update sync status asynchronously
-                this.app.googleDriveSyncService.getSyncStatus().then(status => {
+                this.app.syncManager.getSyncStatus().then(status => {
                     if (status.synced && status.lastSyncTime && !this.statusLocked) {
                         const syncDate = new Date(status.lastSyncTime);
                         statusDiv.textContent = this.translate('googleDrive.lastSynced', {

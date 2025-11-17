@@ -1,6 +1,6 @@
-import en from '../language/en.js';
-import de from '../language/de.js';
-import sv from '../language/sv.js';
+import en from '../../language/en.js';
+import de from '../../language/de.js';
+import sv from '../../language/sv.js';
 
 const DEFAULT_LOCALE_MAP = {
     en: 'en-US',

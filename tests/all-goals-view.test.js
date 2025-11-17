@@ -1,7 +1,7 @@
 const { JSDOM } = require('jsdom');
 const { AllGoalsView } = require('../src/ui/desktop/all-goals-view.js');
-const Goal = require('../src/domain/goal').default;
-const LanguageService = require('../src/domain/language-service').default;
+const Goal = require('../src/domain/models/goal').default;
+const LanguageService = require('../src/domain/services/language-service').default;
 
 let dom;
 let document;
@@ -237,6 +237,152 @@ describe('AllGoalsView', () => {
 
         const rows = document.querySelectorAll('#allGoalsTableBody tr');
         expect(rows.length).toBe(2);
+    });
+
+    test('render should handle missing control elements gracefully', () => {
+        const goal = new Goal({ id: '1', title: 'Test', motivation: 3, urgency: 4, status: 'active' });
+        mockGoalService.goals = [goal];
+        mockGoalService.calculatePriority.mockImplementation(() => 10);
+
+        // Remove control elements
+        const statusFilter = document.getElementById('allGoalsStatusFilter');
+        const priorityFilter = document.getElementById('allGoalsPriorityFilter');
+        const sortSelect = document.getElementById('allGoalsSort');
+        statusFilter?.remove();
+        priorityFilter?.remove();
+        sortSelect?.remove();
+
+        const openGoalForm = jest.fn();
+        expect(() => allGoalsView.render(openGoalForm)).not.toThrow();
+
+        const rows = document.querySelectorAll('#allGoalsTableBody tr');
+        expect(rows.length).toBe(1);
+    });
+
+    test('render should filter out completed goals when includeCompleted is false', () => {
+        const activeGoal = new Goal({ id: '1', title: 'Active', motivation: 3, urgency: 4, status: 'active' });
+        const completedGoal = new Goal({ id: '2', title: 'Completed', motivation: 3, urgency: 4, status: 'completed' });
+        mockGoalService.goals = [activeGoal, completedGoal];
+        mockGoalService.calculatePriority.mockImplementation(() => 10);
+        allGoalsView.allGoalsState.includeCompleted = false;
+
+        const openGoalForm = jest.fn();
+        allGoalsView.render(openGoalForm);
+
+        const rows = document.querySelectorAll('#allGoalsTableBody tr');
+        expect(rows.length).toBe(1);
+        expect(rows[0].dataset.goalId).toBe('1');
+    });
+
+    test('render should filter out abandoned goals when includeAbandoned is false', () => {
+        const activeGoal = new Goal({ id: '1', title: 'Active', motivation: 3, urgency: 4, status: 'active' });
+        const abandonedGoal = new Goal({ id: '2', title: 'Abandoned', motivation: 3, urgency: 4, status: 'abandoned' });
+        mockGoalService.goals = [activeGoal, abandonedGoal];
+        mockGoalService.calculatePriority.mockImplementation(() => 10);
+        allGoalsView.allGoalsState.includeAbandoned = false;
+
+        const openGoalForm = jest.fn();
+        allGoalsView.render(openGoalForm);
+
+        const rows = document.querySelectorAll('#allGoalsTableBody tr');
+        expect(rows.length).toBe(1);
+        expect(rows[0].dataset.goalId).toBe('1');
+    });
+
+    test('render should handle empty state when no goals match filters', () => {
+        const goal = new Goal({ id: '1', title: 'Low Priority', motivation: 1, urgency: 1, status: 'active' });
+        mockGoalService.goals = [goal];
+        mockGoalService.calculatePriority.mockImplementation(() => 5);
+        allGoalsView.allGoalsState.minPriority = 100; // Higher than goal priority
+
+        const openGoalForm = jest.fn();
+        allGoalsView.render(openGoalForm);
+
+        const emptyState = document.getElementById('allGoalsEmptyState');
+        expect(emptyState.hidden).toBe(false);
+        const rows = document.querySelectorAll('#allGoalsTableBody tr');
+        expect(rows.length).toBe(0);
+    });
+
+    test('render should handle missing emptyState element', () => {
+        const emptyState = document.getElementById('allGoalsEmptyState');
+        emptyState?.remove();
+
+        const openGoalForm = jest.fn();
+        expect(() => allGoalsView.render(openGoalForm)).not.toThrow();
+    });
+
+    test('row keydown should handle space key', () => {
+        const goal = new Goal({ id: '1', title: 'Test', motivation: 3, urgency: 4, status: 'active' });
+        mockGoalService.goals = [goal];
+        mockGoalService.calculatePriority.mockImplementation(() => 10);
+        const openGoalForm = jest.fn();
+
+        allGoalsView.render(openGoalForm);
+
+        const row = document.querySelector('#allGoalsTableBody tr');
+        const spaceEvent = new window.KeyboardEvent('keydown', { key: ' ' });
+        row.dispatchEvent(spaceEvent);
+
+        expect(openGoalForm).toHaveBeenCalledWith('1');
+    });
+
+    test('row keydown should ignore other keys', () => {
+        const goal = new Goal({ id: '1', title: 'Test', motivation: 3, urgency: 4, status: 'active' });
+        mockGoalService.goals = [goal];
+        mockGoalService.calculatePriority.mockImplementation(() => 10);
+        const openGoalForm = jest.fn();
+
+        allGoalsView.render(openGoalForm);
+
+        const row = document.querySelector('#allGoalsTableBody tr');
+        const otherKeyEvent = new window.KeyboardEvent('keydown', { key: 'Escape' });
+        row.dispatchEvent(otherKeyEvent);
+
+        expect(openGoalForm).not.toHaveBeenCalled();
+    });
+
+    test('setupControls should handle missing control elements', () => {
+        const statusFilter = document.getElementById('allGoalsStatusFilter');
+        statusFilter?.remove();
+
+        const openGoalForm = jest.fn();
+        expect(() => allGoalsView.setupControls(openGoalForm)).not.toThrow();
+    });
+
+    test('getControlElement should return null when element does not exist', () => {
+        const element = allGoalsView.getControlElement('non-existent-id');
+        expect(element).toBeNull();
+    });
+
+    test('render should handle goals with null lastUpdated', () => {
+        const goal = new Goal({ id: '1', title: 'Test', motivation: 3, urgency: 4, status: 'active' });
+        // Explicitly set lastUpdated to null after creation
+        Object.defineProperty(goal, 'lastUpdated', { value: null, writable: true, configurable: true });
+        mockGoalService.goals = [goal];
+        mockGoalService.calculatePriority.mockImplementation(() => 10);
+
+        const openGoalForm = jest.fn();
+        allGoalsView.render(openGoalForm);
+
+        const rows = document.querySelectorAll('#allGoalsTableBody tr');
+        expect(rows.length).toBe(1);
+        const cells = rows[0].querySelectorAll('td');
+        // Check that last updated cell shows dash or empty when lastUpdated is null
+        const lastUpdatedText = cells[6].textContent.trim();
+        expect(lastUpdatedText === '—' || lastUpdatedText === '').toBe(true);
+    });
+
+    test('render should handle goals with null deadline', () => {
+        const goal = new Goal({ id: '1', title: 'Test', motivation: 3, urgency: 4, status: 'active', deadline: null });
+        mockGoalService.goals = [goal];
+        mockGoalService.calculatePriority.mockImplementation(() => 10);
+
+        const openGoalForm = jest.fn();
+        allGoalsView.render(openGoalForm);
+
+        const rows = document.querySelectorAll('#allGoalsTableBody tr');
+        expect(rows.length).toBe(1);
     });
 });
 

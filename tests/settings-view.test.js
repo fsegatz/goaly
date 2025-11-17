@@ -1,6 +1,6 @@
 const { JSDOM } = require('jsdom');
 const { SettingsView } = require('../src/ui/desktop/settings-view.js');
-const LanguageService = require('../src/domain/language-service').default;
+const LanguageService = require('../src/domain/services/language-service').default;
 
 let dom;
 let document;
@@ -349,8 +349,8 @@ describe('SettingsView', () => {
         expect(() => settingsView.showGoogleDriveStatus('Test message', false)).not.toThrow();
     });
 
-    test('updateGoogleDriveUI should handle when googleDriveSyncService is not available', () => {
-        mockApp.googleDriveSyncService = null;
+    test('updateGoogleDriveUI should handle when syncManager is not available', () => {
+        mockApp.syncManager = null;
         expect(() => settingsView.updateGoogleDriveUI()).not.toThrow();
     });
 
@@ -372,7 +372,8 @@ describe('SettingsView', () => {
         document.body.appendChild(syncBtn);
         document.body.appendChild(statusDiv);
 
-        mockApp.googleDriveSyncService = {
+        mockApp.syncManager = {
+            isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => false),
             getSyncStatus: jest.fn(() => Promise.resolve({ authenticated: false, synced: false }))
         };
@@ -408,7 +409,8 @@ describe('SettingsView', () => {
         document.body.appendChild(syncBtn);
         document.body.appendChild(statusDiv);
 
-        mockApp.googleDriveSyncService = {
+        mockApp.syncManager = {
+            isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => true),
             getSyncStatus: jest.fn(() => Promise.resolve({ 
                 authenticated: true, 
@@ -436,7 +438,8 @@ describe('SettingsView', () => {
         authBtn.id = 'googleDriveAuthBtn';
         document.body.appendChild(authBtn);
 
-        mockApp.googleDriveSyncService = {
+        mockApp.syncManager = {
+            isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => false)
         };
 
@@ -459,7 +462,8 @@ describe('SettingsView', () => {
         document.body.appendChild(syncBtn);
         document.body.appendChild(statusDiv);
 
-        mockApp.googleDriveSyncService = {
+        mockApp.syncManager = {
+            isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => true),
             getSyncStatus: jest.fn(() => Promise.resolve({ 
                 authenticated: true, 
@@ -492,7 +496,8 @@ describe('SettingsView', () => {
         document.body.appendChild(syncBtn);
         document.body.appendChild(statusDiv);
 
-        mockApp.googleDriveSyncService = {
+        mockApp.syncManager = {
+            isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => true),
             getSyncStatus: jest.fn(() => Promise.reject(new Error('Network error')))
         };
@@ -515,7 +520,8 @@ describe('SettingsView', () => {
         statusDiv.textContent = 'old message';
         document.body.appendChild(statusDiv);
 
-        mockApp.googleDriveSyncService = {
+        mockApp.syncManager = {
+            isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => false)
         };
         
@@ -593,7 +599,8 @@ describe('SettingsView', () => {
         mockApp.developerModeService = {
             isDeveloperMode: jest.fn(() => false)
         };
-        mockApp.googleDriveSyncService = {
+        mockApp.syncManager = {
+            isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => false)
         };
 

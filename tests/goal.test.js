@@ -1,5 +1,5 @@
 // tests/goal.test.js
-const Goal = require('../src/domain/goal').default;
+const Goal = require('../src/domain/models/goal').default;
 
 describe('Goal', () => {
     test('should create a Goal object with provided data', () => {

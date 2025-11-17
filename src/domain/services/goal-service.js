@@ -1,16 +1,10 @@
 // src/domain/goal-service.js
 
-import Goal from './goal.js';
-import { prepareGoalsStoragePayload } from './migration-service.js';
+import Goal from '../models/goal.js';
+import { prepareGoalsStoragePayload } from '../migration/migration-service.js';
+import { HISTORY_EVENTS, STORAGE_KEY_GOALS } from '../utils/constants.js';
 
 const HISTORY_LIMIT = 50;
-const HISTORY_EVENTS = {
-    CREATED: 'created',
-    UPDATED: 'updated',
-    STATUS_CHANGE: 'status-change',
-    ROLLBACK: 'rollback'
-};
-
 const TRACKED_HISTORY_FIELDS = ['title', 'description', 'motivation', 'urgency', 'deadline', 'status', 'priority'];
 
 function valuesEqual(a, b) {
@@ -51,7 +45,7 @@ class GoalService {
 	}
 
     loadGoals() {
-        const saved = localStorage.getItem('goaly_goals');
+        const saved = localStorage.getItem(STORAGE_KEY_GOALS);
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
@@ -86,7 +80,7 @@ class GoalService {
 
     saveGoals() {
         const payload = prepareGoalsStoragePayload(this.goals);
-        localStorage.setItem('goaly_goals', JSON.stringify(payload));
+        localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(payload));
 		this._notifyAfterSave();
     }
 

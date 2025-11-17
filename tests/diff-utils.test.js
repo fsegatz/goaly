@@ -1,4 +1,4 @@
-const { computeLineDiff } = require('../src/domain/diff-utils');
+const { computeLineDiff } = require('../src/domain/utils/diff-utils');
 
 describe('computeLineDiff', () => {
     it('detects added and removed lines', () => {
