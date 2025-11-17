@@ -366,6 +366,21 @@ class SyncManager {
     isAuthenticated() {
         return this.googleDriveSyncService?.isAuthenticated() || false;
     }
+
+    /**
+     * Get sync status information
+     * Delegates to the internal GoogleDriveSyncService to maintain encapsulation
+     */
+    async getSyncStatus() {
+        if (!this.googleDriveSyncService) {
+            return {
+                authenticated: false,
+                synced: false,
+                lastSyncTime: null
+            };
+        }
+        return this.googleDriveSyncService.getSyncStatus();
+    }
 }
 
 export default SyncManager;

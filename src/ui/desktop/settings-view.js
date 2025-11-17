@@ -167,18 +167,16 @@ export class SettingsView extends BaseUIController {
                 statusDiv.textContent = this.translate('googleDrive.authenticated');
                 
                 // Update sync status asynchronously
-                if (this.app.syncManager.googleDriveSyncService) {
-                    this.app.syncManager.googleDriveSyncService.getSyncStatus().then(status => {
-                        if (status.synced && status.lastSyncTime && !this.statusLocked) {
-                            const syncDate = new Date(status.lastSyncTime);
-                            statusDiv.textContent = this.translate('googleDrive.lastSynced', {
-                                time: syncDate.toLocaleString()
-                            });
-                        }
-                    }).catch(() => {
-                        // Ignore errors when checking status
-                    });
-                }
+                this.app.syncManager.getSyncStatus().then(status => {
+                    if (status.synced && status.lastSyncTime && !this.statusLocked) {
+                        const syncDate = new Date(status.lastSyncTime);
+                        statusDiv.textContent = this.translate('googleDrive.lastSynced', {
+                            time: syncDate.toLocaleString()
+                        });
+                    }
+                }).catch(() => {
+                    // Ignore errors when checking status
+                });
             }
         } else {
             authBtn.hidden = false;

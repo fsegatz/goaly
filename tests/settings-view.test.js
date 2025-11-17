@@ -375,9 +375,7 @@ describe('SettingsView', () => {
         mockApp.syncManager = {
             isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => false),
-            googleDriveSyncService: {
-                getSyncStatus: jest.fn(() => Promise.resolve({ authenticated: false, synced: false }))
-            }
+            getSyncStatus: jest.fn(() => Promise.resolve({ authenticated: false, synced: false }))
         };
 
         await settingsView.updateGoogleDriveUI();
@@ -414,13 +412,11 @@ describe('SettingsView', () => {
         mockApp.syncManager = {
             isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => true),
-            googleDriveSyncService: {
-                getSyncStatus: jest.fn(() => Promise.resolve({ 
-                    authenticated: true, 
-                    synced: true,
-                    lastSyncTime: '2025-01-01T00:00:00Z'
-                }))
-            }
+            getSyncStatus: jest.fn(() => Promise.resolve({ 
+                authenticated: true, 
+                synced: true,
+                lastSyncTime: '2025-01-01T00:00:00Z'
+            }))
         };
 
         await settingsView.updateGoogleDriveUI();
@@ -469,13 +465,11 @@ describe('SettingsView', () => {
         mockApp.syncManager = {
             isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => true),
-            googleDriveSyncService: {
-                getSyncStatus: jest.fn(() => Promise.resolve({ 
-                    authenticated: true, 
-                    synced: false
-                    // No lastSyncTime
-                }))
-            }
+            getSyncStatus: jest.fn(() => Promise.resolve({ 
+                authenticated: true, 
+                synced: false
+                // No lastSyncTime
+            }))
         };
 
         await settingsView.updateGoogleDriveUI();
@@ -505,9 +499,7 @@ describe('SettingsView', () => {
         mockApp.syncManager = {
             isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => true),
-            googleDriveSyncService: {
-                getSyncStatus: jest.fn(() => Promise.reject(new Error('Network error')))
-            }
+            getSyncStatus: jest.fn(() => Promise.reject(new Error('Network error')))
         };
 
         await settingsView.updateGoogleDriveUI();
