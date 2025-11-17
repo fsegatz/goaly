@@ -64,6 +64,11 @@ When committing and pushing changes, follow these steps:
 
 When implementing a GitHub issue, follow this structured process:
 
+0. **Before Starting Work**
+   - Checkout main branch: `git checkout main`
+   - Pull latest changes: `git pull`
+   - Create a feature branch: `git checkout -b feature/issue-<number>`
+
 1. **Initial Implementation**
    - Read and understand the issue requirements
    - Create a TODO list to track progress
