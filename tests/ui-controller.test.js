@@ -70,7 +70,6 @@ beforeEach(() => {
             <h2 id="modalTitle"></h2>
             <input type="hidden" id="goalId" />
             <input type="text" id="goalTitle" />
-            <textarea id="goalDescription"></textarea>
             <input type="number" id="goalMotivation" />
             <input type="number" id="goalUrgency" />
             <input type="date" id="goalDeadline" />

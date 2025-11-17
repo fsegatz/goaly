@@ -57,7 +57,6 @@ export class DashboardView extends BaseUIController {
                     <div class="goal-title">${this.escapeHtml(goal.title)}</div>
                 </div>
             </div>
-            <div class="goal-description dashboard-description" contenteditable="true" role="textbox" aria-label="${this.translate('goalCard.descriptionAria')}" data-goal-id="${goal.id}" data-placeholder="${this.translate('goalCard.descriptionPlaceholder')}"></div>
             <div class="goal-steps-section">
                 <div class="goal-steps-header">
                     <h4>${this.translate('goalCard.steps.title')}</h4>
@@ -74,61 +73,6 @@ export class DashboardView extends BaseUIController {
                 </div>
             </div>
         `;
-
-        const descriptionEl = card.querySelector('.goal-description');
-        if (descriptionEl) {
-            const currentDescription = goal.description || '';
-            descriptionEl.textContent = currentDescription;
-
-            const sanitizeDescription = (value) => {
-                if (!value) {
-                    return '';
-                }
-                return value.replace(/\u00a0/g, ' ').trim();
-            };
-
-            const resetDescription = () => {
-                descriptionEl.textContent = goal.description || '';
-                if (!descriptionEl.textContent) {
-                    descriptionEl.innerHTML = '';
-                }
-            };
-
-            descriptionEl.addEventListener('focus', () => {
-                card.classList.add('is-editing-description');
-                descriptionEl.classList.add('is-editing');
-            });
-
-            descriptionEl.addEventListener('blur', () => {
-                descriptionEl.classList.remove('is-editing');
-                card.classList.remove('is-editing-description');
-
-                const sanitizedValue = sanitizeDescription(descriptionEl.textContent);
-                const originalValue = sanitizeDescription(goal.description);
-
-                if (sanitizedValue === originalValue) {
-                    resetDescription();
-                    return;
-                }
-
-                try {
-                    const { maxActiveGoals } = this.app.settingsService.getSettings();
-                    this.app.goalService.updateGoal(goal.id, { description: sanitizedValue }, maxActiveGoals);
-                    goal.description = sanitizedValue;
-                } catch (error) {
-                    alert(error.message || this.translate('errors.goalUpdateFailed'));
-                    resetDescription();
-                }
-            });
-
-            descriptionEl.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape') {
-                    event.preventDefault();
-                    resetDescription();
-                    descriptionEl.blur();
-                }
-            });
-        }
 
         const actionsContainer = card.querySelector('.goal-actions');
         if (actionsContainer && goal.status !== 'completed' && goal.status !== 'abandoned') {

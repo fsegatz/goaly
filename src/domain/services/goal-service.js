@@ -5,7 +5,7 @@ import { prepareGoalsStoragePayload } from '../migration/migration-service.js';
 import { HISTORY_EVENTS, STORAGE_KEY_GOALS } from '../utils/constants.js';
 
 const HISTORY_LIMIT = 50;
-const TRACKED_HISTORY_FIELDS = ['title', 'description', 'motivation', 'urgency', 'deadline', 'status', 'priority'];
+const TRACKED_HISTORY_FIELDS = ['title', 'motivation', 'urgency', 'deadline', 'status', 'priority'];
 
 function valuesEqual(a, b) {
     if (a === b) {
@@ -91,7 +91,6 @@ class GoalService {
     createSnapshot(goal) {
         return {
             title: goal.title ?? '',
-            description: goal.description ?? '',
             motivation: Number.isNaN(goal.motivation) ? null : goal.motivation,
             urgency: Number.isNaN(goal.urgency) ? null : goal.urgency,
             deadline: goal.deadline
@@ -150,9 +149,6 @@ class GoalService {
 
         if (snapshot.title !== undefined) {
             updatedFields.title = snapshot.title;
-        }
-        if (snapshot.description !== undefined) {
-            updatedFields.description = snapshot.description;
         }
         if (snapshot.motivation !== undefined) {
             updatedFields.motivation = snapshot.motivation === null ? NaN : Number(snapshot.motivation);
@@ -245,9 +241,6 @@ class GoalService {
 
         if (goalData.title !== undefined && goalData.title !== goal.title) {
             updates.title = goalData.title;
-        }
-        if (goalData.description !== undefined && goalData.description !== goal.description) {
-            updates.description = goalData.description;
         }
         if (goalData.motivation !== undefined) {
             const parsedMotivation = parseInt(goalData.motivation, 10);

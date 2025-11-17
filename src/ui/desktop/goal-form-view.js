@@ -4,7 +4,6 @@ import { BaseUIController } from './base-ui-controller.js';
 
 const HISTORY_FIELD_LABEL_KEYS = {
     title: 'history.fields.title',
-    description: 'history.fields.description',
     motivation: 'history.fields.motivation',
     urgency: 'history.fields.urgency',
     deadline: 'history.fields.deadline',
@@ -41,7 +40,6 @@ export class GoalFormView extends BaseUIController {
                 modalTitle.textContent = this.translate('goalForm.editTitle');
                 document.getElementById('goalId').value = goal.id;
                 document.getElementById('goalTitle').value = goal.title;
-                document.getElementById('goalDescription').value = goal.description || '';
                 document.getElementById('goalMotivation').value = goal.motivation;
                 document.getElementById('goalUrgency').value = goal.urgency;
                 document.getElementById('goalDeadline').value = goal.deadline 
@@ -136,7 +134,6 @@ export class GoalFormView extends BaseUIController {
         const id = document.getElementById('goalId').value;
         const goalData = {
             title: document.getElementById('goalTitle').value,
-            description: document.getElementById('goalDescription').value,
             motivation: document.getElementById('goalMotivation').value,
             urgency: document.getElementById('goalUrgency').value,
             deadline: document.getElementById('goalDeadline').value || null
