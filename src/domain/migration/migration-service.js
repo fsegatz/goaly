@@ -30,7 +30,7 @@ export function prepareGoalsStoragePayload(goals) {
 export function migratePayloadToCurrent(payload) {
     if (Array.isArray(payload)) {
         // Legacy array format - migrate each goal
-        const migratedGoals = payload.map(goal => migrateGoalDescriptionToStep(goal));
+        const migratedGoals = payload.map((goal, index) => migrateGoalDescriptionToStep(goal, index));
         return {
             version: GOAL_FILE_VERSION,
             goals: serializeGoals(migratedGoals)
@@ -45,7 +45,7 @@ export function migratePayloadToCurrent(payload) {
 
     if (Array.isArray(clonedPayload.goals)) {
         // Migrate each goal: convert description to first step
-        migrated.goals = clonedPayload.goals.map(goal => migrateGoalDescriptionToStep(goal));
+        migrated.goals = clonedPayload.goals.map((goal, index) => migrateGoalDescriptionToStep(goal, index));
         migrated.goals = serializeGoals(migrated.goals);
     } else if (!Array.isArray(migrated.goals)) {
         migrated.goals = [];
@@ -58,8 +58,10 @@ export function migratePayloadToCurrent(payload) {
  * Migrates a goal's description field to a step.
  * If the goal has a description, it becomes the first step.
  * The description field is removed from the goal.
+ * @param {Object} goal - The goal object to migrate
+ * @param {number} index - Optional index to include in step ID generation for uniqueness
  */
-function migrateGoalDescriptionToStep(goal) {
+function migrateGoalDescriptionToStep(goal, index = 0) {
     if (!goal || typeof goal !== 'object') {
         return goal;
     }
@@ -76,7 +78,7 @@ function migrateGoalDescriptionToStep(goal) {
         
         // Create a step from the description
         const descriptionStep = {
-            id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
+            id: `${Date.now()}-${index}-${Math.random().toString(16).slice(2, 10)}`,
             text: description.trim(),
             completed: false,
             order: 0
