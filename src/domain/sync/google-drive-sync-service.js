@@ -178,9 +178,7 @@ class GoogleDriveSyncService {
                             // Handle refresh promise if pending
                             if (this.refreshReject) {
                                 this.refreshReject(new Error(errorMessage));
-                                this.refreshResolve = null;
-                                this.refreshReject = null;
-                                this.pendingRefreshPromise = null;
+                                this._clearPendingRefreshState();
                             } else {
                                 reject(new Error(errorMessage));
                             }
@@ -191,9 +189,7 @@ class GoogleDriveSyncService {
                             const error = new Error('No access token received from Google. Please try again.');
                             if (this.refreshReject) {
                                 this.refreshReject(error);
-                                this.refreshResolve = null;
-                                this.refreshReject = null;
-                                this.pendingRefreshPromise = null;
+                                this._clearPendingRefreshState();
                             } else {
                                 reject(error);
                             }
@@ -214,9 +210,7 @@ class GoogleDriveSyncService {
                         // Handle refresh promise if pending
                         if (this.refreshResolve) {
                             this.refreshResolve(true);
-                            this.refreshResolve = null;
-                            this.refreshReject = null;
-                            this.pendingRefreshPromise = null;
+                            this._clearPendingRefreshState();
                         } else {
                             resolve(this.accessToken);
                         }
@@ -252,11 +246,44 @@ class GoogleDriveSyncService {
     }
 
     /**
-     * Refresh access token if needed
-     * Returns true if a refresh was initiated, false if not needed
-     * Throws an error if refresh fails
+     * Clear pending refresh state
+     * @private
      */
-    async refreshTokenIfNeeded() {
+    _clearPendingRefreshState() {
+        this.refreshResolve = null;
+        this.refreshReject = null;
+        this.pendingRefreshPromise = null;
+    }
+
+    /**
+     * Get current access token from memory or localStorage
+     * @private
+     * @returns {string|null} The current access token or null if not available
+     */
+    _getCurrentAccessToken() {
+        if (this.accessToken) {
+            return this.accessToken;
+        }
+        const savedToken = localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN);
+        if (savedToken) {
+            try {
+                const tokenData = JSON.parse(savedToken);
+                return tokenData.access_token || null;
+            } catch (error) {
+                console.error('Failed to parse token from storage', error);
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Refresh access token if needed
+     * @param {boolean} force - Force refresh even if token is still valid
+     * @returns {Promise<boolean>} Returns true if a refresh was initiated, false if not needed
+     * @throws {Error} Throws an error if refresh fails
+     */
+    async refreshTokenIfNeeded(force = false) {
         if (!this.accessToken) {
             return false;
         }
@@ -271,8 +298,8 @@ class GoogleDriveSyncService {
             const expiresAt = tokenData.expires_at || 0;
             const now = Date.now();
 
-            // Refresh if token expires in less than 5 minutes
-            if (expiresAt - now < 5 * 60 * 1000) {
+            // Refresh if forced or token expires in less than 5 minutes
+            if (force || expiresAt - now < 5 * 60 * 1000) {
                 // Ensure token client is initialized
                 if (!this.tokenClient && this.gisLoaded && window.google?.accounts?.oauth2) {
                     // Token client will be created during authenticate() call
@@ -300,16 +327,12 @@ class GoogleDriveSyncService {
                             setTimeout(() => {
                                 if (this.pendingRefreshPromise) {
                                     this.refreshReject(new Error('Token refresh timeout'));
-                                    this.refreshResolve = null;
-                                    this.refreshReject = null;
-                                    this.pendingRefreshPromise = null;
+                                    this._clearPendingRefreshState();
                                 }
                             }, 30000);
                         } catch (error) {
                             this.refreshReject(new Error(`Failed to request token refresh: ${error.message}`));
-                            this.refreshResolve = null;
-                            this.refreshReject = null;
-                            this.pendingRefreshPromise = null;
+                            this._clearPendingRefreshState();
                         }
                     });
 
@@ -346,19 +369,83 @@ class GoogleDriveSyncService {
         }
 
         // Reload token from storage in case it was refreshed
-        const savedToken = localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN);
-        if (savedToken) {
-            try {
-                const tokenData = JSON.parse(savedToken);
-                this.accessToken = tokenData.access_token;
-            } catch (error) {
-                console.error('Failed to reload token from storage', error);
-            }
+        const currentToken = this._getCurrentAccessToken();
+        if (currentToken) {
+            this.accessToken = currentToken;
         }
 
         if (window.gapi?.client && this.accessToken) {
             window.gapi.client.setToken({ access_token: this.accessToken });
         }
+    }
+
+    /**
+     * Execute a fetch request with automatic token refresh on 401 errors
+     * @param {string} url - The URL to fetch
+     * @param {RequestInit} options - Fetch options (method, headers, body, etc.)
+     * @param {number} maxRetries - Maximum number of retries (default: 1)
+     * @returns {Promise<Response>} The fetch response
+     */
+    async executeFetchWithTokenRefresh(url, options = {}, maxRetries = 1) {
+        let lastError = null;
+        
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                // Ensure token is fresh before each attempt
+                await this.ensureAuthenticated();
+                const currentToken = this._getCurrentAccessToken();
+                
+                if (!currentToken) {
+                    throw new Error('No access token available');
+                }
+
+                // Add/update Authorization header
+                const headers = new Headers(options.headers || {});
+                headers.set('Authorization', `Bearer ${currentToken}`);
+                
+                // Execute the fetch request
+                const response = await fetch(url, {
+                    ...options,
+                    headers
+                });
+
+                // If fetch succeeds, return the response
+                if (response.ok || response.status !== 401) {
+                    return response;
+                }
+
+                // Handle 401 error - try to refresh and retry
+                if (response.status === 401 && attempt < maxRetries) {
+                    console.warn(`Fetch request failed with 401, attempting token refresh (attempt ${attempt + 1}/${maxRetries + 1})`);
+                    
+                    try {
+                        // Force token refresh
+                        await this.refreshTokenIfNeeded(true);
+                        // Wait a bit before retrying
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        continue;
+                    } catch (refreshError) {
+                        console.error('Token refresh failed during fetch retry:', refreshError);
+                        throw new Error('Authentication failed. Please sign in again.');
+                    }
+                }
+
+                // If not 401 or no retries left, return the response (even if error)
+                return response;
+            } catch (error) {
+                lastError = error;
+                
+                // If it's an auth error and we have retries left, continue
+                if (error.message?.includes('Authentication failed') && attempt < maxRetries) {
+                    continue;
+                }
+                
+                // Otherwise, throw the error
+                throw error;
+            }
+        }
+        
+        throw lastError || new Error('Fetch request failed');
     }
 
     /**
@@ -393,22 +480,13 @@ class GoogleDriveSyncService {
                     
                     // Try to refresh token
                     try {
-                        // Force token refresh by clearing expiration
-                        const savedToken = localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN);
-                        if (savedToken) {
-                            const tokenData = JSON.parse(savedToken);
-                            // Set expiration to past to force refresh
-                            tokenData.expires_at = Date.now() - 1000;
-                            localStorage.setItem(STORAGE_KEY_GDRIVE_TOKEN, JSON.stringify(tokenData));
-                        }
-                        
-                        await this.refreshTokenIfNeeded();
+                        // Force token refresh
+                        await this.refreshTokenIfNeeded(true);
                         
                         // Update gapi token
-                        const updatedToken = localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN);
-                        if (updatedToken) {
-                            const tokenData = JSON.parse(updatedToken);
-                            this.accessToken = tokenData.access_token;
+                        const refreshedToken = this._getCurrentAccessToken();
+                        if (refreshedToken) {
+                            this.accessToken = refreshedToken;
                             if (window.gapi?.client) {
                                 window.gapi.client.setToken({ access_token: this.accessToken });
                             }
@@ -521,44 +599,14 @@ class GoogleDriveSyncService {
             form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
             form.append('file', blob);
 
-            // Ensure token is fresh before upload
-            await this.ensureAuthenticated();
-            const currentToken = this.accessToken || JSON.parse(localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN) || '{}').access_token;
-            
-            response = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${currentToken}`
-                },
-                body: form
-            });
-
-            // If update fails with 401, try token refresh and retry
-            if (!response.ok && response.status === 401) {
-                try {
-                    // Force token refresh
-                    const savedToken = localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN);
-                    if (savedToken) {
-                        const tokenData = JSON.parse(savedToken);
-                        tokenData.expires_at = Date.now() - 1000;
-                        localStorage.setItem(STORAGE_KEY_GDRIVE_TOKEN, JSON.stringify(tokenData));
-                    }
-                    await this.refreshTokenIfNeeded();
-                    const refreshedToken = this.accessToken || JSON.parse(localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN) || '{}').access_token;
-                    
-                    // Retry with refreshed token
-                    response = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Authorization': `Bearer ${refreshedToken}`
-                        },
-                        body: form
-                    });
-                } catch (refreshError) {
-                    console.error('Token refresh failed during upload retry:', refreshError);
-                    throw new Error('Authentication failed. Please sign in again.');
+            // Use executeFetchWithTokenRefresh for automatic token refresh on 401 errors
+            response = await this.executeFetchWithTokenRefresh(
+                `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
+                {
+                    method: 'PATCH',
+                    body: form
                 }
-            }
+            );
 
             // If update fails, try to find the file again (might have been moved/deleted)
             if (!response.ok && (response.status === 403 || response.status === 404)) {
@@ -575,14 +623,13 @@ class GoogleDriveSyncService {
                     retryForm.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
                     retryForm.append('file', blob);
                     
-                    const retryToken = this.accessToken || JSON.parse(localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN) || '{}').access_token;
-                    response = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Authorization': `Bearer ${retryToken}`
-                        },
-                        body: retryForm
-                    });
+                    response = await this.executeFetchWithTokenRefresh(
+                        `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
+                        {
+                            method: 'PATCH',
+                            body: retryForm
+                        }
+                    );
                 }
                 
                 // If still failing, create new file only as last resort
@@ -592,14 +639,13 @@ class GoogleDriveSyncService {
                     newForm.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
                     newForm.append('file', blob);
 
-                    const createToken = this.accessToken || JSON.parse(localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN) || '{}').access_token;
-                    response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${createToken}`
-                        },
-                        body: newForm
-                    });
+                    response = await this.executeFetchWithTokenRefresh(
+                        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+                        {
+                            method: 'POST',
+                            body: newForm
+                        }
+                    );
                 }
             }
         } else {
@@ -609,44 +655,14 @@ class GoogleDriveSyncService {
             form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
             form.append('file', blob);
 
-            // Ensure token is fresh before upload
-            await this.ensureAuthenticated();
-            const createToken = this.accessToken || JSON.parse(localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN) || '{}').access_token;
-            
-            response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${createToken}`
-                },
-                body: form
-            });
-            
-            // If upload fails with 401, try token refresh and retry
-            if (!response.ok && response.status === 401) {
-                try {
-                    // Force token refresh
-                    const savedToken = localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN);
-                    if (savedToken) {
-                        const tokenData = JSON.parse(savedToken);
-                        tokenData.expires_at = Date.now() - 1000;
-                        localStorage.setItem(STORAGE_KEY_GDRIVE_TOKEN, JSON.stringify(tokenData));
-                    }
-                    await this.refreshTokenIfNeeded();
-                    const refreshedToken = this.accessToken || JSON.parse(localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN) || '{}').access_token;
-                    
-                    // Retry with refreshed token
-                    response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${refreshedToken}`
-                        },
-                        body: form
-                    });
-                } catch (refreshError) {
-                    console.error('Token refresh failed during upload retry:', refreshError);
-                    throw new Error('Authentication failed. Please sign in again.');
+            // Use executeFetchWithTokenRefresh for automatic token refresh on 401 errors
+            response = await this.executeFetchWithTokenRefresh(
+                'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+                {
+                    method: 'POST',
+                    body: form
                 }
-            }
+            );
         }
 
         if (!response.ok) {
@@ -682,40 +698,10 @@ class GoogleDriveSyncService {
         this.fileId = file.id;
         localStorage.setItem(STORAGE_KEY_GDRIVE_FILE_ID, this.fileId);
 
-        // Download file content using fetch
-        await this.ensureAuthenticated();
-        let downloadToken = this.accessToken || JSON.parse(localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN) || '{}').access_token;
-        
-        let response = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
-            headers: {
-                'Authorization': `Bearer ${downloadToken}`
-            }
-        });
-
-        // If download fails with 401, try token refresh and retry
-        if (!response.ok && response.status === 401) {
-            try {
-                // Force token refresh
-                const savedToken = localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN);
-                if (savedToken) {
-                    const tokenData = JSON.parse(savedToken);
-                    tokenData.expires_at = Date.now() - 1000;
-                    localStorage.setItem(STORAGE_KEY_GDRIVE_TOKEN, JSON.stringify(tokenData));
-                }
-                await this.refreshTokenIfNeeded();
-                downloadToken = this.accessToken || JSON.parse(localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN) || '{}').access_token;
-                
-                // Retry with refreshed token
-                response = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
-                    headers: {
-                        'Authorization': `Bearer ${downloadToken}`
-                    }
-                });
-            } catch (refreshError) {
-                console.error('Token refresh failed during download retry:', refreshError);
-                throw new Error('Authentication failed. Please sign in again.');
-            }
-        }
+        // Download file content using fetch with automatic token refresh
+        const response = await this.executeFetchWithTokenRefresh(
+            `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`
+        );
 
         if (!response.ok) {
             throw new Error('Failed to download from Google Drive');
