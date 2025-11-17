@@ -1,21 +1,19 @@
+// tests/mocks/dom.js
+
 const { JSDOM } = require('jsdom');
-const LanguageService = require('../../src/domain/services/language-service').default;
 
-// Mock the entire DOM for testing UI interactions
-let dom;
-let document;
-let window;
+/**
+ * Creates a basic JSDOM instance with minimal HTML
+ */
+function createBasicDOM() {
+    return new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'http://localhost' });
+}
 
-// Mock the app object and its services
-let mockApp;
-let mockGoalService;
-let mockSettingsService;
-let mockReviewService;
-let languageService;
-
-function setupTestEnvironment() {
-    // Setup JSDOM
-    dom = new JSDOM(`<!DOCTYPE html><html><body>
+/**
+ * Creates a JSDOM instance with full UI elements for testing UI controllers
+ */
+function createFullDOM() {
+    return new JSDOM(`<!DOCTYPE html><html><body>
         <div id="goalsList"></div>
         <div id="all-goalsView" class="view">
             <div class="all-goals-controls">
@@ -137,83 +135,58 @@ function setupTestEnvironment() {
             <div id="checkInsList"></div>
             <div id="checkInsEmptyState" hidden></div>
         </div>
-        <button class="menu-btn active" data-view="dashboard"></button>
-        <button class="menu-btn" data-view="all-goals"></button>
+        <nav class="desktop-menu">
+            <button class="menu-btn active" data-view="dashboard"></button>
+            <button class="menu-btn" data-view="all-goals"></button>
+        </nav>
+        <header>
+            <button id="mobileMenuToggle" aria-expanded="false"></button>
+            <div id="mobileMenuDropdown" aria-hidden="true">
+                <button class="mobile-menu-btn active" data-view="dashboard"></button>
+                <button class="mobile-menu-btn" data-view="all-goals"></button>
+            </div>
+        </header>
         <div id="dashboardView" class="view active"></div>
-    </body></html>`, { url: "http://localhost" });
-    document = dom.window.document;
-    window = dom.window;
+        <div id="checkInView" class="view"></div>
+        <div id="settingsView" class="view"></div>
+    </body></html>`, { url: 'http://localhost' });
+}
 
-    // Make document and window available globally for the UIController
+/**
+ * Sets up global DOM environment from a JSDOM instance
+ */
+function setupGlobalDOM(dom) {
+    const document = dom.window.document;
+    const window = dom.window;
+
     global.document = document;
     global.window = window;
     global.navigator = window.navigator || { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
-    global.confirm = jest.fn(); // Mock global confirm
-    global.alert = jest.fn(); // Mock global alert
-    window.confirm = global.confirm;
-    window.alert = global.alert;
-    
+
     // Ensure navigator is available on window
     if (!window.navigator) {
         window.navigator = global.navigator;
     }
 
-    jest.useFakeTimers();
-    jest.setSystemTime(new Date('2025-11-09T12:00:00.000Z')); // Set a fixed system time
-
-    // Mock services
-    mockGoalService = {
-        goals: [],
-        getActiveGoals: jest.fn(() => []),
-        createGoal: jest.fn(),
-        updateGoal: jest.fn(),
-        setGoalStatus: jest.fn(),
-        deleteGoal: jest.fn(),
-        calculatePriority: jest.fn(() => 0),
-        autoActivateGoalsByPriority: jest.fn(),
-        revertGoalToHistoryEntry: jest.fn(),
-    };
-    mockSettingsService = {
-        getSettings: jest.fn(() => ({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] })),
-        updateSettings: jest.fn(),
-        getReviewIntervals: jest.fn(() => [30, 14, 7])
-    };
-    mockReviewService = {
-        getCheckIns: jest.fn(() => []),
-        recordReview: jest.fn()
-    };
-
-    // Mock the app object
-    languageService = new LanguageService();
-    languageService.init('en');
-
-    mockApp = {
-        goalService: mockGoalService,
-        settingsService: mockSettingsService,
-        reviewService: mockReviewService,
-        languageService,
-        checkIns: [],
-        exportData: jest.fn(),
-        importData: jest.fn(),
-        startCheckInTimer: jest.fn(),
-        refreshCheckIns: jest.fn(),
-        handleMigrationReviewRequest: jest.fn(),
-        cancelMigration: jest.fn(),
-        completeMigration: jest.fn()
-    };
-
-    return { dom, document, window, mockApp, mockGoalService, mockSettingsService, mockReviewService, languageService };
+    return { document, window };
 }
 
-function cleanupTestEnvironment() {
-    // Clean up global DOM elements
+/**
+ * Cleans up global DOM environment
+ */
+function cleanupGlobalDOM(dom) {
+    if (dom) {
+        dom.window.close();
+    }
     delete global.document;
     delete global.window;
     delete global.navigator;
-    delete global.confirm;
-    delete global.alert;
-    jest.useRealTimers();
 }
 
-module.exports = { setupTestEnvironment, cleanupTestEnvironment };
+module.exports = {
+    createBasicDOM,
+    createFullDOM,
+    setupGlobalDOM,
+    cleanupGlobalDOM
+};
 

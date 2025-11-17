@@ -2,8 +2,8 @@ const {
     prepareExportPayload,
     migratePayloadToCurrent,
     prepareGoalsStoragePayload
-} = require('../src/domain/migration-service');
-const { GOAL_FILE_VERSION } = require('../src/domain/versioning');
+} = require('../src/domain/migration/migration-service');
+const { GOAL_FILE_VERSION } = require('../src/domain/utils/versioning');
 
 describe('migration service', () => {
     const sampleGoals = [

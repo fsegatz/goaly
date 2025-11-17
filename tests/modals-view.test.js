@@ -1,7 +1,7 @@
 const { JSDOM } = require('jsdom');
 const { ModalsView } = require('../src/ui/desktop/modals-view.js');
-const Goal = require('../src/domain/goal').default;
-const LanguageService = require('../src/domain/language-service').default;
+const Goal = require('../src/domain/models/goal').default;
+const LanguageService = require('../src/domain/services/language-service').default;
 
 let dom;
 let document;

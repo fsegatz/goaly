@@ -1,4 +1,4 @@
-import { GOAL_FILE_VERSION } from './versioning.js';
+import { GOAL_FILE_VERSION } from '../utils/versioning.js';
 
 function deepClone(value) {
     return JSON.parse(JSON.stringify(value ?? null));

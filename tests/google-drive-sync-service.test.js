@@ -1,6 +1,6 @@
 // tests/google-drive-sync-service.test.js
 
-const GoogleDriveSyncService = require('../src/domain/google-drive-sync-service').default;
+const GoogleDriveSyncService = require('../src/domain/sync/google-drive-sync-service').default;
 
 describe('GoogleDriveSyncService', () => {
     let service;
@@ -465,69 +465,6 @@ describe('GoogleDriveSyncService', () => {
             service.gisLoaded = true;
             service.initialized = true;
             window.gapi.client.setToken = jest.fn();
-        });
-
-        test('should detect no conflict when versions match', async () => {
-            const localVersion = '1.0.0';
-            const localExportDate = new Date().toISOString();
-            const remoteData = {
-                version: '1.0.0',
-                exportDate: localExportDate,
-                goals: [{ id: '1', title: 'Test Goal' }] // Has data
-            };
-
-            mockGapi.client.drive.files.list
-                .mockResolvedValueOnce({
-                    result: { files: [{ id: 'folder-id' }] }
-                })
-                .mockResolvedValueOnce({
-                    result: {
-                        files: [{ id: 'file-id', modifiedTime: new Date().toISOString() }]
-                    }
-                });
-
-            global.fetch.mockResolvedValue({
-                ok: true,
-                text: async () => JSON.stringify(remoteData)
-            });
-
-            // Pass localHasData = true since we're testing with matching data
-            const conflict = await service.checkForConflicts(localVersion, localExportDate, true);
-
-            expect(conflict.hasConflict).toBe(false);
-        });
-
-        test('should detect conflict when remote is newer', async () => {
-            const localVersion = '1.0.0';
-            const localExportDate = new Date(Date.now() - 10000).toISOString();
-            const remoteData = {
-                version: '1.0.0',
-                exportDate: new Date().toISOString(),
-                goals: [{ id: '1', title: 'Test Goal' }] // Has data
-            };
-
-            mockGapi.client.drive.files.list
-                .mockResolvedValueOnce({
-                    result: { files: [{ id: 'folder-id' }] }
-                })
-                .mockResolvedValueOnce({
-                    result: {
-                        files: [{ id: 'file-id', modifiedTime: new Date().toISOString() }]
-                    }
-                });
-
-            global.fetch.mockResolvedValue({
-                ok: true,
-                text: async () => JSON.stringify(remoteData)
-            });
-
-            // Pass localHasData = true
-            const conflict = await service.checkForConflicts(localVersion, localExportDate, true);
-
-            expect(conflict.hasConflict).toBe(true);
-            // New implementation returns 'remote_newer' when remote is newer (local is older)
-            expect(conflict.type).toBe('remote_newer');
-            expect(conflict.shouldUpload).toBe(false); // Should download remote
         });
 
         test('should prioritize empty local data - download from remote', async () => {

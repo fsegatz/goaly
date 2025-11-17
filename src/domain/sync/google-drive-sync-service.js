@@ -1,12 +1,11 @@
 // src/domain/google-drive-sync-service.js
 
-import { prepareExportPayload } from './migration-service.js';
-import { GOAL_FILE_VERSION, isSameVersion, isOlderVersion, isNewerVersion } from './versioning.js';
+import { prepareExportPayload } from '../migration/migration-service.js';
+import { GOAL_FILE_VERSION, isSameVersion, isOlderVersion, isNewerVersion } from '../utils/versioning.js';
+import { STORAGE_KEY_GDRIVE_TOKEN, STORAGE_KEY_GDRIVE_FILE_ID } from '../utils/constants.js';
 
 const GOOGLE_DRIVE_FOLDER_NAME = 'Goaly';
 const GOOGLE_DRIVE_FILE_NAME = 'goaly-data.json';
-const STORAGE_KEY_TOKEN = 'goaly_gdrive_token';
-const STORAGE_KEY_FILE_ID = 'goaly_gdrive_file_id';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 
@@ -45,12 +44,12 @@ class GoogleDriveSyncService {
         this.clientId = clientId;
 
         // Load saved token and file ID
-        const savedToken = localStorage.getItem(STORAGE_KEY_TOKEN);
+        const savedToken = localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN);
         if (savedToken) {
             try {
                 const tokenData = JSON.parse(savedToken);
                 this.accessToken = tokenData.access_token;
-                this.fileId = localStorage.getItem(STORAGE_KEY_FILE_ID);
+                this.fileId = localStorage.getItem(STORAGE_KEY_GDRIVE_FILE_ID);
             } catch (error) {
                 console.error('Failed to load saved token', error);
             }
@@ -182,7 +181,7 @@ class GoogleDriveSyncService {
                         }
 
                         this.accessToken = response.access_token;
-                        localStorage.setItem(STORAGE_KEY_TOKEN, JSON.stringify({
+                        localStorage.setItem(STORAGE_KEY_GDRIVE_TOKEN, JSON.stringify({
                             access_token: this.accessToken,
                             expires_at: Date.now() + (response.expires_in * 1000)
                         }));
@@ -217,8 +216,8 @@ class GoogleDriveSyncService {
         }
         this.accessToken = null;
         this.fileId = null;
-        localStorage.removeItem(STORAGE_KEY_TOKEN);
-        localStorage.removeItem(STORAGE_KEY_FILE_ID);
+        localStorage.removeItem(STORAGE_KEY_GDRIVE_TOKEN);
+        localStorage.removeItem(STORAGE_KEY_GDRIVE_FILE_ID);
         if (window.gapi?.client) {
             window.gapi.client.setToken(null);
         }
@@ -232,7 +231,7 @@ class GoogleDriveSyncService {
             return false;
         }
 
-        const savedToken = localStorage.getItem(STORAGE_KEY_TOKEN);
+        const savedToken = localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN);
         if (!savedToken) {
             return false;
         }
@@ -331,7 +330,7 @@ class GoogleDriveSyncService {
         const blob = new Blob([fileContent], { type: 'application/json' });
 
         // First, try to use stored fileId
-        let fileId = this.fileId || localStorage.getItem(STORAGE_KEY_FILE_ID);
+        let fileId = this.fileId || localStorage.getItem(STORAGE_KEY_GDRIVE_FILE_ID);
         
         // If no stored fileId, search for existing file
         if (!fileId) {
@@ -339,7 +338,7 @@ class GoogleDriveSyncService {
             fileId = existingFile ? existingFile.id : null;
             if (fileId) {
                 this.fileId = fileId;
-                localStorage.setItem(STORAGE_KEY_FILE_ID, fileId);
+                localStorage.setItem(STORAGE_KEY_GDRIVE_FILE_ID, fileId);
             }
         }
 
@@ -371,7 +370,7 @@ class GoogleDriveSyncService {
                     // Found a different file with the same name - use it
                     fileId = existingFile.id;
                     this.fileId = fileId;
-                    localStorage.setItem(STORAGE_KEY_FILE_ID, fileId);
+                    localStorage.setItem(STORAGE_KEY_GDRIVE_FILE_ID, fileId);
                     
                     // Try updating the found file
                     const retryForm = new FormData();
@@ -427,7 +426,7 @@ class GoogleDriveSyncService {
 
         const result = await response.json();
         this.fileId = result.id;
-        localStorage.setItem(STORAGE_KEY_FILE_ID, this.fileId);
+        localStorage.setItem(STORAGE_KEY_GDRIVE_FILE_ID, this.fileId);
 
         return {
             fileId: this.fileId,
@@ -450,7 +449,7 @@ class GoogleDriveSyncService {
         }
 
         this.fileId = file.id;
-        localStorage.setItem(STORAGE_KEY_FILE_ID, this.fileId);
+        localStorage.setItem(STORAGE_KEY_GDRIVE_FILE_ID, this.fileId);
 
         // Download file content using fetch
         const response = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
@@ -615,29 +614,6 @@ class GoogleDriveSyncService {
         }
     }
 
-    /**
-     * Compare local and remote versions to detect conflicts (kept for backward compatibility)
-     * @deprecated Use checkSyncDirection instead
-     */
-    async checkForConflicts(localVersion, localExportDate, localHasData = true) {
-        const syncDirection = await this.checkSyncDirection(localVersion, localExportDate, localHasData);
-        
-        // If states are the same, no conflict
-        if (syncDirection.reason === 'same_state') {
-            return { hasConflict: false };
-        }
-
-        // There's a difference, but we'll sync automatically
-        return {
-            hasConflict: true,
-            type: syncDirection.shouldUpload ? 'local_newer' : 'remote_newer',
-            shouldUpload: syncDirection.shouldUpload,
-            localVersion: syncDirection.localVersion,
-            remoteVersion: syncDirection.remoteVersion,
-            localExportDate: syncDirection.localExportDate,
-            remoteExportDate: syncDirection.remoteExportDate
-        };
-    }
 
     /**
      * Get sync status information

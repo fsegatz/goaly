@@ -1,5 +1,7 @@
 // src/domain/settings-service.js
 
+import { STORAGE_KEY_SETTINGS } from '../utils/constants.js';
+
 const FALLBACK_REVIEW_INTERVALS = [7, 14, 30];
 const INTERVAL_PRECISION = 6;
 
@@ -93,7 +95,7 @@ class SettingsService {
     }
 
     loadSettings() {
-        const saved = localStorage.getItem('goaly_settings');
+        const saved = localStorage.getItem(STORAGE_KEY_SETTINGS);
         if (saved) {
             this.settings = { ...this.settings, ...JSON.parse(saved) };
         }
@@ -106,7 +108,7 @@ class SettingsService {
     }
 
     saveSettings() {
-        localStorage.setItem('goaly_settings', JSON.stringify(this.settings));
+        localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(this.settings));
     }
 
     getSettings() {

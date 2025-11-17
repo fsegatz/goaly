@@ -1,5 +1,5 @@
 const { JSDOM } = require('jsdom');
-const LanguageService = require('../src/domain/language-service').default;
+const LanguageService = require('../src/domain/services/language-service').default;
 const enTranslations = require('../src/language/en').default;
 
 describe('LanguageService', () => {

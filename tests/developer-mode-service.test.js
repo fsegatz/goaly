@@ -1,5 +1,5 @@
 // tests/developer-mode-service.test.js
-const DeveloperModeService = require('../src/domain/developer-mode-service.js').default;
+const DeveloperModeService = require('../src/domain/services/developer-mode-service.js').default;
 
 describe('DeveloperModeService', () => {
     test('initial state is disabled', () => {

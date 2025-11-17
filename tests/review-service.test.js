@@ -1,9 +1,9 @@
 // tests/review-service.test.js
 
-const ReviewService = require('../src/domain/review-service').default;
-const GoalService = require('../src/domain/goal-service').default;
-const Goal = require('../src/domain/goal').default;
-const SettingsService = require('../src/domain/settings-service').default;
+const ReviewService = require('../src/domain/services/review-service').default;
+const GoalService = require('../src/domain/services/goal-service').default;
+const Goal = require('../src/domain/models/goal').default;
+const SettingsService = require('../src/domain/services/settings-service').default;
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 

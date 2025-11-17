@@ -5,7 +5,7 @@ const {
     isOlderVersion,
     isSameVersion,
     isNewerVersion
-} = require('../src/domain/versioning');
+} = require('../src/domain/utils/versioning');
 
 describe('versioning utilities', () => {
     test('validates semantic version strings', () => {

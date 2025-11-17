@@ -1,6 +1,6 @@
 // tests/sync-merge-service.test.js
-const { mergePayloads } = require('../src/domain/sync-merge-service.js');
-const { computeTwoWayMerge } = require('../src/domain/sync-merge-service.js');
+const { mergePayloads } = require('../src/domain/sync/sync-merge-service.js');
+const { computeTwoWayMerge } = require('../src/domain/sync/sync-merge-service.js');
 
 describe('sync-merge-service', () => {
     const basePayload = {

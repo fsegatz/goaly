@@ -1,6 +1,6 @@
 // tests/goal-service.test.js
 
-const GoalService = require('../src/domain/goal-service').default;
+const GoalService = require('../src/domain/services/goal-service').default;
 
 describe('Goal Service', () => {
     let goalService;
@@ -218,10 +218,10 @@ describe('Goal Service', () => {
 
     it('should migrate goals to auto activation', () => {
         // Manually set goals with different statuses
-        const goal1 = new (require('../src/domain/goal').default)({ 
+        const goal1 = new (require('../src/domain/models/goal').default)({ 
             id: '1', title: 'Goal 1', motivation: 1, urgency: 1, status: 'active' 
         });
-        const goal2 = new (require('../src/domain/goal').default)({ 
+        const goal2 = new (require('../src/domain/models/goal').default)({ 
             id: '2', title: 'Goal 2', motivation: 5, urgency: 5, status: 'paused' 
         });
         goalService.goals = [goal1, goal2];
@@ -429,7 +429,7 @@ describe('Goal Service', () => {
     });
 
     it('should update goal properties from snapshot via applySnapshotToGoal', () => {
-        const goal = new (require('../src/domain/goal').default)({ title: 'Snapshot Goal', motivation: 2, urgency: 3, status: 'active' });
+        const goal = new (require('../src/domain/models/goal').default)({ title: 'Snapshot Goal', motivation: 2, urgency: 3, status: 'active' });
         const snapshot = {
             title: 'Snapshot Updated',
             description: 'Snapshot Desc',
@@ -522,5 +522,191 @@ describe('Goal Service', () => {
         expect(abandonedGoal.status).toBe('abandoned');
         expect(completedGoal.status).toBe('completed');
         expect(candidate.status).toBe('active');
+    });
+
+    it('onAfterSave should ignore non-function listeners', () => {
+        goalService.onAfterSave('not a function');
+        goalService.onAfterSave(null);
+        goalService.onAfterSave(undefined);
+        goalService.onAfterSave({});
+
+        expect(goalService._listeners.afterSave.length).toBe(0);
+    });
+
+    it('_notifyAfterSave should handle listener errors gracefully', () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        const goodListener = jest.fn();
+        const badListener = jest.fn(() => {
+            throw new Error('Listener error');
+        });
+        const anotherGoodListener = jest.fn();
+
+        goalService.onAfterSave(goodListener);
+        goalService.onAfterSave(badListener);
+        goalService.onAfterSave(anotherGoodListener);
+
+        goalService.saveGoals();
+
+        expect(goodListener).toHaveBeenCalled();
+        expect(badListener).toHaveBeenCalled();
+        expect(anotherGoodListener).toHaveBeenCalled();
+        expect(consoleErrorSpy).toHaveBeenCalledWith('GoalService afterSave listener error', expect.any(Error));
+
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('loadGoals should handle JSON parse errors', () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        localStorage.getItem.mockReturnValue('invalid json');
+
+        goalService.loadGoals();
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to load goals from storage', expect.any(Error));
+        expect(goalService.goals.length).toBe(0);
+
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('loadGoals should handle invalid parsed structure', () => {
+        localStorage.getItem.mockReturnValue('{"invalid": "structure"}');
+
+        goalService.loadGoals();
+
+        expect(goalService.goals.length).toBe(0);
+    });
+
+    it('loadGoals should handle parsed data with version', () => {
+        const savedGoals = {
+            version: '1.0.0',
+            goals: [
+                { id: '1', title: 'Goal 1', motivation: 3, urgency: 4, status: 'active', createdAt: '2025-01-01T00:00:00.000Z', lastUpdated: '2025-01-01T00:00:00.000Z' }
+            ]
+        };
+        localStorage.getItem.mockReturnValue(JSON.stringify(savedGoals));
+        const saveSpy = jest.spyOn(goalService, 'saveGoals');
+
+        goalService.loadGoals();
+
+        expect(goalService.goals.length).toBe(1);
+        expect(saveSpy).not.toHaveBeenCalled(); // Should not save if version exists
+
+        saveSpy.mockRestore();
+    });
+
+    it('applySnapshotToGoal should return early when snapshot is null', () => {
+        const goal = goalService.createGoal({ title: 'Test', motivation: 2, urgency: 2 }, 3);
+        const originalTitle = goal.title;
+
+        goalService.applySnapshotToGoal(goal, null);
+
+        expect(goal.title).toBe(originalTitle);
+    });
+
+    it('applySnapshotToGoal should return early when snapshot is undefined', () => {
+        const goal = goalService.createGoal({ title: 'Test', motivation: 2, urgency: 2 }, 3);
+        const originalTitle = goal.title;
+
+        goalService.applySnapshotToGoal(goal, undefined);
+
+        expect(goal.title).toBe(originalTitle);
+    });
+
+    it('handleStatusTransition should return early when status is the same', () => {
+        const goal = goalService.createGoal({ title: 'Test', motivation: 2, urgency: 2 }, 3);
+        const initialHistoryLength = goal.history.length;
+
+        goalService.handleStatusTransition(goal, goal.status);
+
+        expect(goal.history.length).toBe(initialHistoryLength);
+    });
+
+    it('setGoalStatus should use goals.length when maxActiveGoals is invalid', () => {
+        const goal1 = goalService.createGoal({ title: 'Goal 1', motivation: 5, urgency: 5 }, 1);
+        const goal2 = goalService.createGoal({ title: 'Goal 2', motivation: 3, urgency: 3 }, 1);
+        const autoSpy = jest.spyOn(goalService, 'autoActivateGoalsByPriority');
+
+        goalService.setGoalStatus(goal1.id, 'paused', NaN);
+        expect(autoSpy).toHaveBeenCalledWith(2); // Should use goals.length
+
+        goalService.setGoalStatus(goal1.id, 'active', 0);
+        expect(autoSpy).toHaveBeenCalledWith(2); // Should use goals.length
+
+        goalService.setGoalStatus(goal1.id, 'paused', -1);
+        expect(autoSpy).toHaveBeenCalledWith(2); // Should use goals.length
+
+        autoSpy.mockRestore();
+    });
+
+    it('setGoalStatus should save when status change does not affect active status', () => {
+        const goal = goalService.createGoal({ title: 'Test', motivation: 2, urgency: 2 }, 3);
+        goal.status = 'paused';
+        const saveSpy = jest.spyOn(goalService, 'saveGoals');
+
+        goalService.setGoalStatus(goal.id, 'completed', 3);
+
+        expect(saveSpy).toHaveBeenCalled();
+        saveSpy.mockRestore();
+    });
+
+    it('updateGoal should not change priority when motivation/urgency/deadline unchanged', () => {
+        const goal = goalService.createGoal({ title: 'Test', motivation: 3, urgency: 4 }, 1);
+        const autoSpy = jest.spyOn(goalService, 'autoActivateGoalsByPriority');
+        const saveSpy = jest.spyOn(goalService, 'saveGoals');
+
+        // When motivation is unchanged, updates object will be empty, so function returns early
+        // without calling saveGoals. Let's test with a field that does change.
+        goalService.updateGoal(goal.id, { motivation: 3, description: 'New description' }, 1);
+        expect(autoSpy).not.toHaveBeenCalled();
+        expect(saveSpy).toHaveBeenCalled();
+
+        autoSpy.mockClear();
+        saveSpy.mockClear();
+
+        goalService.updateGoal(goal.id, { urgency: 4, description: 'Another description' }, 1);
+        expect(autoSpy).not.toHaveBeenCalled();
+        expect(saveSpy).toHaveBeenCalled();
+
+        autoSpy.mockClear();
+        saveSpy.mockClear();
+
+        const deadline = new Date('2025-12-31');
+        goal.deadline = deadline;
+        goalService.updateGoal(goal.id, { deadline: deadline.toISOString(), description: 'Yet another' }, 1);
+        expect(autoSpy).not.toHaveBeenCalled();
+        expect(saveSpy).toHaveBeenCalled();
+
+        autoSpy.mockRestore();
+        saveSpy.mockRestore();
+    });
+
+    it('updateGoal should handle undefined steps and resources', () => {
+        const goal = goalService.createGoal({ title: 'Test', motivation: 2, urgency: 2 }, 3);
+        goal.steps = ['step1'];
+        goal.resources = ['res1'];
+
+        goalService.updateGoal(goal.id, { steps: undefined, resources: undefined }, 3);
+
+        expect(goal.steps).toEqual(['step1']); // Should not change
+        expect(goal.resources).toEqual(['res1']); // Should not change
+    });
+
+    it('updateGoal should handle empty steps and resources arrays', () => {
+        const goal = goalService.createGoal({ title: 'Test', motivation: 2, urgency: 2 }, 3);
+        goal.steps = ['step1'];
+        goal.resources = ['res1'];
+
+        goalService.updateGoal(goal.id, { steps: [], resources: [] }, 3);
+
+        expect(goal.steps).toEqual([]);
+        expect(goal.resources).toEqual([]);
+    });
+
+    it('updateGoal should handle non-array steps and resources', () => {
+        const goal = goalService.createGoal({ title: 'Test', motivation: 2, urgency: 2 }, 3);
+
+        goalService.updateGoal(goal.id, { steps: 'not an array', resources: { not: 'array' } }, 3);
+
+        expect(goal.steps).toEqual([]);
+        expect(goal.resources).toEqual([]);
     });
 });

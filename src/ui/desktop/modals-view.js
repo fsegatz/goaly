@@ -1,7 +1,7 @@
 // src/ui/desktop/modals-view.js
 
 import { BaseUIController } from './base-ui-controller.js';
-import { computeLineDiff } from '../../domain/diff-utils.js';
+import { computeLineDiff } from '../../domain/utils/diff-utils.js';
 
 export class ModalsView extends BaseUIController {
     constructor(app) {

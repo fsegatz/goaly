@@ -1,7 +1,7 @@
 // src/domain/sync-merge-service.js
-import Goal from './goal.js';
-import { migratePayloadToCurrent } from './migration-service.js';
-import { GOAL_FILE_VERSION } from './versioning.js';
+import Goal from '../models/goal.js';
+import { migratePayloadToCurrent } from '../migration/migration-service.js';
+import { GOAL_FILE_VERSION } from '../utils/versioning.js';
 
 function parseDate(value) {
 	if (!value) return null;
