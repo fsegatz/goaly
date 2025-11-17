@@ -632,36 +632,55 @@ describe('GoogleDriveSyncService', () => {
 
         test('should refresh token if needed', async () => {
             service.accessToken = 'old-token';
+            service.clientId = 'test-client-id';
             const savedToken = {
                 access_token: 'old-token',
                 expires_at: Date.now() - 10000 // Expired (less than 5 minutes remaining)
             };
             localStorage.getItem.mockReturnValue(JSON.stringify(savedToken));
 
-            let storedCallback = null;
+            // Create a mock callback that will be used by both authenticate and refresh
+            let tokenCallback = null;
             const mockTokenClient = {
                 requestAccessToken: jest.fn((options) => {
-                    if (storedCallback) {
-                        storedCallback({
-                            access_token: 'new-token',
-                            expires_in: 3600
-                        });
-                    }
+                    // Don't invoke immediately - let refreshTokenIfNeeded set up the promise first
+                    // The callback will be invoked manually after the promise is created
                 })
             };
 
+            // Set up initTokenClient to store the callback
             mockGoogleAccounts.oauth2.initTokenClient.mockImplementation((config) => {
-                storedCallback = config.callback;
+                tokenCallback = config.callback;
                 return mockTokenClient;
             });
 
-            service.tokenClient = mockTokenClient;
-
-            const result = await service.refreshTokenIfNeeded();
-
+            // First authenticate to set up the token client and callback
+            // But we need to manually invoke the callback to complete authenticate
+            const authPromise = service.authenticate();
+            // Invoke callback to complete authentication
+            if (tokenCallback) {
+                tokenCallback({
+                    access_token: 'initial-token',
+                    expires_in: 3600
+                });
+            }
+            await authPromise;
+            
+            // Now test refresh - create the promise first
+            const refreshPromise = service.refreshTokenIfNeeded();
+            // Now invoke the callback to complete the refresh
+            if (tokenCallback) {
+                tokenCallback({
+                    access_token: 'new-token',
+                    expires_in: 3600
+                });
+            }
+            const result = await refreshPromise;
+            
+            expect(mockTokenClient.requestAccessToken).toHaveBeenCalledWith({ prompt: '' });
             expect(result).toBe(true);
-            expect(service.tokenClient.requestAccessToken).toHaveBeenCalledWith({ prompt: '' });
-        });
+            expect(localStorage.setItem).toHaveBeenCalled();
+        }, 15000);
 
         test('should not refresh token if still valid', async () => {
             service.accessToken = 'valid-token';
@@ -747,6 +766,115 @@ describe('GoogleDriveSyncService', () => {
 
             expect(status.authenticated).toBe(true);
             expect(status.synced).toBe(false);
+        });
+
+        test('should handle token refresh error', async () => {
+            service.accessToken = 'old-token';
+            service.clientId = 'test-client-id';
+            const savedToken = {
+                access_token: 'old-token',
+                expires_at: Date.now() - 10000
+            };
+            localStorage.getItem.mockReturnValue(JSON.stringify(savedToken));
+
+            let tokenCallback = null;
+            const mockTokenClient = {
+                requestAccessToken: jest.fn((options) => {
+                    // Don't invoke immediately
+                })
+            };
+
+            mockGoogleAccounts.oauth2.initTokenClient.mockImplementation((config) => {
+                tokenCallback = config.callback;
+                return mockTokenClient;
+            });
+
+            // First authenticate to set up the callback
+            const authPromise = service.authenticate();
+            if (tokenCallback) {
+                tokenCallback({
+                    access_token: 'initial-token',
+                    expires_in: 3600
+                });
+            }
+            await authPromise;
+
+            // Now test refresh error - create promise first
+            const refreshPromise = service.refreshTokenIfNeeded();
+            // Invoke callback with error
+            if (tokenCallback) {
+                tokenCallback({ error: 'invalid_grant' });
+            }
+
+            await expect(refreshPromise).rejects.toThrow();
+        }, 15000);
+
+        test('executeWithTokenRefresh should retry on 401 error', async () => {
+            service.accessToken = 'token';
+            service.clientId = 'test-client-id';
+            service.gapiLoaded = true;
+            service.gisLoaded = true;
+            service.initialized = true;
+            
+            const savedToken = {
+                access_token: 'token',
+                expires_at: Date.now() + 600000
+            };
+            localStorage.getItem.mockReturnValue(JSON.stringify(savedToken));
+            window.gapi.client.setToken = jest.fn();
+
+            let callCount = 0;
+            const apiCall = jest.fn(async () => {
+                callCount++;
+                if (callCount === 1) {
+                    const error = new Error('Unauthorized');
+                    error.status = 401;
+                    throw error;
+                }
+                return { result: { success: true } };
+            });
+
+            // Mock token refresh - invoke callback immediately
+            let refreshCallback = null;
+            service.tokenClient = {
+                requestAccessToken: jest.fn((options) => {
+                    // Invoke callback immediately for test
+                    if (refreshCallback) {
+                        refreshCallback({
+                            access_token: 'new-token',
+                            expires_in: 3600
+                        });
+                    }
+                }),
+                callback: null
+            };
+
+            mockGoogleAccounts.oauth2.initTokenClient.mockImplementation((config) => {
+                refreshCallback = config.callback;
+                service.tokenClient.callback = config.callback;
+                return service.tokenClient;
+            });
+
+            const result = await service.executeWithTokenRefresh(apiCall);
+
+            expect(apiCall).toHaveBeenCalledTimes(2);
+            expect(result.result.success).toBe(true);
+        }, 10000);
+
+        test('executeWithTokenRefresh should throw on non-auth errors', async () => {
+            service.accessToken = 'token';
+            const savedToken = {
+                access_token: 'token',
+                expires_at: Date.now() + 600000
+            };
+            localStorage.getItem.mockReturnValue(JSON.stringify(savedToken));
+
+            const apiCall = jest.fn(async () => {
+                throw new Error('Network error');
+            });
+
+            await expect(service.executeWithTokenRefresh(apiCall)).rejects.toThrow('Network error');
+            expect(apiCall).toHaveBeenCalledTimes(1);
         });
     });
 });

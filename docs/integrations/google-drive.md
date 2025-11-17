@@ -143,8 +143,25 @@ This ensures the app can only access files it creates, not your entire Google Dr
 ### Token Management
 
 - Access tokens are stored in browser localStorage
-- Tokens are automatically refreshed when needed
+- Tokens are automatically refreshed when needed (before expiration)
+- Automatic token refresh happens:
+  - Proactively when token expires in less than 5 minutes
+  - Automatically retried on API calls that fail with 401/403 errors
+  - Uses silent refresh (no user interaction required) when possible
 - Users can sign out to revoke access
+- If token refresh fails, users will be prompted to re-authenticate
+
+#### OAuth Best Practices
+
+The implementation follows Google OAuth 2.0 best practices:
+
+1. **Automatic Token Refresh**: Tokens are refreshed automatically before expiration (5-minute buffer) to prevent sync failures
+2. **Silent Refresh**: Uses `prompt: ''` for silent token refresh without user interaction
+3. **Error Handling**: API calls automatically retry with refreshed tokens on authentication errors (401/403)
+4. **Token Expiration Tracking**: Token expiration is tracked and stored with the token to enable proactive refresh
+5. **Graceful Degradation**: If automatic refresh fails, clear error messages guide users to re-authenticate
+
+**Note**: Google OAuth 2.0 access tokens typically expire after 1 hour. The app automatically refreshes tokens before expiration to ensure continuous sync functionality without requiring manual re-authentication.
 
 ### Version Compatibility
 
