@@ -1,6 +1,6 @@
 const SEMVER_REGEX = /^(\d+)\.(\d+)\.(\d+)$/;
 
-export const GOAL_FILE_VERSION = '1.0.0';
+export const GOAL_FILE_VERSION = '1.1.0';
 
 export function isValidVersion(version) {
     if (typeof version !== 'string') {

@@ -321,8 +321,8 @@ describe('Goal Service', () => {
         expect(creationEntry).toBeDefined();
         expect(creationEntry.changes.some(change => change.field === 'title' && change.to === 'History Test')).toBe(true);
 
-        goalService.updateGoal(goal.id, { description: 'Updated description' }, 3);
-        const updateEntry = goal.history.find(entry => entry.event === 'updated' && entry.changes.some(change => change.field === 'description' && change.to === 'Updated description'));
+        goalService.updateGoal(goal.id, { title: 'Updated title' }, 3);
+        const updateEntry = goal.history.find(entry => entry.event === 'updated' && entry.changes.some(change => change.field === 'title' && change.to === 'Updated title'));
         expect(updateEntry).toBeDefined();
     });
 
@@ -343,16 +343,16 @@ describe('Goal Service', () => {
 
     it('should revert goal to previous history entry and create rollback entry', () => {
         const goal = goalService.createGoal({ title: 'Rollback Goal', motivation: 2, urgency: 2 }, 3);
-        goalService.updateGoal(goal.id, { description: 'First description' }, 3);
-        const targetEntry = goal.history.find(entry => entry.event === 'updated' && entry.changes.some(change => change.field === 'description'));
+        goalService.updateGoal(goal.id, { title: 'First title' }, 3);
+        const targetEntry = goal.history.find(entry => entry.event === 'updated' && entry.changes.some(change => change.field === 'title'));
         expect(targetEntry).toBeDefined();
 
-        goalService.updateGoal(goal.id, { description: 'Second description' }, 3);
-        expect(goal.description).toBe('Second description');
+        goalService.updateGoal(goal.id, { title: 'Second title' }, 3);
+        expect(goal.title).toBe('Second title');
 
         const revertedGoal = goalService.revertGoalToHistoryEntry(goal.id, targetEntry.id, 3);
         expect(revertedGoal).not.toBeNull();
-        expect(revertedGoal.description).toBe('');
+        expect(revertedGoal.title).toBe('Rollback Goal');
 
         const rollbackEntry = goal.history.find(entry => entry.event === 'rollback' && entry.meta?.revertedEntryId === targetEntry.id);
         expect(rollbackEntry).toBeDefined();
@@ -361,15 +361,15 @@ describe('Goal Service', () => {
     it('should call saveGoals when revert does not change goal state', () => {
         const saveSpy = jest.spyOn(goalService, 'saveGoals');
         const goal = goalService.createGoal({ title: 'No Change Revert', motivation: 2, urgency: 2 }, 3);
-        goalService.updateGoal(goal.id, { description: 'Interim value' }, 3);
-        const historyEntry = goal.history.find(entry => entry.event === 'updated' && entry.changes.some(change => change.field === 'description'));
+        goalService.updateGoal(goal.id, { title: 'Interim value' }, 3);
+        const historyEntry = goal.history.find(entry => entry.event === 'updated' && entry.changes.some(change => change.field === 'title'));
         expect(historyEntry).toBeDefined();
 
-        goalService.updateGoal(goal.id, { description: '' }, 3);
+        goalService.updateGoal(goal.id, { title: 'No Change Revert' }, 3);
 
         const result = goalService.revertGoalToHistoryEntry(goal.id, historyEntry.id, 3);
         expect(result).not.toBeNull();
-        expect(result.description).toBe('');
+        expect(result.title).toBe('No Change Revert');
         expect(saveSpy).toHaveBeenCalled();
         saveSpy.mockRestore();
     });
@@ -432,7 +432,6 @@ describe('Goal Service', () => {
         const goal = new (require('../src/domain/models/goal').default)({ title: 'Snapshot Goal', motivation: 2, urgency: 3, status: 'active' });
         const snapshot = {
             title: 'Snapshot Updated',
-            description: 'Snapshot Desc',
             motivation: null,
             urgency: 4,
             deadline: '2025-12-31T00:00:00.000Z',
@@ -440,7 +439,6 @@ describe('Goal Service', () => {
         };
         goalService.applySnapshotToGoal(goal, snapshot);
         expect(goal.title).toBe('Snapshot Updated');
-        expect(goal.description).toBe('Snapshot Desc');
         expect(Number.isNaN(goal.motivation)).toBe(true);
         expect(goal.urgency).toBe(4);
         expect(goal.deadline).toBeInstanceOf(Date);
@@ -655,14 +653,14 @@ describe('Goal Service', () => {
 
         // When motivation is unchanged, updates object will be empty, so function returns early
         // without calling saveGoals. Let's test with a field that does change.
-        goalService.updateGoal(goal.id, { motivation: 3, description: 'New description' }, 1);
+        goalService.updateGoal(goal.id, { motivation: 3, title: 'New title' }, 1);
         expect(autoSpy).not.toHaveBeenCalled();
         expect(saveSpy).toHaveBeenCalled();
 
         autoSpy.mockClear();
         saveSpy.mockClear();
 
-        goalService.updateGoal(goal.id, { urgency: 4, description: 'Another description' }, 1);
+        goalService.updateGoal(goal.id, { urgency: 4, title: 'Another title' }, 1);
         expect(autoSpy).not.toHaveBeenCalled();
         expect(saveSpy).toHaveBeenCalled();
 
@@ -671,7 +669,7 @@ describe('Goal Service', () => {
 
         const deadline = new Date('2025-12-31');
         goal.deadline = deadline;
-        goalService.updateGoal(goal.id, { deadline: deadline.toISOString(), description: 'Yet another' }, 1);
+        goalService.updateGoal(goal.id, { deadline: deadline.toISOString(), title: 'Yet another title' }, 1);
         expect(autoSpy).not.toHaveBeenCalled();
         expect(saveSpy).toHaveBeenCalled();
 

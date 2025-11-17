@@ -6,7 +6,6 @@ describe('Goal', () => {
         const goalData = {
             id: '123',
             title: 'Test Goal',
-            description: 'This is a test description',
             motivation: 5,
             urgency: 4,
             deadline: '2025-12-31',
@@ -19,7 +18,6 @@ describe('Goal', () => {
 
         expect(goal.id).toBe(goalData.id);
         expect(goal.title).toBe(goalData.title);
-        expect(goal.description).toBe(goalData.description);
         expect(goal.motivation).toBe(goalData.motivation);
         expect(goal.urgency).toBe(goalData.urgency);
         expect(goal.deadline).toEqual(new Date(goalData.deadline));
@@ -40,7 +38,6 @@ describe('Goal', () => {
 
         expect(typeof goal.id).toBe('string');
         expect(goal.title).toBe(goalData.title);
-        expect(goal.description).toBe('');
         expect(goal.motivation).toBeNaN(); // Since motivation is parsed as int, and not provided, it will be NaN
         expect(goal.urgency).toBeNaN(); // Same as motivation
         expect(goal.deadline).toBeNull();

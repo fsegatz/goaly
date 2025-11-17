@@ -101,20 +101,16 @@ describe('DashboardView', () => {
         expect(dashboardList.innerHTML).not.toContain('Active Goal 3');
     });
 
-    test('createGoalCard should create a goal card with editable description without priority metric or status badge', () => {
-        const goal = new Goal({ id: '1', title: 'Test Goal', description: 'Test Description', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-11-15') });
+    test('createGoalCard should create a goal card without priority metric or status badge', () => {
+        const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-11-15') });
         mockGoalService.calculatePriority.mockReturnValue(4.5);
         const openCompletionModal = jest.fn();
         const updateGoalInline = jest.fn();
 
         const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
-        const descriptionEl = card.querySelector('.goal-description');
 
         expect(card.className).toBe('goal-card active');
         expect(card.querySelector('.goal-title').textContent).toBe('Test Goal');
-        expect(descriptionEl.textContent).toBe('Test Description');
-        expect(descriptionEl.getAttribute('contenteditable')).toBe('true');
-        expect(descriptionEl.classList.contains('dashboard-description')).toBe(true);
         // Priority metric should not be present on dashboard cards
         expect(card.querySelectorAll('.goal-metrics .metric').length).toBe(0);
         expect(card.querySelector('.metric-value.priority')).toBeNull();
@@ -131,7 +127,7 @@ describe('DashboardView', () => {
     });
 
     test('createGoalCard clickable deadline should open date picker and save changes', () => {
-        const goal = new Goal({ id: 'edit-test', title: 'Edit Button', description: '', motivation: 3, urgency: 2, status: 'active', deadline: null });
+        const goal = new Goal({ id: 'edit-test', title: 'Edit Button', motivation: 3, urgency: 2, status: 'active', deadline: null });
         mockGoalService.calculatePriority.mockReturnValue(5);
         mockGoalService.goals = [goal];
         mockGoalService.getActiveGoals.mockReturnValue([goal]);
@@ -163,27 +159,6 @@ describe('DashboardView', () => {
         });
     });
 
-    test('createGoalCard should save description changes on blur', () => {
-        const goal = new Goal({ id: 'desc-test', title: 'Desc Goal', description: 'Initial', motivation: 3, urgency: 2, status: 'active', deadline: null });
-        mockGoalService.calculatePriority.mockReturnValue(6);
-        mockGoalService.goals = [goal];
-        mockGoalService.getActiveGoals.mockReturnValue([goal]);
-        mockGoalService.updateGoal.mockImplementation(() => {
-            goal.description = 'Updated';
-            return goal;
-        });
-        const openCompletionModal = jest.fn();
-        const updateGoalInline = jest.fn();
-
-        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
-        const descriptionEl = card.querySelector('.goal-description');
-        descriptionEl.textContent = 'Updated';
-
-        const blurEvent = new window.Event('blur');
-        descriptionEl.dispatchEvent(blurEvent);
-
-        expect(mockGoalService.updateGoal).toHaveBeenCalledWith('desc-test', { description: 'Updated' }, 3);
-    });
 
     test('formatDeadline should return "Today" for today', () => {
         const today = new Date('2025-11-09T12:00:00.000Z');
@@ -260,7 +235,7 @@ describe('DashboardView', () => {
     });
 
     test('createGoalCard should have clickable deadline label', () => {
-        const goal = new Goal({ id: '1', title: 'Test Goal', description: 'Test Description', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-11-15') });
+        const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-11-15') });
         mockGoalService.calculatePriority.mockReturnValue(4.5);
         const openCompletionModal = jest.fn();
         const updateGoalInline = jest.fn();
@@ -276,7 +251,7 @@ describe('DashboardView', () => {
     });
 
     test('createGoalCard deadline label should be clickable', () => {
-        const goal = new Goal({ id: 'cancel-test', title: 'Cancel Test', description: '', motivation: 3, urgency: 2, status: 'active', deadline: null });
+        const goal = new Goal({ id: 'cancel-test', title: 'Cancel Test', motivation: 3, urgency: 2, status: 'active', deadline: null });
         mockGoalService.calculatePriority.mockReturnValue(5);
         const openCompletionModal = jest.fn();
         const updateGoalInline = jest.fn();
@@ -297,32 +272,9 @@ describe('DashboardView', () => {
         expect(deadlineInput.showPicker).toHaveBeenCalled();
     });
 
-    test('createGoalCard should revert description when update fails', () => {
-        const goal = new Goal({ id: 'desc-error', title: 'Desc Error', description: 'Original', motivation: 2, urgency: 3, status: 'active', deadline: null });
-        mockGoalService.calculatePriority.mockReturnValue(5);
-        mockGoalService.goals = [goal];
-        mockGoalService.getActiveGoals.mockReturnValue([goal]);
-        mockGoalService.updateGoal.mockImplementation(() => {
-            throw new Error('Boom');
-        });
-        const openCompletionModal = jest.fn();
-        const updateGoalInline = jest.fn();
-
-        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
-        global.alert.mockClear();
-        const descriptionEl = card.querySelector('.goal-description');
-        descriptionEl.textContent = 'Broken';
-
-        const blurEvent = new window.Event('blur');
-        descriptionEl.dispatchEvent(blurEvent);
-
-        expect(mockGoalService.updateGoal).toHaveBeenCalledWith('desc-error', { description: 'Broken' }, 3);
-        expect(descriptionEl.textContent).toBe('Original');
-        expect(global.alert).toHaveBeenCalledWith('Boom');
-    });
 
     test('createGoalCard should handle missing actions container', () => {
-        const goal = new Goal({ id: '1', title: 'Test Goal', description: 'Test Description', motivation: 5, urgency: 4, status: 'completed', deadline: new Date('2025-11-15') });
+        const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 5, urgency: 4, status: 'completed', deadline: new Date('2025-11-15') });
         mockGoalService.calculatePriority.mockReturnValue(4.5);
         const openCompletionModal = jest.fn();
         const updateGoalInline = jest.fn();
@@ -333,22 +285,6 @@ describe('DashboardView', () => {
         expect(card.querySelector('.complete-goal')).toBeNull();
     });
 
-    test('createGoalCard should handle escape key in description', () => {
-        const goal = new Goal({ id: 'esc-test', title: 'Escape Test', description: 'Original', motivation: 3, urgency: 2, status: 'active', deadline: null });
-        mockGoalService.calculatePriority.mockReturnValue(5);
-        const openCompletionModal = jest.fn();
-        const updateGoalInline = jest.fn();
-
-        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
-        const descriptionEl = card.querySelector('.goal-description');
-        descriptionEl.textContent = 'Changed';
-        descriptionEl.focus();
-
-        const keydownEvent = new window.KeyboardEvent('keydown', { key: 'Escape' });
-        descriptionEl.dispatchEvent(keydownEvent);
-
-        expect(descriptionEl.textContent).toBe('Original');
-    });
 
     test('createGoalCard should support adding and managing steps', () => {
         const goal = new Goal({ id: 'steps-test', title: 'Steps Test', description: '', motivation: 3, urgency: 2, status: 'active', deadline: null, steps: [] });

@@ -29,7 +29,6 @@ class Goal {
     constructor(goalData) {
         this.id = goalData.id || (Date.now().toString() + Math.random().toString());
         this.title = goalData.title;
-        this.description = goalData.description || '';
         this.motivation = parseInt(goalData.motivation);
         this.urgency = parseInt(goalData.urgency);
         this.deadline = goalData.deadline ? new Date(goalData.deadline) : null;

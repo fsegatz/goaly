@@ -18,7 +18,6 @@ beforeEach(() => {
             <form id="goalForm">
                 <input type="hidden" id="goalId" />
                 <input type="text" id="goalTitle" />
-                <textarea id="goalDescription"></textarea>
                 <input type="number" id="goalMotivation" />
                 <input type="number" id="goalUrgency" />
                 <input type="date" id="goalDeadline" />
@@ -92,7 +91,7 @@ describe('GoalFormView', () => {
     });
 
     test('openGoalForm should populate form with goal data for existing goal', () => {
-        const goal = new Goal({ id: '123', title: 'Edit Goal', description: 'Edit Desc', motivation: 3, urgency: 2, status: 'paused', deadline: new Date('2025-12-25') });
+        const goal = new Goal({ id: '123', title: 'Edit Goal', motivation: 3, urgency: 2, status: 'paused', deadline: new Date('2025-12-25') });
         mockGoalService.goals = [goal];
         const renderViews = jest.fn();
 
@@ -101,7 +100,6 @@ describe('GoalFormView', () => {
         expect(document.getElementById('modalTitle').textContent).toBe('Edit goal');
         expect(document.getElementById('goalId').value).toBe('123');
         expect(document.getElementById('goalTitle').value).toBe('Edit Goal');
-        expect(document.getElementById('goalDescription').value).toBe('Edit Desc');
         expect(document.getElementById('goalMotivation').value).toBe('3');
         expect(document.getElementById('goalUrgency').value).toBe('2');
         expect(document.getElementById('goalDeadline').value).toBe('2025-12-25');
@@ -132,7 +130,6 @@ describe('GoalFormView', () => {
     test('handleGoalSubmit should create a new goal and call renderViews', () => {
         document.getElementById('goalId').value = '';
         document.getElementById('goalTitle').value = 'New Goal';
-        document.getElementById('goalDescription').value = 'New Desc';
         document.getElementById('goalMotivation').value = '5';
         document.getElementById('goalUrgency').value = '4';
         document.getElementById('goalDeadline').value = '2025-12-31';
@@ -145,7 +142,6 @@ describe('GoalFormView', () => {
         expect(mockGoalService.createGoal).toHaveBeenCalledWith(
             {
                 title: 'New Goal',
-                description: 'New Desc',
                 motivation: '5',
                 urgency: '4',
                 deadline: '2025-12-31'
@@ -159,7 +155,6 @@ describe('GoalFormView', () => {
     test('handleGoalSubmit should update an existing goal and call renderViews', () => {
         document.getElementById('goalId').value = 'existing-id';
         document.getElementById('goalTitle').value = 'Updated Goal';
-        document.getElementById('goalDescription').value = 'Updated Desc';
         document.getElementById('goalMotivation').value = '3';
         document.getElementById('goalUrgency').value = '2';
         document.getElementById('goalDeadline').value = '2026-01-01';
@@ -173,7 +168,6 @@ describe('GoalFormView', () => {
             'existing-id',
             {
                 title: 'Updated Goal',
-                description: 'Updated Desc',
                 motivation: '3',
                 urgency: '2',
                 deadline: '2026-01-01'
@@ -187,7 +181,6 @@ describe('GoalFormView', () => {
     test('handleGoalSubmit should show alert on error', () => {
         document.getElementById('goalId').value = '';
         document.getElementById('goalTitle').value = 'New Goal';
-        document.getElementById('goalDescription').value = 'New Desc';
         document.getElementById('goalMotivation').value = '5';
         document.getElementById('goalUrgency').value = '4';
         document.getElementById('goalDeadline').value = '2025-12-31';
@@ -251,7 +244,7 @@ describe('GoalFormView', () => {
         expect(goalFormView.formatHistoryValue('status', 'completed')).toBe('Completed');
         expect(goalFormView.formatHistoryValue('status', 'abandoned')).toBe('Abandoned');
         expect(goalFormView.formatHistoryValue('title', 'My Goal')).toBe('My Goal');
-        expect(goalFormView.formatHistoryValue('description', null)).toBe('—');
+        expect(goalFormView.formatHistoryValue('title', null)).toBe('—');
     });
 
     test('formatHistoryValue handles numeric branches and fallbacks', () => {
@@ -341,7 +334,6 @@ describe('GoalFormView', () => {
         const historyGoal = new Goal({
             id: 'hist-1',
             title: 'History Goal',
-            description: 'Current',
             motivation: 3,
             urgency: 2,
             status: 'active',
