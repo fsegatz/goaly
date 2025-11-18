@@ -2,6 +2,7 @@
 
 // Timer intervals
 export const REVIEW_REFRESH_INTERVAL_MS = 60000; // 1 minute
+export const GOAL_SAVE_INTERVAL_MS = 60000; // 1 minute
 export const GOOGLE_DRIVE_SYNC_DEBOUNCE_MS = 5000; // 5 seconds
 
 // Developer mode

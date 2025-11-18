@@ -12,7 +12,7 @@ import ImportExportService from './domain/utils/import-export-service.js';
 import MigrationManager from './domain/migration/migration-manager.js';
 import TimerService from './domain/services/timer-service.js';
 import { GOAL_FILE_VERSION } from './domain/utils/versioning.js';
-import { DEVELOPER_MODE_PRESS_DURATION_MS, DEVELOPER_MODE_VISUAL_FEEDBACK_MS } from './domain/utils/constants.js';
+import { DEVELOPER_MODE_PRESS_DURATION_MS, DEVELOPER_MODE_VISUAL_FEEDBACK_MS, GOAL_SAVE_INTERVAL_MS } from './domain/utils/constants.js';
 
 class GoalyApp {
     constructor() {
@@ -141,7 +141,7 @@ class GoalyApp {
             const reviewsChanged = this.reviews.length !== reviewsBefore;
             // Save if reviews changed (schedule updates may have occurred) or periodically
             // This ensures nextReviewAt values calculated by ensureGoalSchedule are persisted
-            if (reviewsChanged || !this._lastReviewSave || (Date.now() - this._lastReviewSave) > 60000) {
+            if (reviewsChanged || !this._lastReviewSave || (Date.now() - this._lastReviewSave) > GOAL_SAVE_INTERVAL_MS) {
                 this.goalService.saveGoals();
                 this._lastReviewSave = Date.now();
             }

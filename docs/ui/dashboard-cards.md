@@ -20,15 +20,14 @@ Review cards appear when a goal's review is due. They allow users to:
 - See review status (stable/updated)
 
 **Visual Characteristics:**
-- Orange border (`#f59e0b`) by default
-- Green border when ratings are stable (unchanged from current values)
+- Orange border (`#f59e0b`)
 - Contains form inputs for motivation and urgency (1-5 scale)
 - Shows sequence information (e.g., "Goal 1 of 3")
 - Displays due date information (today, overdue by X days)
 - Includes "Review completed" and "Edit goal" buttons
 
 **Implementation:**
-- Class: `check-in-card dashboard-review-card`
+- Class: `review-card dashboard-review-card`
 - Created by: `DashboardView.createReviewCard()`
 - Styled in: `styles/styles.css` (`.dashboard-review-card`)
 
@@ -57,7 +56,7 @@ Active goal cards display goals that are currently active and within the maximum
 Cards are displayed in the following order:
 
 1. **Review cards first** - All review cards appear before active goal cards
-2. **Review cards** - Ordered by `nextCheckInAt` (earliest first)
+2. **Review cards** - Ordered by `nextReviewAt` (earliest first)
 3. **Active goal cards** - Limited by `maxActiveGoals` setting, ordered by priority (highest first)
 
 This ensures that goals requiring attention (reviews) are always visible and prioritized.
@@ -67,7 +66,7 @@ This ensures that goals requiring attention (reviews) are always visible and pri
 ### Dashboard View
 
 The `DashboardView.render()` method:
-- Fetches active goals and review check-ins
+- Fetches active goals and reviews
 - Combines them into a single list
 - Renders review cards first, then active goal cards
 - Displays feedback messages after review submissions
@@ -75,10 +74,10 @@ The `DashboardView.render()` method:
 ### Review Submission
 
 When a review is submitted:
-1. `UIController.handleCheckInSubmit()` processes the submission
+1. `UIController.handleReviewSubmit()` processes the submission
 2. Review service records the review and updates the goal
 3. Feedback message is displayed in the dashboard
-4. Check-ins are refreshed and dashboard is re-rendered
+4. Reviews are refreshed and dashboard is re-rendered
 
 ### Feedback Display
 
@@ -90,15 +89,15 @@ A feedback banner appears above the cards when a review is completed:
 
 **Implementation:**
 - Element: `#dashboardFeedback`
-- Class: `check-in-feedback`
-- Styled in: `styles/styles.css` (`.check-in-feedback`)
+- Class: `review-feedback`
+- Styled in: `styles/styles.css` (`.review-feedback`)
 
 ## Styling
 
 ### Review Cards in Dashboard
 
 Review cards use distinct styling to differentiate them from goal cards:
-- Different border color (orange/green)
+- Different border color (orange)
 - Different shadow effects
 - Form-based layout with inputs
 

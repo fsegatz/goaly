@@ -34,11 +34,11 @@ describe('TimerService', () => {
 
         expect(mockApp.refreshReviews).toHaveBeenCalledTimes(1);
 
-        // Fast-forward 1 minute (with 5-second interval, this should trigger 12 more calls)
+        // Fast-forward 1 minute (with 60-second interval, this should trigger 1 more call)
         jest.advanceTimersByTime(60000);
 
-        // 1 initial call + 12 interval calls (60 seconds / 5 seconds = 12)
-        expect(mockApp.refreshReviews).toHaveBeenCalledTimes(13);
+        // 1 initial call + 1 interval call (60 seconds / 60 seconds = 1)
+        expect(mockApp.refreshReviews).toHaveBeenCalledTimes(2);
     });
 
     test('startReviewTimer should clear existing timer before starting new one', () => {
