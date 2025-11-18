@@ -9,7 +9,10 @@ export class HelpView extends BaseUIController {
 
     render() {
         // Help view is mostly static HTML, but we can ensure translations are applied
-        this.languageService.applyTranslations(document);
+        const helpViewElement = document.getElementById('helpView');
+        if (helpViewElement) {
+            this.languageService.applyTranslations(helpViewElement);
+        }
     }
 
     setupEventListeners() {
