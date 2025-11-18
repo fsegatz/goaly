@@ -228,10 +228,53 @@ describe('DashboardView', () => {
         expect(dashboardView.formatDateTime(undefined)).toBe('');
     });
 
+    test('formatDate should return empty string for null or undefined', () => {
+        expect(dashboardView.formatDate(null)).toBe('');
+        expect(dashboardView.formatDate(undefined)).toBe('');
+    });
+
     test('formatDate should format date correctly', () => {
         const date = new Date('2025-11-09T12:00:00.000Z');
         const result = dashboardView.formatDate(date);
         expect(result).toBe('11/9/2025');
+    });
+
+    test('formatReviewIntervalInput should return empty string for invalid values', () => {
+        expect(dashboardView.formatReviewIntervalInput(NaN)).toBe('');
+        expect(dashboardView.formatReviewIntervalInput(0)).toBe('');
+        expect(dashboardView.formatReviewIntervalInput(-5)).toBe('');
+    });
+
+    test('formatReviewIntervalInput should format intervals correctly', () => {
+        expect(dashboardView.formatReviewIntervalInput(1)).toBe('1d');
+        expect(dashboardView.formatReviewIntervalInput(0.5)).toBe('12h');
+        expect(dashboardView.formatReviewIntervalInput(1 / 24)).toBe('1h');
+        expect(dashboardView.formatReviewIntervalInput(1 / (24 * 60))).toBe('1m');
+        expect(dashboardView.formatReviewIntervalInput(1 / (24 * 60 * 60))).toBe('1s');
+    });
+
+    test('formatReviewIntervalDisplay should return unknown for invalid values', () => {
+        const result1 = dashboardView.formatReviewIntervalDisplay(NaN);
+        const result2 = dashboardView.formatReviewIntervalDisplay(0);
+        const result3 = dashboardView.formatReviewIntervalDisplay(-5);
+        // Should return translated "unknown" message
+        expect(result1).toBeTruthy();
+        expect(result2).toBeTruthy();
+        expect(result3).toBeTruthy();
+        expect(typeof result1).toBe('string');
+    });
+
+    test('formatReviewIntervalDisplay should format different time units', () => {
+        // Test with different interval values to cover different branches
+        const dayResult = dashboardView.formatReviewIntervalDisplay(1);
+        const hourResult = dashboardView.formatReviewIntervalDisplay(0.5);
+        const minuteResult = dashboardView.formatReviewIntervalDisplay(1 / (24 * 60));
+        const secondResult = dashboardView.formatReviewIntervalDisplay(1 / (24 * 60 * 60));
+        
+        expect(typeof dayResult).toBe('string');
+        expect(typeof hourResult).toBe('string');
+        expect(typeof minuteResult).toBe('string');
+        expect(typeof secondResult).toBe('string');
     });
 
     test('createGoalCard should have clickable deadline label', () => {

@@ -115,7 +115,7 @@ const sv = {
         completed: 'Slutförd',
         abandoned: 'Avbruten'
     },
-    checkIns: {
+    reviews: {
         prompt: 'Dags för ett review för "{{title}}". Bekräfta motivation och brådska.',
         emptyState: 'Alla mål är uppdaterade. Titta in igen senare.',
         sequence: 'Mål {{current}} av {{total}}',

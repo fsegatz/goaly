@@ -42,7 +42,7 @@ function createMockSettingsService(overrides = {}) {
  */
 function createMockReviewService(overrides = {}) {
     return {
-        getCheckIns: jest.fn(() => overrides.checkIns || []),
+        getReviews: jest.fn(() => overrides.reviews || []),
         recordReview: jest.fn(),
         ...overrides
     };

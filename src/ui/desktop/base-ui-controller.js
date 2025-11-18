@@ -7,7 +7,7 @@ export class BaseUIController {
         this.translate = (key, replacements) => this.languageService.translate(key, replacements);
         this.priorityCache = new Map();
         this.priorityCacheDirty = true;
-        this.latestCheckInFeedback = null;
+        this.latestReviewFeedback = null;
 
         this.languageChangeUnsubscribe = this.languageService.onChange(() => {
             this.applyLanguageUpdates();
@@ -114,22 +114,22 @@ export class BaseUIController {
 
     formatReviewIntervalDisplay(intervalDays) {
         if (!Number.isFinite(intervalDays) || intervalDays <= 0) {
-            return this.translate('checkIns.interval.unknown');
+            return this.translate('reviews.interval.unknown');
         }
 
         const totalSeconds = intervalDays * 24 * 60 * 60;
         const formatter = new Intl.NumberFormat(this.languageService.getLocale(), { maximumFractionDigits: 2 });
 
         if (totalSeconds >= 24 * 60 * 60) {
-            return this.translate('checkIns.interval.days', { count: formatter.format(totalSeconds / (24 * 60 * 60)) });
+            return this.translate('reviews.interval.days', { count: formatter.format(totalSeconds / (24 * 60 * 60)) });
         }
         if (totalSeconds >= 60 * 60) {
-            return this.translate('checkIns.interval.hours', { count: formatter.format(totalSeconds / (60 * 60)) });
+            return this.translate('reviews.interval.hours', { count: formatter.format(totalSeconds / (60 * 60)) });
         }
         if (totalSeconds >= 60) {
-            return this.translate('checkIns.interval.minutes', { count: formatter.format(totalSeconds / 60) });
+            return this.translate('reviews.interval.minutes', { count: formatter.format(totalSeconds / 60) });
         }
-        return this.translate('checkIns.interval.seconds', { count: formatter.format(totalSeconds) });
+        return this.translate('reviews.interval.seconds', { count: formatter.format(totalSeconds) });
     }
 }
 

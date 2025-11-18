@@ -14,11 +14,11 @@ function ensureDate(value, fallback = null) {
     return Number.isNaN(parsed.getTime()) ? fallback : parsed;
 }
 
-function getMostRecentCheckIn(goal) {
-    if (!goal || !Array.isArray(goal.checkInDates) || goal.checkInDates.length === 0) {
+function getMostRecentReview(goal) {
+    if (!goal || !Array.isArray(goal.reviewDates) || goal.reviewDates.length === 0) {
         return null;
     }
-    const timestamps = goal.checkInDates
+    const timestamps = goal.reviewDates
         .map((dateString) => {
             const parsed = new Date(dateString);
             return parsed.getTime();
@@ -49,7 +49,8 @@ class ReviewService {
     }
 
     ensureGoalSchedule(goal) {
-        if (!goal || goal.status !== 'active') {
+        // Include active and paused goals for reviews (exclude completed and abandoned)
+        if (!goal || (goal.status !== 'active' && goal.status !== 'paused')) {
             return null;
         }
 
@@ -61,50 +62,69 @@ class ReviewService {
             goal.reviewIntervalIndex = shortestIndex;
         }
 
-        goal.lastCheckInAt = ensureDate(
-            goal.lastCheckInAt,
-            getMostRecentCheckIn(goal) ?? ensureDate(goal.createdAt, new Date())
+        goal.lastReviewAt = ensureDate(
+            goal.lastReviewAt,
+            getMostRecentReview(goal) ?? ensureDate(goal.createdAt, new Date())
         );
 
         const intervalDays = intervals[goal.reviewIntervalIndex] ?? intervals[shortestIndex];
-        const fallbackBase = goal.lastCheckInAt ?? new Date();
+        const fallbackBase = goal.lastReviewAt ?? new Date();
 
-        goal.nextCheckInAt = ensureDate(goal.nextCheckInAt);
-        if (!goal.nextCheckInAt) {
-            goal.nextCheckInAt = this.calculateNextCheckInDate(fallbackBase, intervalDays);
+        const existingNextReview = ensureDate(goal.nextReviewAt);
+        if (!existingNextReview) {
+            // No review scheduled yet - set it based on lastReviewAt (or creation date)
+            goal.nextReviewAt = this.calculateNextReviewDate(fallbackBase, intervalDays);
+        } else {
+            // If nextReviewAt exists, check if it's unreasonably far in the future
+            // This can happen if intervals were changed and goal had a schedule based on old intervals
+            const now = new Date();
+            const maxInterval = Math.max(...intervals);
+            // Convert maxInterval to milliseconds (it's in days, but can be fractional for seconds/minutes)
+            const maxIntervalMs = maxInterval * DAY_IN_MS;
+            // Add a small buffer (1 day) to account for reasonable future dates
+            const maxReasonableDate = new Date(now.getTime() + maxIntervalMs + DAY_IN_MS);
+            
+            // If nextReviewAt is way too far in the future, recalculate it
+            // This ensures goals get updated when intervals change to shorter values
+            if (existingNextReview > maxReasonableDate) {
+                goal.nextReviewAt = this.calculateNextReviewDate(fallbackBase, intervalDays);
+            } else {
+                goal.nextReviewAt = existingNextReview;
+            }
         }
 
         return goal;
     }
 
-    calculateNextCheckInDate(baseDate, intervalDays) {
+    calculateNextReviewDate(baseDate, intervalDays) {
         const base = ensureDate(baseDate, new Date());
         const days = Number.isFinite(intervalDays) && intervalDays > 0 ? intervalDays : this.getReviewIntervals()[0];
         return new Date(base.getTime() + days * DAY_IN_MS);
     }
 
-    shouldCheckIn(goal) {
+    shouldReview(goal) {
         const ensuredGoal = this.ensureGoalSchedule(goal);
         if (!ensuredGoal) {
             return false;
         }
         const now = new Date();
-        return ensuredGoal.nextCheckInAt && ensuredGoal.nextCheckInAt <= now;
+        return ensuredGoal.nextReviewAt && ensuredGoal.nextReviewAt <= now;
     }
 
-    getCheckIns() {
+    getReviews() {
         const goals = this.goalService?.goals ?? [];
         const now = new Date();
+        // Include active and paused goals for reviews (exclude completed and abandoned)
         return goals
-            .filter((goal) => goal.status === 'active')
+            .filter((goal) => goal.status === 'active' || goal.status === 'paused')
             .map((goal) => this.ensureGoalSchedule(goal))
-            .filter((goal) => goal && goal.nextCheckInAt && goal.nextCheckInAt <= now)
-            .sort((a, b) => (a.nextCheckInAt || 0) - (b.nextCheckInAt || 0))
+            .filter((goal) => goal && goal.nextReviewAt && goal.nextReviewAt <= now)
+            .sort((a, b) => (a.nextReviewAt || 0) - (b.nextReviewAt || 0))
             .map((goal) => ({
                 goal,
-                dueAt: goal.nextCheckInAt,
-                isOverdue: goal.nextCheckInAt < now,
-                messageKey: 'checkIns.prompt',
+                dueAt: goal.nextReviewAt,
+                isOverdue: goal.nextReviewAt < now,
+                messageKey: 'reviews.prompt',
                 messageArgs: {
                     title: goal.title
                 }
@@ -155,14 +175,14 @@ class ReviewService {
         }
 
         goal.reviewIntervalIndex = nextIndex;
-        goal.lastCheckInAt = now;
-        if (!Array.isArray(goal.checkInDates)) {
-            goal.checkInDates = [];
+        goal.lastReviewAt = now;
+        if (!Array.isArray(goal.reviewDates)) {
+            goal.reviewDates = [];
         }
-        goal.checkInDates.push(now.toISOString());
+        goal.reviewDates.push(now.toISOString());
 
         const intervalDays = intervals[nextIndex] ?? intervals[longestIndex];
-        goal.nextCheckInAt = this.calculateNextCheckInDate(now, intervalDays);
+        goal.nextReviewAt = this.calculateNextReviewDate(now, intervalDays);
         goal.lastUpdated = now;
 
         if (this.goalService && typeof this.goalService.saveGoals === 'function') {
@@ -175,7 +195,7 @@ class ReviewService {
         };
     }
 
-    performCheckIn(goalId, ratings) {
+    performReview(goalId, ratings) {
         return this.recordReview(goalId, ratings);
     }
 }

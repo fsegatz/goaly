@@ -115,7 +115,7 @@ const de = {
         completed: 'Erreicht',
         abandoned: 'Nicht erreicht'
     },
-    checkIns: {
+    reviews: {
         prompt: 'Zeit für ein Review zu "{{title}}". Bitte bestätige Motivation und Dringlichkeit.',
         emptyState: 'Alle Ziele sind auf dem neuesten Stand. Schau später noch einmal vorbei.',
         sequence: 'Ziel {{current}} von {{total}}',

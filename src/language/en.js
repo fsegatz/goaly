@@ -138,7 +138,7 @@ const en = {
         completed: 'Completed',
         abandoned: 'Abandoned'
     },
-    checkIns: {
+    reviews: {
         prompt: 'Time for a review on "{{title}}". Please confirm motivation and urgency.',
         emptyState: 'All goals are up to date. Come back later for the next review.',
         sequence: 'Goal {{current}} of {{total}}',

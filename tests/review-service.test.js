@@ -41,71 +41,85 @@ describe('Review Service', () => {
         });
     }
 
-    it('should identify an active goal with past nextCheckInAt as due', () => {
+    it('should identify an active goal with past nextReviewAt as due', () => {
         goal = createActiveGoal();
         goal.reviewIntervalIndex = 0;
-        goal.lastCheckInAt = new Date(Date.now() - 31 * DAY_IN_MS);
-        goal.nextCheckInAt = new Date(Date.now() - 1 * DAY_IN_MS);
+        goal.lastReviewAt = new Date(Date.now() - 31 * DAY_IN_MS);
+        goal.nextReviewAt = new Date(Date.now() - 1 * DAY_IN_MS);
         goalService.goals = [goal];
 
-        const checkIns = reviewService.getCheckIns();
+        const reviews = reviewService.getReviews();
 
-        expect(checkIns).toHaveLength(1);
-        expect(checkIns[0].goal.id).toBe(goal.id);
+        expect(reviews).toHaveLength(1);
+        expect(reviews[0].goal.id).toBe(goal.id);
     });
 
-    it('should ignore non-active goals even if nextCheckInAt is in the past', () => {
-        goal = createActiveGoal({ status: 'paused' });
-        goal.reviewIntervalIndex = 0;
-        goal.nextCheckInAt = new Date(Date.now() - DAY_IN_MS);
-        goalService.goals = [goal];
+    it('should ignore completed and abandoned goals even if nextReviewAt is in the past', () => {
+        // Paused goals should be included for reviews
+        const pausedGoal = createActiveGoal({ status: 'paused' });
+        pausedGoal.reviewIntervalIndex = 0;
+        pausedGoal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
+        
+        // Completed goals should be excluded
+        const completedGoal = createActiveGoal({ status: 'completed' });
+        completedGoal.reviewIntervalIndex = 0;
+        completedGoal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
+        
+        // Abandoned goals should be excluded
+        const abandonedGoal = createActiveGoal({ status: 'abandoned' });
+        abandonedGoal.reviewIntervalIndex = 0;
+        abandonedGoal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
+        
+        goalService.goals = [pausedGoal, completedGoal, abandonedGoal];
 
-        const checkIns = reviewService.getCheckIns();
-        expect(checkIns).toHaveLength(0);
+        const reviews = reviewService.getReviews();
+        // Should only include paused goal, not completed or abandoned
+        expect(reviews).toHaveLength(1);
+        expect(reviews[0].goal.status).toBe('paused');
     });
 
     it('should calculate a default next review when none is scheduled', () => {
         goal = createActiveGoal({ createdAt: new Date(Date.now() - 2 * DAY_IN_MS) });
         goal.reviewIntervalIndex = undefined;
-        goal.lastCheckInAt = null;
-        goal.nextCheckInAt = null;
-        goal.checkInDates = [];
+        goal.lastReviewAt = null;
+        goal.nextReviewAt = null;
+        goal.reviewDates = [];
         goalService.goals = [goal];
 
         reviewService.ensureGoalSchedule(goal);
 
         expect(goal.reviewIntervalIndex).toBe(0);
-        expect(goal.nextCheckInAt).toBeInstanceOf(Date);
-        expect(goal.lastCheckInAt).toBeInstanceOf(Date);
+        expect(goal.nextReviewAt).toBeInstanceOf(Date);
+        expect(goal.lastReviewAt).toBeInstanceOf(Date);
     });
 
-    it('should derive last check-in from latest valid history entry', () => {
+    it('should derive last review from latest valid review dates', () => {
         const earlier = new Date(Date.now() - 5 * DAY_IN_MS).toISOString();
         const latest = new Date(Date.now() - 2 * DAY_IN_MS).toISOString();
 
         goal = createActiveGoal({
             reviewIntervalIndex: 5, // invalid index
-            checkInDates: ['not-a-date', earlier, latest],
-            lastCheckInAt: 'bad-date',
+            reviewDates: ['not-a-date', earlier, latest],
+            lastReviewAt: 'bad-date',
             createdAt: 'invalid'
         });
-        goal.nextCheckInAt = null;
+        goal.nextReviewAt = null;
         goalService.goals = [goal];
 
         reviewService.ensureGoalSchedule(goal);
 
         expect(goal.reviewIntervalIndex).toBe(0);
-        expect(goal.lastCheckInAt).toBeInstanceOf(Date);
-        expect(goal.lastCheckInAt.toISOString()).toBe(latest);
-        expect(goal.nextCheckInAt).toBeInstanceOf(Date);
+        expect(goal.lastReviewAt).toBeInstanceOf(Date);
+        expect(goal.lastReviewAt.toISOString()).toBe(latest);
+        expect(goal.nextReviewAt).toBeInstanceOf(Date);
     });
 
     it('should shorten the interval when ratings stay the same', () => {
         goal = createActiveGoal();
         goal.reviewIntervalIndex = 0;
-        goal.lastCheckInAt = new Date(Date.now() - 31 * DAY_IN_MS);
-        goal.nextCheckInAt = new Date(Date.now() - DAY_IN_MS);
-        goal.checkInDates = [];
+        goal.lastReviewAt = new Date(Date.now() - 31 * DAY_IN_MS);
+        goal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
+        goal.reviewDates = [];
         goalService.goals = [goal];
 
         const result = reviewService.recordReview(goal.id, {
@@ -116,16 +130,16 @@ describe('Review Service', () => {
         expect(result).toBeTruthy();
         expect(result.ratingsMatch).toBe(true);
         expect(goal.reviewIntervalIndex).toBe(1);
-        expect(goal.checkInDates).toHaveLength(1);
-        expect(goal.nextCheckInAt.getTime()).toBeGreaterThan(Date.now());
+        expect(goal.reviewDates).toHaveLength(1);
+        expect(goal.nextReviewAt.getTime()).toBeGreaterThan(Date.now());
     });
 
     it('should reset to the longest interval when ratings change', () => {
         goal = createActiveGoal({ motivation: 3, urgency: 3 });
         goal.reviewIntervalIndex = 2;
-        goal.lastCheckInAt = new Date(Date.now() - 10 * DAY_IN_MS);
-        goal.nextCheckInAt = new Date(Date.now() - DAY_IN_MS);
-        goal.checkInDates = [];
+        goal.lastReviewAt = new Date(Date.now() - 10 * DAY_IN_MS);
+        goal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
+        goal.reviewDates = [];
         goalService.goals = [goal];
 
         const result = reviewService.recordReview(goal.id, {
@@ -138,8 +152,8 @@ describe('Review Service', () => {
         expect(goal.reviewIntervalIndex).toBe(0);
         expect(goal.motivation).toBe(5);
         expect(goal.urgency).toBe(5);
-        expect(goal.checkInDates).toHaveLength(1);
-        expect(goal.nextCheckInAt.getTime()).toBeGreaterThan(Date.now());
+        expect(goal.reviewDates).toHaveLength(1);
+        expect(goal.nextReviewAt.getTime()).toBeGreaterThan(Date.now());
     });
 
     it('should return null when recording a review for a missing goal', () => {
@@ -151,9 +165,18 @@ describe('Review Service', () => {
         expect(result).toBeNull();
     });
 
-    it('should return null when scheduling non-active goals', () => {
-        goal = createActiveGoal({ status: 'paused' });
-        expect(reviewService.ensureGoalSchedule(goal)).toBeNull();
+    it('should return null when scheduling completed or abandoned goals', () => {
+        // Paused goals should be schedulable
+        const pausedGoal = createActiveGoal({ status: 'paused' });
+        expect(reviewService.ensureGoalSchedule(pausedGoal)).not.toBeNull();
+        
+        // Completed goals should not be schedulable
+        const completedGoal = createActiveGoal({ status: 'completed' });
+        expect(reviewService.ensureGoalSchedule(completedGoal)).toBeNull();
+        
+        // Abandoned goals should not be schedulable
+        const abandonedGoal = createActiveGoal({ status: 'abandoned' });
+        expect(reviewService.ensureGoalSchedule(abandonedGoal)).toBeNull();
     });
 
     it('should fallback to default intervals when settings provide none', () => {
@@ -167,9 +190,9 @@ describe('Review Service', () => {
 
     it('should tolerate invalid rating inputs and keep previous values', () => {
         goal = createActiveGoal({ reviewIntervalIndex: 0 });
-        goal.checkInDates = [];
-        goal.lastCheckInAt = new Date(Date.now() - 2 * DAY_IN_MS);
-        goal.nextCheckInAt = new Date(Date.now() - DAY_IN_MS);
+        goal.reviewDates = [];
+        goal.lastReviewAt = new Date(Date.now() - 2 * DAY_IN_MS);
+        goal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
         goalService.goals = [goal];
 
         const result = reviewService.recordReview(goal.id, {
@@ -184,71 +207,192 @@ describe('Review Service', () => {
 
     it('should calculate next review using fallback interval when invalid days provided', () => {
         const base = new Date();
-        const next = reviewService.calculateNextCheckInDate(base, NaN);
+        const next = reviewService.calculateNextReviewDate(base, NaN);
         const diffDays = Math.round((next - base) / DAY_IN_MS);
         expect(diffDays).toBe(7);
     });
 
     it('should fallback to current time when base date is invalid', () => {
-        const next = reviewService.calculateNextCheckInDate('not-a-date', 1);
+        const next = reviewService.calculateNextReviewDate('not-a-date', 1);
         const now = Date.now();
         expect(next.getTime()).toBeGreaterThanOrEqual(now);
     });
 
-    it('should fall back to createdAt when no valid check-in dates exist', () => {
+    it('should fall back to createdAt when no valid review dates exist', () => {
         const createdAt = new Date(Date.now() - 3 * DAY_IN_MS);
-        goal = createActiveGoal({ createdAt, checkInDates: ['bad-date'], lastCheckInAt: null, reviewIntervalIndex: null });
-        goal.nextCheckInAt = null;
+        goal = createActiveGoal({ createdAt, reviewDates: ['bad-date'], lastReviewAt: null, reviewIntervalIndex: null });
+        goal.nextReviewAt = null;
         reviewService.ensureGoalSchedule(goal);
         expect(goal.reviewIntervalIndex).toBe(0);
-        expect(goal.lastCheckInAt.toISOString()).toBe(createdAt.toISOString());
-        expect(goal.nextCheckInAt).toBeInstanceOf(Date);
+        expect(goal.lastReviewAt.toISOString()).toBe(createdAt.toISOString());
+        expect(goal.nextReviewAt).toBeInstanceOf(Date);
     });
 
-    it('should initialise checkInDates when undefined during recordReview', () => {
+    it('should initialise reviewDates when undefined during recordReview', () => {
         goal = createActiveGoal({ reviewIntervalIndex: 0 });
-        goal.checkInDates = undefined;
-        goal.lastCheckInAt = new Date(Date.now() - 2 * DAY_IN_MS);
-        goal.nextCheckInAt = new Date(Date.now() - DAY_IN_MS);
+        goal.reviewDates = undefined;
+        goal.lastReviewAt = new Date(Date.now() - 2 * DAY_IN_MS);
+        goal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
         goalService.goals = [goal];
 
         const result = reviewService.recordReview(goal.id, { motivation: goal.motivation, urgency: goal.urgency });
         expect(result).toBeTruthy();
-        expect(Array.isArray(goal.checkInDates)).toBe(true);
-        expect(goal.checkInDates).toHaveLength(1);
+        expect(Array.isArray(goal.reviewDates)).toBe(true);
+        expect(goal.reviewDates).toHaveLength(1);
     });
 
     it('should return goal due when next review has passed', () => {
         goal = createActiveGoal();
-        goal.nextCheckInAt = new Date(Date.now() - 1000);
-        expect(reviewService.shouldCheckIn(goal)).toBe(true);
+        goal.nextReviewAt = new Date(Date.now() - 1000);
+        expect(reviewService.shouldReview(goal)).toBe(true);
     });
 
     it('should return false when next review is in the future', () => {
         goal = createActiveGoal();
-        goal.nextCheckInAt = new Date(Date.now() + 1000);
-        expect(reviewService.shouldCheckIn(goal)).toBe(false);
+        goal.nextReviewAt = new Date(Date.now() + 1000);
+        expect(reviewService.shouldReview(goal)).toBe(false);
     });
 
-    it('should return empty check-ins when next review is in the future', () => {
+    it('should return empty reviews when next review is in the future', () => {
         goal = createActiveGoal();
-        goal.nextCheckInAt = new Date(Date.now() + 60 * 1000);
+        goal.nextReviewAt = new Date(Date.now() + 60 * 1000);
         goalService.goals = [goal];
-        const checkIns = reviewService.getCheckIns();
-        expect(checkIns).toHaveLength(0);
+        const reviews = reviewService.getReviews();
+        expect(reviews).toHaveLength(0);
     });
 
-    it('should sort check-ins by nearest due date', () => {
+    it('should sort reviews by nearest due date', () => {
         const now = Date.now();
         const goalA = createActiveGoal({ id: 'A' });
         const goalB = createActiveGoal({ id: 'B' });
-        goalA.nextCheckInAt = new Date(now - 5 * 60 * 1000);
-        goalB.nextCheckInAt = new Date(now - 60 * 1000);
+        goalA.nextReviewAt = new Date(now - 5 * 60 * 1000);
+        goalB.nextReviewAt = new Date(now - 60 * 1000);
         goalService.goals = [goalB, goalA];
 
-        const result = reviewService.getCheckIns();
+        const result = reviewService.getReviews();
         expect(result.map(entry => entry.goal.id)).toEqual(['A', 'B']);
         expect(result[0].isOverdue).toBe(true);
+    });
+
+    it('should recalculate nextReviewAt when it is unreasonably far in the future', () => {
+        goal = createActiveGoal();
+        goal.reviewIntervalIndex = 0;
+        goal.lastReviewAt = new Date(Date.now() - 10 * DAY_IN_MS);
+        // Set nextReviewAt to be way too far in the future (more than max interval + buffer)
+        const farFuture = new Date(Date.now() + 100 * DAY_IN_MS);
+        goal.nextReviewAt = farFuture;
+        goalService.goals = [goal];
+
+        reviewService.ensureGoalSchedule(goal);
+
+        // Should have recalculated nextReviewAt to be reasonable (based on lastReviewAt + interval)
+        expect(goal.nextReviewAt).toBeInstanceOf(Date);
+        expect(goal.nextReviewAt.getTime()).toBeLessThan(farFuture.getTime());
+        // The recalculated date should be based on lastReviewAt + interval, which may be in the past
+        // but should be much closer to now than the far future date
+        const maxInterval = Math.max(...reviewService.getReviewIntervals());
+        const maxReasonableTime = Date.now() + (maxInterval * DAY_IN_MS) + DAY_IN_MS;
+        expect(goal.nextReviewAt.getTime()).toBeLessThan(maxReasonableTime);
+    });
+
+    it('should return false when shouldReview is called with a goal that cannot be scheduled', () => {
+        const completedGoal = createActiveGoal({ status: 'completed' });
+        expect(reviewService.shouldReview(completedGoal)).toBe(false);
+    });
+
+    it('should call recordReview when performReview is called', () => {
+        goal = createActiveGoal();
+        goal.reviewIntervalIndex = 0;
+        goal.lastReviewAt = new Date(Date.now() - 2 * DAY_IN_MS);
+        goal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
+        goal.reviewDates = [];
+        goalService.goals = [goal];
+
+        const result = reviewService.performReview(goal.id, {
+            motivation: goal.motivation,
+            urgency: goal.urgency
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.goal.id).toBe(goal.id);
+        expect(goal.reviewDates).toHaveLength(1);
+    });
+
+    it('should handle recordReview when goalService lacks updateGoal method', () => {
+        goal = createActiveGoal();
+        goal.reviewIntervalIndex = 0;
+        goal.lastReviewAt = new Date(Date.now() - 2 * DAY_IN_MS);
+        goal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
+        goal.reviewDates = [];
+        goalService.goals = [goal];
+        // Remove updateGoal method to test the branch
+        const originalUpdateGoal = goalService.updateGoal;
+        delete goalService.updateGoal;
+
+        const result = reviewService.recordReview(goal.id, {
+            motivation: 5,
+            urgency: 5
+        });
+
+        expect(result).toBeTruthy();
+        expect(goal.motivation).toBe(5);
+        expect(goal.urgency).toBe(5);
+        
+        // Restore method
+        goalService.updateGoal = originalUpdateGoal;
+    });
+
+    it('should handle recordReview when goalService lacks saveGoals method', () => {
+        goal = createActiveGoal();
+        goal.reviewIntervalIndex = 0;
+        goal.lastReviewAt = new Date(Date.now() - 2 * DAY_IN_MS);
+        goal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
+        goal.reviewDates = [];
+        goalService.goals = [goal];
+        // Remove saveGoals method to test the branch
+        const originalSaveGoals = goalService.saveGoals;
+        delete goalService.saveGoals;
+
+        const result = reviewService.recordReview(goal.id, {
+            motivation: goal.motivation,
+            urgency: goal.urgency
+        });
+
+        expect(result).toBeTruthy();
+        expect(goal.reviewDates).toHaveLength(1);
+        
+        // Restore method
+        goalService.saveGoals = originalSaveGoals;
+    });
+
+    it('should handle recordReview when reviewIntervalIndex is at longest index and ratings match', () => {
+        goal = createActiveGoal();
+        const intervals = reviewService.getReviewIntervals();
+        const longestIndex = intervals.length - 1;
+        goal.reviewIntervalIndex = longestIndex;
+        goal.lastReviewAt = new Date(Date.now() - 2 * DAY_IN_MS);
+        goal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
+        goal.reviewDates = [];
+        goalService.goals = [goal];
+
+        const result = reviewService.recordReview(goal.id, {
+            motivation: goal.motivation,
+            urgency: goal.urgency
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.ratingsMatch).toBe(true);
+        // Should stay at longest index when ratings match
+        expect(goal.reviewIntervalIndex).toBe(longestIndex);
+        expect(goal.reviewDates).toHaveLength(1);
+    });
+
+    it('should handle calculateNextReviewDate with invalid intervalDays using fallback', () => {
+        const base = new Date();
+        const next = reviewService.calculateNextReviewDate(base, -5);
+        const diffDays = Math.round((next - base) / DAY_IN_MS);
+        // Should use fallback interval (first interval = 7 days)
+        expect(diffDays).toBe(7);
     });
 });
 

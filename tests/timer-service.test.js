@@ -9,46 +9,49 @@ describe('TimerService', () => {
     beforeEach(() => {
         jest.useFakeTimers();
         mockApp = {
-            refreshCheckIns: jest.fn()
+            refreshReviews: jest.fn()
         };
         service = new TimerService(mockApp);
     });
 
     afterEach(() => {
-        jest.useRealTimers();
-        if (service.checkInTimer) {
-            clearInterval(service.checkInTimer);
+        if (service.reviewTimer) {
+            service.stopReviewTimer();
         }
+        // Clear all fake timers before switching to real timers
+        jest.clearAllTimers();
+        jest.useRealTimers();
     });
 
-    test('startCheckInTimer should call refreshCheckIns immediately', () => {
-        service.startCheckInTimer();
+    test('startReviewTimer should call refreshReviews immediately', () => {
+        service.startReviewTimer();
 
-        expect(mockApp.refreshCheckIns).toHaveBeenCalledTimes(1);
+        expect(mockApp.refreshReviews).toHaveBeenCalledTimes(1);
     });
 
-    test('startCheckInTimer should set up interval to call refreshCheckIns', () => {
-        service.startCheckInTimer();
+    test('startReviewTimer should set up interval to call refreshReviews', () => {
+        service.startReviewTimer();
 
-        expect(mockApp.refreshCheckIns).toHaveBeenCalledTimes(1);
+        expect(mockApp.refreshReviews).toHaveBeenCalledTimes(1);
 
-        // Fast-forward 1 minute
+        // Fast-forward 1 minute (with 5-second interval, this should trigger 12 more calls)
         jest.advanceTimersByTime(60000);
 
-        expect(mockApp.refreshCheckIns).toHaveBeenCalledTimes(2);
+        // 1 initial call + 12 interval calls (60 seconds / 5 seconds = 12)
+        expect(mockApp.refreshReviews).toHaveBeenCalledTimes(13);
     });
 
-    test('startCheckInTimer should clear existing timer before starting new one', () => {
-        service.startCheckInTimer();
-        const firstTimer = service.checkInTimer;
+    test('startReviewTimer should clear existing timer before starting new one', () => {
+        service.startReviewTimer();
+        const firstTimer = service.reviewTimer;
 
-        service.startCheckInTimer();
-        const secondTimer = service.checkInTimer;
+        service.startReviewTimer();
+        const secondTimer = service.reviewTimer;
 
         expect(firstTimer).not.toBe(secondTimer);
     });
 
-    test('startCheckInTimer should call unref if available', () => {
+    test('startReviewTimer should call unref if available', () => {
         const unrefSpy = jest.fn();
         const originalSetInterval = global.setInterval;
         global.setInterval = jest.fn((callback, delay) => {
@@ -57,38 +60,61 @@ describe('TimerService', () => {
             return timer;
         });
 
-        service.startCheckInTimer();
+        service.startReviewTimer();
 
         expect(unrefSpy).toHaveBeenCalled();
 
+        // Clean up before restoring
+        if (service.reviewTimer) {
+            service.stopReviewTimer();
+        }
         global.setInterval = originalSetInterval;
     });
 
-    test('stopCheckInTimer should clear timer', () => {
-        service.startCheckInTimer();
-        expect(service.checkInTimer).not.toBeNull();
+    test('stopReviewTimer should clear timer', () => {
+        service.startReviewTimer();
+        expect(service.reviewTimer).not.toBeNull();
 
-        service.stopCheckInTimer();
+        service.stopReviewTimer();
 
-        expect(service.checkInTimer).toBeNull();
+        expect(service.reviewTimer).toBeNull();
     });
 
-    test('stopCheckInTimer should handle null timer', () => {
-        service.checkInTimer = null;
+    test('stopReviewTimer should handle null timer', () => {
+        service.reviewTimer = null;
 
-        expect(() => service.stopCheckInTimer()).not.toThrow();
-        expect(service.checkInTimer).toBeNull();
+        expect(() => service.stopReviewTimer()).not.toThrow();
+        expect(service.reviewTimer).toBeNull();
     });
 
-    test('stopCheckInTimer should prevent further refreshCheckIns calls', () => {
-        service.startCheckInTimer();
-        const callCount = mockApp.refreshCheckIns.mock.calls.length;
+    test('stopReviewTimer should prevent further refreshReviews calls', () => {
+        service.startReviewTimer();
+        const callCount = mockApp.refreshReviews.mock.calls.length;
 
-        service.stopCheckInTimer();
+        service.stopReviewTimer();
 
         jest.advanceTimersByTime(60000);
 
-        expect(mockApp.refreshCheckIns).toHaveBeenCalledTimes(callCount);
+        expect(mockApp.refreshReviews).toHaveBeenCalledTimes(callCount);
+    });
+
+    test('startReviewTimer should handle timer without unref method', () => {
+        const originalSetInterval = global.setInterval;
+        global.setInterval = jest.fn((callback, delay) => {
+            const timer = originalSetInterval(callback, delay);
+            // Remove unref method to test the branch where it doesn't exist
+            delete timer.unref;
+            return timer;
+        });
+
+        expect(() => service.startReviewTimer()).not.toThrow();
+        expect(mockApp.refreshReviews).toHaveBeenCalledTimes(1);
+
+        // Clean up before restoring
+        if (service.reviewTimer) {
+            service.stopReviewTimer();
+        }
+        global.setInterval = originalSetInterval;
     });
 });
 

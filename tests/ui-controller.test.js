@@ -129,11 +129,7 @@ beforeEach(() => {
         <input type="number" id="maxActiveGoals" value="3" />
         <input type="text" id="reviewIntervals" value="30, 14, 7" />
         <select id="languageSelect"></select>
-        <div id="checkInsPanel">
-            <div id="checkInsFeedback" hidden></div>
-            <div id="checkInsList"></div>
-            <div id="checkInsEmptyState" hidden></div>
-        </div>
+        <div id="dashboardFeedback" class="check-in-feedback" hidden></div>
         <nav class="desktop-menu">
             <button class="menu-btn active" data-view="dashboard"></button>
             <button class="menu-btn" data-view="all-goals"></button>
@@ -145,8 +141,10 @@ beforeEach(() => {
                 <button class="mobile-menu-btn" data-view="all-goals"></button>
             </div>
         </header>
-        <div id="dashboardView" class="view active"></div>
-        <div id="checkInView" class="view"></div>
+        <div id="dashboardView" class="view active">
+            <div id="dashboardFeedback" class="check-in-feedback" hidden></div>
+            <div id="goalsList" class="goals-list"></div>
+        </div>
         <div id="settingsView" class="view"></div>
     </body></html>`, { url: "http://localhost" });
     document = dom.window.document;
@@ -185,7 +183,7 @@ beforeEach(() => {
         getReviewIntervals: jest.fn(() => [30, 14, 7])
     };
     mockReviewService = {
-        getCheckIns: jest.fn(() => []),
+        getReviews: jest.fn(() => []),
         recordReview: jest.fn()
     };
 
@@ -197,11 +195,11 @@ beforeEach(() => {
         settingsService: mockSettingsService,
         reviewService: mockReviewService,
         languageService,
-        checkIns: [],
+        reviews: [],
         exportData: jest.fn(),
         importData: jest.fn(),
-        startCheckInTimer: jest.fn(),
-        refreshCheckIns: jest.fn(),
+        startReviewTimer: jest.fn(),
+        refreshReviews: jest.fn(),
         handleMigrationReviewRequest: jest.fn(),
         cancelMigration: jest.fn(),
         completeMigration: jest.fn()
@@ -464,17 +462,17 @@ describe('UIController', () => {
         expect(uiController.renderViews).toHaveBeenCalled();
     });
 
-    test('changeGoalStatus should update goal status and refresh check-ins', () => {
+    test('changeGoalStatus should update goal status and refresh reviews', () => {
         const updatedGoal = { id: 'goal-1', status: 'completed' };
         mockGoalService.setGoalStatus.mockReturnValue(updatedGoal);
-        mockReviewService.getCheckIns.mockReturnValue([]);
+        mockReviewService.getReviews.mockReturnValue([]);
         uiController.renderViews = jest.fn();
 
         uiController.changeGoalStatus('goal-1', 'completed');
 
         expect(mockGoalService.setGoalStatus).toHaveBeenCalledWith('goal-1', 'completed', 3);
-        expect(mockReviewService.getCheckIns).toHaveBeenCalled();
-        expect(mockApp.checkIns).toEqual([]);
+        expect(mockReviewService.getReviews).toHaveBeenCalled();
+        expect(mockApp.reviews).toEqual([]);
         expect(uiController.renderViews).toHaveBeenCalled();
     });
 
@@ -607,14 +605,18 @@ describe('UIController', () => {
         expect(controller.allGoalsView).toBeDefined();
     });
 
-    test('renderCheckInView should call checkInView.render', () => {
-        uiController.checkInView.render = jest.fn();
-        uiController.goalFormView.openGoalForm = jest.fn();
-        uiController.renderViews = jest.fn();
+    test('handleReviewSubmit should process review submission', () => {
+        const mockGoal = { id: 'goal-1', title: 'Test Goal', reviewIntervalIndex: 0, motivation: 3, urgency: 4 };
+        const mockResult = { goal: mockGoal, ratingsMatch: true };
+        
+        mockReviewService.recordReview.mockReturnValue(mockResult);
+        mockSettingsService.getReviewIntervals.mockReturnValue([7, 14, 30]);
+        mockReviewService.getReviews.mockReturnValue([]);
+        
+        uiController.handleReviewSubmit('goal-1', { motivation: 3, urgency: 4 }, () => {});
 
-        uiController.renderCheckInView();
-
-        expect(uiController.checkInView.render).toHaveBeenCalled();
+        expect(mockReviewService.recordReview).toHaveBeenCalledWith('goal-1', { motivation: 3, urgency: 4 });
+        expect(mockReviewService.getReviews).toHaveBeenCalled();
     });
 
     test('openGoalForm should call goalFormView.openGoalForm', () => {

@@ -30,7 +30,6 @@
             <nav class="menu desktop-menu">
                 <button class="menu-btn active" data-view="dashboard" data-i18n-key="navigation.dashboard">Dashboard</button>
                 <button class="menu-btn" data-view="all-goals" data-i18n-key="navigation.allGoals">All goals</button>
-                <button class="menu-btn" data-view="check-in" data-i18n-key="navigation.checkIn">Review</button>
                 <button class="menu-btn" data-view="settings" data-i18n-key="navigation.settings">Settings</button>
                 <button class="menu-btn" data-view="help" data-i18n-key="navigation.help">Help</button>
             </nav>
@@ -46,7 +45,6 @@
                 <div class="mobile-menu-dropdown" id="mobileMenuDropdown" aria-hidden="true">
                     <button class="mobile-menu-btn active" data-view="dashboard" data-i18n-key="navigation.dashboard">Dashboard</button>
                     <button class="mobile-menu-btn" data-view="all-goals" data-i18n-key="navigation.allGoals">All goals</button>
-                    <button class="mobile-menu-btn" data-view="check-in" data-i18n-key="navigation.checkIn">Review</button>
                     <button class="mobile-menu-btn" data-view="settings" data-i18n-key="navigation.settings">Settings</button>
                     <button class="mobile-menu-btn" data-view="help" data-i18n-key="navigation.help">Help</button>
                 </div>
@@ -55,6 +53,7 @@
 
         <main>
             <div id="dashboardView" class="view active">
+                <div id="dashboardFeedback" class="review-feedback" hidden></div>
                 <div id="goalsList" class="goals-list"></div>
             </div>
 
@@ -104,13 +103,6 @@
                 <div id="allGoalsMobileContainer" class="mobile-goals-container mobile-only"></div>
             </div>
 
-            <div id="check-inView" class="view">
-                <div class="check-ins-panel" id="checkInsPanel">
-                    <div id="checkInsFeedback" class="check-in-feedback" hidden></div>
-                    <div id="checkInsList" class="check-ins-list"></div>
-                    <div id="checkInsEmptyState" class="check-ins-empty" hidden data-i18n-key="checkIns.emptyState">All goals are up to date. Come back later for the next review.</div>
-                </div>
-            </div>
 
             <div id="settingsView" class="view">
                 <div class="settings-panel" id="settingsPanel">

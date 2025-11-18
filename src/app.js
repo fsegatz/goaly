@@ -22,7 +22,7 @@ class GoalyApp {
         this.developerModeService = new DeveloperModeService();
         this.currentDataVersion = GOAL_FILE_VERSION;
         
-        this.checkIns = [];
+        this.reviews = [];
         this.reviewService = null;
         
         // Initialize service managers
@@ -53,8 +53,8 @@ class GoalyApp {
         
         this.uiController = new UIController(this);
         this.uiController.renderViews();
-        this.refreshCheckIns();
-        this.timerService.startCheckInTimer();
+        this.refreshReviews();
+        this.timerService.startReviewTimer();
         this.setupDeveloperMode();
     }
 
@@ -121,18 +121,34 @@ class GoalyApp {
         this.uiController.settingsView.updateDeveloperModeVisibility();
     }
 
-    startCheckInTimer() {
-        this.timerService.startCheckInTimer();
+    startReviewTimer() {
+        this.timerService.startReviewTimer();
     }
     
-    stopCheckInTimer() {
-        this.timerService.stopCheckInTimer();
+    stopReviewTimer() {
+        this.timerService.stopReviewTimer();
     }
 
-    refreshCheckIns({ render = true } = {}) {
-        this.checkIns = this.reviewService.getCheckIns();
-        if (render && this.uiController && typeof this.uiController.renderCheckInView === 'function') {
-            this.uiController.renderCheckInView();
+    refreshReviews({ render = true } = {}) {
+        // getReviews() calls ensureGoalSchedule() which may update goals' review schedules in memory
+        // Save goals to persist any schedule updates
+        const reviewsBefore = this.reviews?.length ?? 0;
+        this.reviews = this.reviewService.getReviews();
+        
+        // Save goals if schedules were updated (ensureGoalSchedule modifies goals in-place)
+        // We save whenever reviews change or periodically to persist schedule updates
+        if (this.goalService) {
+            const reviewsChanged = this.reviews.length !== reviewsBefore;
+            // Save if reviews changed (schedule updates may have occurred) or periodically
+            // This ensures nextReviewAt values calculated by ensureGoalSchedule are persisted
+            if (reviewsChanged || !this._lastReviewSave || (Date.now() - this._lastReviewSave) > 60000) {
+                this.goalService.saveGoals();
+                this._lastReviewSave = Date.now();
+            }
+        }
+        
+        if (render && this.uiController) {
+            this.uiController.renderViews();
         }
     }
 
@@ -155,7 +171,7 @@ class GoalyApp {
             if (this.settingsService.getSettings().language) {
                 this.languageService.setLanguage(this.settingsService.getSettings().language, { notify: false });
             }
-            this.startCheckInTimer();
+            this.startReviewTimer();
         }
 
         this.goalService.goals = payload.goals.map(goal => new Goal(goal));
@@ -163,7 +179,7 @@ class GoalyApp {
         this.goalService.migrateGoalsToAutoActivation(this.settingsService.getSettings().maxActiveGoals);
 
         this.uiController.renderViews();
-        this.refreshCheckIns();
+        this.refreshReviews();
         this.languageService.applyTranslations(document);
     }
 

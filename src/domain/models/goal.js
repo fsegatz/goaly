@@ -35,9 +35,13 @@ class Goal {
         this.status = goalData.status || 'active';
         this.createdAt = goalData.createdAt ? new Date(goalData.createdAt) : new Date();
         this.lastUpdated = goalData.lastUpdated ? new Date(goalData.lastUpdated) : new Date();
-        this.checkInDates = Array.isArray(goalData.checkInDates) ? [...goalData.checkInDates] : [];
-        this.lastCheckInAt = goalData.lastCheckInAt ? new Date(goalData.lastCheckInAt) : null;
-        this.nextCheckInAt = goalData.nextCheckInAt ? new Date(goalData.nextCheckInAt) : null;
+        // Support both old checkIn* and new review* field names for migration compatibility
+        this.reviewDates = Array.isArray(goalData.reviewDates) ? [...goalData.reviewDates] 
+            : (Array.isArray(goalData.checkInDates) ? [...goalData.checkInDates] : []);
+        this.lastReviewAt = goalData.lastReviewAt ? new Date(goalData.lastReviewAt) 
+            : (goalData.lastCheckInAt ? new Date(goalData.lastCheckInAt) : null);
+        this.nextReviewAt = goalData.nextReviewAt ? new Date(goalData.nextReviewAt) 
+            : (goalData.nextCheckInAt ? new Date(goalData.nextCheckInAt) : null);
         this.reviewIntervalIndex = Number.isInteger(goalData.reviewIntervalIndex)
             ? goalData.reviewIntervalIndex
             : null;

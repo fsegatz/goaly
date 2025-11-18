@@ -400,5 +400,12 @@ describe('ModalsView', () => {
         
         modalsView.closeMigrationModals();
     });
+
+    test('getCompletionElement should initialize completionModalRefs if it does not exist', () => {
+        modalsView.completionModalRefs = undefined;
+        const element = modalsView.getCompletionElement('goal-1');
+        expect(modalsView.completionModalRefs).toBeDefined();
+        expect(typeof modalsView.completionModalRefs).toBe('object');
+    });
 });
 

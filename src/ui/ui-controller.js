@@ -2,7 +2,6 @@
 
 import { DashboardView } from './desktop/dashboard-view.js';
 import { AllGoalsView } from './desktop/all-goals-view.js';
-import { CheckInView } from './desktop/check-in-view.js';
 import { SettingsView } from './desktop/settings-view.js';
 import { HelpView } from './desktop/help-view.js';
 import { GoalFormView } from './desktop/goal-form-view.js';
@@ -15,7 +14,6 @@ class UIController {
         this.isMobile = this.detectMobile();
         this.dashboardView = new DashboardView(app);
         this.allGoalsView = this.isMobile ? new MobileAllGoalsView(app) : new AllGoalsView(app);
-        this.checkInView = new CheckInView(app);
         this.settingsView = new SettingsView(app);
         this.helpView = new HelpView(app);
         this.goalFormView = new GoalFormView(app);
@@ -55,14 +53,12 @@ class UIController {
     renderViews() {
         this.dashboardView.render(
             (goalId) => this.modalsView.openCompletionModal(goalId),
-            (goalId, updates) => this.updateGoalInline(goalId, updates)
-        );
-        this.allGoalsView.render((goalId) => this.goalFormView.openGoalForm(goalId, () => this.renderViews()));
-        this.checkInView.render(
+            (goalId, updates) => this.updateGoalInline(goalId, updates),
             (goalId) => this.goalFormView.openGoalForm(goalId, () => this.renderViews()),
-            (goalId, ratings, renderViews) => this.checkInView.handleCheckInSubmit(goalId, ratings, renderViews),
+            (goalId, ratings, renderViews) => this.handleReviewSubmit(goalId, ratings, renderViews),
             () => this.renderViews()
         );
+        this.allGoalsView.render((goalId) => this.goalFormView.openGoalForm(goalId, () => this.renderViews()));
         this.settingsView.syncSettingsForm();
         this.helpView.render();
     }
@@ -89,7 +85,7 @@ class UIController {
 
         this.settingsView.setupEventListeners(
             () => this.renderViews(),
-            () => this.app.startCheckInTimer()
+            () => this.app.startReviewTimer()
         );
 
         this.modalsView.setupCompletionModal((status) => this.handleCompletionChoice(status));
@@ -205,7 +201,7 @@ class UIController {
                 return;
             }
 
-            this.app.checkIns = this.app.reviewService.getCheckIns();
+            this.app.reviews = this.app.reviewService.getReviews();
             this.renderViews();
         } catch (error) {
             alert(error.message || this.app.languageService.translate('errors.statusChangeFailed'));
@@ -225,12 +221,38 @@ class UIController {
         }
     }
 
-    renderCheckInView() {
-        this.checkInView.render(
-            (goalId) => this.goalFormView.openGoalForm(goalId, () => this.renderViews()),
-            (goalId, ratings, renderViews) => this.checkInView.handleCheckInSubmit(goalId, ratings, renderViews),
-            () => this.renderViews()
-        );
+    handleReviewSubmit(goalId, ratings, renderViews) {
+        try {
+            const result = this.app.reviewService.recordReview(goalId, ratings);
+            if (!result) {
+                alert(this.app.languageService.translate('errors.goalNotFound'));
+                return;
+            }
+
+            const intervals = this.app.settingsService.getReviewIntervals?.() || this.app.settingsService.getSettings().reviewIntervals;
+            const intervalDays = Array.isArray(intervals) && intervals.length > 0
+                ? intervals[result.goal.reviewIntervalIndex] ?? intervals[0]
+                : null;
+            const formattedInterval = this.dashboardView.formatReviewIntervalDisplay(intervalDays);
+
+            this.dashboardView.latestReviewFeedback = {
+                messageKey: result.ratingsMatch ? 'reviews.feedback.stable' : 'reviews.feedback.updated',
+                messageArgs: {
+                    title: result.goal.title,
+                    interval: formattedInterval
+                },
+                type: result.ratingsMatch ? 'success' : 'info'
+            };
+
+            if (!result.ratingsMatch) {
+                this.dashboardView.invalidatePriorityCache();
+            }
+
+            this.app.reviews = this.app.reviewService.getReviews();
+            renderViews();
+        } catch (error) {
+            alert(error?.message || this.app.languageService.translate('errors.goalUpdateFailed'));
+        }
     }
 
     openGoalForm(goalId = null) {

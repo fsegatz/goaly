@@ -28,11 +28,14 @@ export class SettingsView extends BaseUIController {
             languageSelect.value = settings.language;
         }
         if (reviewIntervals) {
-            const intervals = Array.isArray(settings.reviewIntervals) ? settings.reviewIntervals : [];
-            reviewIntervals.value = intervals
-                .map((interval) => this.formatReviewIntervalInput(interval))
-                .filter(Boolean)
-                .join(', ');
+            // Only sync if the input is not focused to avoid overwriting user input
+            if (document.activeElement !== reviewIntervals) {
+                const intervals = Array.isArray(settings.reviewIntervals) ? settings.reviewIntervals : [];
+                reviewIntervals.value = intervals
+                    .map((interval) => this.formatReviewIntervalInput(interval))
+                    .filter(Boolean)
+                    .join(', ');
+            }
         }
     }
 
@@ -57,7 +60,7 @@ export class SettingsView extends BaseUIController {
         languageSelect.value = effectiveLanguage;
     }
 
-    setupEventListeners(renderViews, startCheckInTimer) {
+    setupEventListeners(renderViews, startReviewTimer) {
         const saveSettingsBtn = document.getElementById('saveSettingsBtn');
         if (saveSettingsBtn) {
             saveSettingsBtn.addEventListener('click', () => {
@@ -82,8 +85,10 @@ export class SettingsView extends BaseUIController {
                     this.app.languageService.setLanguage(newSettings.language);
                 }
 
-                this.latestCheckInFeedback = null;
-                startCheckInTimer();
+                this.latestReviewFeedback = null;
+                // Immediately refresh reviews when intervals change
+                this.app.refreshReviews({ render: true });
+                startReviewTimer();
                 renderViews();
             });
         }
