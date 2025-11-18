@@ -13,7 +13,8 @@ const de = {
         dashboard: 'Dashboard',
         allGoals: 'Alle Ziele',
         checkIn: 'Review',
-        settings: 'Einstellungen'
+        settings: 'Einstellungen',
+        help: 'Hilfe'
     },
     actions: {
         export: 'Export',
@@ -255,6 +256,16 @@ const de = {
             applying: 'Zusammengeführte Daten werden lokal angewendet…',
             uploading: 'Zusammengeführte Daten werden zu Google Drive hochgeladen…'
         }
+    },
+    help: {
+        title: 'Hilfe',
+        description: 'Hast du einen Fehler gefunden oder möchtest du ein neues Feature anfragen? Wir würden uns über dein Feedback freuen!',
+        reportBug: 'Fehler melden',
+        reportBugHelp: 'Hast du etwas gefunden, das nicht funktioniert? Lass es uns wissen!',
+        reportBugButton: 'Fehler melden',
+        requestFeature: 'Feature anfragen',
+        requestFeatureHelp: 'Hast du eine Idee für ein neues Feature? Wir würden sie gerne hören!',
+        requestFeatureButton: 'Feature anfragen'
     }
 };
 

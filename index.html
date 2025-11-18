@@ -32,6 +32,7 @@
                 <button class="menu-btn" data-view="all-goals" data-i18n-key="navigation.allGoals">All goals</button>
                 <button class="menu-btn" data-view="check-in" data-i18n-key="navigation.checkIn">Review</button>
                 <button class="menu-btn" data-view="settings" data-i18n-key="navigation.settings">Settings</button>
+                <button class="menu-btn" data-view="help" data-i18n-key="navigation.help">Help</button>
             </nav>
             <div class="header-actions-desktop">
                 <button id="addGoalBtnDesktop" class="btn btn-primary" data-i18n-key="actions.addGoal">New goal</button>
@@ -47,6 +48,7 @@
                     <button class="mobile-menu-btn" data-view="all-goals" data-i18n-key="navigation.allGoals">All goals</button>
                     <button class="mobile-menu-btn" data-view="check-in" data-i18n-key="navigation.checkIn">Review</button>
                     <button class="mobile-menu-btn" data-view="settings" data-i18n-key="navigation.settings">Settings</button>
+                    <button class="mobile-menu-btn" data-view="help" data-i18n-key="navigation.help">Help</button>
                 </div>
             </nav>
         </header>
@@ -150,6 +152,29 @@
                         </div>
                     </div>
                     <button id="saveSettingsBtn" class="btn btn-primary" data-i18n-key="settingsPanel.save">Save</button>
+                </div>
+            </div>
+
+            <div id="helpView" class="view">
+                <div class="settings-panel" id="helpPanel">
+                    <div class="setting-item">
+                        <h2 data-i18n-key="help.title">Help</h2>
+                        <p data-i18n-key="help.description">Have you found a bug or would you like to request a new feature? We'd love to hear from you!</p>
+                    </div>
+                    <div class="setting-item">
+                        <label data-i18n-key="help.reportBug">Report a Bug</label>
+                        <p class="setting-help" data-i18n-key="help.reportBugHelp">Found something that's not working? Let us know!</p>
+                        <div class="data-management-actions">
+                            <a id="bugReportLink" href="https://github.com/fsegatz/goaly/issues/new?template=bug_report.md" target="_blank" rel="noopener noreferrer" class="btn btn-danger" data-i18n-key="help.reportBugButton">Report Bug</a>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label data-i18n-key="help.requestFeature">Request a Feature</label>
+                        <p class="setting-help" data-i18n-key="help.requestFeatureHelp">Have an idea for a new feature? We'd love to hear it!</p>
+                        <div class="data-management-actions">
+                            <a id="featureRequestLink" href="https://github.com/fsegatz/goaly/issues/new?template=feature_request.md" target="_blank" rel="noopener noreferrer" class="btn btn-primary" data-i18n-key="help.requestFeatureButton">Request Feature</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>

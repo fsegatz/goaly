@@ -13,7 +13,8 @@ const sv = {
         dashboard: 'Dashboard',
         allGoals: 'Alla mål',
         checkIn: 'Review',
-        settings: 'Inställningar'
+        settings: 'Inställningar',
+        help: 'Hjälp'
     },
     actions: {
         export: 'Exportera',
@@ -255,6 +256,16 @@ const sv = {
             applying: 'Tillämpa sammanslagen data lokalt…',
             uploading: 'Laddar upp sammanslagen data till Google Drive…'
         }
+    },
+    help: {
+        title: 'Hjälp',
+        description: 'Har du hittat en bugg eller vill du begära en ny funktion? Vi skulle gärna höra från dig!',
+        reportBug: 'Rapportera en bugg',
+        reportBugHelp: 'Har du hittat något som inte fungerar? Låt oss veta!',
+        reportBugButton: 'Rapportera bugg',
+        requestFeature: 'Begär en funktion',
+        requestFeatureHelp: 'Har du en idé för en ny funktion? Vi skulle gärna höra den!',
+        requestFeatureButton: 'Begär funktion'
     }
 };
 

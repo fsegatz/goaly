@@ -4,6 +4,7 @@ import { DashboardView } from './desktop/dashboard-view.js';
 import { AllGoalsView } from './desktop/all-goals-view.js';
 import { CheckInView } from './desktop/check-in-view.js';
 import { SettingsView } from './desktop/settings-view.js';
+import { HelpView } from './desktop/help-view.js';
 import { GoalFormView } from './desktop/goal-form-view.js';
 import { ModalsView } from './desktop/modals-view.js';
 import { MobileAllGoalsView } from './mobile/all-goals-view.js';
@@ -16,6 +17,7 @@ class UIController {
         this.allGoalsView = this.isMobile ? new MobileAllGoalsView(app) : new AllGoalsView(app);
         this.checkInView = new CheckInView(app);
         this.settingsView = new SettingsView(app);
+        this.helpView = new HelpView(app);
         this.goalFormView = new GoalFormView(app);
         this.modalsView = new ModalsView(app);
 
@@ -62,6 +64,7 @@ class UIController {
             () => this.renderViews()
         );
         this.settingsView.syncSettingsForm();
+        this.helpView.render();
     }
 
     setupEventListeners() {
