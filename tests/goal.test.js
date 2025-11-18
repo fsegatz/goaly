@@ -12,7 +12,7 @@ describe('Goal', () => {
             status: 'active',
             createdAt: '2024-01-01',
             lastUpdated: '2024-10-26',
-            checkInDates: ['2024-10-26']
+            reviewDates: ['2024-10-26']
         };
         const goal = new Goal(goalData);
 
@@ -24,7 +24,7 @@ describe('Goal', () => {
         expect(goal.status).toBe(goalData.status);
         expect(goal.createdAt).toEqual(new Date(goalData.createdAt));
         expect(goal.lastUpdated).toEqual(new Date(goalData.lastUpdated));
-        expect(goal.checkInDates).toEqual(goalData.checkInDates);
+        expect(goal.reviewDates).toEqual(goalData.reviewDates);
         expect(goal.history).toEqual([]);
         expect(goal.steps).toEqual([]);
         expect(goal.resources).toEqual([]);
@@ -44,7 +44,7 @@ describe('Goal', () => {
         expect(goal.status).toBe('active');
         expect(goal.createdAt).toBeInstanceOf(Date);
         expect(goal.lastUpdated).toBeInstanceOf(Date);
-        expect(goal.checkInDates).toEqual([]);
+        expect(goal.reviewDates).toEqual([]);
         expect(goal.history).toEqual([]);
         expect(goal.steps).toEqual([]);
         expect(goal.resources).toEqual([]);
@@ -162,5 +162,19 @@ describe('Goal', () => {
         expect(typeof goal.steps[0].id).toBe('string');
         expect(goal.resources[0].id).toBeDefined();
         expect(typeof goal.resources[0].id).toBe('string');
+    });
+
+    test('should handle null history entry', () => {
+        const goalData = {
+            title: 'Goal with null history',
+            motivation: 3,
+            urgency: 4,
+            history: [null, undefined, { timestamp: '2024-01-01', event: 'update' }]
+        };
+        const goal = new Goal(goalData);
+
+        // Should filter out null/undefined entries
+        expect(goal.history).toHaveLength(1);
+        expect(goal.history[0].event).toBe('update');
     });
 });

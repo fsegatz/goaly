@@ -90,6 +90,7 @@ class SettingsService {
             reviewIntervals: [...FALLBACK_REVIEW_INTERVALS]
         };
         delete this.settings.checkInInterval;
+        delete this.settings.reviewsEnabled;
         delete this.settings.checkInsEnabled;
         this.settings.reviewIntervals = normalizeReviewIntervals(this.settings.reviewIntervals);
     }
@@ -100,6 +101,7 @@ class SettingsService {
             this.settings = { ...this.settings, ...JSON.parse(saved) };
         }
         delete this.settings.checkInInterval;
+        delete this.settings.reviewsEnabled;
         delete this.settings.checkInsEnabled;
         if (!this.settings.language) {
             this.settings.language = 'en';
@@ -120,6 +122,7 @@ class SettingsService {
         merged.reviewIntervals = normalizeReviewIntervals(newSettings?.reviewIntervals ?? merged.reviewIntervals);
         this.settings = merged;
         delete this.settings.checkInInterval;
+        delete this.settings.reviewsEnabled;
         delete this.settings.checkInsEnabled;
         if (!this.settings.language) {
             this.settings.language = 'en';

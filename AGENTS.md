@@ -11,6 +11,7 @@ This handbook summarises how coding agents and new contributors collaborate prod
 ## Tests & Quality
 - Execute `npm test` for unit tests; add `-- --coverage` for a coverage report.
 - **Important:** Always run `npm test` directly without piping output through filters (e.g., `findstr`, `grep`) for parsing. This ensures accurate test results and coverage reporting.
+- **Command Usage:** Always use `npm test` without extra flags or piping. Run the command as-is: `npm test`. Do not add flags or pipe output to other commands.
 - Maintain the existing high coverage; extend tests for new UI behaviour (`tests/ui-controller.test.js`).
 - After code changes run `read_lints` in Cursor for touched files.
 
@@ -18,7 +19,7 @@ This handbook summarises how coding agents and new contributors collaborate prod
 - `src/domain`: pure logic (goal, settings, review services).
 - `src/ui/ui-controller.js`: DOM coordination and rendering logic.
 - `styles/styles.css`: global styling with responsive layout.
-- `src/i18n`: language resources and localisation service.
+- `src/language`: language resources and localisation service.
 
 ## Working Guidelines
 1. Review existing tests before implementing changes to understand expected behaviour.

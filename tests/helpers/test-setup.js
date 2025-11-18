@@ -178,7 +178,7 @@ function setupTestEnvironment() {
         getReviewIntervals: jest.fn(() => [30, 14, 7])
     };
     mockReviewService = {
-        getCheckIns: jest.fn(() => []),
+        getReviews: jest.fn(() => []),
         recordReview: jest.fn()
     };
 
@@ -191,11 +191,11 @@ function setupTestEnvironment() {
         settingsService: mockSettingsService,
         reviewService: mockReviewService,
         languageService,
-        checkIns: [],
+        reviews: [],
         exportData: jest.fn(),
         importData: jest.fn(),
-        startCheckInTimer: jest.fn(),
-        refreshCheckIns: jest.fn(),
+        startReviewTimer: jest.fn(),
+        refreshReviews: jest.fn(),
         handleMigrationReviewRequest: jest.fn(),
         cancelMigration: jest.fn(),
         completeMigration: jest.fn()
@@ -205,13 +205,15 @@ function setupTestEnvironment() {
 }
 
 function cleanupTestEnvironment() {
+    // Clear all fake timers before switching to real timers
+    jest.clearAllTimers();
+    jest.useRealTimers();
     // Clean up global DOM elements
     delete global.document;
     delete global.window;
     delete global.navigator;
     delete global.confirm;
     delete global.alert;
-    jest.useRealTimers();
 }
 
 module.exports = { setupTestEnvironment, cleanupTestEnvironment };

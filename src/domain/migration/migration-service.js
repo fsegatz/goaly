@@ -44,8 +44,11 @@ export function migratePayloadToCurrent(payload) {
     };
 
     if (Array.isArray(clonedPayload.goals)) {
-        // Migrate each goal: convert description to first step
-        migrated.goals = clonedPayload.goals.map((goal, index) => migrateGoalDescriptionToStep(goal, index));
+        // Migrate each goal: convert description to first step and rename checkIn fields to review
+        migrated.goals = clonedPayload.goals.map((goal, index) => {
+            const goalWithSteps = migrateGoalDescriptionToStep(goal, index);
+            return migrateCheckInToReview(goalWithSteps);
+        });
         migrated.goals = serializeGoals(migrated.goals);
     } else if (!Array.isArray(migrated.goals)) {
         migrated.goals = [];
@@ -95,6 +98,42 @@ function migrateGoalDescriptionToStep(goal, index = 0) {
     } else if (!Array.isArray(migrated.steps)) {
         // Ensure steps array exists even if no description
         migrated.steps = [];
+    }
+
+    return migrated;
+}
+
+/**
+ * Migrates checkIn field names to review field names.
+ * Renames:
+ * - checkInDates → reviewDates
+ * - lastCheckInAt → lastReviewAt
+ * - nextCheckInAt → nextReviewAt
+ * @param {Object} goal - The goal object to migrate
+ */
+function migrateCheckInToReview(goal) {
+    if (!goal || typeof goal !== 'object') {
+        return goal;
+    }
+
+    const migrated = { ...goal };
+
+    // Rename checkInDates to reviewDates
+    if ('checkInDates' in migrated) {
+        migrated.reviewDates = migrated.checkInDates;
+        delete migrated.checkInDates;
+    }
+
+    // Rename lastCheckInAt to lastReviewAt
+    if ('lastCheckInAt' in migrated) {
+        migrated.lastReviewAt = migrated.lastCheckInAt;
+        delete migrated.lastCheckInAt;
+    }
+
+    // Rename nextCheckInAt to nextReviewAt
+    if ('nextCheckInAt' in migrated) {
+        migrated.nextReviewAt = migrated.nextCheckInAt;
+        delete migrated.nextReviewAt;
     }
 
     return migrated;

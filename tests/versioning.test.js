@@ -39,5 +39,22 @@ describe('versioning utilities', () => {
         expect(isSameVersion('invalid', GOAL_FILE_VERSION)).toBe(false);
         expect(isNewerVersion('invalid', GOAL_FILE_VERSION)).toBe(false);
     });
+
+    test('compares versions with different minor versions', () => {
+        expect(compareVersions('1.3.0', '1.2.0')).toBe(1);
+        expect(compareVersions('1.2.0', '1.3.0')).toBe(-1);
+    });
+
+    test('compares versions with different patch versions', () => {
+        expect(compareVersions('1.2.4', '1.2.3')).toBe(1);
+        expect(compareVersions('1.2.3', '1.2.4')).toBe(-1);
+    });
+
+    test('isValidVersion handles non-string types', () => {
+        expect(isValidVersion(123)).toBe(false);
+        expect(isValidVersion(null)).toBe(false);
+        expect(isValidVersion(undefined)).toBe(false);
+        expect(isValidVersion({})).toBe(false);
+    });
 });
 

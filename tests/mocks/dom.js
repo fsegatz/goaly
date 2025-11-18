@@ -146,7 +146,6 @@ function createFullDOM() {
             </div>
         </header>
         <div id="dashboardView" class="view active"></div>
-        <div id="checkInView" class="view"></div>
         <div id="settingsView" class="view"></div>
     </body></html>`, { url: 'http://localhost' });
 }

@@ -1,43 +1,43 @@
 // src/domain/timer-service.js
 
-import { CHECK_IN_REFRESH_INTERVAL_MS } from '../utils/constants.js';
+import { REVIEW_REFRESH_INTERVAL_MS } from '../utils/constants.js';
 
 /**
- * Manages application timers (check-in refresh, etc.)
+ * Manages application timers (review refresh, etc.)
  */
 class TimerService {
     constructor(app) {
         this.app = app;
-        this.checkInTimer = null;
+        this.reviewTimer = null;
     }
 
     /**
-     * Start the check-in refresh timer
+     * Start the review refresh timer
      */
-    startCheckInTimer() {
-        if (this.checkInTimer) {
-            clearInterval(this.checkInTimer);
-            this.checkInTimer = null;
+    startReviewTimer() {
+        if (this.reviewTimer) {
+            clearInterval(this.reviewTimer);
+            this.reviewTimer = null;
         }
 
-        this.app.refreshCheckIns();
-        this.checkInTimer = setInterval(() => {
-            this.app.refreshCheckIns();
-        }, CHECK_IN_REFRESH_INTERVAL_MS);
+        this.app.refreshReviews();
+        this.reviewTimer = setInterval(() => {
+            this.app.refreshReviews();
+        }, REVIEW_REFRESH_INTERVAL_MS);
         
         // Use unref() to prevent timer from keeping Node.js process alive (for testing)
-        if (typeof this.checkInTimer.unref === 'function') {
-            this.checkInTimer.unref();
+        if (typeof this.reviewTimer.unref === 'function') {
+            this.reviewTimer.unref();
         }
     }
     
     /**
-     * Stop the check-in refresh timer
+     * Stop the review refresh timer
      */
-    stopCheckInTimer() {
-        if (this.checkInTimer) {
-            clearInterval(this.checkInTimer);
-            this.checkInTimer = null;
+    stopReviewTimer() {
+        if (this.reviewTimer) {
+            clearInterval(this.reviewTimer);
+            this.reviewTimer = null;
         }
     }
 }

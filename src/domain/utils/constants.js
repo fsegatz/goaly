@@ -1,7 +1,7 @@
 // src/domain/constants.js
 
 // Timer intervals
-export const CHECK_IN_REFRESH_INTERVAL_MS = 60000; // 1 minute
+export const REVIEW_REFRESH_INTERVAL_MS = 5000; // 5 seconds - allows short review intervals (e.g., 5s, 30s)
 export const GOOGLE_DRIVE_SYNC_DEBOUNCE_MS = 5000; // 5 seconds
 
 // Developer mode

@@ -157,7 +157,7 @@ a.btn {
 }
 
 .settings-panel,
-.check-ins-panel {
+.reviews-panel {
     background: white;
     padding: 25px;
     border-radius: 12px;
@@ -323,6 +323,23 @@ main {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
 }
+
+.dashboard-card-separator {
+    grid-column: 1 / -1;
+    height: 1px;
+    background: #e0e0e0;
+    margin: 24px 0;
+    border: none;
+}
+
+.dashboard-review-card {
+    background: #ffffff;
+    border: 2px solid #f59e0b;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 6px 14px rgba(245, 158, 11, 0.15);
+}
+
 
 .all-goals-controls {
     display: flex;
@@ -1200,7 +1217,7 @@ main {
     min-width: 100px;
 }
 
-.check-in-feedback {
+.review-feedback {
     border-radius: 8px;
     padding: 12px 16px;
     background: #f1f5ff;
@@ -1210,25 +1227,25 @@ main {
     margin-bottom: 18px;
 }
 
-.check-in-feedback[data-state="success"] {
+.review-feedback[data-state="success"] {
     background: #f0f9f5;
     border-left-color: #2d9f6f;
     color: #1f6a4c;
 }
 
-.check-in-feedback[data-state="info"] {
+.review-feedback[data-state="info"] {
     background: #f1f5ff;
     border-left-color: #667eea;
     color: #2f3b68;
 }
 
-.check-ins-list {
+.reviews-list {
     display: flex;
     flex-direction: column;
     gap: 18px;
 }
 
-.check-ins-empty {
+.reviews-empty {
     padding: 24px;
     text-align: center;
     color: #777;
@@ -1238,7 +1255,7 @@ main {
     background: #fafaff;
 }
 
-.check-in-card {
+.review-card {
     background: #ffffff;
     border-radius: 12px;
     border: 1px solid #e0e0e0;
@@ -1248,61 +1265,99 @@ main {
     flex-direction: column;
     gap: 16px;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    min-height: 200px;
+    justify-content: space-between;
 }
 
-.check-in-card.is-stable {
-    border-color: #38a169;
-    box-shadow: 0 10px 20px rgba(56, 161, 105, 0.18);
-}
 
-.check-in-card__header {
+.review-card__header {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: flex-start;
     gap: 8px;
+    position: relative;
+    flex-shrink: 0;
 }
 
-.check-in-card__title {
+.review-card__title {
     font-size: 1.2rem;
     font-weight: 600;
     color: #2d2d2d;
     flex: 1 1 auto;
+    padding-right: 120px;
+    margin-right: 8px;
 }
 
-.check-in-card__sequence {
+.review-card__sequence {
     font-size: 0.85rem;
     color: #667eea;
     font-weight: 600;
 }
 
-.check-in-card__due {
-    font-size: 0.9rem;
-    color: #a94442;
-    font-weight: 500;
-    width: 100%;
+.review-card__review-badge {
+    font-size: 0.85rem;
+    color: #f59e0b;
+    font-weight: 600;
+    padding: 4px 8px;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
 }
 
-.check-in-card__fields {
+.review-card__due {
+    font-size: 0.85rem;
+    color: #a94442;
+    font-weight: 500;
+    text-align: right;
+    white-space: nowrap;
+    position: absolute;
+    top: 28px;
+    right: 0;
+    z-index: 1;
+}
+
+.review-card__bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: auto;
+    flex-shrink: 0;
+}
+
+.review-card__fields {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 16px;
     align-items: end;
 }
 
-.check-in-card__field {
+.review-card__field {
     display: flex;
     flex-direction: column;
     gap: 6px;
 }
 
-.check-in-card__field-label {
+.review-card__field-label {
     font-size: 0.9rem;
     color: #555;
     font-weight: 500;
+    display: block;
+    margin-bottom: 8px;
+    visibility: visible;
+    opacity: 1;
 }
 
-.check-in-card__field-input {
+.review-card__field-input {
     padding: 10px 12px;
     border-radius: 8px;
     border: 1px solid #d0d0d0;
@@ -1310,36 +1365,144 @@ main {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.check-in-card__field-input:focus {
+.review-card__field-input:focus {
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
 }
 
-.check-in-card__status {
-    align-self: flex-start;
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: #e6f9f0;
-    color: #20744a;
-    font-size: 0.85rem;
+.review-card__radio-field {
+    grid-column: 1 / -1;
+}
+
+.review-card__radio-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: nowrap;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.review-card__radio-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.review-card__radio-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    width: 0;
+    height: 0;
+}
+
+.review-card__radio-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 36px;
+    height: 36px;
+    border: 2px solid #d0d0d0;
+    border-radius: 8px;
+    background: white;
+    color: #555;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.review-card__radio-option:hover .review-card__radio-label {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+
+.review-card__radio-option input[type="radio"]:checked + .review-card__radio-label {
+    border-color: #667eea;
+    background: #667eea;
+    color: white;
     font-weight: 600;
 }
 
-.check-in-card__actions {
+.review-card__radio-option.is-current .review-card__radio-label {
+    border-color: #f59e0b;
+    background: #fff7ed;
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+.review-card__radio-option.is-current input[type="radio"]:checked + .review-card__radio-label {
+    border-color: #f59e0b;
+    background: #f59e0b;
+    color: white;
+}
+
+.review-card__actions {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
+    align-items: center;
+    flex-direction: row;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.check-in-card__actions .btn {
-    flex: 1;
-    min-width: 120px;
+.review-card__actions .btn {
+    flex: 1 1 auto;
+    min-width: 140px;
+    max-width: calc(50% - 6px);
+    padding: 12px 20px !important;
+    white-space: nowrap;
+    width: auto;
+    font-size: 1rem;
+    overflow: visible;
+    text-overflow: clip;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.5;
+    height: auto;
+    box-sizing: border-box;
+    visibility: visible;
+    opacity: 1;
+}
+
+.review-card__actions .btn-primary {
+    color: white !important;
+    background: #667eea !important;
+}
+
+.review-card__actions .btn-primary:hover {
+    background: #5568d3 !important;
+    color: white !important;
+}
+
+.review-card__actions .btn-secondary {
+    color: #333 !important;
+    background: #e0e0e0 !important;
+}
+
+.review-card__actions .btn-secondary:hover {
+    background: #d0d0d0 !important;
+    color: #333 !important;
 }
 
 @media (max-width: 600px) {
-    .check-in-card__actions .btn {
+    .review-card__actions {
+        flex-direction: column;
+    }
+    
+    .review-card__actions .btn {
         min-width: 100%;
+        width: 100%;
+        flex: 0 0 auto;
     }
 }
 

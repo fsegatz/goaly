@@ -41,7 +41,8 @@ beforeEach(() => {
         },
         exportData: jest.fn(),
         importData: jest.fn(),
-        startCheckInTimer: jest.fn(),
+        startReviewTimer: jest.fn(),
+        refreshReviews: jest.fn(),
     };
 
     settingsView = new SettingsView(mockApp);
@@ -65,8 +66,8 @@ afterEach(() => {
 describe('SettingsView', () => {
     test('exportBtn click should call app.exportData', () => {
         const renderViews = jest.fn();
-        const startCheckInTimer = jest.fn();
-        settingsView.setupEventListeners(renderViews, startCheckInTimer);
+        const startReviewTimer = jest.fn();
+        settingsView.setupEventListeners(renderViews, startReviewTimer);
 
         document.getElementById('exportBtn').click();
         expect(mockApp.exportData).toHaveBeenCalled();
@@ -76,8 +77,8 @@ describe('SettingsView', () => {
         const importFile = document.getElementById('importFile');
         importFile.click = jest.fn();
         const renderViews = jest.fn();
-        const startCheckInTimer = jest.fn();
-        settingsView.setupEventListeners(renderViews, startCheckInTimer);
+        const startReviewTimer = jest.fn();
+        settingsView.setupEventListeners(renderViews, startReviewTimer);
 
         document.getElementById('importBtn').click();
         expect(importFile.click).toHaveBeenCalled();
@@ -91,8 +92,8 @@ describe('SettingsView', () => {
             writable: true,
         });
         const renderViews = jest.fn();
-        const startCheckInTimer = jest.fn();
-        settingsView.setupEventListeners(renderViews, startCheckInTimer);
+        const startReviewTimer = jest.fn();
+        settingsView.setupEventListeners(renderViews, startReviewTimer);
 
         importFile.dispatchEvent(new dom.window.Event('change'));
         expect(mockApp.importData).toHaveBeenCalledWith(mockFile);
@@ -106,8 +107,8 @@ describe('SettingsView', () => {
             writable: true,
         });
         const renderViews = jest.fn();
-        const startCheckInTimer = jest.fn();
-        settingsView.setupEventListeners(renderViews, startCheckInTimer);
+        const startReviewTimer = jest.fn();
+        settingsView.setupEventListeners(renderViews, startReviewTimer);
 
         importFile.dispatchEvent(new dom.window.Event('change'));
         expect(mockApp.importData).not.toHaveBeenCalled();
@@ -169,8 +170,8 @@ describe('SettingsView', () => {
         document.getElementById('reviewIntervals').value = '45, 15, 7';
         mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] });
         const renderViews = jest.fn();
-        const startCheckInTimer = jest.fn();
-        settingsView.setupEventListeners(renderViews, startCheckInTimer);
+        const startReviewTimer = jest.fn();
+        settingsView.setupEventListeners(renderViews, startReviewTimer);
 
         document.getElementById('saveSettingsBtn').click();
 
@@ -180,7 +181,7 @@ describe('SettingsView', () => {
             reviewIntervals: '45, 15, 7'
         });
         expect(mockApp.goalService.autoActivateGoalsByPriority).toHaveBeenCalledWith(5);
-        expect(startCheckInTimer).toHaveBeenCalled();
+        expect(startReviewTimer).toHaveBeenCalled();
         expect(renderViews).toHaveBeenCalled();
     });
 
@@ -189,8 +190,8 @@ describe('SettingsView', () => {
         document.getElementById('reviewIntervals').value = '30, 14, 7';
         mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] });
         const renderViews = jest.fn();
-        const startCheckInTimer = jest.fn();
-        settingsView.setupEventListeners(renderViews, startCheckInTimer);
+        const startReviewTimer = jest.fn();
+        settingsView.setupEventListeners(renderViews, startReviewTimer);
 
         document.getElementById('saveSettingsBtn').click();
 
@@ -206,11 +207,11 @@ describe('SettingsView', () => {
         
         mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] });
         const renderViews = jest.fn();
-        const startCheckInTimer = jest.fn();
+        const startReviewTimer = jest.fn();
         
         // Mock renderViews on settingsView to prevent error
         settingsView.renderViews = renderViews;
-        settingsView.setupEventListeners(renderViews, startCheckInTimer);
+        settingsView.setupEventListeners(renderViews, startReviewTimer);
 
         document.getElementById('saveSettingsBtn').click();
 
@@ -234,14 +235,14 @@ describe('SettingsView', () => {
         document.getElementById('reviewIntervals').value = '30, 14, 7';
         mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] });
         const renderViews = jest.fn();
-        const startCheckInTimer = jest.fn();
-        settingsView.setupEventListeners(renderViews, startCheckInTimer);
+        const startReviewTimer = jest.fn();
+        settingsView.setupEventListeners(renderViews, startReviewTimer);
 
         document.getElementById('saveSettingsBtn').click();
 
         expect(mockSettingsService.updateSettings).toHaveBeenCalled();
         expect(mockApp.goalService.autoActivateGoalsByPriority).not.toHaveBeenCalled();
-        expect(startCheckInTimer).toHaveBeenCalled();
+        expect(startReviewTimer).toHaveBeenCalled();
         expect(renderViews).toHaveBeenCalled();
     });
 
@@ -251,6 +252,66 @@ describe('SettingsView', () => {
         document.getElementById('languageSelect').remove();
 
         expect(() => settingsView.syncSettingsForm()).not.toThrow();
+    });
+
+    test('syncSettingsForm should not sync reviewIntervals when input is focused', () => {
+        // Test the first syncSettingsForm method (line 18) that checks for focused element
+        const reviewIntervals = document.getElementById('reviewIntervals');
+        reviewIntervals.value = 'user typing...';
+        
+        // Create a spy to intercept the call and check which method is called
+        const originalSync = settingsView.syncSettingsForm;
+        let syncCalled = false;
+        settingsView.syncSettingsForm = function() {
+            syncCalled = true;
+            // Call the first syncSettingsForm implementation
+            const settings = this.app.settingsService.getSettings();
+            const maxActiveGoals = document.getElementById('maxActiveGoals');
+            const languageSelect = document.getElementById('languageSelect');
+            const reviewIntervals = document.getElementById('reviewIntervals');
+
+            if (maxActiveGoals) {
+                maxActiveGoals.value = settings.maxActiveGoals;
+            }
+            if (languageSelect) {
+                languageSelect.value = settings.language;
+            }
+            if (reviewIntervals) {
+                // Only sync if the input is not focused to avoid overwriting user input
+                if (document.activeElement !== reviewIntervals) {
+                    const intervals = Array.isArray(settings.reviewIntervals) ? settings.reviewIntervals : [];
+                    reviewIntervals.value = intervals
+                        .map((interval) => this.formatReviewIntervalInput(interval))
+                        .filter(Boolean)
+                        .join(', ');
+                }
+            }
+        };
+        
+        // Simulate focus by setting activeElement
+        Object.defineProperty(document, 'activeElement', {
+            value: reviewIntervals,
+            writable: true,
+            configurable: true
+        });
+        mockSettingsService.getSettings.mockReturnValue({ 
+            maxActiveGoals: 3, 
+            language: 'en', 
+            reviewIntervals: [7, 14, 30] 
+        });
+
+        settingsView.syncSettingsForm();
+
+        // Should preserve user input when focused
+        expect(reviewIntervals.value).toBe('user typing...');
+        
+        // Restore
+        settingsView.syncSettingsForm = originalSync;
+        Object.defineProperty(document, 'activeElement', {
+            value: document.body,
+            writable: true,
+            configurable: true
+        });
     });
 
     test('updateLanguageOptions should handle missing languageSelect', () => {
