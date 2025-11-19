@@ -43,6 +43,7 @@ beforeEach(() => {
         getActiveGoals: jest.fn(() => []),
         calculatePriority: jest.fn(() => 0),
         updateGoal: jest.fn(),
+        isGoalPaused: jest.fn(() => false),
     };
     mockSettingsService = {
         getSettings: jest.fn(() => ({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] })),
@@ -120,7 +121,8 @@ describe('DashboardView', () => {
         expect(card.querySelector('.goal-deadline-input')).not.toBeNull();
         expect(card.querySelector('.edit-goal')).toBeNull();
         expect(card.querySelector('.goal-deadline-label')).not.toBeNull();
-        expect(card.innerHTML).not.toContain('pause-goal');
+        // Active goals should have a pause button
+        expect(card.querySelector('.pause-goal')).not.toBeNull();
         expect(card.innerHTML).not.toContain('activate-goal');
         expect(card.querySelector('.complete-goal')).not.toBeNull();
         expect(card.querySelector('.goal-steps-section')).not.toBeNull();

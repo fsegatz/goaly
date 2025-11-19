@@ -369,20 +369,139 @@ class GoalService {
 
     getActiveGoals() {
         return this.goals
-            .filter(g => g.status === 'active')
+            .filter(g => g.status === 'active' && !this.isGoalPaused(g))
             .sort((a, b) => this.calculatePriority(b) - this.calculatePriority(a));
+    }
+
+    /**
+     * Check if a goal is currently paused (either by date or goal dependency)
+     * This method does NOT modify the goal - use checkAndClearPauseConditions to clear expired pauses
+     * @param {Goal} goal - The goal to check
+     * @returns {boolean} - True if the goal is paused
+     */
+    isGoalPaused(goal) {
+        if (!goal) {
+            return false;
+        }
+
+        // Check date-based pause
+        if (goal.pauseUntil) {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            const pauseUntil = new Date(goal.pauseUntil);
+            pauseUntil.setHours(0, 0, 0, 0);
+            if (pauseUntil > now) {
+                return true;
+            }
+        }
+
+        // Check goal dependency pause
+        if (goal.pauseUntilGoalId) {
+            const dependencyGoal = this.goals.find(g => g.id === goal.pauseUntilGoalId);
+            if (dependencyGoal && dependencyGoal.status !== 'completed') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Pause a goal until a specific date or until another goal is completed
+     * @param {string} goalId - The ID of the goal to pause
+     * @param {Object} pauseData - Object with pauseUntil (Date) or pauseUntilGoalId (string)
+     * @param {number} maxActiveGoals - Maximum number of active goals
+     * @returns {Goal|null} - The paused goal or null if not found
+     */
+    pauseGoal(goalId, pauseData, maxActiveGoals) {
+        const goal = this.goals.find(g => g.id === goalId);
+        if (!goal) {
+            return null;
+        }
+
+        const beforeSnapshot = this.createSnapshot(goal);
+        
+        // Set pause metadata
+        goal.pauseUntil = pauseData.pauseUntil || null;
+        goal.pauseUntilGoalId = pauseData.pauseUntilGoalId || null;
+        goal.lastUpdated = new Date();
+
+        // If goal is active and should be paused, change status to paused
+        if (goal.status === 'active' && this.isGoalPaused(goal)) {
+            this.handleStatusTransition(goal, 'paused');
+        }
+
+        const afterSnapshot = this.createSnapshot(goal);
+        const changes = this.diffSnapshots(beforeSnapshot, afterSnapshot);
+        this.recordHistory(goal, {
+            event: HISTORY_EVENTS.UPDATED,
+            timestamp: goal.lastUpdated,
+            before: beforeSnapshot,
+            after: afterSnapshot,
+            changes
+        });
+
+        // Re-activate goals to fill the slot if needed
+        this.autoActivateGoalsByPriority(maxActiveGoals);
+        
+        return goal;
+    }
+
+    /**
+     * Unpause a goal (clear pause metadata)
+     * @param {string} goalId - The ID of the goal to unpause
+     * @param {number} maxActiveGoals - Maximum number of active goals
+     * @returns {Goal|null} - The unpaused goal or null if not found
+     */
+    unpauseGoal(goalId, maxActiveGoals) {
+        const goal = this.goals.find(g => g.id === goalId);
+        if (!goal) {
+            return null;
+        }
+
+        const beforeSnapshot = this.createSnapshot(goal);
+        
+        // Clear pause metadata
+        goal.pauseUntil = null;
+        goal.pauseUntilGoalId = null;
+        goal.lastUpdated = new Date();
+
+        const afterSnapshot = this.createSnapshot(goal);
+        const changes = this.diffSnapshots(beforeSnapshot, afterSnapshot);
+        this.recordHistory(goal, {
+            event: HISTORY_EVENTS.UPDATED,
+            timestamp: goal.lastUpdated,
+            before: beforeSnapshot,
+            after: afterSnapshot,
+            changes
+        });
+
+        // Re-activate goals based on priority
+        this.autoActivateGoalsByPriority(maxActiveGoals);
+        
+        return goal;
     }
 
     /**
      * Automatically activates the top N goals with the highest priority.
      * All other non-completed goals are paused.
+     * Excludes goals that are manually paused (by date or goal dependency).
      * @param {number} maxActiveGoals - Maximum number of active goals
      */
     autoActivateGoalsByPriority(maxActiveGoals) {
-        // Sort all non-completed goals by priority
+        // Check and clear expired pause conditions
+        this.checkAndClearPauseConditions();
+
+        // Sort all non-completed goals by priority, excluding manually paused goals
         const ineligibleStatuses = new Set(['completed', 'abandoned']);
         const eligibleGoals = this.goals
-            .filter(g => !ineligibleStatuses.has(g.status))
+            .filter(g => {
+                if (ineligibleStatuses.has(g.status)) {
+                    return false;
+                }
+                // Exclude goals that are manually paused
+                return !this.isGoalPaused(g);
+            })
             .sort((a, b) => {
                 const priorityA = this.calculatePriority(a);
                 const priorityB = this.calculatePriority(b);
@@ -399,14 +518,54 @@ class GoalService {
 
         // Update status
         goalsToActivate.forEach(goal => {
-            this.handleStatusTransition(goal, 'active');
+            if (goal.status !== 'active') {
+                this.handleStatusTransition(goal, 'active');
+            }
         });
 
         goalsToPause.forEach(goal => {
-            this.handleStatusTransition(goal, 'paused');
+            if (goal.status !== 'paused') {
+                this.handleStatusTransition(goal, 'paused');
+            }
+        });
+
+        // Ensure manually paused goals have status 'paused'
+        this.goals.forEach(goal => {
+            if (!ineligibleStatuses.has(goal.status) && this.isGoalPaused(goal) && goal.status !== 'paused') {
+                this.handleStatusTransition(goal, 'paused');
+            }
         });
 
         this.saveGoals();
+    }
+
+    /**
+     * Check and clear expired pause conditions
+     */
+    checkAndClearPauseConditions() {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        this.goals.forEach(goal => {
+            // Clear expired date-based pauses
+            if (goal.pauseUntil) {
+                const pauseUntil = new Date(goal.pauseUntil);
+                pauseUntil.setHours(0, 0, 0, 0);
+                if (pauseUntil <= now) {
+                    goal.pauseUntil = null;
+                    goal.lastUpdated = new Date();
+                }
+            }
+
+            // Clear goal dependency pauses if dependency is completed
+            if (goal.pauseUntilGoalId) {
+                const dependencyGoal = this.goals.find(g => g.id === goal.pauseUntilGoalId);
+                if (!dependencyGoal || dependencyGoal.status === 'completed') {
+                    goal.pauseUntilGoalId = null;
+                    goal.lastUpdated = new Date();
+                }
+            }
+        });
     }
 }
 

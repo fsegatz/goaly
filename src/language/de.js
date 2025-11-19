@@ -64,7 +64,14 @@ const de = {
         noDeadline: 'Keine Deadline',
         actions: {
             edit: 'Bearbeiten',
-            complete: 'Abschließen'
+            complete: 'Abschließen',
+            pause: 'Pausieren'
+        },
+        paused: {
+            untilToday: '⏸️ Pausiert bis heute',
+            untilTomorrow: '⏸️ Pausiert bis morgen',
+            untilDate: '⏸️ Pausiert bis {{date}}',
+            untilGoal: '⏸️ Pausiert bis "{{goalTitle}}" abgeschlossen ist'
         },
         inline: {
             deadline: 'Deadline',
@@ -103,6 +110,15 @@ const de = {
         question: 'Hast du dein Ziel erreicht?',
         success: 'Ziel erreicht',
         failure: 'Nicht erreicht',
+        cancel: 'Abbrechen'
+    },
+    pauseModal: {
+        title: 'Ziel pausieren',
+        description: 'Wähle, wann dieses Ziel wieder aktiv werden soll:',
+        untilDate: 'Bis zu einem bestimmten Datum',
+        untilGoal: 'Bis ein anderes Ziel abgeschlossen ist',
+        selectGoal: 'Wähle ein Ziel...',
+        confirm: 'Pausieren',
         cancel: 'Abbrechen'
     },
     deadline: {

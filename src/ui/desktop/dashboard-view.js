@@ -10,13 +10,19 @@ export class DashboardView extends BaseUIController {
         super(app);
     }
 
-    render(openCompletionModal, updateGoalInline, openGoalForm, handleReviewSubmit, renderViews) {
+    render(openCompletionModal, updateGoalInline, openGoalForm, handleReviewSubmit, renderViews, openPauseModal) {
         this.invalidatePriorityCache();
         this.refreshPriorityCache();
+        this.openPauseModal = openPauseModal;
         const settings = this.app.settingsService.getSettings();
+        // Get active goals (excluding manually paused ones)
         const activeGoals = this.app.goalService.getActiveGoals();
-        const dashboardGoals = activeGoals.slice(0, settings.maxActiveGoals);
+        // Also get manually paused goals to show them with visual indicators
+        const manuallyPausedGoals = this.app.goalService.goals
+            .filter(g => g.status === 'paused' && this.app.goalService.isGoalPaused(g))
+            .sort((a, b) => this.app.goalService.calculatePriority(b) - this.app.goalService.calculatePriority(a));
         
+        const dashboardGoals = activeGoals.slice(0, settings.maxActiveGoals);
         // Get reviews - these include ALL active and paused goals that need review
         // (not limited by maxActiveGoals - all goals needing review should show review cards)
         const reviews = Array.isArray(this.app.reviews) ? this.app.reviews : [];
@@ -59,6 +65,14 @@ export class DashboardView extends BaseUIController {
         // Add active goal cards - show all active goals up to maxActiveGoals
         // (some of these may also have review cards above, which is fine)
         dashboardGoals.forEach(goal => {
+            allCards.push({
+                type: 'goal',
+                data: goal
+            });
+        });
+        
+        // Add manually paused goals to show them with visual indicators
+        manuallyPausedGoals.forEach(goal => {
             allCards.push({
                 type: 'goal',
                 data: goal
@@ -266,7 +280,8 @@ export class DashboardView extends BaseUIController {
 
     createGoalCard(goal, openCompletionModal, updateGoalInline) {
         const card = document.createElement('div');
-        card.className = `goal-card ${goal.status}`;
+        const isManuallyPaused = this.app.goalService.isGoalPaused(goal);
+        card.className = `goal-card ${goal.status}${isManuallyPaused ? ' manually-paused' : ''}`;
 
         const deadlineText = goal.deadline
             ? this.formatDeadline(goal.deadline)
@@ -283,10 +298,38 @@ export class DashboardView extends BaseUIController {
             `).join('')
             : `<li class="steps-empty">${this.translate('goalCard.steps.empty')}</li>`;
 
+        // Get pause indicator text
+        let pauseIndicator = '';
+        if (isManuallyPaused) {
+            if (goal.pauseUntil) {
+                const pauseDate = new Date(goal.pauseUntil);
+                pauseDate.setHours(0, 0, 0, 0);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const daysUntil = Math.ceil((pauseDate - today) / (1000 * 60 * 60 * 24));
+                if (daysUntil === 0) {
+                    pauseIndicator = `<span class="goal-pause-indicator" data-i18n-key="goalCard.paused.untilToday">⏸️ ${this.translate('goalCard.paused.untilToday')}</span>`;
+                } else if (daysUntil === 1) {
+                    pauseIndicator = `<span class="goal-pause-indicator" data-i18n-key="goalCard.paused.untilTomorrow">⏸️ ${this.translate('goalCard.paused.untilTomorrow')}</span>`;
+                } else {
+                    const formattedDate = this.formatDeadline(pauseDate);
+                    pauseIndicator = `<span class="goal-pause-indicator" data-i18n-key="goalCard.paused.untilDate">⏸️ ${this.translate('goalCard.paused.untilDate', { date: formattedDate })}</span>`;
+                }
+            } else if (goal.pauseUntilGoalId) {
+                const dependencyGoal = this.app.goalService.goals.find(g => g.id === goal.pauseUntilGoalId);
+                if (dependencyGoal) {
+                    pauseIndicator = `<span class="goal-pause-indicator" data-i18n-key="goalCard.paused.untilGoal">⏸️ ${this.translate('goalCard.paused.untilGoal', { goalTitle: this.escapeHtml(dependencyGoal.title) })}</span>`;
+                } else {
+                    pauseIndicator = `<span class="goal-pause-indicator">⏸️ ${this.translate('goalCard.paused.untilGoal', { goalTitle: '' })}</span>`;
+                }
+            }
+        }
+
         card.innerHTML = `
             <div class="goal-header">
                 <div>
                     <div class="goal-title">${this.escapeHtml(goal.title)}</div>
+                    ${pauseIndicator}
                 </div>
             </div>
             <div class="goal-steps-section">
@@ -308,6 +351,24 @@ export class DashboardView extends BaseUIController {
 
         const actionsContainer = card.querySelector('.goal-actions');
         if (actionsContainer && goal.status !== 'completed' && goal.status !== 'abandoned') {
+            // Add pause button for active goals
+            if (goal.status === 'active') {
+                const pauseButton = document.createElement('button');
+                pauseButton.type = 'button';
+                pauseButton.className = 'btn btn-secondary pause-goal';
+                pauseButton.textContent = this.translate('goalCard.actions.pause');
+                pauseButton.setAttribute('data-i18n-key', 'goalCard.actions.pause');
+                pauseButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    // Pass openPauseModal callback - will be set up in render method
+                    if (this.openPauseModal) {
+                        this.openPauseModal(goal.id);
+                    }
+                });
+                actionsContainer.appendChild(pauseButton);
+            }
+            
             const completeButton = document.createElement('button');
             completeButton.type = 'button';
             completeButton.className = 'btn btn-secondary complete-goal';

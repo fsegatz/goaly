@@ -284,6 +284,32 @@
         </div>
     </div>
 
+    <div id="pauseModal" class="modal">
+        <div class="modal-content pause-modal">
+            <span id="pauseCloseBtn" class="close">&times;</span>
+            <h2 data-i18n-key="pauseModal.title">Pause goal</h2>
+            <p data-i18n-key="pauseModal.description">Choose when this goal should become active again:</p>
+            <div class="pause-options">
+                <div class="pause-option">
+                    <input type="radio" id="pauseUntilDate" name="pauseType" value="date" checked>
+                    <label for="pauseUntilDate" data-i18n-key="pauseModal.untilDate">Until a specific date</label>
+                    <input type="date" id="pauseUntilDateInput" class="pause-date-input" min="">
+                </div>
+                <div class="pause-option">
+                    <input type="radio" id="pauseUntilGoal" name="pauseType" value="goal">
+                    <label for="pauseUntilGoal" data-i18n-key="pauseModal.untilGoal">Until another goal is completed</label>
+                    <select id="pauseUntilGoalSelect" class="pause-goal-select" disabled>
+                        <option value="" data-i18n-key="pauseModal.selectGoal">Select a goal...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="pauseConfirmBtn" class="btn btn-primary" data-i18n-key="pauseModal.confirm">Pause</button>
+                <button id="pauseCancelBtn" class="btn btn-secondary" data-i18n-key="pauseModal.cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="src/app.js"></script>
 </body>
 </html>

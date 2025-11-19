@@ -56,7 +56,8 @@ class UIController {
             (goalId, updates) => this.updateGoalInline(goalId, updates),
             (goalId) => this.goalFormView.openGoalForm(goalId, () => this.renderViews()),
             (goalId, ratings, renderViews) => this.handleReviewSubmit(goalId, ratings, renderViews),
-            () => this.renderViews()
+            () => this.renderViews(),
+            (goalId) => this.modalsView.openPauseModal(goalId)
         );
         this.allGoalsView.render((goalId) => this.goalFormView.openGoalForm(goalId, () => this.renderViews()));
         this.settingsView.syncSettingsForm();
@@ -202,6 +203,18 @@ class UIController {
         }
         this.changeGoalStatus(goalId, status);
         this.modalsView.closeCompletionModal();
+    }
+
+    handlePauseChoice(pauseData) {
+        const goalId = this.modalsView.getPendingPauseGoalId();
+        if (!goalId) {
+            return;
+        }
+        this.modalsView.closePauseModal();
+        const { maxActiveGoals } = this.app.settingsService.getSettings();
+        this.app.goalService.pauseGoal(goalId, pauseData, maxActiveGoals);
+        this.app.reviews = this.app.reviewService.getReviews();
+        this.renderViews();
     }
 
     changeGoalStatus(goalId, newStatus) {
