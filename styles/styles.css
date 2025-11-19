@@ -881,8 +881,13 @@ main {
     color: white;
 }
 
-.status-paused {
+.status-inactive {
     background: #ffa500;
+    color: white;
+}
+
+.status-paused {
+    background: #9e9e9e;
     color: white;
 }
 
