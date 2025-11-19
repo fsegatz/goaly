@@ -166,7 +166,8 @@ class GoalService {
         }
         // Handle pause metadata
         // If reverting to active status, always clear pause metadata
-        if (snapshot.status === 'active') {
+        const targetStatus = snapshot.status !== undefined ? snapshot.status : goal.status;
+        if (targetStatus === 'active') {
             updatedFields.pauseUntil = null;
             updatedFields.pauseUntilGoalId = null;
         } else {
@@ -180,6 +181,12 @@ class GoalService {
         }
 
         Object.assign(goal, updatedFields);
+        
+        // Ensure pause metadata is cleared if goal status is active (in case snapshot didn't have status)
+        if (goal.status === 'active') {
+            goal.pauseUntil = null;
+            goal.pauseUntilGoalId = null;
+        }
     }
 
     handleStatusTransition(goal, newStatus) {
@@ -188,6 +195,11 @@ class GoalService {
         }
         const beforeSnapshot = this.createSnapshot(goal);
         goal.status = newStatus;
+        // Clear pause metadata when transitioning to active status
+        if (newStatus === 'active') {
+            goal.pauseUntil = null;
+            goal.pauseUntilGoalId = null;
+        }
         goal.lastUpdated = new Date();
         const afterSnapshot = this.createSnapshot(goal);
         const changes = this.diffSnapshots(beforeSnapshot, afterSnapshot).filter(change => change.field === 'status' || change.field === 'priority');

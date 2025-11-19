@@ -374,6 +374,33 @@ describe('Goal Service', () => {
         saveSpy.mockRestore();
     });
 
+    it('should clear pause metadata when reverting from paused to active status', () => {
+        const goal = goalService.createGoal({ title: 'Paused Goal', motivation: 5, urgency: 5 }, 3);
+        expect(goal.status).toBe('active');
+        
+        // Make an update to create a history entry with a 'before' snapshot
+        goalService.updateGoal(goal.id, { title: 'Updated Title' }, 3);
+        const updateEntry = goal.history.find(entry => entry.event === 'updated' && entry.before);
+        expect(updateEntry).toBeDefined();
+        expect(updateEntry.before.status).toBe('active');
+        
+        // Pause the goal
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 7);
+        goalService.pauseGoal(goal.id, { pauseUntil: futureDate }, 3);
+        expect(goal.status).toBe('paused');
+        expect(goal.pauseUntil).not.toBeNull();
+        expect(goalService.isGoalPaused(goal)).toBe(true);
+        
+        // Revert to the active state (before the update)
+        const revertedGoal = goalService.revertGoalToHistoryEntry(goal.id, updateEntry.id, 3);
+        expect(revertedGoal).not.toBeNull();
+        expect(revertedGoal.status).toBe('active');
+        expect(revertedGoal.pauseUntil).toBeNull();
+        expect(revertedGoal.pauseUntilGoalId).toBeNull();
+        expect(goalService.isGoalPaused(revertedGoal)).toBe(false);
+    });
+
     it('should return null when reverting with invalid history id or missing before snapshot', () => {
         const goal = goalService.createGoal({ title: 'Invalid Revert', motivation: 2, urgency: 2 }, 3);
         expect(goalService.revertGoalToHistoryEntry(goal.id, 'does-not-exist', 3)).toBeNull();
