@@ -86,10 +86,15 @@ When implementing a GitHub issue, follow this structured process:
    - Make a second commit with improvements
 
 3. **Create PR and Push**
-   - Create a feature branch (if not already on one)
-   - Push the branch to GitHub
-   - Create a Pull Request with a clear description of changes
-   - Reference the issue number in the PR description
+   - Start the development server: `npx --yes serve -l 8000` (run in background)
+   - Inform the developer that the server is running and wait for their confirmation
+   - Once confirmed, proceed with creating the PR:
+     - Ensure you're on the feature branch: `git checkout feature/issue-<number>` (if not already)
+     - Stage all changes: `git add .`
+     - Commit with a descriptive message: `git commit -m "Feature: Description" -m "Details..." -m "Fixes #<number>"`
+     - Push the branch: `git push -u origin feature/issue-<number>`
+     - Provide the PR creation link to the developer
+   - Reference the issue number in the PR description and commit message
 
 4. **Documentation**
    - Update `AGENTS.md` or relevant documentation if the process changes
@@ -98,19 +103,27 @@ When implementing a GitHub issue, follow this structured process:
 **Example workflow:**
 ```bash
 # 1. Create feature branch
+git checkout main
+git pull
 git checkout -b feature/issue-<number>
 
 # 2. Implement changes and make first commit
 git add -A
-git commit -m "Implement issue #<number>: Description of changes"
+git commit -m "Feature: Implement issue #<number>: Description of changes"
 
-# 3. Review, improve, and make second commit
+# 3. Review, improve, and make second commit (optional)
 git add -A
 git commit -m "Review and improve: Add additional test coverage"
 
-# 4. Push and create PR
-git push origin feature/issue-<number>
-# Then create PR on GitHub
+# 4. Start server for developer confirmation
+npx --yes serve -l 8000  # Run in background
+# Wait for developer confirmation
+
+# 5. Push and create PR
+git add .
+git commit -m "Feature: Final description" -m "Details..." -m "Fixes #<number>"
+git push -u origin feature/issue-<number>
+# Provide PR creation link to developer
 ```
 
 ## Reference Material
