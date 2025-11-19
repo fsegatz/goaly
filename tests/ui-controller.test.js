@@ -19,13 +19,35 @@ beforeEach(() => {
             <div class="all-goals-controls">
                 <label for="allGoalsStatusFilter">
                     <span>Status</span>
-                    <select id="allGoalsStatusFilter">
-                        <option value="all">All statuses</option>
-                        <option value="active">Active</option>
-                        <option value="paused">Paused</option>
-                        <option value="completed">Completed</option>
-                        <option value="abandoned">Abandoned</option>
-                    </select>
+                    <div class="status-filter-dropdown" id="allGoalsStatusFilter">
+                        <button type="button" class="status-filter-button" id="allGoalsStatusFilterButton" aria-haspopup="true" aria-expanded="false">
+                            <span class="status-filter-button-text">All statuses</span>
+                            <span class="status-filter-button-arrow">▼</span>
+                        </button>
+                        <div class="status-filter-dropdown-menu" id="allGoalsStatusFilterMenu" role="menu" aria-hidden="true">
+                            <label class="status-filter-option" role="menuitem">
+                                <input type="checkbox" value="all" class="status-filter-checkbox" checked>
+                                <span>All statuses</span>
+                            </label>
+                            <label class="status-filter-option" role="menuitem">
+                                <input type="checkbox" value="active" class="status-filter-checkbox">
+                                <span>Active</span>
+                            </label>
+                            <label class="status-filter-option" role="menuitem">
+                                <input type="checkbox" value="paused" class="status-filter-checkbox">
+                                <span>Paused</span>
+                            </label>
+                            <label class="status-filter-option" role="menuitem">
+                                <input type="checkbox" value="completed" class="status-filter-checkbox">
+                                <span>Completed</span>
+                            </label>
+                            <label class="status-filter-option" role="menuitem">
+                                <input type="checkbox" value="abandoned" class="status-filter-checkbox">
+                                <span>Abandoned</span>
+                            </label>
+                            <button type="button" class="status-filter-clear" id="allGoalsStatusFilterClear">Clear filter</button>
+                        </div>
+                    </div>
                 </label>
                 <label for="allGoalsPriorityFilter">
                     <span>Minimum priority</span>

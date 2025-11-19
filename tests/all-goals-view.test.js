@@ -16,13 +16,35 @@ beforeEach(() => {
             <div class="all-goals-controls">
                 <label for="allGoalsStatusFilter">
                     <span>Status</span>
-                    <select id="allGoalsStatusFilter">
-                        <option value="all">All statuses</option>
-                        <option value="active">Active</option>
-                        <option value="paused">Paused</option>
-                        <option value="completed">Completed</option>
-                        <option value="abandoned">Abandoned</option>
-                    </select>
+                    <div class="status-filter-dropdown" id="allGoalsStatusFilter">
+                        <button type="button" class="status-filter-button" id="allGoalsStatusFilterButton" aria-haspopup="true" aria-expanded="false">
+                            <span class="status-filter-button-text">All statuses</span>
+                            <span class="status-filter-button-arrow">▼</span>
+                        </button>
+                        <div class="status-filter-dropdown-menu" id="allGoalsStatusFilterMenu" role="menu" aria-hidden="true">
+                            <label class="status-filter-option" role="menuitem">
+                                <input type="checkbox" value="all" class="status-filter-checkbox" checked>
+                                <span>All statuses</span>
+                            </label>
+                            <label class="status-filter-option" role="menuitem">
+                                <input type="checkbox" value="active" class="status-filter-checkbox">
+                                <span>Active</span>
+                            </label>
+                            <label class="status-filter-option" role="menuitem">
+                                <input type="checkbox" value="paused" class="status-filter-checkbox">
+                                <span>Paused</span>
+                            </label>
+                            <label class="status-filter-option" role="menuitem">
+                                <input type="checkbox" value="completed" class="status-filter-checkbox">
+                                <span>Completed</span>
+                            </label>
+                            <label class="status-filter-option" role="menuitem">
+                                <input type="checkbox" value="abandoned" class="status-filter-checkbox">
+                                <span>Abandoned</span>
+                            </label>
+                            <button type="button" class="status-filter-clear" id="allGoalsStatusFilterClear">Clear filter</button>
+                        </div>
+                    </div>
                 </label>
                 <label for="allGoalsPriorityFilter">
                     <span>Minimum priority</span>
@@ -136,16 +158,60 @@ describe('AllGoalsView', () => {
         });
 
         test('should filter by status selection', () => {
-            const statusFilter = document.getElementById('allGoalsStatusFilter');
-            statusFilter.value = 'paused';
-            statusFilter.dispatchEvent(new window.Event('change', { bubbles: true }));
+            const dropdown = document.getElementById('allGoalsStatusFilter');
+            const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
+            const allCheckbox = dropdown.querySelector('input[value="all"]');
+
+            // Select paused status
+            pausedCheckbox.checked = true;
+            pausedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
 
             const rows = document.querySelectorAll('#allGoalsTableBody tr');
             expect(rows.length).toBe(1);
             expect(rows[0].dataset.goalId).toBe(pausedGoal.id);
 
-            statusFilter.value = 'all';
-            statusFilter.dispatchEvent(new window.Event('change', { bubbles: true }));
+            // Select all statuses
+            allCheckbox.checked = true;
+            allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+            expect(document.querySelectorAll('#allGoalsTableBody tr').length).toBe(3);
+        });
+
+        test('should filter by multiple status selections', () => {
+            const dropdown = document.getElementById('allGoalsStatusFilter');
+            const activeCheckbox = dropdown.querySelector('input[value="active"]');
+            const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
+            const completedCheckbox = dropdown.querySelector('input[value="completed"]');
+            const allCheckbox = dropdown.querySelector('input[value="all"]');
+
+            // Uncheck "all" first - this will check all others
+            allCheckbox.checked = false;
+            allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            // Now uncheck completed to only have active and paused
+            completedCheckbox.checked = false;
+            completedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            const rows = document.querySelectorAll('#allGoalsTableBody tr');
+            expect(rows.length).toBe(2);
+            expect(Array.from(rows).map(r => r.dataset.goalId)).toContain(activeGoal.id);
+            expect(Array.from(rows).map(r => r.dataset.goalId)).toContain(pausedGoal.id);
+            expect(Array.from(rows).map(r => r.dataset.goalId)).not.toContain(completedGoal.id);
+        });
+
+        test('should clear filter and reset to all', () => {
+            const dropdown = document.getElementById('allGoalsStatusFilter');
+            const clearButton = document.getElementById('allGoalsStatusFilterClear');
+            const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
+            const allCheckbox = dropdown.querySelector('input[value="all"]');
+
+            // First select paused
+            pausedCheckbox.checked = true;
+            pausedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+            expect(document.querySelectorAll('#allGoalsTableBody tr').length).toBe(1);
+
+            // Clear filter
+            clearButton.click();
+            expect(allCheckbox.checked).toBe(true);
             expect(document.querySelectorAll('#allGoalsTableBody tr').length).toBe(3);
         });
 

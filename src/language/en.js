@@ -37,6 +37,7 @@ const en = {
         sortLabel: 'Sorting',
         includeCompleted: 'Show completed',
         includeAbandoned: 'Show abandoned',
+        clearFilter: 'Clear filter',
         statusOptions: {
             all: 'All statuses',
             active: 'Active',

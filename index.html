@@ -61,13 +61,35 @@
                 <div class="all-goals-controls">
                     <label for="allGoalsStatusFilter">
                         <span data-i18n-key="filters.statusLabel">Status</span>
-                        <select id="allGoalsStatusFilter">
-                            <option value="all" data-i18n-key="filters.statusOptions.all">All statuses</option>
-                            <option value="active" data-i18n-key="filters.statusOptions.active">Active</option>
-                            <option value="paused" data-i18n-key="filters.statusOptions.paused">Paused</option>
-                            <option value="completed" data-i18n-key="filters.statusOptions.completed">Completed</option>
-                            <option value="abandoned" data-i18n-key="filters.statusOptions.abandoned">Abandoned</option>
-                        </select>
+                        <div class="status-filter-dropdown" id="allGoalsStatusFilter">
+                            <button type="button" class="status-filter-button" id="allGoalsStatusFilterButton" aria-haspopup="true" aria-expanded="false">
+                                <span class="status-filter-button-text" data-i18n-key="filters.statusOptions.all">All statuses</span>
+                                <span class="status-filter-button-arrow">▼</span>
+                            </button>
+                            <div class="status-filter-dropdown-menu" id="allGoalsStatusFilterMenu" role="menu" aria-hidden="true">
+                                <label class="status-filter-option" role="menuitem">
+                                    <input type="checkbox" value="all" class="status-filter-checkbox" checked>
+                                    <span data-i18n-key="filters.statusOptions.all">All statuses</span>
+                                </label>
+                                <label class="status-filter-option" role="menuitem">
+                                    <input type="checkbox" value="active" class="status-filter-checkbox">
+                                    <span data-i18n-key="filters.statusOptions.active">Active</span>
+                                </label>
+                                <label class="status-filter-option" role="menuitem">
+                                    <input type="checkbox" value="paused" class="status-filter-checkbox">
+                                    <span data-i18n-key="filters.statusOptions.paused">Paused</span>
+                                </label>
+                                <label class="status-filter-option" role="menuitem">
+                                    <input type="checkbox" value="completed" class="status-filter-checkbox">
+                                    <span data-i18n-key="filters.statusOptions.completed">Completed</span>
+                                </label>
+                                <label class="status-filter-option" role="menuitem">
+                                    <input type="checkbox" value="abandoned" class="status-filter-checkbox">
+                                    <span data-i18n-key="filters.statusOptions.abandoned">Abandoned</span>
+                                </label>
+                                <button type="button" class="status-filter-clear" id="allGoalsStatusFilterClear" data-i18n-key="filters.clearFilter">Clear filter</button>
+                            </div>
+                        </div>
                     </label>
                     <label for="allGoalsPriorityFilter">
                         <span data-i18n-key="filters.minPriorityLabel">Minimum priority</span>
