@@ -141,6 +141,7 @@ const en = {
         untilDate: 'Until a specific date',
         untilGoal: 'Until another goal is completed',
         selectGoal: 'Select a goal...',
+        noGoalsAvailable: 'No other goals available',
         confirm: 'Pause',
         cancel: 'Cancel'
     },
