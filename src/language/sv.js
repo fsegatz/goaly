@@ -37,6 +37,7 @@ const sv = {
         sortLabel: 'Sortering',
         includeCompleted: 'Visa slutförda',
         includeAbandoned: 'Visa avbrutna',
+        clearFilter: 'Rensa filter',
         statusOptions: {
             all: 'Alla statusar',
             active: 'Aktiv',

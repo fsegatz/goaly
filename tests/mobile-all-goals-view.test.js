@@ -16,13 +16,35 @@ beforeEach(() => {
         <div class="all-goals-controls">
             <label for="allGoalsStatusFilter">
                 <span>Status</span>
-                <select id="allGoalsStatusFilter">
-                    <option value="all">All statuses</option>
-                    <option value="active">Active</option>
-                    <option value="paused">Paused</option>
-                    <option value="completed">Completed</option>
-                    <option value="abandoned">Abandoned</option>
-                </select>
+                <div class="status-filter-dropdown" id="allGoalsStatusFilter">
+                    <button type="button" class="status-filter-button" id="allGoalsStatusFilterButton" aria-haspopup="true" aria-expanded="false">
+                        <span class="status-filter-button-text">All statuses</span>
+                        <span class="status-filter-button-arrow">▼</span>
+                    </button>
+                    <div class="status-filter-dropdown-menu" id="allGoalsStatusFilterMenu" role="menu" aria-hidden="true">
+                        <label class="status-filter-option" role="menuitem">
+                            <input type="checkbox" value="all" class="status-filter-checkbox" checked>
+                            <span>All statuses</span>
+                        </label>
+                        <label class="status-filter-option" role="menuitem">
+                            <input type="checkbox" value="active" class="status-filter-checkbox">
+                            <span>Active</span>
+                        </label>
+                        <label class="status-filter-option" role="menuitem">
+                            <input type="checkbox" value="paused" class="status-filter-checkbox">
+                            <span>Paused</span>
+                        </label>
+                        <label class="status-filter-option" role="menuitem">
+                            <input type="checkbox" value="completed" class="status-filter-checkbox">
+                            <span>Completed</span>
+                        </label>
+                        <label class="status-filter-option" role="menuitem">
+                            <input type="checkbox" value="abandoned" class="status-filter-checkbox">
+                            <span>Abandoned</span>
+                        </label>
+                        <button type="button" class="status-filter-clear" id="allGoalsStatusFilterClear">Clear filter</button>
+                    </div>
+                </div>
             </label>
             <label for="allGoalsPriorityFilter">
                 <span>Minimum priority</span>
@@ -262,11 +284,24 @@ describe('MobileAllGoalsView', () => {
         mobileAllGoalsView.render = jest.fn();
         mobileAllGoalsView.setupControls(openGoalForm);
 
-        const statusFilter = document.getElementById('allGoalsStatusFilter');
-        statusFilter.value = 'paused';
-        statusFilter.dispatchEvent(new window.Event('change', { bubbles: true }));
+        const dropdown = document.getElementById('allGoalsStatusFilter');
+        const activeCheckbox = dropdown.querySelector('input[value="active"]');
+        const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
+        const completedCheckbox = dropdown.querySelector('input[value="completed"]');
+        const abandonedCheckbox = dropdown.querySelector('input[value="abandoned"]');
+        const allCheckbox = dropdown.querySelector('input[value="all"]');
 
-        expect(mobileAllGoalsView.allGoalsState.statusFilter).toBe('paused');
+        // Uncheck "all" first - this will check all others
+        allCheckbox.checked = false;
+        allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+        // Uncheck all except paused
+        activeCheckbox.checked = false;
+        completedCheckbox.checked = false;
+        abandonedCheckbox.checked = false;
+        activeCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+        expect(mobileAllGoalsView.allGoalsState.statusFilter).toEqual(['paused']);
         expect(mobileAllGoalsView.render).toHaveBeenCalledWith(openGoalForm);
     });
 
@@ -301,6 +336,202 @@ describe('MobileAllGoalsView', () => {
         priorityFilter.dispatchEvent(new window.Event('input', { bubbles: true }));
 
         expect(mobileAllGoalsView.allGoalsState.minPriority).toBe(0);
+    });
+
+    test('setupControls should update sort on change', () => {
+        const openGoalForm = jest.fn();
+        mobileAllGoalsView.render = jest.fn();
+        mobileAllGoalsView.setupControls(openGoalForm);
+
+        const sortSelect = document.getElementById('allGoalsSort');
+        sortSelect.value = 'updated-asc';
+        sortSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+        expect(mobileAllGoalsView.allGoalsState.sort).toBe('updated-asc');
+        expect(mobileAllGoalsView.render).toHaveBeenCalledWith(openGoalForm);
+    });
+
+    test('setupStatusFilterDropdown should toggle dropdown on button click', () => {
+        const openGoalForm = jest.fn();
+        mobileAllGoalsView.setupControls(openGoalForm);
+
+        const button = document.getElementById('allGoalsStatusFilterButton');
+        const menu = document.getElementById('allGoalsStatusFilterMenu');
+
+        expect(button.getAttribute('aria-expanded')).toBe('false');
+        expect(menu.getAttribute('aria-hidden')).toBe('true');
+
+        button.click();
+
+        expect(button.getAttribute('aria-expanded')).toBe('true');
+        expect(menu.getAttribute('aria-hidden')).toBe('false');
+
+        button.click();
+
+        expect(button.getAttribute('aria-expanded')).toBe('false');
+        expect(menu.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    test('setupStatusFilterDropdown should close dropdown when clicking outside', () => {
+        const openGoalForm = jest.fn();
+        mobileAllGoalsView.setupControls(openGoalForm);
+
+        const button = document.getElementById('allGoalsStatusFilterButton');
+        const menu = document.getElementById('allGoalsStatusFilterMenu');
+        const outsideElement = document.createElement('div');
+        document.body.appendChild(outsideElement);
+
+        // Open dropdown
+        button.click();
+        expect(button.getAttribute('aria-expanded')).toBe('true');
+
+        // Click outside
+        outsideElement.click();
+
+        expect(button.getAttribute('aria-expanded')).toBe('false');
+        expect(menu.getAttribute('aria-hidden')).toBe('true');
+
+        document.body.removeChild(outsideElement);
+    });
+
+    test('setupStatusFilterDropdown should clear filter when clear button is clicked', () => {
+        const openGoalForm = jest.fn();
+        mobileAllGoalsView.render = jest.fn();
+        mobileAllGoalsView.setupControls(openGoalForm);
+
+        const dropdown = document.getElementById('allGoalsStatusFilter');
+        const clearButton = document.getElementById('allGoalsStatusFilterClear');
+        const allCheckbox = dropdown.querySelector('input[value="all"]');
+        const activeCheckbox = dropdown.querySelector('input[value="active"]');
+        const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
+
+        // Set some filters
+        allCheckbox.checked = false;
+        activeCheckbox.checked = true;
+        pausedCheckbox.checked = true;
+        mobileAllGoalsView.allGoalsState.statusFilter = ['active', 'paused'];
+
+        // Clear filter
+        clearButton.click();
+
+        expect(mobileAllGoalsView.allGoalsState.statusFilter).toEqual(['all']);
+        expect(allCheckbox.checked).toBe(true);
+        expect(activeCheckbox.checked).toBe(false);
+        expect(pausedCheckbox.checked).toBe(false);
+        expect(mobileAllGoalsView.render).toHaveBeenCalledWith(openGoalForm);
+    });
+
+    test('handleStatusFilterChange should check all when "all" is checked', () => {
+        const openGoalForm = jest.fn();
+        mobileAllGoalsView.setupControls(openGoalForm);
+
+        const dropdown = document.getElementById('allGoalsStatusFilter');
+        const allCheckbox = dropdown.querySelector('input[value="all"]');
+        const activeCheckbox = dropdown.querySelector('input[value="active"]');
+        const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
+        const completedCheckbox = dropdown.querySelector('input[value="completed"]');
+        const abandonedCheckbox = dropdown.querySelector('input[value="abandoned"]');
+        const checkboxes = dropdown.querySelectorAll('.status-filter-checkbox');
+
+        // Uncheck all first
+        allCheckbox.checked = false;
+        allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+        // Now check "all"
+        allCheckbox.checked = true;
+        allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+        expect(mobileAllGoalsView.allGoalsState.statusFilter).toEqual(['all']);
+        expect(activeCheckbox.checked).toBe(false);
+        expect(pausedCheckbox.checked).toBe(false);
+        expect(completedCheckbox.checked).toBe(false);
+        expect(abandonedCheckbox.checked).toBe(false);
+    });
+
+    test('handleStatusFilterChange should uncheck "all" when specific status is changed', () => {
+        const openGoalForm = jest.fn();
+        mobileAllGoalsView.setupControls(openGoalForm);
+
+        const dropdown = document.getElementById('allGoalsStatusFilter');
+        const allCheckbox = dropdown.querySelector('input[value="all"]');
+        const activeCheckbox = dropdown.querySelector('input[value="active"]');
+        const checkboxes = dropdown.querySelectorAll('.status-filter-checkbox');
+
+        // "all" is initially checked
+        expect(allCheckbox.checked).toBe(true);
+
+        // Uncheck active (but this should uncheck "all" first)
+        allCheckbox.checked = false;
+        allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+        // Now check active
+        activeCheckbox.checked = true;
+        activeCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+        expect(allCheckbox.checked).toBe(false);
+        expect(mobileAllGoalsView.allGoalsState.statusFilter).toContain('active');
+    });
+
+    test('handleStatusFilterChange should select "all" when nothing is selected', () => {
+        const openGoalForm = jest.fn();
+        mobileAllGoalsView.setupControls(openGoalForm);
+
+        const dropdown = document.getElementById('allGoalsStatusFilter');
+        const allCheckbox = dropdown.querySelector('input[value="all"]');
+        const activeCheckbox = dropdown.querySelector('input[value="active"]');
+        const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
+        const completedCheckbox = dropdown.querySelector('input[value="completed"]');
+        const abandonedCheckbox = dropdown.querySelector('input[value="abandoned"]');
+        const checkboxes = dropdown.querySelectorAll('.status-filter-checkbox');
+
+        // Uncheck all first - this checks all others
+        allCheckbox.checked = false;
+        allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+        // Now uncheck all specific statuses one by one
+        activeCheckbox.checked = false;
+        activeCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+        pausedCheckbox.checked = false;
+        pausedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+        completedCheckbox.checked = false;
+        completedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+        // Last one should trigger "select all"
+        abandonedCheckbox.checked = false;
+        abandonedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+        expect(allCheckbox.checked).toBe(true);
+        expect(mobileAllGoalsView.allGoalsState.statusFilter).toEqual(['all']);
+    });
+
+    test('updateStatusFilterButtonText should handle missing button text element', () => {
+        const button = document.createElement('button');
+        // No buttonText element inside
+
+        expect(() => mobileAllGoalsView.updateStatusFilterButtonText(button)).not.toThrow();
+    });
+
+    test('updateStatusFilterButtonText should show count when multiple statuses selected', () => {
+        const openGoalForm = jest.fn();
+        mobileAllGoalsView.setupControls(openGoalForm);
+
+        const button = document.getElementById('allGoalsStatusFilterButton');
+        const buttonText = button.querySelector('.status-filter-button-text');
+
+        mobileAllGoalsView.allGoalsState.statusFilter = ['active', 'paused'];
+        mobileAllGoalsView.updateStatusFilterButtonText(button);
+
+        expect(buttonText.textContent).toContain('2');
+        expect(buttonText.textContent).toContain('status');
+    });
+
+    test('setupStatusFilterDropdown should handle missing dropdown elements', () => {
+        const openGoalForm = jest.fn();
+        document.getElementById('allGoalsStatusFilter').remove();
+
+        expect(() => mobileAllGoalsView.setupStatusFilterDropdown(openGoalForm)).not.toThrow();
     });
 });
 

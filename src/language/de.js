@@ -37,6 +37,7 @@ const de = {
         sortLabel: 'Sortierung',
         includeCompleted: 'Erreichte anzeigen',
         includeAbandoned: 'Nicht erreichte anzeigen',
+        clearFilter: 'Filter zurücksetzen',
         statusOptions: {
             all: 'Alle Status',
             active: 'Aktiv',

@@ -77,6 +77,7 @@ When implementing a GitHub issue, follow this structured process:
    - Update tests to cover new functionality
    - Run `npm test` to ensure all tests pass
    - Check test coverage threshold (80% for statements, branches, functions, and lines)
+   - **Important:** Add sufficient tests to meet coverage thresholds. If coverage is below 80%, add additional tests for uncovered code paths, edge cases, and error handling until the threshold is met.
    - Make the first commit with a descriptive message
 
 2. **Review and Improve**

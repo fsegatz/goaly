@@ -6,7 +6,7 @@ export class MobileAllGoalsView extends BaseUIController {
     constructor(app) {
         super(app);
         this.allGoalsState = {
-            statusFilter: 'all',
+            statusFilter: ['all'],
             minPriority: 0,
             sort: 'priority-desc',
             includeCompleted: true,
@@ -15,40 +15,149 @@ export class MobileAllGoalsView extends BaseUIController {
     }
 
     setupControls(openGoalForm) {
-        const controls = [
-            {
-                id: 'allGoalsStatusFilter',
-                event: 'change',
-                key: 'statusFilter',
-                getValue: (element) => element.value
-            },
-            {
-                id: 'allGoalsPriorityFilter',
-                event: 'input',
-                key: 'minPriority',
-                getValue: (element) => {
-                    const parsed = parseInt(element.value, 10);
-                    return Number.isNaN(parsed) ? 0 : parsed;
-                }
-            },
-            {
-                id: 'allGoalsSort',
-                event: 'change',
-                key: 'sort',
-                getValue: (element) => element.value
-            }
-        ];
+        // Setup status filter dropdown
+        this.setupStatusFilterDropdown(openGoalForm);
 
-        controls.forEach(({ id, event, key, getValue }) => {
-            const element = document.getElementById(id);
-            if (!element) {
-                return;
-            }
-            element.addEventListener(event, () => {
-                this.allGoalsState[key] = getValue(element);
+        // Setup priority filter
+        const priorityFilter = document.getElementById('allGoalsPriorityFilter');
+        if (priorityFilter) {
+            priorityFilter.addEventListener('input', () => {
+                const parsed = parseInt(priorityFilter.value, 10);
+                this.allGoalsState.minPriority = Number.isNaN(parsed) ? 0 : parsed;
                 this.render(openGoalForm);
             });
+        }
+
+        // Setup sort
+        const sortSelect = document.getElementById('allGoalsSort');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', () => {
+                this.allGoalsState.sort = sortSelect.value;
+                this.render(openGoalForm);
+            });
+        }
+    }
+
+    setupStatusFilterDropdown(openGoalForm) {
+        const dropdown = document.getElementById('allGoalsStatusFilter');
+        const button = document.getElementById('allGoalsStatusFilterButton');
+        const menu = document.getElementById('allGoalsStatusFilterMenu');
+        const clearButton = document.getElementById('allGoalsStatusFilterClear');
+        const checkboxes = dropdown?.querySelectorAll('.status-filter-checkbox');
+
+        if (!dropdown || !button || !menu) {
+            return;
+        }
+
+        // Toggle dropdown
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isExpanded = button.getAttribute('aria-expanded') === 'true';
+            button.setAttribute('aria-expanded', !isExpanded);
+            menu.setAttribute('aria-hidden', isExpanded);
         });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!dropdown.contains(e.target)) {
+                button.setAttribute('aria-expanded', 'false');
+                menu.setAttribute('aria-hidden', 'true');
+            }
+        });
+
+        // Handle checkbox changes
+        if (checkboxes) {
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    this.handleStatusFilterChange(checkbox, checkboxes);
+                    this.updateStatusFilterButtonText(button);
+                    this.render(openGoalForm);
+                });
+            });
+        }
+
+        // Handle clear filter
+        if (clearButton) {
+            clearButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.allGoalsState.statusFilter = ['all'];
+                if (checkboxes) {
+                    checkboxes.forEach(cb => {
+                        cb.checked = cb.value === 'all';
+                    });
+                }
+                this.updateStatusFilterButtonText(button);
+                button.setAttribute('aria-expanded', 'false');
+                menu.setAttribute('aria-hidden', 'true');
+                this.render(openGoalForm);
+            });
+        }
+    }
+
+    handleStatusFilterChange(changedCheckbox, allCheckboxes) {
+        if (changedCheckbox.value === 'all') {
+            // If "all" is checked, uncheck everything else and set filter to ['all']
+            if (changedCheckbox.checked) {
+                allCheckboxes.forEach(cb => {
+                    if (cb.value !== 'all') {
+                        cb.checked = false;
+                    }
+                });
+                this.allGoalsState.statusFilter = ['all'];
+            } else {
+                // If "all" is unchecked, check all others
+                allCheckboxes.forEach(cb => {
+                    if (cb.value !== 'all') {
+                        cb.checked = true;
+                    }
+                });
+                this.allGoalsState.statusFilter = ['active', 'paused', 'completed', 'abandoned'];
+            }
+        } else {
+            // If a specific status is changed, uncheck "all" if it was checked
+            const allCheckbox = Array.from(allCheckboxes).find(cb => cb.value === 'all');
+            if (allCheckbox && allCheckbox.checked) {
+                allCheckbox.checked = false;
+            }
+
+            // Update the filter array
+            const selectedStatuses = Array.from(allCheckboxes)
+                .filter(cb => cb.checked && cb.value !== 'all')
+                .map(cb => cb.value);
+
+            if (selectedStatuses.length === 0) {
+                // If nothing is selected, select "all"
+                if (allCheckbox) {
+                    allCheckbox.checked = true;
+                }
+                this.allGoalsState.statusFilter = ['all'];
+            } else {
+                this.allGoalsState.statusFilter = selectedStatuses;
+            }
+        }
+    }
+
+    updateStatusFilterButtonText(button) {
+        const buttonText = button?.querySelector('.status-filter-button-text');
+        if (!buttonText) {
+            return;
+        }
+
+        const statusCount = this.allGoalsState.statusFilter.length;
+        const isAll = this.allGoalsState.statusFilter.includes('all') || 
+                     (statusCount === 4 && this.allGoalsState.statusFilter.includes('active') && 
+                      this.allGoalsState.statusFilter.includes('paused') && 
+                      this.allGoalsState.statusFilter.includes('completed') && 
+                      this.allGoalsState.statusFilter.includes('abandoned'));
+
+        if (isAll) {
+            buttonText.textContent = this.translate('filters.statusOptions.all');
+        } else if (statusCount === 1) {
+            const status = this.allGoalsState.statusFilter[0];
+            buttonText.textContent = this.translate(`filters.statusOptions.${status}`);
+        } else {
+            buttonText.textContent = `${statusCount} ${this.translate('filters.statusLabel').toLowerCase()}`;
+        }
     }
 
     render(openGoalForm) {
@@ -72,7 +181,9 @@ export class MobileAllGoalsView extends BaseUIController {
             if (!this.allGoalsState.includeAbandoned && goal.status === 'abandoned') {
                 return false;
             }
-            if (this.allGoalsState.statusFilter !== 'all' && goal.status !== this.allGoalsState.statusFilter) {
+            // Check if status matches any of the selected filters
+            if (!this.allGoalsState.statusFilter.includes('all') && 
+                !this.allGoalsState.statusFilter.includes(goal.status)) {
                 return false;
             }
             if (priority < this.allGoalsState.minPriority) {

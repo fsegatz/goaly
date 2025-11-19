@@ -367,6 +367,123 @@ main {
     min-width: 160px;
 }
 
+/* Status filter multi-select dropdown */
+.status-filter-dropdown {
+    position: relative;
+    min-width: 160px;
+}
+
+.status-filter-button {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #d0d0d0;
+    background: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    transition: border-color 0.2s ease;
+}
+
+.status-filter-button:hover {
+    border-color: #667eea;
+}
+
+.status-filter-button[aria-expanded="true"] {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.status-filter-button-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.status-filter-button-arrow {
+    margin-left: 8px;
+    font-size: 0.8rem;
+    color: #666;
+    transition: transform 0.2s ease;
+}
+
+.status-filter-button[aria-expanded="true"] .status-filter-button-arrow {
+    transform: rotate(180deg);
+}
+
+.status-filter-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transition: max-height 0.2s ease, opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.status-filter-dropdown-menu[aria-hidden="false"] {
+    max-height: 300px;
+    opacity: 1;
+    visibility: visible;
+    padding: 4px 0;
+}
+
+.status-filter-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    gap: 8px;
+}
+
+.status-filter-option:hover {
+    background-color: #f8f9ff;
+}
+
+.status-filter-checkbox {
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.status-filter-option span {
+    flex: 1;
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.status-filter-clear {
+    width: 100%;
+    padding: 8px 12px;
+    margin-top: 4px;
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    background: transparent;
+    color: #667eea;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.2s ease;
+}
+
+.status-filter-clear:hover {
+    background-color: #f8f9ff;
+}
+
 /* Mobile menu styles */
 .mobile-menu-toggle {
     display: flex;
@@ -1695,6 +1812,22 @@ main {
         min-width: 0;
         padding: 6px 8px;
         font-size: 0.85rem;
+    }
+
+    .all-goals-controls .status-filter-dropdown {
+        min-width: 0;
+        max-width: 120px;
+    }
+
+    .all-goals-controls .status-filter-button {
+        font-size: 0.85rem;
+        padding: 6px 8px;
+    }
+
+    .all-goals-controls .status-filter-button-text {
+        font-size: 0.85rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .all-goals-controls .toggle-option {
