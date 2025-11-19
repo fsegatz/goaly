@@ -58,6 +58,9 @@ class Goal {
             text: resource.text || '',
             type: resource.type || 'general'
         })) : [];
+        // Pause metadata: pauseUntil (date) or pauseUntilGoalId (goal ID that must be completed)
+        this.pauseUntil = goalData.pauseUntil ? new Date(goalData.pauseUntil) : null;
+        this.pauseUntilGoalId = goalData.pauseUntilGoalId || null;
     }
 }
 

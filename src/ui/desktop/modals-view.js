@@ -19,6 +19,18 @@ export class ModalsView extends BaseUIController {
         this.migrationDiffData = null;
         this.isSyncingMigrationScroll = false;
         this.migrationScrollBound = false;
+        this.pauseModalRefs = {
+            pauseModal: document.getElementById('pauseModal'),
+            pauseCloseBtn: document.getElementById('pauseCloseBtn'),
+            pauseCancelBtn: document.getElementById('pauseCancelBtn'),
+            pauseConfirmBtn: document.getElementById('pauseConfirmBtn'),
+            pauseUntilDate: document.getElementById('pauseUntilDate'),
+            pauseUntilGoal: document.getElementById('pauseUntilGoal'),
+            pauseUntilDateInput: document.getElementById('pauseUntilDateInput'),
+            pauseUntilGoalSelect: document.getElementById('pauseUntilGoalSelect')
+        };
+        this.pendingPauseGoalId = null;
+        this.pauseModalInitialized = false;
     }
 
     setupCompletionModal(handleCompletionChoice) {
@@ -328,6 +340,172 @@ export class ModalsView extends BaseUIController {
         }
         const element = document.getElementById(id);
         this.migrationModalRefs[id] = element || null;
+        return element || null;
+    }
+
+    setupPauseModal(handlePauseChoice) {
+        if (this.pauseModalInitialized) {
+            return;
+        }
+
+        const modal = this.getPauseElement('pauseModal');
+        if (!modal) {
+            return;
+        }
+
+        const confirmBtn = this.getPauseElement('pauseConfirmBtn');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', () => {
+                const pauseType = this.getPauseElement('pauseUntilDate')?.checked ? 'date' : 'goal';
+                let pauseUntil = null;
+                let pauseUntilGoalId = null;
+
+                if (pauseType === 'date') {
+                    const dateInput = this.getPauseElement('pauseUntilDateInput');
+                    if (dateInput && dateInput.value) {
+                        pauseUntil = new Date(dateInput.value);
+                    }
+                } else {
+                    const goalSelect = this.getPauseElement('pauseUntilGoalSelect');
+                    if (goalSelect && goalSelect.value) {
+                        pauseUntilGoalId = goalSelect.value;
+                    }
+                }
+
+                if (pauseType === 'date' && !pauseUntil) {
+                    // Date is required for date pause type
+                    return;
+                }
+                if (pauseType === 'goal' && !pauseUntilGoalId) {
+                    // Goal is required for goal pause type
+                    return;
+                }
+
+                handlePauseChoice({
+                    pauseUntil,
+                    pauseUntilGoalId
+                });
+            });
+        }
+
+        const cancelBtn = this.getPauseElement('pauseCancelBtn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => this.closePauseModal());
+        }
+
+        const closeBtn = this.getPauseElement('pauseCloseBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.closePauseModal());
+        }
+
+        // Toggle between date and goal options
+        const dateRadio = this.getPauseElement('pauseUntilDate');
+        const goalRadio = this.getPauseElement('pauseUntilGoal');
+        const dateInput = this.getPauseElement('pauseUntilDateInput');
+        const goalSelect = this.getPauseElement('pauseUntilGoalSelect');
+
+        if (dateRadio && goalRadio && dateInput && goalSelect) {
+            dateRadio.addEventListener('change', () => {
+                dateInput.disabled = false;
+                goalSelect.disabled = true;
+            });
+            goalRadio.addEventListener('change', () => {
+                dateInput.disabled = true;
+                goalSelect.disabled = false;
+            });
+        }
+
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                this.closePauseModal();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && modal.classList.contains('is-visible')) {
+                this.closePauseModal();
+            }
+        });
+
+        this.pauseModalInitialized = true;
+    }
+
+    openPauseModal(goalId) {
+        if (!goalId) {
+            return;
+        }
+        const modal = this.getPauseElement('pauseModal');
+        if (!modal) {
+            return;
+        }
+
+        this.pendingPauseGoalId = goalId;
+
+        // Set minimum date to today
+        const dateInput = this.getPauseElement('pauseUntilDateInput');
+        if (dateInput) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            dateInput.min = today.toISOString().split('T')[0];
+            dateInput.value = '';
+        }
+
+        // Populate goal select with other active/paused goals (excluding the current goal)
+        const goalSelect = this.getPauseElement('pauseUntilGoalSelect');
+        if (goalSelect) {
+            goalSelect.innerHTML = '<option value="" data-i18n-key="pauseModal.selectGoal">Select a goal...</option>';
+            const goals = this.app.goalService.goals.filter(
+                g => g.id !== goalId && g.status !== 'completed' && g.status !== 'abandoned'
+            );
+            goals.forEach(goal => {
+                const option = document.createElement('option');
+                option.value = goal.id;
+                option.textContent = goal.title;
+                goalSelect.appendChild(option);
+            });
+            goalSelect.value = '';
+        }
+
+        // Reset to date option
+        const dateRadio = this.getPauseElement('pauseUntilDate');
+        if (dateRadio) {
+            dateRadio.checked = true;
+        }
+        if (dateInput) {
+            dateInput.disabled = false;
+        }
+        if (goalSelect) {
+            goalSelect.disabled = true;
+        }
+
+        modal.classList.add('is-visible');
+        this.languageService.applyTranslations(modal);
+    }
+
+    closePauseModal() {
+        const modal = this.getPauseElement('pauseModal');
+        if (modal) {
+            modal.classList.remove('is-visible');
+        }
+        this.pendingPauseGoalId = null;
+    }
+
+    getPendingPauseGoalId() {
+        return this.pendingPauseGoalId;
+    }
+
+    getPauseElement(id) {
+        if (!this.pauseModalRefs) {
+            this.pauseModalRefs = {};
+        }
+        const cached = this.pauseModalRefs[id];
+        if (cached && cached.isConnected) {
+            return cached;
+        }
+        const element = document.getElementById(id);
+        if (element) {
+            this.pauseModalRefs[id] = element;
+        }
         return element || null;
     }
 }

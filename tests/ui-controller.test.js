@@ -199,6 +199,8 @@ beforeEach(() => {
         calculatePriority: jest.fn(() => 0),
         autoActivateGoalsByPriority: jest.fn(),
         revertGoalToHistoryEntry: jest.fn(),
+        isGoalPaused: jest.fn(() => false),
+        pauseGoal: jest.fn(),
     };
     mockSettingsService = {
         getSettings: jest.fn(() => ({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] })),

@@ -64,7 +64,14 @@ const sv = {
         noDeadline: 'Ingen deadline',
         actions: {
             edit: 'Redigera',
-            complete: 'Slutför'
+            complete: 'Slutför',
+            pause: 'Pausa'
+        },
+        paused: {
+            untilToday: '⏸️ Pausad till idag',
+            untilTomorrow: '⏸️ Pausad till imorgon',
+            untilDate: '⏸️ Pausad till {{date}}',
+            untilGoal: '⏸️ Pausad tills "{{goalTitle}}" är slutfört'
         },
         inline: {
             deadline: 'Deadline',
@@ -103,6 +110,15 @@ const sv = {
         question: 'Uppnådde du målet?',
         success: 'Mål slutfört',
         failure: 'Inte slutfört',
+        cancel: 'Avbryt'
+    },
+    pauseModal: {
+        title: 'Pausa mål',
+        description: 'Välj när detta mål ska bli aktivt igen:',
+        untilDate: 'Till ett specifikt datum',
+        untilGoal: 'Tills ett annat mål är slutfört',
+        selectGoal: 'Välj ett mål...',
+        confirm: 'Pausa',
         cancel: 'Avbryt'
     },
     deadline: {

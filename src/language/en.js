@@ -65,7 +65,14 @@ const en = {
         deadlineClickable: 'Click to edit deadline',
         actions: {
             edit: 'Edit',
-            complete: 'Complete'
+            complete: 'Complete',
+            pause: 'Pause'
+        },
+        paused: {
+            untilToday: '⏸️ Paused until today',
+            untilTomorrow: '⏸️ Paused until tomorrow',
+            untilDate: '⏸️ Paused until {{date}}',
+            untilGoal: '⏸️ Paused until "{{goalTitle}}" is completed'
         },
         inline: {
             deadline: 'Deadline',
@@ -126,6 +133,15 @@ const en = {
         question: 'Did you achieve your goal?',
         success: 'Goal completed',
         failure: 'Not completed',
+        cancel: 'Cancel'
+    },
+    pauseModal: {
+        title: 'Pause goal',
+        description: 'Choose when this goal should become active again:',
+        untilDate: 'Until a specific date',
+        untilGoal: 'Until another goal is completed',
+        selectGoal: 'Select a goal...',
+        confirm: 'Pause',
         cancel: 'Cancel'
     },
     deadline: {
