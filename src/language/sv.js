@@ -178,7 +178,8 @@ const sv = {
         goalSaveFailed: 'Det gick inte att spara målet.',
         revertNotPossible: 'Går inte att återställa.',
         goalNotFound: 'Målet hittades inte.',
-        statusChangeFailed: 'Statusändringen misslyckades.'
+        statusChangeFailed: 'Statusändringen misslyckades.',
+        titleRequired: 'Titeln får inte vara tom.'
     },
     allGoals: {
         openGoalAria: 'Öppna mål {{title}}'

@@ -611,6 +611,32 @@ main {
     color: #333;
     margin-bottom: 5px;
     flex: 1;
+    transition: color 0.2s ease;
+}
+
+.goal-title:hover {
+    color: #667eea;
+}
+
+.goal-title-input {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+    flex: 1;
+    width: 100%;
+    padding: 2px 4px;
+    border: 2px solid #667eea;
+    border-radius: 4px;
+    background: white;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.goal-title-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .goal-status-badge {

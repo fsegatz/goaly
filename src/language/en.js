@@ -201,7 +201,8 @@ const en = {
         goalSaveFailed: 'Saving the goal failed.',
         revertNotPossible: 'Unable to revert this goal.',
         goalNotFound: 'Goal not found.',
-        statusChangeFailed: 'Failed to change the status.'
+        statusChangeFailed: 'Failed to change the status.',
+        titleRequired: 'Title cannot be empty.'
     },
     allGoals: {
         openGoalAria: 'Open goal {{title}}'

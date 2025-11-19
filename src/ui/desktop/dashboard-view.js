@@ -364,7 +364,122 @@ export class DashboardView extends BaseUIController {
         // Setup steps functionality
         this.setupSteps(card, goal, updateGoalInline);
 
+        // Setup inline title editing
+        this.setupTitleEditing(card, goal, updateGoalInline);
+
         return card;
+    }
+
+    setupTitleEditing(card, goal, updateGoalInline) {
+        const titleElement = card.querySelector('.goal-title');
+        if (!titleElement) {
+            return;
+        }
+
+        // Make title clickable to enter edit mode
+        titleElement.style.cursor = 'pointer';
+        titleElement.setAttribute('role', 'button');
+        titleElement.setAttribute('tabindex', '0');
+        titleElement.setAttribute('aria-label', 'Click to edit goal title');
+
+        let originalTitle = goal.title;
+        let isEditing = false;
+
+        const startEditing = () => {
+            if (isEditing) {
+                return;
+            }
+            isEditing = true;
+            originalTitle = titleElement.textContent.trim();
+
+            // Create input field
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'goal-title-input';
+            input.value = originalTitle;
+            input.setAttribute('aria-label', 'Edit goal title');
+
+            // Replace title with input
+            titleElement.style.display = 'none';
+            titleElement.parentNode.insertBefore(input, titleElement);
+            input.focus();
+            input.select();
+
+            const saveTitle = () => {
+                const newTitle = input.value.trim();
+                if (newTitle === originalTitle) {
+                    // No change, just cancel
+                    cancelEditing();
+                    return;
+                }
+
+                if (newTitle === '') {
+                    // Empty title not allowed, restore original
+                    alert(this.translate('errors.titleRequired') || 'Title cannot be empty');
+                    cancelEditing();
+                    return;
+                }
+
+                // Save the new title
+                updateGoalInline(goal.id, { title: newTitle });
+                goal.title = newTitle;
+                titleElement.textContent = newTitle;
+                cancelEditing();
+            };
+
+            const cancelEditing = () => {
+                if (!isEditing) {
+                    return;
+                }
+                isEditing = false;
+                input.remove();
+                titleElement.style.display = '';
+            };
+
+            // Handle Enter key to save
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    saveTitle();
+                } else if (event.key === 'Escape') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    cancelEditing();
+                }
+            });
+
+            // Handle blur to save (clicking outside)
+            input.addEventListener('blur', () => {
+                // Use setTimeout to allow other click events to fire first
+                setTimeout(() => {
+                    if (isEditing) {
+                        saveTitle();
+                    }
+                }, 200);
+            });
+
+            // Prevent blur when clicking on the card itself
+            input.addEventListener('mousedown', (event) => {
+                event.stopPropagation();
+            });
+        };
+
+        // Click to start editing
+        titleElement.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            startEditing();
+        });
+
+        // Keyboard support (Enter or Space to start editing)
+        titleElement.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                event.stopPropagation();
+                startEditing();
+            }
+        });
     }
 
     setupSteps(card, goal, updateGoalInline) {
