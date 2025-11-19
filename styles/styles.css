@@ -882,13 +882,13 @@ main {
 }
 
 .status-inactive {
-    background: #ffa500;
+    background: #9e9e9e;
     color: white;
 }
 
 .status-paused {
-    background: #9e9e9e;
-    color: white;
+    background: #ffc107;
+    color: #333;
 }
 
 .status-completed {
