@@ -633,5 +633,167 @@ describe('DashboardView', () => {
         expect(stepsList.textContent).toContain('No steps yet');
     });
 
+    test('createGoalCard title should be clickable to enter edit mode', () => {
+        const goal = new Goal({ id: 'title-test', title: 'Original Title', motivation: 3, urgency: 2, status: 'active' });
+        const openCompletionModal = jest.fn();
+        const updateGoalInline = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
+        const titleElement = card.querySelector('.goal-title');
+
+        expect(titleElement).not.toBeNull();
+        expect(titleElement.getAttribute('role')).toBe('button');
+        expect(titleElement.getAttribute('tabindex')).toBe('0');
+        expect(titleElement.style.cursor).toBe('pointer');
+    });
+
+    test('createGoalCard clicking title should show input field', () => {
+        const goal = new Goal({ id: 'title-test', title: 'Original Title', motivation: 3, urgency: 2, status: 'active' });
+        const openCompletionModal = jest.fn();
+        const updateGoalInline = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
+        const titleElement = card.querySelector('.goal-title');
+
+        titleElement.click();
+
+        const input = card.querySelector('.goal-title-input');
+        expect(input).not.toBeNull();
+        expect(input.value).toBe('Original Title');
+        expect(titleElement.style.display).toBe('none');
+    });
+
+    test('createGoalCard Enter key should save title changes', () => {
+        const goal = new Goal({ id: 'title-test', title: 'Original Title', motivation: 3, urgency: 2, status: 'active' });
+        const openCompletionModal = jest.fn();
+        const updateGoalInline = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
+        const titleElement = card.querySelector('.goal-title');
+
+        titleElement.click();
+        const input = card.querySelector('.goal-title-input');
+        input.value = 'Updated Title';
+        
+        const enterEvent = new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+        input.dispatchEvent(enterEvent);
+
+        expect(updateGoalInline).toHaveBeenCalledWith('title-test', { title: 'Updated Title' });
+        expect(titleElement.style.display).toBe('');
+        expect(titleElement.textContent).toBe('Updated Title');
+    });
+
+    test('createGoalCard Escape key should cancel title editing', () => {
+        const goal = new Goal({ id: 'title-test', title: 'Original Title', motivation: 3, urgency: 2, status: 'active' });
+        const openCompletionModal = jest.fn();
+        const updateGoalInline = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
+        const titleElement = card.querySelector('.goal-title');
+
+        titleElement.click();
+        const input = card.querySelector('.goal-title-input');
+        input.value = 'Changed Title';
+        
+        const escapeEvent = new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+        input.dispatchEvent(escapeEvent);
+
+        expect(updateGoalInline).not.toHaveBeenCalled();
+        expect(titleElement.style.display).toBe('');
+        expect(titleElement.textContent).toBe('Original Title');
+    });
+
+    test('createGoalCard blur should save title changes', () => {
+        const goal = new Goal({ id: 'title-test', title: 'Original Title', motivation: 3, urgency: 2, status: 'active' });
+        const openCompletionModal = jest.fn();
+        const updateGoalInline = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
+        const titleElement = card.querySelector('.goal-title');
+
+        titleElement.click();
+        const input = card.querySelector('.goal-title-input');
+        input.value = 'Updated Title';
+        
+        input.dispatchEvent(new window.Event('blur'));
+
+        // Advance timers to trigger setTimeout in the blur handler
+        jest.advanceTimersByTime(250);
+
+        expect(updateGoalInline).toHaveBeenCalledWith('title-test', { title: 'Updated Title' });
+        expect(titleElement.style.display).toBe('');
+        expect(titleElement.textContent).toBe('Updated Title');
+    });
+
+    test('createGoalCard empty title should show error and cancel', () => {
+        const goal = new Goal({ id: 'title-test', title: 'Original Title', motivation: 3, urgency: 2, status: 'active' });
+        const openCompletionModal = jest.fn();
+        const updateGoalInline = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
+        const titleElement = card.querySelector('.goal-title');
+
+        titleElement.click();
+        const input = card.querySelector('.goal-title-input');
+        input.value = '   '; // Only whitespace
+        
+        const enterEvent = new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+        input.dispatchEvent(enterEvent);
+
+        expect(global.alert).toHaveBeenCalled();
+        expect(updateGoalInline).not.toHaveBeenCalled();
+        expect(titleElement.style.display).toBe('');
+        expect(titleElement.textContent).toBe('Original Title');
+    });
+
+    test('createGoalCard no change should cancel without saving', () => {
+        const goal = new Goal({ id: 'title-test', title: 'Original Title', motivation: 3, urgency: 2, status: 'active' });
+        const openCompletionModal = jest.fn();
+        const updateGoalInline = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
+        const titleElement = card.querySelector('.goal-title');
+
+        titleElement.click();
+        const input = card.querySelector('.goal-title-input');
+        // Keep the same title
+        
+        const enterEvent = new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+        input.dispatchEvent(enterEvent);
+
+        expect(updateGoalInline).not.toHaveBeenCalled();
+        expect(titleElement.style.display).toBe('');
+    });
+
+    test('createGoalCard keyboard Enter should start editing', () => {
+        const goal = new Goal({ id: 'title-test', title: 'Original Title', motivation: 3, urgency: 2, status: 'active' });
+        const openCompletionModal = jest.fn();
+        const updateGoalInline = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
+        const titleElement = card.querySelector('.goal-title');
+
+        const enterEvent = new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+        titleElement.dispatchEvent(enterEvent);
+
+        const input = card.querySelector('.goal-title-input');
+        expect(input).not.toBeNull();
+    });
+
+    test('createGoalCard keyboard Space should start editing', () => {
+        const goal = new Goal({ id: 'title-test', title: 'Original Title', motivation: 3, urgency: 2, status: 'active' });
+        const openCompletionModal = jest.fn();
+        const updateGoalInline = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
+        const titleElement = card.querySelector('.goal-title');
+
+        const spaceEvent = new window.KeyboardEvent('keydown', { key: ' ', bubbles: true });
+        titleElement.dispatchEvent(spaceEvent);
+
+        const input = card.querySelector('.goal-title-input');
+        expect(input).not.toBeNull();
+    });
+
 });
 

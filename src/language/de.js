@@ -178,7 +178,8 @@ const de = {
         goalSaveFailed: 'Speichern des Ziels fehlgeschlagen.',
         revertNotPossible: 'Zurücksetzen nicht möglich.',
         goalNotFound: 'Ziel nicht gefunden.',
-        statusChangeFailed: 'Statusänderung fehlgeschlagen.'
+        statusChangeFailed: 'Statusänderung fehlgeschlagen.',
+        titleRequired: 'Der Titel darf nicht leer sein.'
     },
     allGoals: {
         openGoalAria: 'Ziel {{title}} öffnen'
