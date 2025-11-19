@@ -57,6 +57,31 @@ beforeEach(() => {
                 </div>
             </div>
         </div>
+        <div id="pauseModal" class="modal">
+            <div class="modal-content pause-modal">
+                <span id="pauseCloseBtn" class="close">&times;</span>
+                <h2>Pause goal</h2>
+                <p>Choose when this goal should become active again:</p>
+                <div class="pause-options">
+                    <div class="pause-option">
+                        <input type="radio" id="pauseUntilDate" name="pauseType" value="date" checked>
+                        <label for="pauseUntilDate">Until a specific date</label>
+                        <input type="date" id="pauseUntilDateInput" class="pause-date-input" min="">
+                    </div>
+                    <div class="pause-option">
+                        <input type="radio" id="pauseUntilGoal" name="pauseType" value="goal">
+                        <label for="pauseUntilGoal">Until another goal is completed</label>
+                        <select id="pauseUntilGoalSelect" class="pause-goal-select" disabled>
+                            <option value="">Select a goal...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="pauseConfirmBtn" class="btn btn-primary">Pause</button>
+                    <button id="pauseCancelBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
     </body></html>`, { url: "http://localhost" });
     document = dom.window.document;
     window = dom.window;
@@ -76,6 +101,7 @@ beforeEach(() => {
     mockGoalService = {
         goals: [],
         setGoalStatus: jest.fn(),
+        isGoalPaused: jest.fn(() => false),
     };
     mockSettingsService = {
         getSettings: jest.fn(() => ({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] })),
@@ -406,6 +432,284 @@ describe('ModalsView', () => {
         const element = modalsView.getCompletionElement('goal-1');
         expect(modalsView.completionModalRefs).toBeDefined();
         expect(typeof modalsView.completionModalRefs).toBe('object');
+    });
+
+    describe('Pause Modal', () => {
+        test('setupPauseModal should setup event listeners', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            expect(modalsView.pauseModalInitialized).toBe(true);
+        });
+
+        test('setupPauseModal should not setup twice', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            const initialRefs = { ...modalsView.pauseModalRefs };
+            modalsView.setupPauseModal(handlePauseChoice);
+            expect(modalsView.pauseModalRefs).toEqual(initialRefs);
+        });
+
+        test('openPauseModal should open modal and set pending goal id', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            mockGoalService.goals = [
+                { id: 'goal-1', title: 'Goal 1', status: 'active' },
+                { id: 'goal-2', title: 'Goal 2', status: 'active' }
+            ];
+
+            modalsView.openPauseModal('goal-1');
+
+            const modal = document.getElementById('pauseModal');
+            expect(modal.classList.contains('is-visible')).toBe(true);
+            expect(modalsView.getPendingPauseGoalId()).toBe('goal-1');
+        });
+
+        test('openPauseModal should populate goal select with other goals', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            mockGoalService.goals = [
+                { id: 'goal-1', title: 'Goal 1', status: 'active' },
+                { id: 'goal-2', title: 'Goal 2', status: 'active' },
+                { id: 'goal-3', title: 'Goal 3', status: 'completed' }
+            ];
+
+            modalsView.openPauseModal('goal-1');
+
+            const goalSelect = document.getElementById('pauseUntilGoalSelect');
+            expect(goalSelect.options.length).toBe(2); // Select option + Goal 2
+            expect(goalSelect.options[1].value).toBe('goal-2');
+            expect(goalSelect.options[1].textContent).toBe('Goal 2');
+        });
+
+        test('openPauseModal should show no goals available message when no other goals', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            mockGoalService.goals = [
+                { id: 'goal-1', title: 'Goal 1', status: 'active' }
+            ];
+
+            modalsView.openPauseModal('goal-1');
+
+            const goalSelect = document.getElementById('pauseUntilGoalSelect');
+            expect(goalSelect.options.length).toBe(2);
+            expect(goalSelect.options[1].disabled).toBe(true);
+        });
+
+        test('openPauseModal should set minimum date to today', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            mockGoalService.goals = [];
+
+            modalsView.openPauseModal('goal-1');
+
+            const dateInput = document.getElementById('pauseUntilDateInput');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            expect(dateInput.min).toBe(today.toISOString().split('T')[0]);
+        });
+
+        test('openPauseModal should reset to date option by default', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            mockGoalService.goals = [];
+
+            modalsView.openPauseModal('goal-1');
+
+            const dateRadio = document.getElementById('pauseUntilDate');
+            const goalRadio = document.getElementById('pauseUntilGoal');
+            const dateInput = document.getElementById('pauseUntilDateInput');
+            const goalSelect = document.getElementById('pauseUntilGoalSelect');
+
+            expect(dateRadio.checked).toBe(true);
+            expect(goalRadio.checked).toBe(false);
+            expect(dateInput.disabled).toBe(false);
+            expect(goalSelect.disabled).toBe(true);
+        });
+
+        test('openPauseModal ignores empty goal id', () => {
+            const modal = document.getElementById('pauseModal');
+            modal.classList.remove('is-visible');
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+
+            modalsView.openPauseModal('');
+            expect(modal.classList.contains('is-visible')).toBe(false);
+        });
+
+        test('openPauseModal no-ops when modal missing', () => {
+            const pauseModal = document.getElementById('pauseModal');
+            pauseModal.remove();
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            expect(() => modalsView.openPauseModal('goal-1')).not.toThrow();
+        });
+
+        test('closePauseModal should close modal and clear pending goal id', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            modalsView.openPauseModal('goal-1');
+            expect(modalsView.getPendingPauseGoalId()).toBe('goal-1');
+
+            modalsView.closePauseModal();
+
+            const modal = document.getElementById('pauseModal');
+            expect(modal.classList.contains('is-visible')).toBe(false);
+            expect(modalsView.getPendingPauseGoalId()).toBeNull();
+        });
+
+        test('pause confirm button should call handlePauseChoice with date', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            mockGoalService.goals = [];
+            modalsView.openPauseModal('goal-1');
+
+            const dateInput = document.getElementById('pauseUntilDateInput');
+            const futureDate = new Date();
+            futureDate.setDate(futureDate.getDate() + 7);
+            dateInput.value = futureDate.toISOString().split('T')[0];
+
+            const confirmBtn = document.getElementById('pauseConfirmBtn');
+            confirmBtn.click();
+
+            expect(handlePauseChoice).toHaveBeenCalledWith({
+                pauseUntil: expect.any(Date),
+                pauseUntilGoalId: null
+            });
+        });
+
+        test('pause confirm button should call handlePauseChoice with goal id', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            mockGoalService.goals = [
+                { id: 'goal-2', title: 'Goal 2', status: 'active' }
+            ];
+            modalsView.openPauseModal('goal-1');
+
+            const goalRadio = document.getElementById('pauseUntilGoal');
+            goalRadio.checked = true;
+            goalRadio.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            const goalSelect = document.getElementById('pauseUntilGoalSelect');
+            goalSelect.value = 'goal-2';
+
+            const confirmBtn = document.getElementById('pauseConfirmBtn');
+            confirmBtn.click();
+
+            expect(handlePauseChoice).toHaveBeenCalledWith({
+                pauseUntil: null,
+                pauseUntilGoalId: 'goal-2'
+            });
+        });
+
+        test('pause confirm button should not call handlePauseChoice without date', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            mockGoalService.goals = [];
+            modalsView.openPauseModal('goal-1');
+
+            const confirmBtn = document.getElementById('pauseConfirmBtn');
+            confirmBtn.click();
+
+            expect(handlePauseChoice).not.toHaveBeenCalled();
+        });
+
+        test('pause confirm button should not call handlePauseChoice without goal', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            mockGoalService.goals = [
+                { id: 'goal-2', title: 'Goal 2', status: 'active' }
+            ];
+            modalsView.openPauseModal('goal-1');
+
+            const goalRadio = document.getElementById('pauseUntilGoal');
+            goalRadio.checked = true;
+            goalRadio.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            const confirmBtn = document.getElementById('pauseConfirmBtn');
+            confirmBtn.click();
+
+            expect(handlePauseChoice).not.toHaveBeenCalled();
+        });
+
+        test('pause cancel button should close modal', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            modalsView.openPauseModal('goal-1');
+
+            const cancelBtn = document.getElementById('pauseCancelBtn');
+            cancelBtn.click();
+
+            const modal = document.getElementById('pauseModal');
+            expect(modal.classList.contains('is-visible')).toBe(false);
+            expect(handlePauseChoice).not.toHaveBeenCalled();
+        });
+
+        test('pause close button should close modal', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            modalsView.openPauseModal('goal-1');
+
+            const closeBtn = document.getElementById('pauseCloseBtn');
+            closeBtn.click();
+
+            const modal = document.getElementById('pauseModal');
+            expect(modal.classList.contains('is-visible')).toBe(false);
+        });
+
+        test('clicking outside pause modal should close it', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            modalsView.openPauseModal('goal-1');
+
+            const modal = document.getElementById('pauseModal');
+            const clickEvent = new window.MouseEvent('click', { bubbles: true, cancelable: true });
+            Object.defineProperty(clickEvent, 'target', { value: modal, enumerable: true });
+            modal.dispatchEvent(clickEvent);
+
+            expect(modal.classList.contains('is-visible')).toBe(false);
+        });
+
+        test('Escape key should close pause modal', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            modalsView.openPauseModal('goal-1');
+
+            document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+            const modal = document.getElementById('pauseModal');
+            expect(modal.classList.contains('is-visible')).toBe(false);
+        });
+
+        test('radio button change should toggle input disabled state', () => {
+            const handlePauseChoice = jest.fn();
+            modalsView.setupPauseModal(handlePauseChoice);
+            mockGoalService.goals = [];
+            modalsView.openPauseModal('goal-1');
+
+            const dateRadio = document.getElementById('pauseUntilDate');
+            const goalRadio = document.getElementById('pauseUntilGoal');
+            const dateInput = document.getElementById('pauseUntilDateInput');
+            const goalSelect = document.getElementById('pauseUntilGoalSelect');
+
+            goalRadio.checked = true;
+            goalRadio.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            expect(dateInput.disabled).toBe(true);
+            expect(goalSelect.disabled).toBe(false);
+
+            dateRadio.checked = true;
+            dateRadio.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            expect(dateInput.disabled).toBe(false);
+            expect(goalSelect.disabled).toBe(true);
+        });
+
+        test('getPauseElement should initialize pauseModalRefs if it does not exist', () => {
+            modalsView.pauseModalRefs = undefined;
+            const element = modalsView.getPauseElement('pauseModal');
+            expect(modalsView.pauseModalRefs).toBeDefined();
+            expect(typeof modalsView.pauseModalRefs).toBe('object');
+        });
     });
 });
 
