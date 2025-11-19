@@ -725,7 +725,7 @@ describe('DashboardView', () => {
         expect(titleElement.textContent).toBe('Updated Title');
     });
 
-    test('createGoalCard empty title should show error and cancel', () => {
+    test('createGoalCard empty title should show error and keep editing', () => {
         const goal = new Goal({ id: 'title-test', title: 'Original Title', motivation: 3, urgency: 2, status: 'active' });
         const openCompletionModal = jest.fn();
         const updateGoalInline = jest.fn();
@@ -740,10 +740,16 @@ describe('DashboardView', () => {
         const enterEvent = new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
         input.dispatchEvent(enterEvent);
 
-        expect(global.alert).toHaveBeenCalled();
+        // Error should be shown inline, editing should continue
+        expect(input.classList.contains('goal-title-input-error')).toBe(true);
+        expect(input.getAttribute('aria-invalid')).toBe('true');
+        const errorMessage = card.querySelector('.goal-title-error-message');
+        expect(errorMessage).not.toBeNull();
+        expect(errorMessage.textContent).toBeTruthy();
         expect(updateGoalInline).not.toHaveBeenCalled();
-        expect(titleElement.style.display).toBe('');
-        expect(titleElement.textContent).toBe('Original Title');
+        // Input should still be visible (editing not cancelled)
+        expect(titleElement.style.display).toBe('none');
+        expect(input.parentNode).not.toBeNull();
     });
 
     test('createGoalCard no change should cancel without saving', () => {

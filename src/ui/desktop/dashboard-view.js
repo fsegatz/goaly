@@ -3,6 +3,7 @@
 import { BaseUIController } from './base-ui-controller.js';
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const BLUR_SAVE_DELAY_MS = 200;
 
 export class DashboardView extends BaseUIController {
     constructor(app) {
@@ -376,14 +377,56 @@ export class DashboardView extends BaseUIController {
             return;
         }
 
-        // Make title clickable to enter edit mode
+        this.makeTitleEditable(titleElement);
+        this.attachTitleEditListeners(titleElement, goal, updateGoalInline);
+    }
+
+    makeTitleEditable(titleElement) {
         titleElement.style.cursor = 'pointer';
         titleElement.setAttribute('role', 'button');
         titleElement.setAttribute('tabindex', '0');
         titleElement.setAttribute('aria-label', 'Click to edit goal title');
+    }
 
-        let originalTitle = goal.title;
+    attachTitleEditListeners(titleElement, goal, updateGoalInline) {
         let isEditing = false;
+        let originalTitle = goal.title;
+        let input = null;
+        let errorMessage = null;
+
+        const createInputElement = () => {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'goal-title-input';
+            input.value = originalTitle;
+            input.setAttribute('aria-label', 'Edit goal title');
+            return input;
+        };
+
+        const showError = (message) => {
+            if (!input) return;
+            input.classList.add('goal-title-input-error');
+            input.setAttribute('aria-invalid', 'true');
+            
+            // Create or update error message
+            if (!errorMessage) {
+                errorMessage = document.createElement('span');
+                errorMessage.className = 'goal-title-error-message';
+                errorMessage.setAttribute('role', 'alert');
+                input.parentNode.insertBefore(errorMessage, input.nextSibling);
+            }
+            errorMessage.textContent = message;
+        };
+
+        const clearError = () => {
+            if (!input) return;
+            input.classList.remove('goal-title-input-error');
+            input.removeAttribute('aria-invalid');
+            if (errorMessage) {
+                errorMessage.remove();
+                errorMessage = null;
+            }
+        };
 
         const startEditing = () => {
             if (isEditing) {
@@ -392,93 +435,98 @@ export class DashboardView extends BaseUIController {
             isEditing = true;
             originalTitle = titleElement.textContent.trim();
 
-            // Create input field
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'goal-title-input';
-            input.value = originalTitle;
-            input.setAttribute('aria-label', 'Edit goal title');
-
-            // Replace title with input
+            input = createInputElement();
             titleElement.style.display = 'none';
             titleElement.parentNode.insertBefore(input, titleElement);
             input.focus();
             input.select();
-
-            const saveTitle = () => {
-                const newTitle = input.value.trim();
-                if (newTitle === originalTitle) {
-                    // No change, just cancel
-                    cancelEditing();
-                    return;
-                }
-
-                if (newTitle === '') {
-                    // Empty title not allowed, restore original
-                    alert(this.translate('errors.titleRequired') || 'Title cannot be empty');
-                    cancelEditing();
-                    return;
-                }
-
-                // Save the new title
-                updateGoalInline(goal.id, { title: newTitle });
-                goal.title = newTitle;
-                titleElement.textContent = newTitle;
-                cancelEditing();
-            };
 
             const cancelEditing = () => {
                 if (!isEditing) {
                     return;
                 }
                 isEditing = false;
-                input.remove();
+                if (input && input.parentNode) {
+                    input.remove();
+                }
+                input = null;
+                clearError();
                 titleElement.style.display = '';
             };
 
-            // Handle Enter key to save
-            input.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    saveTitle();
-                } else if (event.key === 'Escape') {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    cancelEditing();
-                }
-            });
-
-            // Handle blur to save (clicking outside)
-            input.addEventListener('blur', () => {
-                // Use setTimeout to allow other click events to fire first
-                setTimeout(() => {
-                    if (isEditing) {
-                        saveTitle();
-                    }
-                }, 200);
-            });
-
-            // Prevent blur when clicking on the card itself
-            input.addEventListener('mousedown', (event) => {
-                event.stopPropagation();
-            });
+            this.attachInputEventListeners(input, titleElement, goal, updateGoalInline, () => isEditing, originalTitle, showError, clearError, cancelEditing);
         };
 
-        // Click to start editing
-        titleElement.addEventListener('click', (event) => {
+        const handleTitleClick = (event) => {
             event.preventDefault();
             event.stopPropagation();
             startEditing();
-        });
+        };
 
-        // Keyboard support (Enter or Space to start editing)
-        titleElement.addEventListener('keydown', (event) => {
+        const handleTitleKeydown = (event) => {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
                 event.stopPropagation();
                 startEditing();
             }
+        };
+
+        titleElement.addEventListener('click', handleTitleClick);
+        titleElement.addEventListener('keydown', handleTitleKeydown);
+    }
+
+    attachInputEventListeners(input, titleElement, goal, updateGoalInline, isEditingCheck, originalTitle, showError, clearError, cancelEditing) {
+        const saveTitle = () => {
+            const newTitle = input.value.trim();
+            clearError();
+
+            if (newTitle === originalTitle) {
+                cancelEditing();
+                return;
+            }
+
+            if (newTitle === '') {
+                const errorText = this.translate('errors.titleRequired') || 'Title cannot be empty';
+                showError(errorText);
+                input.focus();
+                input.select();
+                return;
+            }
+
+            updateGoalInline(goal.id, { title: newTitle });
+            goal.title = newTitle;
+            titleElement.textContent = newTitle;
+            cancelEditing();
+        };
+
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                event.stopPropagation();
+                saveTitle();
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                event.stopPropagation();
+                cancelEditing();
+            }
+        });
+
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                // Check if input still exists in DOM and editing is still active
+                if (input && input.parentNode && isEditingCheck()) {
+                    saveTitle();
+                }
+            }, BLUR_SAVE_DELAY_MS);
+        });
+
+        input.addEventListener('mousedown', (event) => {
+            event.stopPropagation();
+        });
+
+        // Clear error on input
+        input.addEventListener('input', () => {
+            clearError();
         });
     }
 
