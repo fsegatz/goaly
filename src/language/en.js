@@ -14,7 +14,8 @@ const en = {
         allGoals: 'All goals',
         checkIn: 'Review',
         settings: 'Settings',
-        help: 'Help'
+        help: 'Help',
+        goToDashboard: 'Go to Dashboard'
     },
     actions: {
         export: 'Export',

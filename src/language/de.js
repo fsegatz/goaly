@@ -14,7 +14,8 @@ const de = {
         allGoals: 'Alle Ziele',
         checkIn: 'Review',
         settings: 'Einstellungen',
-        help: 'Hilfe'
+        help: 'Hilfe',
+        goToDashboard: 'Zum Dashboard'
     },
     actions: {
         export: 'Export',

@@ -109,13 +109,37 @@ class GoalyApp {
         logo.addEventListener('mouseleave', cancelPress);
 
         // Touch events (for mobile)
+        let touchStartTime = null;
+        let touchMoved = false;
         logo.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            startPress(e);
-        });
-        logo.addEventListener('touchend', cancelPress);
-        logo.addEventListener('touchcancel', cancelPress);
-        logo.addEventListener('touchmove', cancelPress);
+            touchStartTime = Date.now();
+            touchMoved = false;
+            // Don't preventDefault immediately - allow click for quick taps
+            startPress(null); // Pass null so preventDefault isn't called
+        }, { passive: true });
+        logo.addEventListener('touchmove', () => {
+            touchMoved = true;
+            cancelPress();
+        }, { passive: true });
+        logo.addEventListener('touchend', (e) => {
+            cancelPress();
+            // Handle navigation for quick taps (not long presses)
+            if (touchStartTime && !touchMoved) {
+                const touchDuration = Date.now() - touchStartTime;
+                // Quick tap threshold: less than 300ms (developer mode uses 5000ms)
+                if (touchDuration < 300) {
+                    // Navigate to dashboard for quick taps
+                    this.uiController.switchView('dashboard');
+                }
+            }
+            touchStartTime = null;
+            touchMoved = false;
+        }, { passive: true });
+        logo.addEventListener('touchcancel', () => {
+            cancelPress();
+            touchStartTime = null;
+            touchMoved = false;
+        }, { passive: true });
 
         // Update visibility on load
         this.uiController.settingsView.updateDeveloperModeVisibility();

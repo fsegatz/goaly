@@ -14,7 +14,8 @@ const sv = {
         allGoals: 'Alla mål',
         checkIn: 'Review',
         settings: 'Inställningar',
-        help: 'Hjälp'
+        help: 'Hjälp',
+        goToDashboard: 'Gå till Dashboard'
     },
     actions: {
         export: 'Exportera',
