@@ -97,6 +97,22 @@ class UIController {
 
         this.allGoalsView.setupControls((goalId) => this.goalFormView.openGoalForm(goalId, () => this.renderViews()));
 
+        // Logo click handler - navigate to dashboard
+        const goalyLogo = document.getElementById('goalyLogo');
+        if (goalyLogo) {
+            const navigateToDashboard = () => {
+                this.switchView('dashboard');
+            };
+            goalyLogo.addEventListener('click', navigateToDashboard);
+            // Keyboard accessibility (Enter and Space)
+            goalyLogo.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigateToDashboard();
+                }
+            });
+        }
+
         // Desktop menu
         document.querySelectorAll('.desktop-menu .menu-btn').forEach(btn => {
             btn.addEventListener('click', () => {

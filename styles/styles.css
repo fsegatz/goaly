@@ -19,7 +19,7 @@ body {
 
 header {
     background: white;
-    padding: 20px 30px;
+    padding: 40px 30px;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin-bottom: 30px;
@@ -33,11 +33,54 @@ header {
     z-index: 100;
 }
 
-header h1 {
+header h1,
+header .logo-button {
     font-size: 2rem;
     color: #667eea;
     margin: 0;
     flex-shrink: 0;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 102;
+    transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+header h1:active,
+header .logo-button:active {
+    transform: translateX(-50%) scale(0.95);
+}
+
+.logo-button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 2rem;
+    color: #667eea;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-button:hover {
+    opacity: 0.8;
+}
+
+.logo-button:active {
+    opacity: 0.6;
+}
+
+.logo-button:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 4px;
+    border-radius: 4px;
 }
 
 .mobile-view-divider {
@@ -90,13 +133,22 @@ header h1 {
         justify-content: space-between;
     }
 
-    header h1 {
-        order: 1;
+    header h1,
+    header .logo-button {
+        left: 30px;
+        transform: none;
+    }
+
+    header h1:active,
+    header .logo-button:active {
+        transform: scale(0.95);
     }
 
     .desktop-menu {
         order: 2;
-        flex: 1;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
         justify-content: center;
         overflow: hidden;
         overflow-x: hidden;
@@ -104,6 +156,8 @@ header h1 {
 
     .header-actions-desktop {
         order: 3;
+        position: absolute;
+        right: 30px;
     }
 }
 
