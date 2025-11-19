@@ -33,7 +33,6 @@ header {
     z-index: 100;
 }
 
-header h1,
 header .logo-button {
     font-size: 2rem;
     color: #667eea;
@@ -46,7 +45,6 @@ header .logo-button {
     transition: transform 0.1s ease, opacity 0.1s ease;
 }
 
-header h1:active,
 header .logo-button:active {
     transform: translateX(-50%) scale(0.95);
 }
@@ -133,13 +131,11 @@ header .logo-button:active {
         justify-content: space-between;
     }
 
-    header h1,
     header .logo-button {
         left: 30px;
         transform: none;
     }
 
-    header h1:active,
     header .logo-button:active {
         transform: scale(0.95);
     }
@@ -1737,18 +1733,6 @@ main {
         justify-content: space-between;
     }
 
-    header h1 {
-        font-size: 1.3rem;
-        margin: 0;
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        text-align: center;
-        pointer-events: none;
-        white-space: nowrap;
-        z-index: 0;
-        padding: 0;
-    }
 
     .desktop-menu {
         display: none;

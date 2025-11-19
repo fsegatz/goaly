@@ -67,7 +67,9 @@ class GoalyApp {
         let pressTimer = null;
 
         const startPress = (e) => {
-            e.preventDefault();
+            if (e) {
+                e.preventDefault();
+            }
             pressTimer = setTimeout(() => {
                 // Press duration has passed
                 this.developerModeService.enable();
@@ -115,6 +117,7 @@ class GoalyApp {
             touchStartTime = Date.now();
             touchMoved = false;
             // Don't preventDefault immediately - allow click for quick taps
+            // Quick tap navigation is handled by the 'click' event in ui-controller.js
             startPress(null); // Pass null so preventDefault isn't called
         }, { passive: true });
         logo.addEventListener('touchmove', () => {
@@ -123,15 +126,6 @@ class GoalyApp {
         }, { passive: true });
         logo.addEventListener('touchend', (e) => {
             cancelPress();
-            // Handle navigation for quick taps (not long presses)
-            if (touchStartTime && !touchMoved) {
-                const touchDuration = Date.now() - touchStartTime;
-                // Quick tap threshold: less than 300ms (developer mode uses 5000ms)
-                if (touchDuration < 300) {
-                    // Navigate to dashboard for quick taps
-                    this.uiController.switchView('dashboard');
-                }
-            }
             touchStartTime = null;
             touchMoved = false;
         }, { passive: true });
