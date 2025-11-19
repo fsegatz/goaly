@@ -17,11 +17,6 @@ export class DashboardView extends BaseUIController {
         const settings = this.app.settingsService.getSettings();
         // Get active goals (excluding manually paused ones)
         const activeGoals = this.app.goalService.getActiveGoals();
-        // Also get manually paused goals to show them with visual indicators
-        const manuallyPausedGoals = this.app.goalService.goals
-            .filter(g => g.status === 'paused' && this.app.goalService.isGoalPaused(g))
-            .sort((a, b) => this.app.goalService.calculatePriority(b) - this.app.goalService.calculatePriority(a));
-        
         const dashboardGoals = activeGoals.slice(0, settings.maxActiveGoals);
         // Get reviews - these include ALL active and paused goals that need review
         // (not limited by maxActiveGoals - all goals needing review should show review cards)
@@ -65,14 +60,6 @@ export class DashboardView extends BaseUIController {
         // Add active goal cards - show all active goals up to maxActiveGoals
         // (some of these may also have review cards above, which is fine)
         dashboardGoals.forEach(goal => {
-            allCards.push({
-                type: 'goal',
-                data: goal
-            });
-        });
-        
-        // Add manually paused goals to show them with visual indicators
-        manuallyPausedGoals.forEach(goal => {
             allCards.push({
                 type: 'goal',
                 data: goal

@@ -42,6 +42,7 @@ const de = {
         statusOptions: {
             all: 'Alle Status',
             active: 'Aktiv',
+            inactive: 'Inaktiv',
             paused: 'Pausiert',
             completed: 'Erreicht',
             abandoned: 'Nicht erreicht'

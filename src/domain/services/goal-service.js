@@ -212,7 +212,7 @@ class GoalService {
 
     createGoal(goalData, maxActiveGoals) {
         // Status is determined automatically rather than set manually
-        const goal = new Goal({ ...goalData, status: 'paused' }); // Temporarily set to paused
+        const goal = new Goal({ ...goalData, status: 'inactive' }); // Temporarily set to inactive
         const creationSnapshot = this.createSnapshot(goal);
         const creationChanges = this.diffSnapshots({}, creationSnapshot);
         this.recordHistory(goal, {
@@ -499,8 +499,15 @@ class GoalService {
                 if (ineligibleStatuses.has(g.status)) {
                     return false;
                 }
-                // Exclude goals that are manually paused
-                return !this.isGoalPaused(g);
+                // Exclude goals that are manually paused (they should have status 'paused')
+                if (this.isGoalPaused(g)) {
+                    return false;
+                }
+                // If goal has old 'paused' status but is not manually paused, migrate it to 'inactive'
+                if (g.status === 'paused') {
+                    this.handleStatusTransition(g, 'inactive');
+                }
+                return true;
             })
             .sort((a, b) => {
                 const priorityA = this.calculatePriority(a);
@@ -514,7 +521,7 @@ class GoalService {
 
         // Activate the top N goals by priority
         const goalsToActivate = eligibleGoals.slice(0, maxActiveGoals);
-        const goalsToPause = eligibleGoals.slice(maxActiveGoals);
+        const goalsToInactivate = eligibleGoals.slice(maxActiveGoals);
 
         // Update status
         goalsToActivate.forEach(goal => {
@@ -523,9 +530,11 @@ class GoalService {
             }
         });
 
-        goalsToPause.forEach(goal => {
-            if (goal.status !== 'paused') {
-                this.handleStatusTransition(goal, 'paused');
+        // Set goals to inactive (not active due to priority limits)
+        goalsToInactivate.forEach(goal => {
+            // Only set to inactive if not manually paused
+            if (!this.isGoalPaused(goal) && goal.status !== 'inactive') {
+                this.handleStatusTransition(goal, 'inactive');
             }
         });
 

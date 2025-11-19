@@ -754,9 +754,15 @@ main {
     background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
 }
 
-.goal-card.paused {
+.goal-card.inactive {
     opacity: 0.7;
     border-color: #ffa500;
+}
+
+.goal-card.paused {
+    opacity: 0.6;
+    border-color: #9e9e9e;
+    background: #f5f5f5;
 }
 
 .goal-card.manually-paused {

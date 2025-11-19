@@ -58,7 +58,7 @@ describe('Goal Service', () => {
         expect(activeGoals.length).toBe(2);
         expect(activeGoals.map(g => g.title)).toContain('High Priority');
         expect(activeGoals.map(g => g.title)).toContain('Medium Priority');
-        expect(goal3.status).toBe('paused');
+        expect(goal3.status).toBe('inactive');
     });
 
     it('should update a goal', () => {
@@ -75,14 +75,14 @@ describe('Goal Service', () => {
         
         // Initially goal1 should be active (higher priority)
         expect(goal1.status).toBe('active');
-        expect(goal2.status).toBe('paused');
+        expect(goal2.status).toBe('inactive');
         
         // Increase goal2's priority
         goalService.updateGoal(goal2.id, { motivation: 10, urgency: 10 }, 1);
         
         // Now goal2 should be active (higher priority)
         expect(goal2.status).toBe('active');
-        expect(goal1.status).toBe('paused');
+        expect(goal1.status).toBe('inactive');
     });
 
     it('should delete a goal', () => {
@@ -99,15 +99,15 @@ describe('Goal Service', () => {
         
         // goal1 should be active
         expect(goal1.status).toBe('active');
-        expect(goal2.status).toBe('paused');
-        expect(goal3.status).toBe('paused');
+        expect(goal2.status).toBe('inactive');
+        expect(goal3.status).toBe('inactive');
         
         // Delete goal1
         goalService.deleteGoal(goal1.id, 1);
         
         // goal2 should now be active
         expect(goal2.status).toBe('active');
-        expect(goal3.status).toBe('paused');
+        expect(goal3.status).toBe('inactive');
     });
 
     it('should calculate priority correctly', () => {
@@ -198,7 +198,7 @@ describe('Goal Service', () => {
         // Should be sorted by priority (highest first)
         expect(activeGoals[0].title).toBe('High Priority');
         expect(activeGoals[1].title).toBe('Medium Priority');
-        expect(goal1.status).toBe('paused');
+        expect(goal1.status).toBe('inactive');
     });
 
     it('should not activate completed goals', () => {
@@ -222,15 +222,15 @@ describe('Goal Service', () => {
             id: '1', title: 'Goal 1', motivation: 1, urgency: 1, status: 'active' 
         });
         const goal2 = new (require('../src/domain/models/goal').default)({ 
-            id: '2', title: 'Goal 2', motivation: 5, urgency: 5, status: 'paused' 
+            id: '2', title: 'Goal 2', motivation: 5, urgency: 5, status: 'inactive' 
         });
         goalService.goals = [goal1, goal2];
         
-        // Migrate - should activate goal2 (higher priority) and pause goal1
+        // Migrate - should activate goal2 (higher priority) and inactivate goal1
         goalService.migrateGoalsToAutoActivation(1);
         
         expect(goal2.status).toBe('active');
-        expect(goal1.status).toBe('paused');
+        expect(goal1.status).toBe('inactive');
     });
 
     it('should return early when migrating empty goals list', () => {
@@ -265,7 +265,7 @@ describe('Goal Service', () => {
         
         // goal1 should be active, goal2 paused
         expect(goal1.status).toBe('active');
-        expect(goal2.status).toBe('paused');
+        expect(goal2.status).toBe('inactive');
         
         // Delete paused goal2 - should not trigger reactivation
         const saveGoalsSpy = jest.spyOn(goalService, 'saveGoals');
@@ -312,7 +312,7 @@ describe('Goal Service', () => {
         
         // The older goal should be active
         expect(goal1.status).toBe('active');
-        expect(goal2.status).toBe('paused');
+        expect(goal2.status).toBe('inactive');
     });
 
     it('should record history entries when creating and updating goals', () => {
@@ -482,7 +482,7 @@ describe('Goal Service', () => {
         const autoSpy = jest.spyOn(goalService, 'autoActivateGoalsByPriority');
 
         expect(first.status).toBe('active');
-        expect(second.status).toBe('paused');
+        expect(second.status).toBe('inactive');
 
         goalService.setGoalStatus(first.id, 'abandoned', 1);
 
@@ -498,7 +498,7 @@ describe('Goal Service', () => {
         const autoSpy = jest.spyOn(goalService, 'autoActivateGoalsByPriority');
 
         expect(first.status).toBe('active');
-        expect(second.status).toBe('paused');
+        expect(second.status).toBe('inactive');
 
         goalService.setGoalStatus(second.id, 'active', 1);
 
