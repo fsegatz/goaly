@@ -97,7 +97,9 @@ class GoalService {
                 ? goal.deadline.toISOString()
                 : null,
             status: goal.status ?? 'active',
-            priority: this.calculatePriority(goal)
+            priority: this.calculatePriority(goal),
+            pauseUntil: goal.pauseUntil ? goal.pauseUntil.toISOString() : null,
+            pauseUntilGoalId: goal.pauseUntilGoalId || null
         };
     }
 
@@ -161,6 +163,20 @@ class GoalService {
         }
         if (snapshot.status !== undefined) {
             updatedFields.status = snapshot.status;
+        }
+        // Handle pause metadata
+        // If reverting to active status, always clear pause metadata
+        if (snapshot.status === 'active') {
+            updatedFields.pauseUntil = null;
+            updatedFields.pauseUntilGoalId = null;
+        } else {
+            // For other statuses, restore pause metadata if present in snapshot
+            if (snapshot.pauseUntil !== undefined) {
+                updatedFields.pauseUntil = snapshot.pauseUntil ? new Date(snapshot.pauseUntil) : null;
+            }
+            if (snapshot.pauseUntilGoalId !== undefined) {
+                updatedFields.pauseUntilGoalId = snapshot.pauseUntilGoalId || null;
+            }
         }
 
         Object.assign(goal, updatedFields);
