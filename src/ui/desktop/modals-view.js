@@ -19,16 +19,7 @@ export class ModalsView extends BaseUIController {
         this.migrationDiffData = null;
         this.isSyncingMigrationScroll = false;
         this.migrationScrollBound = false;
-        this.pauseModalRefs = {
-            pauseModal: document.getElementById('pauseModal'),
-            pauseCloseBtn: document.getElementById('pauseCloseBtn'),
-            pauseCancelBtn: document.getElementById('pauseCancelBtn'),
-            pauseConfirmBtn: document.getElementById('pauseConfirmBtn'),
-            pauseUntilDate: document.getElementById('pauseUntilDate'),
-            pauseUntilGoal: document.getElementById('pauseUntilGoal'),
-            pauseUntilDateInput: document.getElementById('pauseUntilDateInput'),
-            pauseUntilGoalSelect: document.getElementById('pauseUntilGoalSelect')
-        };
+        this.pauseModalRefs = {};
         this.pendingPauseGoalId = null;
         this.pauseModalInitialized = false;
     }
@@ -390,12 +381,20 @@ export class ModalsView extends BaseUIController {
 
         const cancelBtn = this.getPauseElement('pauseCancelBtn');
         if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => this.closePauseModal());
+            cancelBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.closePauseModal();
+            });
         }
 
         const closeBtn = this.getPauseElement('pauseCloseBtn');
         if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.closePauseModal());
+            closeBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.closePauseModal();
+            });
         }
 
         // Toggle between date and goal options
@@ -450,26 +449,39 @@ export class ModalsView extends BaseUIController {
             dateInput.value = '';
         }
 
-        // Populate goal select with other active/paused goals (excluding the current goal)
+        // Populate goal select with other goals (excluding the current goal)
+        // Include all goals except completed/abandoned ones, as user might want to pause until a paused goal becomes active
         const goalSelect = this.getPauseElement('pauseUntilGoalSelect');
         if (goalSelect) {
             goalSelect.innerHTML = '<option value="" data-i18n-key="pauseModal.selectGoal">Select a goal...</option>';
             const goals = this.app.goalService.goals.filter(
                 g => g.id !== goalId && g.status !== 'completed' && g.status !== 'abandoned'
             );
-            goals.forEach(goal => {
+            if (goals.length === 0) {
                 const option = document.createElement('option');
-                option.value = goal.id;
-                option.textContent = goal.title;
+                option.value = '';
+                option.textContent = this.translate('pauseModal.noGoalsAvailable') || 'No other goals available';
+                option.disabled = true;
                 goalSelect.appendChild(option);
-            });
+            } else {
+                goals.forEach(goal => {
+                    const option = document.createElement('option');
+                    option.value = goal.id;
+                    option.textContent = goal.title;
+                    goalSelect.appendChild(option);
+                });
+            }
             goalSelect.value = '';
         }
 
         // Reset to date option
         const dateRadio = this.getPauseElement('pauseUntilDate');
+        const goalRadio = this.getPauseElement('pauseUntilGoal');
         if (dateRadio) {
             dateRadio.checked = true;
+        }
+        if (goalRadio) {
+            goalRadio.checked = false;
         }
         if (dateInput) {
             dateInput.disabled = false;

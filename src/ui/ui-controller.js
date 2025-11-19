@@ -90,6 +90,7 @@ class UIController {
         );
 
         this.modalsView.setupCompletionModal((status) => this.handleCompletionChoice(status));
+        this.modalsView.setupPauseModal((pauseData) => this.handlePauseChoice(pauseData));
         this.modalsView.setupMigrationModals(
             () => this.app.cancelMigration(),
             () => this.app.handleMigrationReviewRequest(),
