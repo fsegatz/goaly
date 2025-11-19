@@ -42,6 +42,7 @@ const en = {
         statusOptions: {
             all: 'All statuses',
             active: 'Active',
+            inactive: 'Inactive',
             paused: 'Paused',
             completed: 'Completed',
             abandoned: 'Abandoned'
@@ -153,6 +154,7 @@ const en = {
     },
     status: {
         active: 'Active',
+        inactive: 'Inactive',
         paused: 'Paused',
         completed: 'Completed',
         abandoned: 'Abandoned'

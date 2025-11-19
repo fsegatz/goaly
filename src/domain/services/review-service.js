@@ -49,8 +49,8 @@ class ReviewService {
     }
 
     ensureGoalSchedule(goal) {
-        // Include active and paused goals for reviews (exclude completed and abandoned)
-        if (!goal || (goal.status !== 'active' && goal.status !== 'paused')) {
+        // Include active, inactive, and paused goals for reviews (exclude completed and abandoned)
+        if (!goal || (goal.status !== 'active' && goal.status !== 'inactive' && goal.status !== 'paused')) {
             return null;
         }
 
@@ -116,7 +116,7 @@ class ReviewService {
         const now = new Date();
         // Include active and paused goals for reviews (exclude completed and abandoned)
         return goals
-            .filter((goal) => goal.status === 'active' || goal.status === 'paused')
+            .filter((goal) => goal.status === 'active' || goal.status === 'inactive' || goal.status === 'paused')
             .map((goal) => this.ensureGoalSchedule(goal))
             .filter((goal) => goal && goal.nextReviewAt && goal.nextReviewAt <= now)
             .sort((a, b) => (a.nextReviewAt || 0) - (b.nextReviewAt || 0))

@@ -42,6 +42,7 @@ const sv = {
         statusOptions: {
             all: 'Alla statusar',
             active: 'Aktiv',
+            inactive: 'Inaktiv',
             paused: 'Pausad',
             completed: 'Slutförd',
             abandoned: 'Avbruten'
@@ -129,6 +130,7 @@ const sv = {
     },
     status: {
         active: 'Aktiv',
+        inactive: 'Inaktiv',
         paused: 'Pausad',
         completed: 'Slutförd',
         abandoned: 'Avbruten'

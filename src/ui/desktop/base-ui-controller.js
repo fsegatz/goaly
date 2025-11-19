@@ -60,6 +60,9 @@ export class BaseUIController {
     }
 
     getStatusText(status) {
+        if (status === 'inactive') {
+            return this.translate('status.inactive');
+        }
         const key = `status.${status}`;
         const translated = this.translate(key);
         return translated === key ? status : translated;
