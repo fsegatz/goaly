@@ -969,7 +969,10 @@ describe('SyncManager', () => {
 
         await manager.syncWithGoogleDrive();
 
-        expect(mockApp.languageService.translate).toHaveBeenCalledWith('googleDrive.syncError', { message: undefined });
+        // Error without message should be converted to a descriptive message
+        expect(mockApp.languageService.translate).toHaveBeenCalledWith('googleDrive.syncError', { message: expect.any(String) });
+        const lastCall = mockApp.languageService.translate.mock.calls.find(call => call[0] === 'googleDrive.syncError');
+        expect(lastCall[1].message).not.toBeUndefined();
     });
 
     test('scheduleBackgroundSyncSoon should handle sync error gracefully', async () => {

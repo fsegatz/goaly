@@ -818,4 +818,62 @@ describe('Goal Service', () => {
         expect(revertedGoal.pauseUntil).toBeNull();
         expect(revertedGoal.pauseUntilGoalId).toBeNull();
     });
+
+    it('checkAndClearPauseConditions should record history when clearing expired pause conditions', () => {
+        const goal = goalService.createGoal({ title: 'Paused Goal', motivation: 5, urgency: 5 }, 3);
+        const pastDate = new Date();
+        pastDate.setDate(pastDate.getDate() - 1);
+        pastDate.setHours(0, 0, 0, 0);
+        
+        // Set pause directly to avoid auto-clearing in pauseGoal
+        goal.pauseUntil = pastDate;
+        expect(goal.pauseUntil).not.toBeNull();
+        
+        const historyBefore = goal.history.length;
+        goalService.checkAndClearPauseConditions();
+        
+        expect(goal.pauseUntil).toBeNull();
+        expect(goal.history.length).toBe(historyBefore + 1);
+        
+        const lastEntry = goal.history[goal.history.length - 1];
+        expect(lastEntry.event).toBe('updated');
+        expect(lastEntry.changes.some(change => change.field === 'pauseUntil' && change.from !== null && change.to === null)).toBe(true);
+    });
+
+    it('checkAndClearPauseConditions should record history when clearing goal dependency pause', () => {
+        const goal1 = goalService.createGoal({ title: 'Goal 1', motivation: 5, urgency: 5 }, 3);
+        const goal2 = goalService.createGoal({ title: 'Goal 2', motivation: 3, urgency: 3 }, 3);
+        
+        // Set pause directly to avoid auto-clearing in pauseGoal
+        goal1.pauseUntilGoalId = goal2.id;
+        expect(goal1.pauseUntilGoalId).toBe(goal2.id);
+        
+        // Check history before setGoalStatus (which will trigger checkAndClearPauseConditions)
+        const historyBefore = goal1.history.length;
+        
+        // setGoalStatus will call autoActivateGoalsByPriority, which calls checkAndClearPauseConditions
+        goalService.setGoalStatus(goal2.id, 'completed', 3);
+        
+        expect(goal1.pauseUntilGoalId).toBeNull();
+        expect(goal1.history.length).toBe(historyBefore + 1);
+        
+        const lastEntry = goal1.history[goal1.history.length - 1];
+        expect(lastEntry.event).toBe('updated');
+        expect(lastEntry.changes.some(change => change.field === 'pauseUntilGoalId' && change.from === goal2.id && change.to === null)).toBe(true);
+    });
+
+    it('checkAndClearPauseConditions should not record history when no pause conditions are cleared', () => {
+        const goal = goalService.createGoal({ title: 'Active Goal', motivation: 5, urgency: 5 }, 3);
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 7);
+        
+        goalService.pauseGoal(goal.id, { pauseUntil: futureDate }, 3);
+        expect(goal.pauseUntil).not.toBeNull();
+        
+        const historyBefore = goal.history.length;
+        goalService.checkAndClearPauseConditions();
+        
+        expect(goal.pauseUntil).not.toBeNull();
+        expect(goal.history.length).toBe(historyBefore);
+    });
 });
