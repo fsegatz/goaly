@@ -2,7 +2,7 @@
 
 import { prepareExportPayload } from '../migration/migration-service.js';
 import { GOAL_FILE_VERSION, isSameVersion, isOlderVersion, isNewerVersion } from '../utils/versioning.js';
-import { STORAGE_KEY_GDRIVE_TOKEN, STORAGE_KEY_GDRIVE_FILE_ID } from '../utils/constants.js';
+import { STORAGE_KEY_GDRIVE_TOKEN, STORAGE_KEY_GDRIVE_FILE_ID, STORAGE_KEY_GDRIVE_FOLDER_ID } from '../utils/constants.js';
 
 const GOOGLE_DRIVE_FOLDER_NAME = 'Goaly';
 const GOOGLE_DRIVE_FILE_NAME = 'goaly-data.json';
@@ -23,10 +23,14 @@ class GoogleDriveSyncService {
         this.gisLoaded = false;
         this.accessToken = null;
         this.fileId = null;
+        this.folderId = null;
         this.initialized = false;
         this.pendingRefreshPromise = null;
         this.refreshResolve = null;
         this.refreshReject = null;
+        this._lastStatusCheck = 0;
+        this._cachedStatus = null;
+        this._statusCacheTimeout = 60000; // Cache status for 1 minute
     }
 
     /**
@@ -46,6 +50,9 @@ class GoogleDriveSyncService {
         this.apiKey = apiKey;
         this.clientId = clientId;
 
+        // Load Google APIs first (needed for token client initialization)
+        await this.loadGoogleAPIs();
+
         // Load saved token and file ID
         const savedToken = localStorage.getItem(STORAGE_KEY_GDRIVE_TOKEN);
         if (savedToken) {
@@ -53,13 +60,71 @@ class GoogleDriveSyncService {
                 const tokenData = JSON.parse(savedToken);
                 this.accessToken = tokenData.access_token;
                 this.fileId = localStorage.getItem(STORAGE_KEY_GDRIVE_FILE_ID);
+                this.folderId = localStorage.getItem(STORAGE_KEY_GDRIVE_FOLDER_ID);
+                
+                // Re-initialize token client if we have a saved token
+                // This allows token refresh to work after page reload
+                if (this.gisLoaded && window.google?.accounts?.oauth2 && this.accessToken) {
+                    this.tokenClient = window.google.accounts.oauth2.initTokenClient({
+                        client_id: this.clientId,
+                        scope: SCOPES,
+                        callback: async (response) => {
+                            if (response.error) {
+                                let errorMessage = response.error;
+                                if (response.error === 'popup_closed_by_user') {
+                                    errorMessage = 'Authentication cancelled. Please try again.';
+                                } else if (response.error === 'access_denied') {
+                                    errorMessage = 'Access denied. Make sure you are added as a test user in Google Cloud Console.';
+                                } else if (response.error === 'invalid_client') {
+                                    errorMessage = 'Invalid client ID. Please check your configuration.';
+                                } else if (response.error === 'redirect_uri_mismatch') {
+                                    errorMessage = 'Redirect URI mismatch. Please check your OAuth configuration in Google Cloud Console.';
+                                } else if (response.error === 'immediate_failed' || response.error === 'popup_blocked') {
+                                    // Silent refresh failed - user needs to re-authenticate
+                                    errorMessage = 'Session expired. Please sign in again.';
+                                }
+                                
+                                // Handle refresh promise if pending
+                                if (this.refreshReject) {
+                                    this.refreshReject(new Error(errorMessage));
+                                    this._clearPendingRefreshState();
+                                }
+                                return;
+                            }
+
+                            if (!response.access_token) {
+                                const error = new Error('No access token received from Google. Please try again.');
+                                if (this.refreshReject) {
+                                    this.refreshReject(error);
+                                    this._clearPendingRefreshState();
+                                }
+                                return;
+                            }
+
+                            this.accessToken = response.access_token;
+                            localStorage.setItem(STORAGE_KEY_GDRIVE_TOKEN, JSON.stringify({
+                                access_token: this.accessToken,
+                                expires_at: Date.now() + (response.expires_in * 1000)
+                            }));
+
+                            // Set token for gapi requests
+                            if (window.gapi && window.gapi.client) {
+                                window.gapi.client.setToken({ access_token: this.accessToken });
+                            }
+
+                            // Handle refresh promise if pending
+                            if (this.refreshResolve) {
+                                this.refreshResolve(true);
+                                this._clearPendingRefreshState();
+                            }
+                        }
+                    });
+                }
             } catch (error) {
                 console.error('Failed to load saved token', error);
             }
         }
 
-        // Load Google APIs
-        await this.loadGoogleAPIs();
         this.initialized = true;
     }
 
@@ -173,6 +238,9 @@ class GoogleDriveSyncService {
                                 errorMessage = 'Invalid client ID. Please check your configuration.';
                             } else if (response.error === 'redirect_uri_mismatch') {
                                 errorMessage = 'Redirect URI mismatch. Please check your OAuth configuration in Google Cloud Console.';
+                            } else if (response.error === 'immediate_failed' || response.error === 'popup_blocked') {
+                                // Silent refresh failed - user needs to re-authenticate
+                                errorMessage = 'Session expired. Please sign in again.';
                             }
                             
                             // Handle refresh promise if pending
@@ -238,8 +306,12 @@ class GoogleDriveSyncService {
         }
         this.accessToken = null;
         this.fileId = null;
+        this.folderId = null;
+        this._cachedStatus = null;
+        this._lastStatusCheck = 0;
         localStorage.removeItem(STORAGE_KEY_GDRIVE_TOKEN);
         localStorage.removeItem(STORAGE_KEY_GDRIVE_FILE_ID);
+        localStorage.removeItem(STORAGE_KEY_GDRIVE_FOLDER_ID);
         if (window.gapi?.client) {
             window.gapi.client.setToken(null);
         }
@@ -300,12 +372,63 @@ class GoogleDriveSyncService {
 
             // Refresh if forced or token expires in less than 5 minutes
             if (force || expiresAt - now < 5 * 60 * 1000) {
-                // Ensure token client is initialized
+                // Ensure token client is initialized - re-initialize if needed
                 if (!this.tokenClient && this.gisLoaded && window.google?.accounts?.oauth2) {
-                    // Token client will be created during authenticate() call
-                    // For refresh, we need it to already exist
-                    console.warn('Token client not initialized, cannot refresh token');
-                    return false;
+                    // Re-initialize token client if it's not available
+                    this.tokenClient = window.google.accounts.oauth2.initTokenClient({
+                        client_id: this.clientId,
+                        scope: SCOPES,
+                        callback: async (response) => {
+                            if (response.error) {
+                                let errorMessage = response.error;
+                                if (response.error === 'popup_closed_by_user') {
+                                    errorMessage = 'Authentication cancelled. Please try again.';
+                                } else if (response.error === 'access_denied') {
+                                    errorMessage = 'Access denied. Make sure you are added as a test user in Google Cloud Console.';
+                                } else if (response.error === 'invalid_client') {
+                                    errorMessage = 'Invalid client ID. Please check your configuration.';
+                                } else if (response.error === 'redirect_uri_mismatch') {
+                                    errorMessage = 'Redirect URI mismatch. Please check your OAuth configuration in Google Cloud Console.';
+                                } else if (response.error === 'immediate_failed' || response.error === 'popup_blocked') {
+                                    // Silent refresh failed - user needs to re-authenticate
+                                    errorMessage = 'Session expired. Please sign in again.';
+                                }
+                                
+                                // Handle refresh promise if pending
+                                if (this.refreshReject) {
+                                    this.refreshReject(new Error(errorMessage));
+                                    this._clearPendingRefreshState();
+                                }
+                                return;
+                            }
+
+                            if (!response.access_token) {
+                                const error = new Error('No access token received from Google. Please try again.');
+                                if (this.refreshReject) {
+                                    this.refreshReject(error);
+                                    this._clearPendingRefreshState();
+                                }
+                                return;
+                            }
+
+                            this.accessToken = response.access_token;
+                            localStorage.setItem(STORAGE_KEY_GDRIVE_TOKEN, JSON.stringify({
+                                access_token: this.accessToken,
+                                expires_at: Date.now() + (response.expires_in * 1000)
+                            }));
+
+                            // Set token for gapi requests
+                            if (window.gapi && window.gapi.client) {
+                                window.gapi.client.setToken({ access_token: this.accessToken });
+                            }
+
+                            // Handle refresh promise if pending
+                            if (this.refreshResolve) {
+                                this.refreshResolve(true);
+                                this._clearPendingRefreshState();
+                            }
+                        }
+                    });
                 }
 
                 if (this.tokenClient) {
@@ -321,7 +444,8 @@ class GoogleDriveSyncService {
 
                         try {
                             // Request token refresh (silent, no prompt)
-                            this.tokenClient.requestAccessToken({ prompt: '' });
+                            // Use 'none' for silent refresh - this will fail if user needs to re-authenticate
+                            this.tokenClient.requestAccessToken({ prompt: 'none' });
                             
                             // Set timeout to reject if refresh takes too long (30 seconds)
                             setTimeout(() => {
@@ -511,9 +635,23 @@ class GoogleDriveSyncService {
 
     /**
      * Find or create the Goaly folder in Google Drive
+     * Uses cached folder ID if available to avoid unnecessary API calls
      */
     async findOrCreateFolder() {
         await this.ensureAuthenticated();
+
+        // Use cached folder ID if available
+        if (this.folderId) {
+            return this.folderId;
+        }
+
+        // Try to load from localStorage
+        const cachedFolderId = localStorage.getItem(STORAGE_KEY_GDRIVE_FOLDER_ID);
+        if (cachedFolderId) {
+            this.folderId = cachedFolderId;
+            // Trust the cached ID - if it's invalid, operations will fail and we'll handle it then
+            return this.folderId;
+        }
 
         // Search for existing folder with automatic retry on auth errors
         const response = await this.executeWithTokenRefresh(async () => {
@@ -525,7 +663,9 @@ class GoogleDriveSyncService {
         });
 
         if (response.result.files && response.result.files.length > 0) {
-            return response.result.files[0].id;
+            this.folderId = response.result.files[0].id;
+            localStorage.setItem(STORAGE_KEY_GDRIVE_FOLDER_ID, this.folderId);
+            return this.folderId;
         }
 
         // Create folder if it doesn't exist
@@ -539,7 +679,9 @@ class GoogleDriveSyncService {
             });
         });
 
-        return folderResponse.result.id;
+        this.folderId = folderResponse.result.id;
+        localStorage.setItem(STORAGE_KEY_GDRIVE_FOLDER_ID, this.folderId);
+        return this.folderId;
     }
 
     /**
@@ -569,7 +711,7 @@ class GoogleDriveSyncService {
     async uploadData(goals, settings) {
         await this.ensureAuthenticated();
 
-        const folderId = await this.findOrCreateFolder();
+        let folderId = await this.findOrCreateFolder();
         const payload = prepareExportPayload(goals, settings);
         const fileContent = JSON.stringify(payload, null, 2);
         const blob = new Blob([fileContent], { type: 'application/json' });
@@ -610,6 +752,13 @@ class GoogleDriveSyncService {
 
             // If update fails, try to find the file again (might have been moved/deleted)
             if (!response.ok && (response.status === 403 || response.status === 404)) {
+                // Clear folder cache if folder might be invalid
+                if (response.status === 403) {
+                    this.folderId = null;
+                    localStorage.removeItem(STORAGE_KEY_GDRIVE_FOLDER_ID);
+                    // Re-fetch folder ID
+                    folderId = await this.findOrCreateFolder();
+                }
                 // Search for the file again
                 const existingFile = await this.findDataFile(folderId);
                 if (existingFile && existingFile.id !== fileId) {
@@ -674,6 +823,10 @@ class GoogleDriveSyncService {
         const result = await response.json();
         this.fileId = result.id;
         localStorage.setItem(STORAGE_KEY_GDRIVE_FILE_ID, this.fileId);
+        
+        // Invalidate status cache after upload
+        this._cachedStatus = null;
+        this._lastStatusCheck = 0;
 
         return {
             fileId: this.fileId,
@@ -697,6 +850,10 @@ class GoogleDriveSyncService {
 
         this.fileId = file.id;
         localStorage.setItem(STORAGE_KEY_GDRIVE_FILE_ID, this.fileId);
+        
+        // Invalidate status cache after download
+        this._cachedStatus = null;
+        this._lastStatusCheck = 0;
 
         // Download file content using fetch with automatic token refresh
         const response = await this.executeFetchWithTokenRefresh(
@@ -863,6 +1020,7 @@ class GoogleDriveSyncService {
 
     /**
      * Get sync status information
+     * Uses caching to avoid excessive API calls
      */
     async getSyncStatus() {
         if (!this.isAuthenticated()) {
@@ -872,33 +1030,89 @@ class GoogleDriveSyncService {
             };
         }
 
+        // Return cached status if still valid (within 1 minute)
+        const now = Date.now();
+        if (this._cachedStatus && (now - this._lastStatusCheck) < this._statusCacheTimeout) {
+            return this._cachedStatus;
+        }
+
         try {
-            // Do not create folder on status check; list by name instead
-            const folderList = await this.executeWithTokenRefresh(async () => {
-                return await window.gapi.client.drive.files.list({
-                    q: `name='${GOOGLE_DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-                    fields: 'files(id, name)',
-                    spaces: 'drive'
-                });
-            });
-            const folderId = (folderList.result.files && folderList.result.files[0]?.id) || null;
-            let file = null;
-            if (folderId) {
-                const fileList = await this.executeWithTokenRefresh(async () => {
+            // Use cached folder ID if available, otherwise search for it
+            let folderId = this.folderId || localStorage.getItem(STORAGE_KEY_GDRIVE_FOLDER_ID);
+            
+            if (!folderId) {
+                // Only search for folder if we don't have it cached
+                const folderList = await this.executeWithTokenRefresh(async () => {
                     return await window.gapi.client.drive.files.list({
-                        q: `name='${GOOGLE_DRIVE_FILE_NAME}' and '${folderId}' in parents and trashed=false`,
-                        fields: 'files(id, name, modifiedTime)',
+                        q: `name='${GOOGLE_DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+                        fields: 'files(id, name)',
                         spaces: 'drive'
                     });
                 });
-                file = (fileList.result.files && fileList.result.files[0]) || null;
+                folderId = (folderList.result.files && folderList.result.files[0]?.id) || null;
+                if (folderId) {
+                    this.folderId = folderId;
+                    localStorage.setItem(STORAGE_KEY_GDRIVE_FOLDER_ID, folderId);
+                }
             }
-            return {
+
+            let file = null;
+            if (folderId) {
+                // Use cached file ID if available, otherwise search for it
+                const cachedFileId = this.fileId || localStorage.getItem(STORAGE_KEY_GDRIVE_FILE_ID);
+                
+                if (cachedFileId) {
+                    // Try to get file metadata directly using cached ID (more efficient)
+                    try {
+                        const fileResponse = await this.executeWithTokenRefresh(async () => {
+                            return await window.gapi.client.drive.files.get({
+                                fileId: cachedFileId,
+                                fields: 'id, name, modifiedTime, trashed'
+                            });
+                        });
+                        
+                        // Verify it's not trashed and is the correct file
+                        if (fileResponse.result && !fileResponse.result.trashed && fileResponse.result.name === GOOGLE_DRIVE_FILE_NAME) {
+                            file = {
+                                id: fileResponse.result.id,
+                                modifiedTime: fileResponse.result.modifiedTime
+                            };
+                        }
+                    } catch (error) {
+                        // File might have been deleted or moved, fall back to listing
+                        console.warn('Cached file ID invalid, falling back to list:', error);
+                    }
+                }
+                
+                // If we don't have file info yet, search for it
+                if (!file) {
+                    const fileList = await this.executeWithTokenRefresh(async () => {
+                        return await window.gapi.client.drive.files.list({
+                            q: `name='${GOOGLE_DRIVE_FILE_NAME}' and '${folderId}' in parents and trashed=false`,
+                            fields: 'files(id, name, modifiedTime)',
+                            spaces: 'drive'
+                        });
+                    });
+                    file = (fileList.result.files && fileList.result.files[0]) || null;
+                    if (file) {
+                        this.fileId = file.id;
+                        localStorage.setItem(STORAGE_KEY_GDRIVE_FILE_ID, file.id);
+                    }
+                }
+            }
+            
+            const status = {
                 authenticated: true,
                 synced: !!file,
                 lastSyncTime: file ? file.modifiedTime : null,
                 fileId: file ? file.id : null
             };
+            
+            // Cache the status
+            this._cachedStatus = status;
+            this._lastStatusCheck = now;
+            
+            return status;
         } catch (error) {
             return {
                 authenticated: true,

@@ -146,6 +146,17 @@ class SyncManager {
             return;
         }
 
+        // Ensure token is fresh before starting sync
+        if (typeof this.googleDriveSyncService.ensureAuthenticated === 'function') {
+            try {
+                await this.googleDriveSyncService.ensureAuthenticated();
+            } catch (error) {
+                // If token refresh fails, show error but don't block sync attempt
+                // The API call will handle auth errors and retry
+                console.warn('Token refresh check failed, proceeding with sync:', error);
+            }
+        }
+
         const statusView = this.app.uiController.settingsView;
         if (!background) {
             statusView.showGoogleDriveStatus(
@@ -287,7 +298,9 @@ class SyncManager {
                 );
             }
         } catch (error) {
-            this.showError('googleDrive.syncError', { message: error.message });
+            // Provide better error messages - handle undefined error.message
+            const errorMessage = error?.message || error?.toString() || 'Unknown error occurred';
+            this.showError('googleDrive.syncError', { message: errorMessage });
         } finally {
             this._isSyncing = false;
             this._suppressAutoSync = false;
@@ -300,6 +313,17 @@ class SyncManager {
     async downloadFromGoogleDrive() {
         if (!this.googleDriveSyncService || !this.googleDriveSyncService.isAuthenticated()) {
             return;
+        }
+
+        // Ensure token is fresh before downloading
+        if (typeof this.googleDriveSyncService.ensureAuthenticated === 'function') {
+            try {
+                await this.googleDriveSyncService.ensureAuthenticated();
+            } catch (error) {
+                // If token refresh fails, show error but don't block download attempt
+                // The API call will handle auth errors and retry
+                console.warn('Token refresh check failed, proceeding with download:', error);
+            }
         }
 
         const statusView = this.app.uiController.settingsView;
@@ -337,7 +361,9 @@ class SyncManager {
                 this.showError('import.incompatible');
             }
         } catch (error) {
-            this.showError('googleDrive.downloadError', { message: error.message });
+            // Provide better error messages - handle undefined error.message
+            const errorMessage = error?.message || error?.toString() || 'Unknown error occurred';
+            this.showError('googleDrive.downloadError', { message: errorMessage });
         }
     }
 

@@ -7,6 +7,7 @@ export class SettingsView extends BaseUIController {
         super(app);
         this.statusTimeout = null;
         this.statusLocked = false;
+        this._lastStatusCheck = 0;
     }
 
     initializeLanguageControls() {
@@ -171,17 +172,21 @@ export class SettingsView extends BaseUIController {
                 statusDiv.className = 'google-drive-status google-drive-status-authenticated';
                 statusDiv.textContent = this.translate('googleDrive.authenticated');
                 
-                // Update sync status asynchronously
-                this.app.syncManager.getSyncStatus().then(status => {
-                    if (status.synced && status.lastSyncTime && !this.statusLocked) {
-                        const syncDate = new Date(status.lastSyncTime);
-                        statusDiv.textContent = this.translate('googleDrive.lastSynced', {
-                            time: syncDate.toLocaleString()
-                        });
-                    }
-                }).catch(() => {
-                    // Ignore errors when checking status
-                });
+                // Update sync status asynchronously (debounced to avoid excessive API calls)
+                // Only check if we haven't checked recently
+                if (!this._lastStatusCheck || (Date.now() - this._lastStatusCheck) > 60000) {
+                    this._lastStatusCheck = Date.now();
+                    this.app.syncManager.getSyncStatus().then(status => {
+                        if (status.synced && status.lastSyncTime && !this.statusLocked) {
+                            const syncDate = new Date(status.lastSyncTime);
+                            statusDiv.textContent = this.translate('googleDrive.lastSynced', {
+                                time: syncDate.toLocaleString()
+                            });
+                        }
+                    }).catch(() => {
+                        // Ignore errors when checking status
+                    });
+                }
             }
         } else {
             authBtn.hidden = false;

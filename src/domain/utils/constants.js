@@ -14,6 +14,7 @@ export const STORAGE_KEY_GOALS = 'goaly_goals';
 export const STORAGE_KEY_SETTINGS = 'goaly_settings';
 export const STORAGE_KEY_GDRIVE_TOKEN = 'goaly_gdrive_token';
 export const STORAGE_KEY_GDRIVE_FILE_ID = 'goaly_gdrive_file_id';
+export const STORAGE_KEY_GDRIVE_FOLDER_ID = 'goaly_gdrive_folder_id';
 
 // Goal history events
 export const HISTORY_EVENTS = {

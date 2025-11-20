@@ -181,12 +181,6 @@ class GoalService {
         }
 
         Object.assign(goal, updatedFields);
-        
-        // Ensure pause metadata is cleared if goal status is active (in case snapshot didn't have status)
-        if (goal.status === 'active') {
-            goal.pauseUntil = null;
-            goal.pauseUntilGoalId = null;
-        }
     }
 
     handleStatusTransition(goal, newStatus) {
@@ -584,13 +578,22 @@ class GoalService {
         now.setHours(0, 0, 0, 0);
 
         this.goals.forEach(goal => {
+            const beforeSnapshot = this.createSnapshot(goal);
+            let changed = false;
+            const pauseChanges = [];
+
             // Clear expired date-based pauses
             if (goal.pauseUntil) {
                 const pauseUntil = new Date(goal.pauseUntil);
                 pauseUntil.setHours(0, 0, 0, 0);
                 if (pauseUntil <= now) {
+                    pauseChanges.push({
+                        field: 'pauseUntil',
+                        from: beforeSnapshot.pauseUntil,
+                        to: null
+                    });
                     goal.pauseUntil = null;
-                    goal.lastUpdated = new Date();
+                    changed = true;
                 }
             }
 
@@ -598,9 +601,27 @@ class GoalService {
             if (goal.pauseUntilGoalId) {
                 const dependencyGoal = this.goals.find(g => g.id === goal.pauseUntilGoalId);
                 if (!dependencyGoal || dependencyGoal.status === 'completed') {
+                    pauseChanges.push({
+                        field: 'pauseUntilGoalId',
+                        from: beforeSnapshot.pauseUntilGoalId,
+                        to: null
+                    });
                     goal.pauseUntilGoalId = null;
-                    goal.lastUpdated = new Date();
+                    changed = true;
                 }
+            }
+
+            if (changed) {
+                goal.lastUpdated = new Date();
+                const afterSnapshot = this.createSnapshot(goal);
+                const changes = [...this.diffSnapshots(beforeSnapshot, afterSnapshot), ...pauseChanges];
+                this.recordHistory(goal, {
+                    event: HISTORY_EVENTS.UPDATED,
+                    timestamp: goal.lastUpdated,
+                    before: beforeSnapshot,
+                    after: afterSnapshot,
+                    changes
+                });
             }
         });
     }
