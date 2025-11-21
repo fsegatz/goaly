@@ -1,20 +1,10 @@
 // src/domain/services/review-service.js
 
 import { MAX_RATING_VALUE } from '../utils/constants.js';
+import { DEFAULT_REVIEW_INTERVALS } from './settings-service.js';
+import { normalizeDate } from '../utils/date-utils.js';
 
-const DEFAULT_REVIEW_INTERVALS = [7, 14, 30];
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
-
-function ensureDate(value, fallback = null) {
-    if (!value) {
-        return fallback;
-    }
-    if (value instanceof Date && !Number.isNaN(value.getTime())) {
-        return value;
-    }
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? fallback : parsed;
-}
 
 function getMostRecentReview(goal) {
     if (!goal || !Array.isArray(goal.reviewDates) || goal.reviewDates.length === 0) {
@@ -64,15 +54,15 @@ class ReviewService {
             goal.reviewIntervalIndex = shortestIndex;
         }
 
-        goal.lastReviewAt = ensureDate(
+        goal.lastReviewAt = normalizeDate(
             goal.lastReviewAt,
-            getMostRecentReview(goal) ?? ensureDate(goal.createdAt, new Date())
+            getMostRecentReview(goal) ?? normalizeDate(goal.createdAt, new Date())
         );
 
         const intervalDays = intervals[goal.reviewIntervalIndex] ?? intervals[shortestIndex];
         const fallbackBase = goal.lastReviewAt ?? new Date();
 
-        const existingNextReview = ensureDate(goal.nextReviewAt);
+        const existingNextReview = normalizeDate(goal.nextReviewAt);
         if (!existingNextReview) {
             // No review scheduled yet - set it based on lastReviewAt (or creation date)
             goal.nextReviewAt = this.calculateNextReviewDate(fallbackBase, intervalDays);
@@ -99,7 +89,7 @@ class ReviewService {
     }
 
     calculateNextReviewDate(baseDate, intervalDays) {
-        const base = ensureDate(baseDate, new Date());
+        const base = normalizeDate(baseDate, new Date());
         const days = Number.isFinite(intervalDays) && intervalDays > 0 ? intervalDays : this.getReviewIntervals()[0];
         return new Date(base.getTime() + days * DAY_IN_MS);
     }

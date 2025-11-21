@@ -2,7 +2,8 @@
 
 import { STORAGE_KEY_SETTINGS } from '../utils/constants.js';
 
-const FALLBACK_REVIEW_INTERVALS = [7, 14, 30];
+export const DEFAULT_REVIEW_INTERVALS = [7, 14, 30];
+const FALLBACK_REVIEW_INTERVALS = DEFAULT_REVIEW_INTERVALS;
 const INTERVAL_PRECISION = 6;
 
 function parseIntervalToken(rawValue) {
