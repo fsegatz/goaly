@@ -35,17 +35,6 @@ class ErrorHandler {
      */
     log(severity, message, error = null, context = {}) {
         const timestamp = new Date().toISOString();
-        const logEntry = {
-            timestamp,
-            severity,
-            message,
-            context,
-            error: error ? {
-                name: error.name || 'Error',
-                message: error.message || String(error),
-                stack: error.stack || null
-            } : null
-        };
 
         // Log to console based on severity
         switch (severity) {
@@ -90,21 +79,20 @@ class ErrorHandler {
         }
 
         // Display to user
+        // TODO: Consider refactoring to an event-based system or custom display handlers
+        // to reduce coupling to specific UI components
         if (this.uiController && this.uiController.settingsView) {
             // Use settings view for Google Drive errors (existing pattern)
+            // This maintains backward compatibility with existing Google Drive error handling
             if (messageKey.startsWith('googleDrive.')) {
                 this.uiController.settingsView.showGoogleDriveStatus(userMessage, true);
                 return;
             }
         }
 
-        // Fallback to alert for critical errors or when UI controller is not available
-        if (severity === 'critical' || !this.uiController) {
-            alert(userMessage);
-        } else {
-            // For other errors, try to use alert as fallback
-            alert(userMessage);
-        }
+        // Fallback to alert. For a better user experience, this could be replaced with
+        // a non-blocking toast notification for non-critical errors in the future.
+        alert(userMessage);
     }
 
     /**

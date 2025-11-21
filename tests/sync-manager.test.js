@@ -94,6 +94,11 @@ describe('SyncManager', () => {
     });
 
     afterEach(() => {
+        // Clear any pending timers before restoring real timers
+        if (manager && manager.syncDebounce) {
+            clearTimeout(manager.syncDebounce);
+            manager.syncDebounce = null;
+        }
         jest.useRealTimers();
         cleanupGlobalDOM(dom);
         cleanupBrowserMocks();
