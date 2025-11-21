@@ -89,10 +89,14 @@ class SettingsService {
             language: 'en',
             reviewIntervals: [...FALLBACK_REVIEW_INTERVALS]
         };
+        this._cleanupDeprecatedSettings();
+        this.settings.reviewIntervals = normalizeReviewIntervals(this.settings.reviewIntervals);
+    }
+
+    _cleanupDeprecatedSettings() {
         delete this.settings.checkInInterval;
         delete this.settings.reviewsEnabled;
         delete this.settings.checkInsEnabled;
-        this.settings.reviewIntervals = normalizeReviewIntervals(this.settings.reviewIntervals);
     }
 
     loadSettings() {
@@ -100,9 +104,7 @@ class SettingsService {
         if (saved) {
             this.settings = { ...this.settings, ...JSON.parse(saved) };
         }
-        delete this.settings.checkInInterval;
-        delete this.settings.reviewsEnabled;
-        delete this.settings.checkInsEnabled;
+        this._cleanupDeprecatedSettings();
         if (!this.settings.language) {
             this.settings.language = 'en';
         }
@@ -121,9 +123,7 @@ class SettingsService {
         const merged = { ...this.settings, ...newSettings };
         merged.reviewIntervals = normalizeReviewIntervals(newSettings?.reviewIntervals ?? merged.reviewIntervals);
         this.settings = merged;
-        delete this.settings.checkInInterval;
-        delete this.settings.reviewsEnabled;
-        delete this.settings.checkInsEnabled;
+        this._cleanupDeprecatedSettings();
         if (!this.settings.language) {
             this.settings.language = 'en';
         }
