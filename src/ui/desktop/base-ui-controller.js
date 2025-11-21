@@ -1,5 +1,7 @@
 // src/ui/desktop/base-ui-controller.js
 
+import { URGENT_DEADLINE_DAYS } from '../../domain/utils/constants.js';
+
 export class BaseUIController {
     constructor(app) {
         this.app = app;
@@ -44,7 +46,7 @@ export class BaseUIController {
             return this.translate('deadline.today');
         } else if (days === 1) {
             return this.translate('deadline.tomorrow');
-        } else if (days <= 7) {
+        } else if (days <= URGENT_DEADLINE_DAYS) {
             return this.translate('deadline.inDays', { count: days });
         } else {
             const locale = this.languageService.getLocale();
@@ -56,7 +58,7 @@ export class BaseUIController {
         if (!deadline) return false;
         const now = new Date();
         const days = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
-        return days <= 7 && days >= 0;
+        return days <= URGENT_DEADLINE_DAYS && days >= 0;
     }
 
     getStatusText(status) {

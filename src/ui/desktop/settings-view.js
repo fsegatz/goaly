@@ -1,5 +1,7 @@
 // src/ui/desktop/settings-view.js
 
+import { getElement, getOptionalElement } from '../utils/dom-utils.js';
+
 import { BaseUIController } from './base-ui-controller.js';
 
 export class SettingsView extends BaseUIController {
@@ -18,9 +20,9 @@ export class SettingsView extends BaseUIController {
 
     syncSettingsForm() {
         const settings = this.app.settingsService.getSettings();
-        const maxActiveGoals = document.getElementById('maxActiveGoals');
-        const languageSelect = document.getElementById('languageSelect');
-        const reviewIntervals = document.getElementById('reviewIntervals');
+        const maxActiveGoals = getOptionalElement('maxActiveGoals');
+        const languageSelect = getOptionalElement('languageSelect');
+        const reviewIntervals = getOptionalElement('reviewIntervals');
 
         if (maxActiveGoals) {
             maxActiveGoals.value = settings.maxActiveGoals;
@@ -41,7 +43,7 @@ export class SettingsView extends BaseUIController {
     }
 
     updateLanguageOptions() {
-        const languageSelect = document.getElementById('languageSelect');
+        const languageSelect = getOptionalElement('languageSelect');
         if (!languageSelect) {
             return;
         }
@@ -62,15 +64,15 @@ export class SettingsView extends BaseUIController {
     }
 
     setupEventListeners(renderViews, startReviewTimer) {
-        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const saveSettingsBtn = getOptionalElement('saveSettingsBtn');
         if (saveSettingsBtn) {
             saveSettingsBtn.addEventListener('click', () => {
-                const languageSelect = document.getElementById('languageSelect');
+                const languageSelect = getOptionalElement('languageSelect');
                 const currentSettings = this.app.settingsService.getSettings();
                 const previousLanguage = currentSettings.language;
-                const reviewIntervalsInput = document.getElementById('reviewIntervals');
+                const reviewIntervalsInput = getOptionalElement('reviewIntervals');
                 const newSettings = {
-                    maxActiveGoals: parseInt(document.getElementById('maxActiveGoals').value),
+                    maxActiveGoals: parseInt(getElement('maxActiveGoals').value),
                     language: languageSelect ? languageSelect.value : previousLanguage,
                     reviewIntervals: reviewIntervalsInput ? reviewIntervalsInput.value : currentSettings.reviewIntervals
                 };
@@ -94,22 +96,22 @@ export class SettingsView extends BaseUIController {
             });
         }
 
-        const exportBtn = document.getElementById('exportBtn');
+        const exportBtn = getOptionalElement('exportBtn');
         if (exportBtn) {
             exportBtn.addEventListener('click', () => this.app.exportData());
         }
 
-        const importBtn = document.getElementById('importBtn');
+        const importBtn = getOptionalElement('importBtn');
         if (importBtn) {
             importBtn.addEventListener('click', () => {
-                const importFile = document.getElementById('importFile');
+                const importFile = getOptionalElement('importFile');
                 if (importFile) {
                     importFile.click();
                 }
             });
         }
 
-        const importFile = document.getElementById('importFile');
+        const importFile = getOptionalElement('importFile');
         if (importFile) {
             importFile.addEventListener('change', (e) => {
                 if (e.target.files.length > 0) {
@@ -120,21 +122,21 @@ export class SettingsView extends BaseUIController {
         }
 
         // Google Drive sync event listeners
-        const googleDriveAuthBtn = document.getElementById('googleDriveAuthBtn');
+        const googleDriveAuthBtn = getOptionalElement('googleDriveAuthBtn');
         if (googleDriveAuthBtn) {
             googleDriveAuthBtn.addEventListener('click', () => {
                 this.app.authenticateGoogleDrive();
             });
         }
 
-        const googleDriveSignOutBtn = document.getElementById('googleDriveSignOutBtn');
+        const googleDriveSignOutBtn = getOptionalElement('googleDriveSignOutBtn');
         if (googleDriveSignOutBtn) {
             googleDriveSignOutBtn.addEventListener('click', () => {
                 this.app.signOutGoogleDrive();
             });
         }
 
-        const googleDriveSyncBtn = document.getElementById('googleDriveSyncBtn');
+        const googleDriveSyncBtn = getOptionalElement('googleDriveSyncBtn');
         if (googleDriveSyncBtn) {
             googleDriveSyncBtn.addEventListener('click', () => {
                 this.app.syncWithGoogleDrive();
@@ -150,10 +152,10 @@ export class SettingsView extends BaseUIController {
             return;
         }
 
-        const authBtn = document.getElementById('googleDriveAuthBtn');
-        const signOutBtn = document.getElementById('googleDriveSignOutBtn');
-        const syncBtn = document.getElementById('googleDriveSyncBtn');
-        const statusDiv = document.getElementById('googleDriveAuthStatus');
+        const authBtn = getOptionalElement('googleDriveAuthBtn');
+        const signOutBtn = getOptionalElement('googleDriveSignOutBtn');
+        const syncBtn = getOptionalElement('googleDriveSyncBtn');
+        const statusDiv = getOptionalElement('googleDriveAuthStatus');
 
         if (!authBtn || !signOutBtn || !syncBtn || !statusDiv) {
             return;
@@ -198,9 +200,9 @@ export class SettingsView extends BaseUIController {
 
     syncSettingsForm() {
         const settings = this.app.settingsService.getSettings();
-        const maxActiveGoals = document.getElementById('maxActiveGoals');
-        const languageSelect = document.getElementById('languageSelect');
-        const reviewIntervals = document.getElementById('reviewIntervals');
+        const maxActiveGoals = getOptionalElement('maxActiveGoals');
+        const languageSelect = getOptionalElement('languageSelect');
+        const reviewIntervals = getOptionalElement('reviewIntervals');
 
         if (maxActiveGoals) {
             maxActiveGoals.value = settings.maxActiveGoals;
@@ -224,7 +226,7 @@ export class SettingsView extends BaseUIController {
     }
 
     updateDeveloperModeVisibility() {
-        const dataManagementItem = document.getElementById('dataManagementSection');
+        const dataManagementItem = getOptionalElement('dataManagementSection');
         if (dataManagementItem) {
             const isDeveloperMode = this.app.developerModeService.isDeveloperMode();
             dataManagementItem.style.display = isDeveloperMode ? 'block' : 'none';
@@ -232,7 +234,7 @@ export class SettingsView extends BaseUIController {
     }
 
     showGoogleDriveStatus(message, isError = false, isSuccess = false) {
-        const statusDiv = document.getElementById('googleDriveAuthStatus');
+        const statusDiv = getOptionalElement('googleDriveAuthStatus');
         if (!statusDiv) {
             return;
         }

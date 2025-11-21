@@ -1,6 +1,8 @@
 // src/ui/mobile/all-goals-view.js
 
 import { BaseUIController } from '../desktop/base-ui-controller.js';
+import { MAX_RATING_VALUE } from '../../domain/utils/constants.js';
+import { getOptionalElement, getElement } from '../utils/dom-utils.js';
 
 export class MobileAllGoalsView extends BaseUIController {
     constructor(app) {
@@ -19,7 +21,7 @@ export class MobileAllGoalsView extends BaseUIController {
         this.setupStatusFilterDropdown(openGoalForm);
 
         // Setup priority filter
-        const priorityFilter = document.getElementById('allGoalsPriorityFilter');
+        const priorityFilter = getOptionalElement('allGoalsPriorityFilter');
         if (priorityFilter) {
             priorityFilter.addEventListener('input', () => {
                 const parsed = parseInt(priorityFilter.value, 10);
@@ -29,7 +31,7 @@ export class MobileAllGoalsView extends BaseUIController {
         }
 
         // Setup sort
-        const sortSelect = document.getElementById('allGoalsSort');
+        const sortSelect = getOptionalElement('allGoalsSort');
         if (sortSelect) {
             sortSelect.addEventListener('change', () => {
                 this.allGoalsState.sort = sortSelect.value;
@@ -39,10 +41,10 @@ export class MobileAllGoalsView extends BaseUIController {
     }
 
     setupStatusFilterDropdown(openGoalForm) {
-        const dropdown = document.getElementById('allGoalsStatusFilter');
-        const button = document.getElementById('allGoalsStatusFilterButton');
-        const menu = document.getElementById('allGoalsStatusFilterMenu');
-        const clearButton = document.getElementById('allGoalsStatusFilterClear');
+        const dropdown = getOptionalElement('allGoalsStatusFilter');
+        const button = getOptionalElement('allGoalsStatusFilterButton');
+        const menu = getOptionalElement('allGoalsStatusFilterMenu');
+        const clearButton = getOptionalElement('allGoalsStatusFilterClear');
         const checkboxes = dropdown?.querySelectorAll('.status-filter-checkbox');
 
         if (!dropdown || !button || !menu) {
@@ -162,7 +164,7 @@ export class MobileAllGoalsView extends BaseUIController {
     }
 
     render(openGoalForm) {
-        const container = document.getElementById('allGoalsMobileContainer');
+        const container = getOptionalElement('allGoalsMobileContainer');
         if (!container) {
             return;
         }
@@ -250,11 +252,11 @@ export class MobileAllGoalsView extends BaseUIController {
                     </div>
                     <div class="mobile-goal-card__metric">
                         <span class="mobile-goal-card__metric-label">${this.translate('tables.allGoals.headers.motivation')}</span>
-                        <span class="mobile-goal-card__metric-value">${goal.motivation}/5</span>
+                        <span class="mobile-goal-card__metric-value">${goal.motivation}/${MAX_RATING_VALUE}</span>
                     </div>
                     <div class="mobile-goal-card__metric">
                         <span class="mobile-goal-card__metric-label">${this.translate('tables.allGoals.headers.urgency')}</span>
-                        <span class="mobile-goal-card__metric-value">${goal.urgency}/5</span>
+                        <span class="mobile-goal-card__metric-value">${goal.urgency}/${MAX_RATING_VALUE}</span>
                     </div>
                 </div>
                 <div class="mobile-goal-card__details">

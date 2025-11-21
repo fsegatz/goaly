@@ -1,6 +1,7 @@
 // src/ui/desktop/goal-form-view.js
 
 import { BaseUIController } from './base-ui-controller.js';
+import { getElement, getOptionalElement, querySelectorSafe } from '../utils/dom-utils.js';
 
 const HISTORY_FIELD_LABEL_KEYS = {
     title: 'history.fields.title',
@@ -24,10 +25,10 @@ export class GoalFormView extends BaseUIController {
     }
 
     openGoalForm(goalId = null, renderViews) {
-        const modal = document.getElementById('goalModal');
-        const form = document.getElementById('goalForm');
-        const deleteBtn = document.getElementById('deleteBtn');
-        const modalTitle = document.getElementById('modalTitle');
+        const modal = getOptionalElement('goalModal');
+        const form = getOptionalElement('goalForm');
+        const deleteBtn = getOptionalElement('deleteBtn');
+        const modalTitle = getOptionalElement('modalTitle');
 
         if (!modal || !form || !deleteBtn || !modalTitle) {
             return;
@@ -38,11 +39,11 @@ export class GoalFormView extends BaseUIController {
             goal = this.app.goalService.goals.find(g => g.id === goalId) || null;
             if (goal) {
                 modalTitle.textContent = this.translate('goalForm.editTitle');
-                document.getElementById('goalId').value = goal.id;
-                document.getElementById('goalTitle').value = goal.title;
-                document.getElementById('goalMotivation').value = goal.motivation;
-                document.getElementById('goalUrgency').value = goal.urgency;
-                document.getElementById('goalDeadline').value = goal.deadline 
+                getElement('goalId').value = goal.id;
+                getElement('goalTitle').value = goal.title;
+                getElement('goalMotivation').value = goal.motivation;
+                getElement('goalUrgency').value = goal.urgency;
+                getElement('goalDeadline').value = goal.deadline 
                     ? goal.deadline.toISOString().split('T')[0]
                     : '';
                 deleteBtn.style.display = 'inline-block';
@@ -50,7 +51,7 @@ export class GoalFormView extends BaseUIController {
         } else {
             modalTitle.textContent = this.translate('goalForm.createTitle');
             form.reset();
-            document.getElementById('goalId').value = '';
+            getElement('goalId').value = '';
             deleteBtn.style.display = 'none';
         }
 
@@ -65,18 +66,18 @@ export class GoalFormView extends BaseUIController {
     }
 
     closeGoalForm() {
-        const modal = document.getElementById('goalModal');
+        const modal = getOptionalElement('goalModal');
         if (modal) {
             modal.classList.remove('is-visible');
         }
-        const form = document.getElementById('goalForm');
+        const form = getOptionalElement('goalForm');
         if (form) {
             form.reset();
         }
     }
 
     setupEventListeners(handleGoalSubmit, handleDelete, renderViews) {
-        const goalForm = document.getElementById('goalForm');
+        const goalForm = getOptionalElement('goalForm');
         if (goalForm) {
             goalForm.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -84,12 +85,12 @@ export class GoalFormView extends BaseUIController {
             });
         }
 
-        const cancelBtn = document.getElementById('cancelBtn');
+        const cancelBtn = getOptionalElement('cancelBtn');
         if (cancelBtn) {
             cancelBtn.addEventListener('click', () => this.closeGoalForm());
         }
 
-        const deleteBtn = document.getElementById('deleteBtn');
+        const deleteBtn = getOptionalElement('deleteBtn');
         if (deleteBtn) {
             deleteBtn.addEventListener('click', () => {
                 if (confirm(this.translate('goalForm.confirmDelete'))) {
@@ -98,14 +99,14 @@ export class GoalFormView extends BaseUIController {
             });
         }
 
-        const closeBtn = document.querySelector('.close');
+        const closeBtn = querySelectorSafe('.close');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.closeGoalForm());
         }
 
         // Use mousedown instead of click to avoid closing the modal immediately
         window.addEventListener('mousedown', (e) => {
-            const modal = document.getElementById('goalModal');
+            const modal = getElement('goalModal');
             if (modal) {
                 const isModalVisible = modal.classList.contains('is-visible');
                 
@@ -131,12 +132,12 @@ export class GoalFormView extends BaseUIController {
     }
 
     handleGoalSubmit(renderViews) {
-        const id = document.getElementById('goalId').value;
+        const id = getElement('goalId').value;
         const goalData = {
-            title: document.getElementById('goalTitle').value,
-            motivation: document.getElementById('goalMotivation').value,
-            urgency: document.getElementById('goalUrgency').value,
-            deadline: document.getElementById('goalDeadline').value || null
+            title: getElement('goalTitle').value,
+            motivation: getElement('goalMotivation').value,
+            urgency: getElement('goalUrgency').value,
+            deadline: getElement('goalDeadline').value || null
         };
 
         try {
@@ -153,7 +154,7 @@ export class GoalFormView extends BaseUIController {
     }
 
     handleDelete(renderViews) {
-        const id = document.getElementById('goalId').value;
+        const id = getElement('goalId').value;
         this.app.goalService.deleteGoal(id, this.app.settingsService.getSettings().maxActiveGoals);
         this.closeGoalForm();
         renderViews();
@@ -203,8 +204,8 @@ export class GoalFormView extends BaseUIController {
     }
 
     resetGoalHistoryView() {
-        const section = document.getElementById('goalHistorySection');
-        const list = document.getElementById('goalHistoryList');
+        const section = getOptionalElement('goalHistorySection');
+        const list = getOptionalElement('goalHistoryList');
         if (!section || !list) {
             return;
         }
@@ -213,8 +214,8 @@ export class GoalFormView extends BaseUIController {
     }
 
     renderGoalHistory(goal, renderViews) {
-        const section = document.getElementById('goalHistorySection');
-        const list = document.getElementById('goalHistoryList');
+        const section = getOptionalElement('goalHistorySection');
+        const list = getOptionalElement('goalHistoryList');
         if (!section || !list) {
             return;
         }

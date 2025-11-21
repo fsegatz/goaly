@@ -2,9 +2,9 @@
 
 import Goal from '../models/goal.js';
 import { prepareGoalsStoragePayload } from '../migration/migration-service.js';
-import { HISTORY_EVENTS, STORAGE_KEY_GOALS } from '../utils/constants.js';
+import { HISTORY_EVENTS, STORAGE_KEY_GOALS, GOAL_HISTORY_LIMIT, DEADLINE_BONUS_DAYS } from '../utils/constants.js';
 
-const HISTORY_LIMIT = 50;
+const HISTORY_LIMIT = GOAL_HISTORY_LIMIT;
 const TRACKED_HISTORY_FIELDS = ['title', 'motivation', 'urgency', 'deadline', 'status', 'priority'];
 
 function valuesEqual(a, b) {
@@ -387,10 +387,10 @@ class GoalService {
             const now = new Date();
             const daysUntilDeadline = Math.ceil((goal.deadline - now) / (1000 * 60 * 60 * 24));
             
-            if (daysUntilDeadline > 30) {
+            if (daysUntilDeadline > DEADLINE_BONUS_DAYS) {
                 priority += 0;
             } else {
-                const bonus = Math.max(0, 30 - daysUntilDeadline);
+                const bonus = Math.max(0, DEADLINE_BONUS_DAYS - daysUntilDeadline);
                 priority += bonus;
             }
         }

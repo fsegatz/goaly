@@ -1,4 +1,6 @@
-// src/domain/review-service.js
+// src/domain/services/review-service.js
+
+import { MAX_RATING_VALUE } from '../utils/constants.js';
 
 const DEFAULT_REVIEW_INTERVALS = [7, 14, 30];
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
@@ -136,7 +138,7 @@ class ReviewService {
         if (!Number.isFinite(parsed)) {
             return fallback;
         }
-        return Math.min(5, Math.max(1, parsed));
+        return Math.min(MAX_RATING_VALUE, Math.max(1, parsed));
     }
 
     recordReview(goalId, ratings = {}) {

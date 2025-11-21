@@ -1,6 +1,8 @@
 // src/ui/desktop/all-goals-view.js
 
 import { BaseUIController } from './base-ui-controller.js';
+import { MAX_RATING_VALUE } from '../../domain/utils/constants.js';
+import { getElement, getOptionalElement } from '../utils/dom-utils.js';
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
@@ -15,13 +17,13 @@ export class AllGoalsView extends BaseUIController {
             includeAbandoned: true
         };
         this.allGoalsControlRefs = {
-            allGoalsStatusFilter: document.getElementById('allGoalsStatusFilter'),
-            allGoalsStatusFilterButton: document.getElementById('allGoalsStatusFilterButton'),
-            allGoalsStatusFilterMenu: document.getElementById('allGoalsStatusFilterMenu'),
-            allGoalsPriorityFilter: document.getElementById('allGoalsPriorityFilter'),
-            allGoalsSort: document.getElementById('allGoalsSort'),
-            allGoalsTableBody: document.getElementById('allGoalsTableBody'),
-            allGoalsEmptyState: document.getElementById('allGoalsEmptyState')
+            allGoalsStatusFilter: getOptionalElement('allGoalsStatusFilter'),
+            allGoalsStatusFilterButton: getOptionalElement('allGoalsStatusFilterButton'),
+            allGoalsStatusFilterMenu: getOptionalElement('allGoalsStatusFilterMenu'),
+            allGoalsPriorityFilter: getOptionalElement('allGoalsPriorityFilter'),
+            allGoalsSort: getOptionalElement('allGoalsSort'),
+            allGoalsTableBody: getElement('allGoalsTableBody'),
+            allGoalsEmptyState: getElement('allGoalsEmptyState')
         };
     }
 
@@ -53,7 +55,7 @@ export class AllGoalsView extends BaseUIController {
         const dropdown = this.getControlElement('allGoalsStatusFilter');
         const button = this.getControlElement('allGoalsStatusFilterButton');
         const menu = this.getControlElement('allGoalsStatusFilterMenu');
-        const clearButton = document.getElementById('allGoalsStatusFilterClear');
+        const clearButton = getOptionalElement('allGoalsStatusFilterClear');
         const checkboxes = dropdown?.querySelectorAll('.status-filter-checkbox');
 
         if (!dropdown || !button || !menu) {
@@ -289,11 +291,11 @@ export class AllGoalsView extends BaseUIController {
                 },
                 {
                     labelKey: 'tables.allGoals.headers.motivation',
-                    content: `${goal.motivation}/5`
+                    content: `${goal.motivation}/${MAX_RATING_VALUE}`
                 },
                 {
                     labelKey: 'tables.allGoals.headers.urgency',
-                    content: `${goal.urgency}/5`
+                    content: `${goal.urgency}/${MAX_RATING_VALUE}`
                 },
                 {
                     labelKey: 'tables.allGoals.headers.deadline',
@@ -340,7 +342,7 @@ export class AllGoalsView extends BaseUIController {
         if (cached && cached.isConnected) {
             return cached;
         }
-        const element = document.getElementById(id);
+        const element = getOptionalElement(id);
         this.allGoalsControlRefs[id] = element || null;
         return element || null;
     }

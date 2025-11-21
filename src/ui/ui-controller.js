@@ -7,6 +7,8 @@ import { HelpView } from './desktop/help-view.js';
 import { GoalFormView } from './desktop/goal-form-view.js';
 import { ModalsView } from './desktop/modals-view.js';
 import { MobileAllGoalsView } from './mobile/all-goals-view.js';
+import { MOBILE_BREAKPOINT_PX } from '../domain/utils/constants.js';
+import { getOptionalElement, querySelectorAllSafe, querySelectorSafe } from './utils/dom-utils.js';
 
 class UIController {
     constructor(app) {
@@ -40,7 +42,7 @@ class UIController {
     }
 
     detectMobile() {
-        return window.innerWidth <= 900 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        return window.innerWidth <= MOBILE_BREAKPOINT_PX || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
     applyLanguageUpdates() {
@@ -65,8 +67,8 @@ class UIController {
     }
 
     setupEventListeners() {
-        const addGoalBtn = document.getElementById('addGoalBtn');
-        const addGoalBtnDesktop = document.getElementById('addGoalBtnDesktop');
+        const addGoalBtn = getOptionalElement('addGoalBtn');
+        const addGoalBtnDesktop = getOptionalElement('addGoalBtnDesktop');
         const handleAddGoal = (e) => {
             e.stopPropagation();
             this.goalFormView.openGoalForm(null, () => this.renderViews());
@@ -100,7 +102,7 @@ class UIController {
         this.allGoalsView.setupControls((goalId) => this.goalFormView.openGoalForm(goalId, () => this.renderViews()));
 
         // Logo click handler - navigate to dashboard
-        const goalyLogo = document.getElementById('goalyLogo');
+        const goalyLogo = getOptionalElement('goalyLogo');
         if (goalyLogo) {
             const navigateToDashboard = () => {
                 this.switchView('dashboard');
@@ -116,15 +118,15 @@ class UIController {
         }
 
         // Desktop menu
-        document.querySelectorAll('.desktop-menu .menu-btn').forEach(btn => {
+        querySelectorAllSafe('.desktop-menu .menu-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.switchView(btn.dataset.view);
             });
         });
 
         // Mobile menu
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        const mobileMenuDropdown = document.getElementById('mobileMenuDropdown');
+        const mobileMenuToggle = getOptionalElement('mobileMenuToggle');
+        const mobileMenuDropdown = getOptionalElement('mobileMenuDropdown');
         
         if (mobileMenuToggle && mobileMenuDropdown) {
             const updateDropdownPosition = () => {
@@ -162,7 +164,7 @@ class UIController {
             });
 
             // Mobile menu buttons
-            document.querySelectorAll('.mobile-menu-btn').forEach(btn => {
+            querySelectorAllSafe('.mobile-menu-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     this.switchView(btn.dataset.view);
                     mobileMenuToggle.setAttribute('aria-expanded', 'false');
@@ -174,24 +176,24 @@ class UIController {
 
     switchView(viewName) {
         // Update desktop menu
-        document.querySelectorAll('.desktop-menu .menu-btn').forEach(b => b.classList.remove('active'));
-        const desktopBtn = document.querySelector(`.desktop-menu .menu-btn[data-view="${viewName}"]`);
+        querySelectorAllSafe('.desktop-menu .menu-btn').forEach(b => b.classList.remove('active'));
+        const desktopBtn = querySelectorSafe(`.desktop-menu .menu-btn[data-view="${viewName}"]`);
         if (desktopBtn) {
             desktopBtn.classList.add('active');
         }
 
         // Update mobile menu
-        document.querySelectorAll('.mobile-menu-btn').forEach(b => b.classList.remove('active'));
-        const mobileBtn = document.querySelector(`.mobile-menu-btn[data-view="${viewName}"]`);
+        querySelectorAllSafe('.mobile-menu-btn').forEach(b => b.classList.remove('active'));
+        const mobileBtn = querySelectorSafe(`.mobile-menu-btn[data-view="${viewName}"]`);
         if (mobileBtn) {
             mobileBtn.classList.add('active');
         }
 
         // Switch views
-        document.querySelectorAll('.view').forEach(content => {
+        querySelectorAllSafe('.view').forEach(content => {
             content.classList.remove('active');
         });
-        const targetView = document.getElementById(`${viewName}View`);
+        const targetView = getOptionalElement(`${viewName}View`);
         if (targetView) {
             targetView.classList.add('active');
         }

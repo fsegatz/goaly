@@ -1,6 +1,7 @@
 // src/ui/desktop/help-view.js
 
 import { BaseUIController } from './base-ui-controller.js';
+import { getOptionalElement } from '../utils/dom-utils.js';
 
 export class HelpView extends BaseUIController {
     constructor(app) {
@@ -9,7 +10,7 @@ export class HelpView extends BaseUIController {
 
     render() {
         // Help view is mostly static HTML, but we can ensure translations are applied
-        const helpViewElement = document.getElementById('helpView');
+        const helpViewElement = getOptionalElement('helpView');
         if (helpViewElement) {
             this.languageService.applyTranslations(helpViewElement);
         }
