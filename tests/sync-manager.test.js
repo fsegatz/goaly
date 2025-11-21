@@ -52,6 +52,24 @@ describe('SyncManager', () => {
             'import.incompatible': 'Incompatible'
         };
 
+        const ErrorHandler = require('../src/domain/services/error-handler').default;
+        const mockErrorHandler = new ErrorHandler({
+            translate: jest.fn((key, replacements) => {
+                if (translations[key]) {
+                    if (typeof translations[key] === 'function') {
+                        return translations[key](replacements);
+                    }
+                    return translations[key];
+                }
+                return key;
+            })
+        });
+        mockErrorHandler.error = jest.fn();
+        mockErrorHandler.warning = jest.fn();
+        mockErrorHandler.info = jest.fn();
+        mockErrorHandler.critical = jest.fn();
+        mockErrorHandler.showError = jest.fn();
+
         mockApp = createMockApp({
             goalService: {
                 goals: [{ id: '1', title: 'Test' }],
@@ -68,6 +86,7 @@ describe('SyncManager', () => {
                     return key;
                 })
             },
+            errorHandler: mockErrorHandler,
             currentDataVersion: GOAL_FILE_VERSION
         });
 
@@ -250,7 +269,7 @@ describe('SyncManager', () => {
 
         await manager.authenticateGoogleDrive();
 
-        expect(mockApp.languageService.translate).toHaveBeenCalledWith('googleDrive.notConfigured', {});
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('googleDrive.notConfigured', {});
     });
 
     test('authenticateGoogleDrive should authenticate and sync', async () => {
@@ -276,7 +295,7 @@ describe('SyncManager', () => {
 
         await manager.authenticateGoogleDrive();
 
-        expect(mockApp.languageService.translate).toHaveBeenCalledWith('googleDrive.authError', { message: 'Auth failed' });
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('googleDrive.authError', { message: 'Auth failed' }, expect.any(Error));
     });
 
     test('signOutGoogleDrive should sign out and cleanup', () => {
@@ -329,11 +348,15 @@ describe('SyncManager', () => {
     test('showError should use settingsView when available', () => {
         manager.showError('googleDrive.notConfigured');
 
-        expect(mockApp.uiController.settingsView.showGoogleDriveStatus).toHaveBeenCalledWith('Not configured', true);
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('googleDrive.notConfigured', {});
     });
 
     test('showError should use alert when uiController missing', () => {
-        mockApp.uiController = null;
+        // Create a real ErrorHandler instance for this test to verify alert behavior
+        const ErrorHandler = require('../src/domain/services/error-handler').default;
+        const realErrorHandler = new ErrorHandler(mockApp.languageService, null);
+        mockApp.errorHandler = realErrorHandler;
+        manager.app = mockApp;
 
         manager.showError('googleDrive.notConfigured');
 
@@ -341,7 +364,11 @@ describe('SyncManager', () => {
     });
 
     test('showError should use alert when settingsView missing', () => {
-        mockApp.uiController = {};
+        // Create a real ErrorHandler instance for this test to verify alert behavior
+        const ErrorHandler = require('../src/domain/services/error-handler').default;
+        const realErrorHandler = new ErrorHandler(mockApp.languageService, {});
+        mockApp.errorHandler = realErrorHandler;
+        manager.app = mockApp;
 
         manager.showError('googleDrive.notConfigured');
 
@@ -353,7 +380,7 @@ describe('SyncManager', () => {
 
         await manager.syncWithGoogleDrive();
 
-        expect(mockApp.languageService.translate).toHaveBeenCalledWith('googleDrive.notConfigured', {});
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('googleDrive.notConfigured', {});
     });
 
     test('syncWithGoogleDrive should show error when not authenticated', async () => {
@@ -363,7 +390,7 @@ describe('SyncManager', () => {
 
         await manager.syncWithGoogleDrive();
 
-        expect(mockApp.languageService.translate).toHaveBeenCalledWith('googleDrive.authError', { message: 'Not authenticated' });
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('googleDrive.authError', { message: 'Not authenticated' });
     });
 
     test('syncWithGoogleDrive should skip if already syncing', async () => {
@@ -435,7 +462,7 @@ describe('SyncManager', () => {
 
         await manager.downloadFromGoogleDrive();
 
-        expect(mockApp.languageService.translate).toHaveBeenCalledWith('import.versionTooNew', {
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('import.versionTooNew', {
             fileVersion: '2.0.0',
             currentVersion: GOAL_FILE_VERSION
         });
@@ -453,7 +480,7 @@ describe('SyncManager', () => {
 
         await manager.downloadFromGoogleDrive();
 
-        expect(mockApp.languageService.translate).toHaveBeenCalledWith('import.invalidVersionFormat', { version: 'invalid' });
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('import.invalidVersionFormat', { version: 'invalid' });
     });
 
     test('downloadFromGoogleDrive should handle download error', async () => {
@@ -464,7 +491,7 @@ describe('SyncManager', () => {
 
         await manager.downloadFromGoogleDrive();
 
-        expect(mockApp.languageService.translate).toHaveBeenCalledWith('googleDrive.downloadError', { message: 'Network error' });
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('googleDrive.downloadError', { message: 'Network error' }, expect.any(Error));
     });
 
     test('downloadFromGoogleDrive should handle null service', async () => {
@@ -561,7 +588,7 @@ describe('SyncManager', () => {
 
         await manager.authenticateGoogleDrive();
 
-        expect(mockApp.languageService.translate).toHaveBeenCalledWith('googleDrive.authError', { message: 'Unknown error occurred' });
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('googleDrive.authError', { message: 'Unknown error occurred' }, expect.any(Error));
     });
 
     test('downloadFromGoogleDrive should handle incompatible version', async () => {
@@ -593,7 +620,7 @@ describe('SyncManager', () => {
 
         await manager.downloadFromGoogleDrive();
 
-        expect(mockApp.languageService.translate).toHaveBeenCalledWith('import.incompatible', {});
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('import.incompatible', {});
         
         // Restore mocks
         jest.restoreAllMocks();
@@ -716,7 +743,7 @@ describe('SyncManager', () => {
 
         await manager.syncWithGoogleDrive();
 
-        expect(mockApp.languageService.translate).toHaveBeenCalledWith('googleDrive.syncError', { message: 'Network error' });
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('googleDrive.syncError', { message: 'Network error' }, expect.any(Error));
     });
 
     test('syncWithGoogleDrive should handle base payload parsing errors', async () => {
@@ -731,7 +758,12 @@ describe('SyncManager', () => {
 
         await manager.syncWithGoogleDrive();
 
-        expect(global.console.error).toHaveBeenCalledWith('Failed to parse base payload from localStorage; clearing corrupted entry.', expect.any(Error));
+        expect(mockApp.errorHandler.warning).toHaveBeenCalledWith(
+            'googleDrive.syncError',
+            { message: 'Failed to parse base payload from localStorage; clearing corrupted entry' },
+            expect.any(Error),
+            { context: 'parseBasePayload' }
+        );
         expect(global.localStorage.removeItem).toHaveBeenCalled();
     });
 
@@ -856,7 +888,7 @@ describe('SyncManager', () => {
 
         await manager.syncWithGoogleDrive();
 
-        expect(mockApp.languageService.translate).toHaveBeenCalledWith('googleDrive.syncError', { message: 'Apply error' });
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('googleDrive.syncError', { message: 'Apply error' }, expect.any(Error));
     });
 
     test('syncWithGoogleDrive should handle uploadData errors', async () => {
@@ -871,7 +903,7 @@ describe('SyncManager', () => {
 
         await manager.syncWithGoogleDrive();
 
-        expect(mockApp.languageService.translate).toHaveBeenCalledWith('googleDrive.syncError', { message: 'Upload failed' });
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('googleDrive.syncError', { message: 'Upload failed' }, expect.any(Error));
     });
 
     test('syncWithGoogleDrive should use fallback status messages when translations missing', async () => {
@@ -980,7 +1012,12 @@ describe('SyncManager', () => {
 
         // When initialization fails, the service should be set to null
         expect(testManager.googleDriveSyncService).toBeNull();
-        expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to initialize Google Drive sync:', initError);
+        expect(testManager.app.errorHandler.error).toHaveBeenCalledWith(
+            'googleDrive.syncError',
+            { message: expect.stringContaining('Initialization failed') },
+            initError,
+            { context: 'initialization' }
+        );
         
         // Restore
         GoogleDriveSyncService.prototype.initialize = originalInit;
@@ -1123,8 +1160,8 @@ describe('SyncManager', () => {
         await manager.syncWithGoogleDrive();
 
         // Error without message should be converted to a descriptive message
-        expect(mockApp.languageService.translate).toHaveBeenCalledWith('googleDrive.syncError', { message: expect.any(String) });
-        const lastCall = mockApp.languageService.translate.mock.calls.find(call => call[0] === 'googleDrive.syncError');
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('googleDrive.syncError', { message: expect.any(String) }, expect.any(Object));
+        const lastCall = mockApp.errorHandler.error.mock.calls.find(call => call[0] === 'googleDrive.syncError');
         expect(lastCall[1].message).not.toBeUndefined();
     });
 
@@ -1143,7 +1180,12 @@ describe('SyncManager', () => {
         // Wait for the promise rejection to be handled
         await Promise.resolve();
 
-        expect(global.console.error).toHaveBeenCalledWith('Background sync failed (debounced):', expect.any(Error));
+        expect(mockApp.errorHandler.warning).toHaveBeenCalledWith(
+            'googleDrive.syncError',
+            { message: expect.any(String) },
+            expect.any(Error),
+            { context: 'debounced' }
+        );
     });
 });
 

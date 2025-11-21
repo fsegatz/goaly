@@ -218,6 +218,7 @@ const en = {
         confirmDelete: 'Do you really want to delete this goal?'
     },
     errors: {
+        generic: 'An error occurred: {{message}}',
         goalUpdateFailed: 'Updating the goal failed.',
         goalSaveFailed: 'Saving the goal failed.',
         revertNotPossible: 'Unable to revert this goal.',

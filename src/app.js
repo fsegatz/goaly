@@ -11,6 +11,7 @@ import SyncManager from './domain/sync/sync-manager.js';
 import ImportExportService from './domain/utils/import-export-service.js';
 import MigrationManager from './domain/migration/migration-manager.js';
 import TimerService from './domain/services/timer-service.js';
+import ErrorHandler from './domain/services/error-handler.js';
 import { GOAL_FILE_VERSION } from './domain/utils/versioning.js';
 import { DEVELOPER_MODE_PRESS_DURATION_MS, DEVELOPER_MODE_VISUAL_FEEDBACK_MS, GOAL_SAVE_INTERVAL_MS } from './domain/utils/constants.js';
 
@@ -18,7 +19,8 @@ class GoalyApp {
     constructor() {
         this.settingsService = new SettingsService();
         this.languageService = new LanguageService();
-        this.goalService = new GoalService();
+        this.errorHandler = new ErrorHandler(this.languageService);
+        this.goalService = new GoalService([], this.errorHandler);
         this.developerModeService = new DeveloperModeService();
         this.currentDataVersion = GOAL_FILE_VERSION;
         
@@ -52,6 +54,8 @@ class GoalyApp {
         this.syncManager.initGoogleDriveSync();
         
         this.uiController = new UIController(this);
+        // Set UI controller in error handler after it's created
+        this.errorHandler.setUIController(this.uiController);
         this.uiController.renderViews();
         this.refreshReviews();
         this.timerService.startReviewTimer();

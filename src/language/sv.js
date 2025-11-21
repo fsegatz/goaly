@@ -194,6 +194,7 @@ const sv = {
         confirmDelete: 'Vill du verkligen ta bort det här målet?'
     },
     errors: {
+        generic: 'Ett fel uppstod: {{message}}',
         goalUpdateFailed: 'Uppdateringen av målet misslyckades.',
         goalSaveFailed: 'Det gick inte att spara målet.',
         revertNotPossible: 'Går inte att återställa.',

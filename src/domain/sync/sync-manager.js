@@ -32,11 +32,11 @@ class SyncManager {
                 // If already authenticated at startup, perform a one-time background sync
                 if (this.googleDriveSyncService.isAuthenticated()) {
                     this.syncWithGoogleDrive({ background: true }).catch(error => {
-                        console.error('Background sync failed during initialization:', error);
+                        this.app.errorHandler.warning('googleDrive.syncError', { message: error?.message || 'Background sync failed' }, error, { context: 'initialization' });
                     });
                 }
             } catch (error) {
-                console.error('Failed to initialize Google Drive sync:', error);
+                this.app.errorHandler.error('googleDrive.syncError', { message: error?.message || 'Failed to initialize Google Drive sync' }, error, { context: 'initialization' });
                 this.googleDriveSyncService = null;
             }
         }
@@ -71,7 +71,7 @@ class SyncManager {
         }
         this.syncDebounce = setTimeout(() => {
             this.syncWithGoogleDrive({ background: true }).catch(error => {
-                console.error('Background sync failed (debounced):', error);
+                this.app.errorHandler.warning('googleDrive.syncError', { message: error?.message || 'Background sync failed' }, error, { context: 'debounced' });
             });
             this.syncDebounce = null;
         }, GOOGLE_DRIVE_SYNC_DEBOUNCE_MS);
@@ -109,9 +109,7 @@ class SyncManager {
                 false
             );
         } catch (error) {
-            console.error('Google Drive authentication error:', error);
-            const errorMessage = error.message || 'Unknown error occurred';
-            this.showError('googleDrive.authError', { message: errorMessage });
+            this.app.errorHandler.error('googleDrive.authError', { message: error?.message || 'Unknown error occurred' }, error);
         }
     }
 
@@ -153,7 +151,7 @@ class SyncManager {
             } catch (error) {
                 // If token refresh fails, show error but don't block sync attempt
                 // The API call will handle auth errors and retry
-                console.warn('Token refresh check failed, proceeding with sync:', error);
+                this.app.errorHandler.warning('googleDrive.syncError', { message: 'Token refresh check failed, proceeding with sync' }, error, { context: 'tokenRefresh' });
             }
         }
 
@@ -219,7 +217,7 @@ class SyncManager {
                 const baseStr = localStorage.getItem(this.getLastSyncStorageKey());
                 if (baseStr) basePayload = JSON.parse(baseStr);
             } catch (e) {
-                console.error('Failed to parse base payload from localStorage; clearing corrupted entry.', e);
+                this.app.errorHandler.warning('googleDrive.syncError', { message: 'Failed to parse base payload from localStorage; clearing corrupted entry' }, e, { context: 'parseBasePayload' });
                 localStorage.removeItem(this.getLastSyncStorageKey());
             }
 
@@ -300,7 +298,7 @@ class SyncManager {
         } catch (error) {
             // Provide better error messages - handle undefined error.message
             const errorMessage = error?.message || error?.toString() || 'Unknown error occurred';
-            this.showError('googleDrive.syncError', { message: errorMessage });
+            this.app.errorHandler.error('googleDrive.syncError', { message: errorMessage }, error);
         } finally {
             this._isSyncing = false;
             this._suppressAutoSync = false;
@@ -322,7 +320,7 @@ class SyncManager {
             } catch (error) {
                 // If token refresh fails, show error but don't block download attempt
                 // The API call will handle auth errors and retry
-                console.warn('Token refresh check failed, proceeding with download:', error);
+                this.app.errorHandler.warning('googleDrive.syncError', { message: 'Token refresh check failed, proceeding with download' }, error, { context: 'tokenRefresh' });
             }
         }
 
@@ -363,20 +361,16 @@ class SyncManager {
         } catch (error) {
             // Provide better error messages - handle undefined error.message
             const errorMessage = error?.message || error?.toString() || 'Unknown error occurred';
-            this.showError('googleDrive.downloadError', { message: errorMessage });
+            this.app.errorHandler.error('googleDrive.downloadError', { message: errorMessage }, error);
         }
     }
 
     /**
      * Show Google Drive error message
+     * @deprecated Use app.errorHandler instead
      */
     showError(messageKey, replacements = {}) {
-        const message = this.app.languageService.translate(messageKey, replacements);
-        if (this.app.uiController && this.app.uiController.settingsView) {
-            this.app.uiController.settingsView.showGoogleDriveStatus(message, true);
-        } else {
-            alert(message);
-        }
+        this.app.errorHandler.error(messageKey, replacements);
     }
 
     /**

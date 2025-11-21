@@ -227,14 +227,14 @@ class UIController {
             const { maxActiveGoals } = this.app.settingsService.getSettings();
             const updatedGoal = this.app.goalService.setGoalStatus(goalId, newStatus, maxActiveGoals);
             if (!updatedGoal) {
-                alert(this.app.languageService.translate('errors.goalNotFound'));
+                this.app.errorHandler.error('errors.goalNotFound');
                 return;
             }
 
             this.app.reviews = this.app.reviewService.getReviews();
             this.renderViews();
         } catch (error) {
-            alert(error.message || this.app.languageService.translate('errors.statusChangeFailed'));
+            this.app.errorHandler.error('errors.statusChangeFailed', { message: error?.message || '' }, error);
         }
     }
 
@@ -246,7 +246,7 @@ class UIController {
             this.allGoalsView.invalidatePriorityCache();
             this.renderViews();
         } catch (error) {
-            alert(error.message || this.app.languageService.translate('errors.goalUpdateFailed'));
+            this.app.errorHandler.error('errors.goalUpdateFailed', { message: error?.message || '' }, error);
             this.renderViews();
         }
     }
@@ -255,7 +255,7 @@ class UIController {
         try {
             const result = this.app.reviewService.recordReview(goalId, ratings);
             if (!result) {
-                alert(this.app.languageService.translate('errors.goalNotFound'));
+                this.app.errorHandler.error('errors.goalNotFound');
                 return;
             }
 
@@ -281,7 +281,7 @@ class UIController {
             this.app.reviews = this.app.reviewService.getReviews();
             renderViews();
         } catch (error) {
-            alert(error?.message || this.app.languageService.translate('errors.goalUpdateFailed'));
+            this.app.errorHandler.error('errors.goalUpdateFailed', { message: error?.message || '' }, error);
         }
     }
 

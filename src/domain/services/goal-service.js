@@ -21,9 +21,10 @@ function valuesEqual(a, b) {
 }
 
 class GoalService {
-    constructor(goals = []) {
+    constructor(goals = [], errorHandler = null) {
 		this.goals = goals.map(g => new Goal(g));
 		this._listeners = { afterSave: [] };
+		this.errorHandler = errorHandler;
     }
 
 	onAfterSave(listener) {
@@ -39,7 +40,11 @@ class GoalService {
 				fn();
 			} catch (error) {
 				// Log and continue so one faulty listener does not break others
-				console.error('GoalService afterSave listener error', error);
+				if (this.errorHandler) {
+					this.errorHandler.warning('errors.generic', { message: 'GoalService afterSave listener error' }, error, { context: 'afterSaveListener' });
+				} else {
+					console.error('GoalService afterSave listener error', error);
+				}
 			}
 		}
 	}
@@ -61,7 +66,11 @@ class GoalService {
                     }
                 }
             } catch (error) {
-                console.error('Failed to load goals from storage', error);
+                if (this.errorHandler) {
+                    this.errorHandler.error('errors.generic', { message: 'Failed to load goals from storage' }, error, { context: 'loadGoals' });
+                } else {
+                    console.error('Failed to load goals from storage', error);
+                }
             }
         }
     }
