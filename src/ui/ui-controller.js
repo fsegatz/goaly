@@ -244,8 +244,7 @@ class UIController {
         try {
             const { maxActiveGoals } = this.app.settingsService.getSettings();
             this.app.goalService.updateGoal(goalId, updates, maxActiveGoals);
-            this.dashboardView.invalidatePriorityCache();
-            this.allGoalsView.invalidatePriorityCache();
+            // Cache is automatically invalidated by GoalService
             this.renderViews();
         } catch (error) {
             this.app.errorHandler.error('errors.goalUpdateFailed', { message: error?.message || '' }, error);
@@ -276,10 +275,7 @@ class UIController {
                 type: result.ratingsMatch ? 'success' : 'info'
             };
 
-            if (!result.ratingsMatch) {
-                this.dashboardView.invalidatePriorityCache();
-            }
-
+            // Cache is automatically invalidated by GoalService when ratings change
             this.app.reviews = this.app.reviewService.getReviews();
             renderViews();
         } catch (error) {

@@ -3,6 +3,7 @@
 import Goal from '../models/goal.js';
 import { prepareGoalsStoragePayload } from '../migration/migration-service.js';
 import { HISTORY_EVENTS, STORAGE_KEY_GOALS, GOAL_HISTORY_LIMIT, DEADLINE_BONUS_DAYS } from '../utils/constants.js';
+import { PriorityCacheManager } from '../priority-cache-manager.js';
 
 const HISTORY_LIMIT = GOAL_HISTORY_LIMIT;
 const TRACKED_HISTORY_FIELDS = ['title', 'motivation', 'urgency', 'deadline', 'status', 'priority'];
@@ -25,6 +26,7 @@ class GoalService {
 		this.goals = goals.map(g => new Goal(g));
 		this._listeners = { afterSave: [] };
 		this.errorHandler = errorHandler;
+		this.priorityCache = new PriorityCacheManager(this);
     }
 
 	onAfterSave(listener) {
@@ -56,11 +58,13 @@ class GoalService {
                 const parsed = JSON.parse(saved);
                 if (Array.isArray(parsed)) {
                     this.goals = parsed.map(goal => new Goal(goal));
+                    this.priorityCache.invalidate();
                     this.saveGoals();
                     return;
                 }
                 if (parsed && Array.isArray(parsed.goals)) {
                     this.goals = parsed.goals.map(goal => new Goal(goal));
+                    this.priorityCache.invalidate();
                     if (!parsed.version) {
                         this.saveGoals();
                     }
@@ -213,6 +217,8 @@ class GoalService {
             after: afterSnapshot,
             changes
         });
+        // Status changes may affect priority (e.g., deadline calculations)
+        this.priorityCache.invalidate();
     }
 
     setGoalStatus(id, newStatus, maxActiveGoals) {
@@ -237,6 +243,8 @@ class GoalService {
         } else {
             this.saveGoals();
         }
+        
+        // Cache already invalidated by handleStatusTransition
 
         return goal;
     }
@@ -254,6 +262,7 @@ class GoalService {
             changes: creationChanges
         });
         this.goals.push(goal);
+        this.priorityCache.invalidate();
         
         // Automatically activate the top N goals by priority
         this.autoActivateGoalsByPriority(maxActiveGoals);
@@ -323,6 +332,9 @@ class GoalService {
             changes
         });
         
+        // Invalidate cache when goal is updated (priority may have changed)
+        this.priorityCache.invalidate();
+        
         // Automatically re-activate goals if the priority changed
         if (priorityChanged) {
             this.autoActivateGoalsByPriority(maxActiveGoals);
@@ -364,6 +376,7 @@ class GoalService {
             meta: { revertedEntryId: historyEntryId }
         });
 
+        this.priorityCache.invalidate();
         this.autoActivateGoalsByPriority(maxActiveGoals);
         return goal;
     }
@@ -371,6 +384,7 @@ class GoalService {
     deleteGoal(id, maxActiveGoals) {
         const wasActive = this.goals.find(g => g.id === id)?.status === 'active';
         this.goals = this.goals.filter(g => g.id !== id);
+        this.priorityCache.invalidate();
         
         // Automatically re-activate goals if an active goal was deleted
         if (wasActive) {
@@ -472,6 +486,8 @@ class GoalService {
             changes
         });
 
+        this.priorityCache.invalidate();
+        
         // Re-activate goals to fill the slot if needed
         this.autoActivateGoalsByPriority(maxActiveGoals);
         
@@ -507,6 +523,8 @@ class GoalService {
             changes
         });
 
+        this.priorityCache.invalidate();
+        
         // Re-activate goals based on priority
         this.autoActivateGoalsByPriority(maxActiveGoals);
         
@@ -576,6 +594,7 @@ class GoalService {
             }
         });
 
+        this.priorityCache.invalidate();
         this.saveGoals();
     }
 
@@ -585,6 +604,7 @@ class GoalService {
     checkAndClearPauseConditions() {
         const now = new Date();
         now.setHours(0, 0, 0, 0);
+        let anyChanged = false;
 
         this.goals.forEach(goal => {
             const beforeSnapshot = this.createSnapshot(goal);
@@ -603,6 +623,7 @@ class GoalService {
                     });
                     goal.pauseUntil = null;
                     changed = true;
+                    anyChanged = true;
                 }
             }
 
@@ -617,6 +638,7 @@ class GoalService {
                     });
                     goal.pauseUntilGoalId = null;
                     changed = true;
+                    anyChanged = true;
                 }
             }
 
@@ -633,6 +655,11 @@ class GoalService {
                 });
             }
         });
+        
+        // Invalidate cache if any pause conditions were cleared (may affect priority)
+        if (anyChanged) {
+            this.priorityCache.invalidate();
+        }
     }
 }
 

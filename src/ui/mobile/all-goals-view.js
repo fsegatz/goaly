@@ -169,12 +169,9 @@ export class MobileAllGoalsView extends BaseUIController {
             return;
         }
 
-        this.invalidatePriorityCache();
-        this.refreshPriorityCache();
-
         const goalsWithMeta = this.app.goalService.goals.map(goal => ({
             goal,
-            priority: this.priorityCache.get(goal.id) ?? 0
+            priority: this.getPriority(goal.id)
         }));
 
         const filtered = goalsWithMeta.filter(({ goal, priority }) => {

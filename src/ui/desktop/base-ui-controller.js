@@ -7,8 +7,6 @@ export class BaseUIController {
         this.app = app;
         this.languageService = app.languageService;
         this.translate = (key, replacements) => this.languageService.translate(key, replacements);
-        this.priorityCache = new Map();
-        this.priorityCacheDirty = true;
         this.latestReviewFeedback = null;
 
         this.languageChangeUnsubscribe = this.languageService.onChange(() => {
@@ -21,19 +19,21 @@ export class BaseUIController {
         this.renderViews();
     }
 
-    invalidatePriorityCache() {
-        this.priorityCacheDirty = true;
+    /**
+     * Get priority for a goal from the centralized cache.
+     * @param {string} goalId - The goal ID
+     * @returns {number} - The priority value
+     */
+    getPriority(goalId) {
+        return this.app.goalService.priorityCache.getPriority(goalId);
     }
 
-    refreshPriorityCache() {
-        if (!this.priorityCacheDirty) {
-            return;
-        }
-        this.priorityCache.clear();
-        this.app.goalService.goals.forEach(goal => {
-            this.priorityCache.set(goal.id, this.app.goalService.calculatePriority(goal));
-        });
-        this.priorityCacheDirty = false;
+    /**
+     * Get all priorities as a Map.
+     * @returns {Map<string, number>} - Map of goal ID to priority
+     */
+    getAllPriorities() {
+        return this.app.goalService.priorityCache.getAllPriorities();
     }
 
     formatDeadline(deadline) {

@@ -14,8 +14,6 @@ export class DashboardView extends BaseUIController {
     }
 
     render(openCompletionModal, updateGoalInline, openGoalForm, handleReviewSubmit, renderViews, openPauseModal) {
-        this.invalidatePriorityCache();
-        this.refreshPriorityCache();
         this.openPauseModal = openPauseModal;
         const settings = this.app.settingsService.getSettings();
         // Get active goals (excluding manually paused ones)

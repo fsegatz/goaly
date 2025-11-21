@@ -44,6 +44,22 @@ beforeEach(() => {
         calculatePriority: jest.fn(() => 0),
         updateGoal: jest.fn(),
         isGoalPaused: jest.fn(() => false),
+        priorityCache: {
+            getPriority: jest.fn((goalId) => {
+                const goal = mockGoalService.goals.find(g => g.id === goalId);
+                return goal ? mockGoalService.calculatePriority(goal) : 0;
+            }),
+            getAllPriorities: jest.fn(() => {
+                const priorities = new Map();
+                mockGoalService.goals.forEach(goal => {
+                    priorities.set(goal.id, mockGoalService.calculatePriority(goal));
+                });
+                return priorities;
+            }),
+            invalidate: jest.fn(),
+            refreshIfNeeded: jest.fn(),
+            clear: jest.fn()
+        }
     };
     mockSettingsService = {
         getSettings: jest.fn(() => ({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] })),
