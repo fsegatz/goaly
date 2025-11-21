@@ -2,7 +2,7 @@
 
 import { BaseUIController } from '../desktop/base-ui-controller.js';
 import { MAX_RATING_VALUE } from '../../domain/utils/constants.js';
-import { getOptionalElement, getElement } from '../utils/dom-utils.js';
+import { getOptionalElement } from '../utils/dom-utils.js';
 
 export class MobileAllGoalsView extends BaseUIController {
     constructor(app) {
