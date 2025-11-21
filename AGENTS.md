@@ -9,9 +9,15 @@ This handbook summarises how coding agents and new contributors collaborate prod
 - **Windows Note:** On Windows, Cursor should use `cmd` instead of PowerShell for terminal commands. Use `cmd /c <command>` when running commands on Windows.
 
 ## Tests & Quality
-- Execute `npm test` for unit tests; add `-- --coverage` for a coverage report.
+- Execute `npm test` for unit tests.
+- **CRITICAL:** Always run `npm test` exactly as-is without any modifications, flags, or piping:
+  - ✅ Correct: `npm test`
+  - ❌ Wrong: `npm test -- --coverage`
+  - ❌ Wrong: `npm test -- sync-manager.test.js`
+  - ❌ Wrong: `npm test | findstr ...`
+  - ❌ Wrong: Any other variation of the test command
+- **Exception:** When fixing worker process exit issues, you may use `npm test -- --detectOpenHandles` to identify what's preventing graceful shutdown. This is the only exception to the "no flags" rule.
 - **Important:** Always run `npm test` directly without piping output through filters (e.g., `findstr`, `grep`) for parsing. This ensures accurate test results and coverage reporting.
-- **Command Usage:** Always use `npm test` without extra flags or piping. Run the command as-is: `npm test`. Do not add flags or pipe output to other commands.
 - Maintain the existing high coverage; extend tests for new UI behaviour (`tests/ui-controller.test.js`).
 - After code changes run `read_lints` in Cursor for touched files.
 
