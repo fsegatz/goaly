@@ -42,7 +42,7 @@ export function daysBetween(date1, date2) {
  */
 export function setToMidnight(date) {
     const normalized = normalizeDate(date, new Date());
-    const result = new Date(normalized);
+    const result = new Date(normalized.getTime());
     result.setHours(0, 0, 0, 0);
     return result;
 }
