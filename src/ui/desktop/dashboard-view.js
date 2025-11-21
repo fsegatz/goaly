@@ -28,6 +28,14 @@ export class DashboardView extends BaseUIController {
         const dashboardList = getElement('goalsList');
         const feedbackElement = getOptionalElement('dashboardFeedback');
         
+        // Clean up EventManager instances for existing cards before clearing the list
+        // This prevents memory leaks when cards are removed from the DOM
+        for (const card of dashboardList.querySelectorAll('.goal-card, .review-card')) {
+            if (card._stepEventManager) {
+                card._stepEventManager.cleanup();
+            }
+        }
+        
         dashboardList.innerHTML = '';
 
         // Display feedback if available
@@ -625,19 +633,15 @@ export class DashboardView extends BaseUIController {
 
         const renderSteps = () => {
             // Clean up existing step element listeners before re-rendering
-            // EventManager tracks all listeners, so we can clean them up easily
-            // This prevents duplicate listeners when steps are re-rendered
-            const existingSteps = stepsList.querySelectorAll('.goal-step');
-            existingSteps.forEach(stepEl => {
-                // Clean up listeners for all child elements of each step
-                const checkbox = stepEl.querySelector('.step-checkbox');
-                const textEl = stepEl.querySelector('.step-text');
-                const deleteBtn = stepEl.querySelector('.step-delete');
-                
-                if (checkbox) eventManager.off(checkbox);
-                if (textEl) eventManager.off(textEl);
-                if (deleteBtn) eventManager.off(deleteBtn);
-            });
+            // This is more robust as it doesn't depend on specific selectors.
+            // We iterate through EventManager's tracked listeners and remove any
+            // that are descendants of the stepsList, preventing duplicate listeners
+            // when steps are re-rendered.
+            for (const element of [...eventManager.listeners.keys()]) {
+                if (stepsList.contains(element)) {
+                    eventManager.off(element);
+                }
+            }
 
             const sortedSteps = [...(goal.steps || [])].sort((a, b) => (a.order || 0) - (b.order || 0));
             if (sortedSteps.length === 0) {
