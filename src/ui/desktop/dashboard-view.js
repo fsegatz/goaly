@@ -578,9 +578,32 @@ export class DashboardView extends BaseUIController {
         });
     }
 
+    /**
+     * Sets up step management for a goal card, including rendering and event handling.
+     * 
+     * Event Listener Lifecycle:
+     * - Listener references are stored on the card element (_stepListeners) for explicit cleanup
+     * - Before re-rendering, existing step element listeners are removed via removeEventListener
+     * - The addStepBtn listener is stored and removed before re-attaching to prevent duplicates
+     * - This eliminates the need for cloneNode(true) workaround and makes listener management explicit
+     * 
+     * @param {HTMLElement} card - The goal card element
+     * @param {Object} goal - The goal object
+     * @param {Function} updateGoalInline - Callback to update goal data
+     */
     setupSteps(card, goal, updateGoalInline) {
         const stepsList = card.querySelector('.goal-steps-list');
         const addStepBtn = card.querySelector('.add-step');
+
+        // Store event listener references for proper cleanup
+        // This allows us to remove listeners explicitly instead of using cloneNode workaround
+        // The _stepListeners object persists across re-renders to track all attached listeners
+        if (!card._stepListeners) {
+            card._stepListeners = {
+                addStepBtn: null,
+                stepElements: new Map()
+            };
+        }
 
         const saveSteps = () => {
             const steps = Array.from(stepsList.querySelectorAll('.goal-step')).map((el, index) => {
@@ -601,6 +624,34 @@ export class DashboardView extends BaseUIController {
         };
 
         const renderSteps = () => {
+            // Clean up existing step element listeners before re-rendering
+            // This prevents duplicate listeners when steps are re-rendered
+            // Each listener is explicitly removed using the stored reference
+            if (card._stepListeners.stepElements) {
+                card._stepListeners.stepElements.forEach((listeners, stepEl) => {
+                    if (stepEl.parentNode) {
+                        // Remove listeners if element still exists in DOM
+                        const checkbox = stepEl.querySelector('.step-checkbox');
+                        const textEl = stepEl.querySelector('.step-text');
+                        const deleteBtn = stepEl.querySelector('.step-delete');
+                        
+                        if (checkbox && listeners.checkbox) {
+                            checkbox.removeEventListener('change', listeners.checkbox);
+                        }
+                        if (textEl && listeners.textBlur) {
+                            textEl.removeEventListener('blur', listeners.textBlur);
+                        }
+                        if (textEl && listeners.textKeydown) {
+                            textEl.removeEventListener('keydown', listeners.textKeydown);
+                        }
+                        if (deleteBtn && listeners.delete) {
+                            deleteBtn.removeEventListener('click', listeners.delete);
+                        }
+                    }
+                });
+                card._stepListeners.stepElements.clear();
+            }
+
             const sortedSteps = [...(goal.steps || [])].sort((a, b) => (a.order || 0) - (b.order || 0));
             if (sortedSteps.length === 0) {
                 stepsList.innerHTML = `<li class="steps-empty">${this.translate('goalCard.steps.empty')}</li>`;
@@ -612,15 +663,19 @@ export class DashboardView extends BaseUIController {
                         <button type="button" class="step-delete" aria-label="${this.translate('goalCard.steps.delete')}">×</button>
                     </li>
                 `).join('');
-                this.attachStepListeners(stepsList, saveSteps, card, goal, updateGoalInline);
+                this.attachStepListeners(stepsList, saveSteps, renderSteps, card, goal, updateGoalInline);
             }
         };
 
-        // Remove existing event listeners by cloning the button
-        const newAddStepBtn = addStepBtn.cloneNode(true);
-        addStepBtn.parentNode.replaceChild(newAddStepBtn, addStepBtn);
+        // Remove existing addStepBtn listener if it exists
+        // This prevents duplicate listeners when setupSteps is called multiple times
+        if (card._stepListeners.addStepBtn) {
+            addStepBtn.removeEventListener('click', card._stepListeners.addStepBtn);
+        }
 
-        newAddStepBtn.addEventListener('click', () => {
+        // Create and store the addStepBtn click handler
+        // The handler reference is stored so it can be removed later if needed
+        const handleAddStepClick = () => {
             const newStep = {
                 id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
                 text: '',
@@ -640,24 +695,53 @@ export class DashboardView extends BaseUIController {
                 sel.removeAllRanges();
                 sel.addRange(range);
             }
-        });
+        };
+
+        // Store the listener reference and attach it
+        card._stepListeners.addStepBtn = handleAddStepClick;
+        addStepBtn.addEventListener('click', handleAddStepClick);
 
         // Initial render
         renderSteps();
     }
 
-    attachStepListeners(stepsList, saveSteps, card, goal, updateGoalInline) {
+    /**
+     * Attaches event listeners to step elements and stores references for cleanup.
+     * 
+     * Listener Management:
+     * - All listeners are stored in card._stepListeners.stepElements Map
+     * - Named handler functions are used so references can be stored and removed later
+     * - When steps are re-rendered, these listeners are explicitly removed before new ones are attached
+     * 
+     * @param {HTMLElement} stepsList - The container element for all steps
+     * @param {Function} saveSteps - Callback to save step changes
+     * @param {Function} renderSteps - Callback to re-render steps (replaces recursive setupSteps calls)
+     * @param {HTMLElement} card - The goal card element
+     * @param {Object} goal - The goal object
+     * @param {Function} updateGoalInline - Callback to update goal data
+     */
+    attachStepListeners(stepsList, saveSteps, renderSteps, card, goal, updateGoalInline) {
+        // Ensure listener storage exists
+        if (!card._stepListeners) {
+            card._stepListeners = {
+                addStepBtn: null,
+                stepElements: new Map()
+            };
+        }
+
         stepsList.querySelectorAll('.goal-step').forEach(stepEl => {
             const checkbox = stepEl.querySelector('.step-checkbox');
             const textEl = stepEl.querySelector('.step-text');
             const deleteBtn = stepEl.querySelector('.step-delete');
 
-            checkbox.addEventListener('change', () => {
+            // Create named handler functions so we can store references for cleanup
+            // These named functions allow explicit removal via removeEventListener
+            const handleCheckboxChange = () => {
                 stepEl.classList.toggle('completed', checkbox.checked);
                 saveSteps();
-            });
+            };
 
-            textEl.addEventListener('blur', () => {
+            const handleTextBlur = () => {
                 if (!textEl.textContent.trim()) {
                     const stepId = stepEl.dataset.stepId;
                     if (goal.steps) {
@@ -666,20 +750,22 @@ export class DashboardView extends BaseUIController {
                     // Save based on goal object, not DOM, since DOM hasn't updated yet
                     const { maxActiveGoals } = this.app.settingsService.getSettings();
                     this.app.goalService.updateGoal(goal.id, { steps: goal.steps }, maxActiveGoals);
-                    this.setupSteps(card, goal, updateGoalInline);
+                    // Re-render steps directly instead of recursively calling setupSteps
+                    // This eliminates recursive re-rendering and simplifies the component lifecycle
+                    renderSteps();
                 } else {
                     saveSteps();
                 }
-            });
+            };
 
-            textEl.addEventListener('keydown', (event) => {
+            const handleTextKeydown = (event) => {
                 if (event.key === 'Enter') {
                     event.preventDefault();
                     textEl.blur();
                 }
-            });
+            };
 
-            deleteBtn.addEventListener('click', (event) => {
+            const handleDeleteClick = (event) => {
                 event.preventDefault();
                 event.stopPropagation();
                 const stepId = stepEl.dataset.stepId;
@@ -689,9 +775,24 @@ export class DashboardView extends BaseUIController {
                 // Save based on goal object, not DOM, since DOM hasn't updated yet
                 const { maxActiveGoals } = this.app.settingsService.getSettings();
                 this.app.goalService.updateGoal(goal.id, { steps: goal.steps }, maxActiveGoals);
-                // Re-render the steps list immediately by calling setupSteps again
-                this.setupSteps(card, goal, updateGoalInline);
+                // Re-render steps directly instead of recursively calling setupSteps
+                // This eliminates recursive re-rendering and simplifies the component lifecycle
+                renderSteps();
+            };
+
+            // Store listener references for cleanup
+            card._stepListeners.stepElements.set(stepEl, {
+                checkbox: handleCheckboxChange,
+                textBlur: handleTextBlur,
+                textKeydown: handleTextKeydown,
+                delete: handleDeleteClick
             });
+
+            // Attach listeners
+            checkbox.addEventListener('change', handleCheckboxChange);
+            textEl.addEventListener('blur', handleTextBlur);
+            textEl.addEventListener('keydown', handleTextKeydown);
+            deleteBtn.addEventListener('click', handleDeleteClick);
         });
     }
 
