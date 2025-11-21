@@ -4,6 +4,7 @@ import Goal from '../models/goal.js';
 import { prepareGoalsStoragePayload } from '../migration/migration-service.js';
 import { HISTORY_EVENTS, STORAGE_KEY_GOALS, GOAL_HISTORY_LIMIT, DEADLINE_BONUS_DAYS } from '../utils/constants.js';
 import { PriorityCacheManager } from '../priority-cache-manager.js';
+import { setToMidnight, normalizeDate } from '../utils/date-utils.js';
 
 const HISTORY_LIMIT = GOAL_HISTORY_LIMIT;
 const TRACKED_HISTORY_FIELDS = ['title', 'motivation', 'urgency', 'deadline', 'status', 'priority'];
@@ -398,13 +399,16 @@ class GoalService {
 
         if (goal.deadline) {
             const now = new Date();
-            const daysUntilDeadline = Math.ceil((goal.deadline - now) / (1000 * 60 * 60 * 24));
-            
-            if (daysUntilDeadline > DEADLINE_BONUS_DAYS) {
-                priority += 0;
-            } else {
-                const bonus = Math.max(0, DEADLINE_BONUS_DAYS - daysUntilDeadline);
-                priority += bonus;
+            const deadlineDate = normalizeDate(goal.deadline);
+            if (deadlineDate) {
+                const daysUntilDeadline = Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                
+                if (daysUntilDeadline > DEADLINE_BONUS_DAYS) {
+                    priority += 0;
+                } else {
+                    const bonus = Math.max(0, DEADLINE_BONUS_DAYS - daysUntilDeadline);
+                    priority += bonus;
+                }
             }
         }
 
@@ -430,10 +434,8 @@ class GoalService {
 
         // Check date-based pause
         if (goal.pauseUntil) {
-            const now = new Date();
-            now.setHours(0, 0, 0, 0);
-            const pauseUntil = new Date(goal.pauseUntil);
-            pauseUntil.setHours(0, 0, 0, 0);
+            const now = setToMidnight(new Date());
+            const pauseUntil = setToMidnight(goal.pauseUntil);
             if (pauseUntil > now) {
                 return true;
             }
@@ -531,18 +533,21 @@ class GoalService {
     }
 
     /**
-     * Automatically activates the top N goals with the highest priority.
-     * All other non-completed goals are paused.
-     * Excludes goals that are manually paused (by date or goal dependency).
-     * @param {number} maxActiveGoals - Maximum number of active goals
+     * Check and clear expired pause conditions
+     * @private
      */
-    autoActivateGoalsByPriority(maxActiveGoals) {
-        // Check and clear expired pause conditions
+    _checkExpiredPauses() {
         this.checkAndClearPauseConditions();
+    }
 
-        // Sort all non-completed goals by priority, excluding manually paused goals
-        const ineligibleStatuses = new Set(['completed', 'abandoned']);
-        const eligibleGoals = this.goals
+    /**
+     * Get goals eligible for activation (excluding completed, abandoned, and manually paused goals)
+     * @param {Set<string>} ineligibleStatuses - Set of statuses that are not eligible
+     * @returns {Goal[]} - Array of eligible goals sorted by priority
+     * @private
+     */
+    _getEligibleGoalsForActivation(ineligibleStatuses) {
+        return this.goals
             .filter(g => {
                 if (ineligibleStatuses.has(g.status)) {
                     return false;
@@ -566,8 +571,15 @@ class GoalService {
                 }
                 return priorityB - priorityA;
             });
+    }
 
-        // Activate the top N goals by priority
+    /**
+     * Activate the top N goals by priority
+     * @param {Goal[]} eligibleGoals - Goals eligible for activation, sorted by priority
+     * @param {number} maxActiveGoals - Maximum number of active goals
+     * @private
+     */
+    _activateTopPriorityGoals(eligibleGoals, maxActiveGoals) {
         const goalsToActivate = eligibleGoals.slice(0, maxActiveGoals);
         const goalsToInactivate = eligibleGoals.slice(maxActiveGoals);
 
@@ -585,13 +597,40 @@ class GoalService {
                 this.handleStatusTransition(goal, 'inactive');
             }
         });
+    }
 
-        // Ensure manually paused goals have status 'paused'
+    /**
+     * Validate that manually paused goals have the correct 'paused' status
+     * @param {Set<string>} ineligibleStatuses - Set of statuses that are not eligible
+     * @private
+     */
+    _validatePausedGoals(ineligibleStatuses) {
         this.goals.forEach(goal => {
             if (!ineligibleStatuses.has(goal.status) && this.isGoalPaused(goal) && goal.status !== 'paused') {
                 this.handleStatusTransition(goal, 'paused');
             }
         });
+    }
+
+    /**
+     * Automatically activates the top N goals with the highest priority.
+     * All other non-completed goals are paused.
+     * Excludes goals that are manually paused (by date or goal dependency).
+     * @param {number} maxActiveGoals - Maximum number of active goals
+     */
+    autoActivateGoalsByPriority(maxActiveGoals) {
+        // Check and clear expired pause conditions
+        this._checkExpiredPauses();
+
+        // Sort all non-completed goals by priority, excluding manually paused goals
+        const ineligibleStatuses = new Set(['completed', 'abandoned']);
+        const eligibleGoals = this._getEligibleGoalsForActivation(ineligibleStatuses);
+
+        // Activate the top N goals by priority
+        this._activateTopPriorityGoals(eligibleGoals, maxActiveGoals);
+
+        // Ensure manually paused goals have status 'paused'
+        this._validatePausedGoals(ineligibleStatuses);
 
         this.priorityCache.invalidate();
         this.saveGoals();
@@ -601,8 +640,7 @@ class GoalService {
      * Check and clear expired pause conditions
      */
     checkAndClearPauseConditions() {
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
+        const now = setToMidnight(new Date());
         let anyChanged = false;
 
         this.goals.forEach(goal => {
@@ -612,8 +650,7 @@ class GoalService {
 
             // Clear expired date-based pauses
             if (goal.pauseUntil) {
-                const pauseUntil = new Date(goal.pauseUntil);
-                pauseUntil.setHours(0, 0, 0, 0);
+                const pauseUntil = setToMidnight(goal.pauseUntil);
                 if (pauseUntil <= now) {
                     pauseChanges.push({
                         field: 'pauseUntil',

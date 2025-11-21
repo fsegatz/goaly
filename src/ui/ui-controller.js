@@ -7,13 +7,13 @@ import { HelpView } from './desktop/help-view.js';
 import { GoalFormView } from './desktop/goal-form-view.js';
 import { ModalsView } from './desktop/modals-view.js';
 import { MobileAllGoalsView } from './mobile/all-goals-view.js';
-import { MOBILE_BREAKPOINT_PX } from '../domain/utils/constants.js';
+import { isMobileDevice } from '../domain/utils/device-utils.js';
 import { getOptionalElement, querySelectorAllSafe, querySelectorSafe } from './utils/dom-utils.js';
 
 class UIController {
     constructor(app) {
         this.app = app;
-        this.isMobile = this.detectMobile();
+        this.isMobile = isMobileDevice();
         this.dashboardView = new DashboardView(app);
         this.allGoalsView = this.isMobile ? new MobileAllGoalsView(app) : new AllGoalsView(app);
         this.settingsView = new SettingsView(app);
@@ -27,7 +27,7 @@ class UIController {
         // Handle window resize to switch between mobile/desktop views
         window.addEventListener('resize', () => {
             const wasMobile = this.isMobile;
-            this.isMobile = this.detectMobile();
+            this.isMobile = isMobileDevice();
             if (wasMobile !== this.isMobile) {
                 // Preserve filter state
                 const oldState = this.allGoalsView.allGoalsState;
@@ -39,10 +39,6 @@ class UIController {
                 this.renderViews();
             }
         });
-    }
-
-    detectMobile() {
-        return window.innerWidth <= MOBILE_BREAKPOINT_PX || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
     applyLanguageUpdates() {

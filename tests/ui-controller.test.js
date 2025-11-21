@@ -451,18 +451,22 @@ describe('UIController', () => {
         );
     });
 
-    test('detectMobile should return true for mobile widths', () => {
+    test('isMobile should be true for mobile widths', () => {
         window.innerWidth = 800;
-        expect(uiController.detectMobile()).toBe(true);
+        // Recreate controller to get updated isMobile value
+        const testController = new UIController(mockApp);
+        expect(testController.isMobile).toBe(true);
     });
 
-    test('detectMobile should return false for desktop widths', () => {
+    test('isMobile should be false for desktop widths', () => {
         window.innerWidth = 1000;
         Object.defineProperty(window.navigator, 'userAgent', {
             value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
             configurable: true
         });
-        expect(uiController.detectMobile()).toBe(false);
+        // Recreate controller to get updated isMobile value
+        const testController = new UIController(mockApp);
+        expect(testController.isMobile).toBe(false);
     });
 
     test('setupEventListeners should tolerate missing optional elements', () => {
@@ -579,35 +583,36 @@ describe('UIController', () => {
         expect(uiController.modalsView.closeCompletionModal).toHaveBeenCalled();
     });
 
-    test('detectMobile should return true for mobile width', () => {
+    test('isMobile should be true for mobile width', () => {
         window.innerWidth = 800;
-        expect(uiController.detectMobile()).toBe(true);
+        // Recreate controller to get updated isMobile value
+        const testController = new UIController(mockApp);
+        expect(testController.isMobile).toBe(true);
     });
 
-    test('detectMobile should return true for mobile user agent', () => {
-        // Test the detectMobile method directly with a mobile user agent
-        // The regex checks for iPhone, so let's test that
-        const originalUserAgent = window.navigator.userAgent;
+    test('isMobile should be true for mobile user agent', () => {
+        // Test with a mobile user agent
         Object.defineProperty(window.navigator, 'userAgent', {
             get: () => 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)',
             configurable: true
         });
         window.innerWidth = 1200;
         
-        // Test the method directly - it should match iPhone in the regex
-        const result = uiController.detectMobile();
-        // If it doesn't match, that's okay - the test is just checking the method works
-        // The important thing is it doesn't throw
-        expect(typeof result).toBe('boolean');
+        // Recreate controller to get updated isMobile value
+        const testController = new UIController(mockApp);
+        // Should be true because of mobile user agent
+        expect(testController.isMobile).toBe(true);
     });
 
-    test('detectMobile should return false for desktop', () => {
+    test('isMobile should be false for desktop', () => {
         window.innerWidth = 1200;
         Object.defineProperty(window.navigator, 'userAgent', {
             value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
             configurable: true
         });
-        expect(uiController.detectMobile()).toBe(false);
+        // Recreate controller to get updated isMobile value
+        const testController = new UIController(mockApp);
+        expect(testController.isMobile).toBe(false);
     });
 
     test('window resize should switch from mobile to desktop view', () => {
