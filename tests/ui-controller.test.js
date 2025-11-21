@@ -202,6 +202,22 @@ beforeEach(() => {
         revertGoalToHistoryEntry: jest.fn(),
         isGoalPaused: jest.fn(() => false),
         pauseGoal: jest.fn(),
+        priorityCache: {
+            getPriority: jest.fn((goalId) => {
+                const goal = mockGoalService.goals.find(g => g.id === goalId);
+                return goal ? mockGoalService.calculatePriority(goal) : 0;
+            }),
+            getAllPriorities: jest.fn(() => {
+                const priorities = new Map();
+                mockGoalService.goals.forEach(goal => {
+                    priorities.set(goal.id, mockGoalService.calculatePriority(goal));
+                });
+                return priorities;
+            }),
+            invalidate: jest.fn(),
+            refreshIfNeeded: jest.fn(),
+            clear: jest.fn()
+        }
     };
     mockSettingsService = {
         getSettings: jest.fn(() => ({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] })),
@@ -496,15 +512,12 @@ describe('UIController', () => {
 
     test('updateGoalInline should update goal and re-render', () => {
         mockGoalService.updateGoal.mockReturnValue({ id: 'goal-1', title: 'Updated' });
-        uiController.dashboardView.invalidatePriorityCache = jest.fn();
-        uiController.allGoalsView.invalidatePriorityCache = jest.fn();
         uiController.renderViews = jest.fn();
 
         uiController.updateGoalInline('goal-1', { title: 'Updated' });
 
         expect(mockGoalService.updateGoal).toHaveBeenCalledWith('goal-1', { title: 'Updated' }, 3);
-        expect(uiController.dashboardView.invalidatePriorityCache).toHaveBeenCalled();
-        expect(uiController.allGoalsView.invalidatePriorityCache).toHaveBeenCalled();
+        // Cache is automatically invalidated by GoalService, no manual invalidation needed
         expect(uiController.renderViews).toHaveBeenCalled();
     });
 

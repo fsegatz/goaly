@@ -49,6 +49,14 @@ beforeEach(() => {
         updateGoal: jest.fn(),
         deleteGoal: jest.fn(),
         revertGoalToHistoryEntry: jest.fn(),
+        calculatePriority: jest.fn(() => 0),
+        priorityCache: {
+            getPriority: jest.fn(() => 0),
+            getAllPriorities: jest.fn(() => new Map()),
+            invalidate: jest.fn(),
+            refreshIfNeeded: jest.fn(),
+            clear: jest.fn()
+        }
     };
 
     const languageService = new LanguageService();
