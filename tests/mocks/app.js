@@ -1,6 +1,7 @@
 // tests/mocks/app.js
 
 const LanguageService = require('../../src/domain/services/language-service').default;
+const ErrorHandler = require('../../src/domain/services/error-handler').default;
 const {
     createMockGoalService,
     createMockSettingsService,
@@ -27,6 +28,9 @@ function createMockApp(overrides = {}) {
         languageService.init(overrides.language || 'en');
     }
 
+    // Create error handler with language service
+    const errorHandler = overrides.errorHandler || new ErrorHandler(languageService);
+
     const syncManager = overrides.syncManager || createMockSyncManager();
     const uiController = overrides.uiController || createMockUIController();
 
@@ -35,6 +39,7 @@ function createMockApp(overrides = {}) {
         settingsService,
         reviewService,
         languageService,
+        errorHandler,
         syncManager,
         uiController,
         reviews: overrides.reviews || [],

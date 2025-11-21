@@ -193,6 +193,7 @@ const de = {
         confirmDelete: 'Möchtest du dieses Ziel wirklich löschen?'
     },
     errors: {
+        generic: 'Ein Fehler ist aufgetreten: {{message}}',
         goalUpdateFailed: 'Aktualisierung des Ziels fehlgeschlagen.',
         goalSaveFailed: 'Speichern des Ziels fehlgeschlagen.',
         revertNotPossible: 'Zurücksetzen nicht möglich.',

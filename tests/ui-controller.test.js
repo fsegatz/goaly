@@ -2,6 +2,7 @@ const { JSDOM } = require('jsdom');
 const UIController = require('../src/ui/ui-controller').default;
 const Goal = require('../src/domain/models/goal').default;
 const LanguageService = require('../src/domain/services/language-service').default;
+const ErrorHandler = require('../src/domain/services/error-handler').default;
 
 let dom;
 let document;
@@ -215,11 +216,19 @@ beforeEach(() => {
     languageService = new LanguageService();
     languageService.init('en');
 
+    const mockErrorHandler = new ErrorHandler(languageService);
+    mockErrorHandler.showError = jest.fn();
+    mockErrorHandler.error = jest.fn();
+    mockErrorHandler.warning = jest.fn();
+    mockErrorHandler.info = jest.fn();
+    mockErrorHandler.critical = jest.fn();
+
     mockApp = {
         goalService: mockGoalService,
         settingsService: mockSettingsService,
         reviewService: mockReviewService,
         languageService,
+        errorHandler: mockErrorHandler,
         reviews: [],
         exportData: jest.fn(),
         importData: jest.fn(),
@@ -398,7 +407,6 @@ describe('UIController', () => {
     });
 
     test('changeGoalStatus handles thrown errors and shows alert', () => {
-        const alertSpy = jest.spyOn(global, 'alert').mockImplementation(() => {});
         mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3 });
         mockGoalService.setGoalStatus.mockImplementation(() => {
             throw new Error('boom');
@@ -406,18 +414,25 @@ describe('UIController', () => {
 
         uiController.changeGoalStatus('goal-1', 'completed');
 
-        expect(alertSpy).toHaveBeenCalledWith('boom');
-        alertSpy.mockRestore();
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith(
+            'errors.statusChangeFailed',
+            { message: 'boom' },
+            expect.any(Error)
+        );
         mockGoalService.setGoalStatus.mockReset();
     });
 
     test('updateGoalInline should show an alert when update throws an error', () => {
-        window.alert.mockClear();
+        mockApp.errorHandler.error.mockClear();
         mockGoalService.updateGoal.mockImplementationOnce(() => {
             throw { message: '' };
         });
         uiController.updateGoalInline('goal-error', {});
-        expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('Updating the goal failed.'));
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith(
+            'errors.goalUpdateFailed',
+            { message: '' },
+            expect.any(Object)
+        );
     });
 
     test('detectMobile should return true for mobile widths', () => {
@@ -498,11 +513,11 @@ describe('UIController', () => {
             throw new Error('Update failed');
         });
         uiController.renderViews = jest.fn();
-        window.alert.mockClear();
+        mockApp.errorHandler.error.mockClear();
 
         uiController.updateGoalInline('goal-1', { title: 'Updated' });
 
-        expect(window.alert).toHaveBeenCalled();
+        expect(mockApp.errorHandler.error).toHaveBeenCalled();
         expect(uiController.renderViews).toHaveBeenCalled();
     });
 
@@ -522,12 +537,12 @@ describe('UIController', () => {
 
     test('changeGoalStatus should alert when goal not found', () => {
         mockGoalService.setGoalStatus.mockReturnValue(null);
-        window.alert.mockClear();
+        mockApp.errorHandler.error.mockClear();
         uiController.renderViews = jest.fn();
 
         uiController.changeGoalStatus('missing-goal', 'completed');
 
-        expect(window.alert).toHaveBeenCalled();
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('errors.goalNotFound');
         expect(uiController.renderViews).not.toHaveBeenCalled();
     });
 
