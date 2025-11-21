@@ -6,6 +6,11 @@
  * Provides a simple API for attaching and automatically cleaning up event listeners,
  * eliminating the need for manual tracking and removal of listeners.
  * 
+ * **Important:** To prevent memory leaks, it is crucial to call `cleanup()` or `off()`
+ * when the managed elements are removed from the DOM. Since this class uses a Map to
+ * track elements, it holds strong references to elements, which can prevent garbage
+ * collection if not managed correctly.
+ * 
  * @example
  * const eventManager = new EventManager();
  * 
