@@ -217,8 +217,6 @@ class GoalService {
             after: afterSnapshot,
             changes
         });
-        // Status changes may affect priority (e.g., deadline calculations)
-        this.priorityCache.invalidate();
     }
 
     setGoalStatus(id, newStatus, maxActiveGoals) {
@@ -244,7 +242,8 @@ class GoalService {
             this.saveGoals();
         }
         
-        // Cache already invalidated by handleStatusTransition
+        // Status changes may affect priority (e.g., deadline calculations)
+        this.priorityCache.invalidate();
 
         return goal;
     }
