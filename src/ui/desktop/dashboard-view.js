@@ -627,25 +627,25 @@ export class DashboardView extends BaseUIController {
             // Clean up existing step element listeners before re-rendering
             // This prevents duplicate listeners when steps are re-rendered
             // Each listener is explicitly removed using the stored reference
+            // Element references are stored to avoid redundant DOM queries
             if (card._stepListeners.stepElements) {
-                card._stepListeners.stepElements.forEach((listeners, stepEl) => {
+                card._stepListeners.stepElements.forEach((listenerData, stepEl) => {
                     if (stepEl.parentNode) {
-                        // Remove listeners if element still exists in DOM
-                        const checkbox = stepEl.querySelector('.step-checkbox');
-                        const textEl = stepEl.querySelector('.step-text');
-                        const deleteBtn = stepEl.querySelector('.step-delete');
+                        // Remove listeners using stored element references
+                        // This avoids redundant DOM queries and improves performance
+                        const { elements, listeners } = listenerData;
                         
-                        if (checkbox && listeners.checkbox) {
-                            checkbox.removeEventListener('change', listeners.checkbox);
+                        if (elements.checkbox && listeners.checkbox) {
+                            elements.checkbox.removeEventListener('change', listeners.checkbox);
                         }
-                        if (textEl && listeners.textBlur) {
-                            textEl.removeEventListener('blur', listeners.textBlur);
+                        if (elements.textEl && listeners.textBlur) {
+                            elements.textEl.removeEventListener('blur', listeners.textBlur);
                         }
-                        if (textEl && listeners.textKeydown) {
-                            textEl.removeEventListener('keydown', listeners.textKeydown);
+                        if (elements.textEl && listeners.textKeydown) {
+                            elements.textEl.removeEventListener('keydown', listeners.textKeydown);
                         }
-                        if (deleteBtn && listeners.delete) {
-                            deleteBtn.removeEventListener('click', listeners.delete);
+                        if (elements.deleteBtn && listeners.deleteHandler) {
+                            elements.deleteBtn.removeEventListener('click', listeners.deleteHandler);
                         }
                     }
                 });
@@ -721,14 +721,7 @@ export class DashboardView extends BaseUIController {
      * @param {Function} updateGoalInline - Callback to update goal data
      */
     attachStepListeners(stepsList, saveSteps, renderSteps, card, goal, updateGoalInline) {
-        // Ensure listener storage exists
-        if (!card._stepListeners) {
-            card._stepListeners = {
-                addStepBtn: null,
-                stepElements: new Map()
-            };
-        }
-
+        // setupSteps already ensures card._stepListeners is initialized before calling this function
         stepsList.querySelectorAll('.goal-step').forEach(stepEl => {
             const checkbox = stepEl.querySelector('.step-checkbox');
             const textEl = stepEl.querySelector('.step-text');
@@ -780,12 +773,20 @@ export class DashboardView extends BaseUIController {
                 renderSteps();
             };
 
-            // Store listener references for cleanup
+            // Store element references and listener functions for cleanup
+            // Storing element references avoids redundant DOM queries during cleanup
             card._stepListeners.stepElements.set(stepEl, {
-                checkbox: handleCheckboxChange,
-                textBlur: handleTextBlur,
-                textKeydown: handleTextKeydown,
-                delete: handleDeleteClick
+                elements: {
+                    checkbox,
+                    textEl,
+                    deleteBtn
+                },
+                listeners: {
+                    checkbox: handleCheckboxChange,
+                    textBlur: handleTextBlur,
+                    textKeydown: handleTextKeydown,
+                    deleteHandler: handleDeleteClick
+                }
             });
 
             // Attach listeners
