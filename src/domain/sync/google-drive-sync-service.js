@@ -68,56 +68,7 @@ class GoogleDriveSyncService {
                     this.tokenClient = window.google.accounts.oauth2.initTokenClient({
                         client_id: this.clientId,
                         scope: SCOPES,
-                        callback: async (response) => {
-                            if (response.error) {
-                                let errorMessage = response.error;
-                                if (response.error === 'popup_closed_by_user') {
-                                    errorMessage = 'Authentication cancelled. Please try again.';
-                                } else if (response.error === 'access_denied') {
-                                    errorMessage = 'Access denied. Make sure you are added as a test user in Google Cloud Console.';
-                                } else if (response.error === 'invalid_client') {
-                                    errorMessage = 'Invalid client ID. Please check your configuration.';
-                                } else if (response.error === 'redirect_uri_mismatch') {
-                                    errorMessage = 'Redirect URI mismatch. Please check your OAuth configuration in Google Cloud Console.';
-                                } else if (response.error === 'immediate_failed' || response.error === 'popup_blocked') {
-                                    // Silent refresh failed - user needs to re-authenticate
-                                    errorMessage = 'Session expired. Please sign in again.';
-                                }
-                                
-                                // Handle refresh promise if pending
-                                if (this.refreshReject) {
-                                    this.refreshReject(new Error(errorMessage));
-                                    this._clearPendingRefreshState();
-                                }
-                                return;
-                            }
-
-                            if (!response.access_token) {
-                                const error = new Error('No access token received from Google. Please try again.');
-                                if (this.refreshReject) {
-                                    this.refreshReject(error);
-                                    this._clearPendingRefreshState();
-                                }
-                                return;
-                            }
-
-                            this.accessToken = response.access_token;
-                            localStorage.setItem(STORAGE_KEY_GDRIVE_TOKEN, JSON.stringify({
-                                access_token: this.accessToken,
-                                expires_at: Date.now() + (response.expires_in * 1000)
-                            }));
-
-                            // Set token for gapi requests
-                            if (window.gapi && window.gapi.client) {
-                                window.gapi.client.setToken({ access_token: this.accessToken });
-                            }
-
-                            // Handle refresh promise if pending
-                            if (this.refreshResolve) {
-                                this.refreshResolve(true);
-                                this._clearPendingRefreshState();
-                            }
-                        }
+                        callback: (response) => this._handleTokenResponse(response)
                     });
                 }
             } catch (error) {
@@ -204,6 +155,75 @@ class GoogleDriveSyncService {
     }
 
     /**
+     * Handle OAuth token response from Google
+     * @param {Object} response - The OAuth response from Google
+     * @param {Function} resolve - Optional resolve function for authenticate promise
+     * @param {Function} reject - Optional reject function for authenticate promise
+     */
+    _handleTokenResponse(response, resolve = null, reject = null) {
+        if (response.error) {
+            let errorMessage = response.error;
+            if (response.error === 'popup_closed_by_user') {
+                errorMessage = 'Authentication cancelled. Please try again.';
+            } else if (response.error === 'access_denied') {
+                errorMessage = 'Access denied. Make sure you are added as a test user in Google Cloud Console.';
+            } else if (response.error === 'invalid_client') {
+                errorMessage = 'Invalid client ID. Please check your configuration.';
+            } else if (response.error === 'redirect_uri_mismatch') {
+                errorMessage = 'Redirect URI mismatch. Please check your OAuth configuration in Google Cloud Console.';
+            } else if (response.error === 'immediate_failed' || response.error === 'popup_blocked') {
+                // Silent refresh failed - user needs to re-authenticate
+                errorMessage = 'Session expired. Please sign in again.';
+            }
+            
+            const error = new Error(errorMessage);
+            
+            // Handle refresh promise if pending
+            if (this.refreshReject) {
+                this.refreshReject(error);
+                this._clearPendingRefreshState();
+            } else if (reject) {
+                // Handle authenticate promise
+                reject(error);
+            }
+            return;
+        }
+
+        if (!response.access_token) {
+            const error = new Error('No access token received from Google. Please try again.');
+            // Handle refresh promise if pending
+            if (this.refreshReject) {
+                this.refreshReject(error);
+                this._clearPendingRefreshState();
+            } else if (reject) {
+                // Handle authenticate promise
+                reject(error);
+            }
+            return;
+        }
+
+        this.accessToken = response.access_token;
+        localStorage.setItem(STORAGE_KEY_GDRIVE_TOKEN, JSON.stringify({
+            access_token: this.accessToken,
+            expires_at: Date.now() + (response.expires_in * 1000)
+        }));
+
+        // Set token for gapi requests
+        if (window.gapi && window.gapi.client) {
+            window.gapi.client.setToken({ access_token: this.accessToken });
+        }
+
+        // Handle refresh promise if pending
+        if (this.refreshResolve) {
+            this.refreshResolve(true);
+            this._clearPendingRefreshState();
+        } else if (resolve) {
+            // Handle authenticate promise
+            resolve(this.accessToken);
+        }
+    }
+
+    /**
      * Check if user is authenticated
      */
     isAuthenticated() {
@@ -227,62 +247,7 @@ class GoogleDriveSyncService {
                 this.tokenClient = window.google.accounts.oauth2.initTokenClient({
                     client_id: this.clientId,
                     scope: SCOPES,
-                    callback: async (response) => {
-                        if (response.error) {
-                            let errorMessage = response.error;
-                            if (response.error === 'popup_closed_by_user') {
-                                errorMessage = 'Authentication cancelled. Please try again.';
-                            } else if (response.error === 'access_denied') {
-                                errorMessage = 'Access denied. Make sure you are added as a test user in Google Cloud Console.';
-                            } else if (response.error === 'invalid_client') {
-                                errorMessage = 'Invalid client ID. Please check your configuration.';
-                            } else if (response.error === 'redirect_uri_mismatch') {
-                                errorMessage = 'Redirect URI mismatch. Please check your OAuth configuration in Google Cloud Console.';
-                            } else if (response.error === 'immediate_failed' || response.error === 'popup_blocked') {
-                                // Silent refresh failed - user needs to re-authenticate
-                                errorMessage = 'Session expired. Please sign in again.';
-                            }
-                            
-                            // Handle refresh promise if pending
-                            if (this.refreshReject) {
-                                this.refreshReject(new Error(errorMessage));
-                                this._clearPendingRefreshState();
-                            } else {
-                                reject(new Error(errorMessage));
-                            }
-                            return;
-                        }
-
-                        if (!response.access_token) {
-                            const error = new Error('No access token received from Google. Please try again.');
-                            if (this.refreshReject) {
-                                this.refreshReject(error);
-                                this._clearPendingRefreshState();
-                            } else {
-                                reject(error);
-                            }
-                            return;
-                        }
-
-                        this.accessToken = response.access_token;
-                        localStorage.setItem(STORAGE_KEY_GDRIVE_TOKEN, JSON.stringify({
-                            access_token: this.accessToken,
-                            expires_at: Date.now() + (response.expires_in * 1000)
-                        }));
-
-                        // Set token for gapi requests
-                        if (window.gapi && window.gapi.client) {
-                            window.gapi.client.setToken({ access_token: this.accessToken });
-                        }
-
-                        // Handle refresh promise if pending
-                        if (this.refreshResolve) {
-                            this.refreshResolve(true);
-                            this._clearPendingRefreshState();
-                        } else {
-                            resolve(this.accessToken);
-                        }
-                    }
+                    callback: (response) => this._handleTokenResponse(response, resolve, reject)
                 });
 
                 if (!this.tokenClient) {
@@ -378,56 +343,7 @@ class GoogleDriveSyncService {
                     this.tokenClient = window.google.accounts.oauth2.initTokenClient({
                         client_id: this.clientId,
                         scope: SCOPES,
-                        callback: async (response) => {
-                            if (response.error) {
-                                let errorMessage = response.error;
-                                if (response.error === 'popup_closed_by_user') {
-                                    errorMessage = 'Authentication cancelled. Please try again.';
-                                } else if (response.error === 'access_denied') {
-                                    errorMessage = 'Access denied. Make sure you are added as a test user in Google Cloud Console.';
-                                } else if (response.error === 'invalid_client') {
-                                    errorMessage = 'Invalid client ID. Please check your configuration.';
-                                } else if (response.error === 'redirect_uri_mismatch') {
-                                    errorMessage = 'Redirect URI mismatch. Please check your OAuth configuration in Google Cloud Console.';
-                                } else if (response.error === 'immediate_failed' || response.error === 'popup_blocked') {
-                                    // Silent refresh failed - user needs to re-authenticate
-                                    errorMessage = 'Session expired. Please sign in again.';
-                                }
-                                
-                                // Handle refresh promise if pending
-                                if (this.refreshReject) {
-                                    this.refreshReject(new Error(errorMessage));
-                                    this._clearPendingRefreshState();
-                                }
-                                return;
-                            }
-
-                            if (!response.access_token) {
-                                const error = new Error('No access token received from Google. Please try again.');
-                                if (this.refreshReject) {
-                                    this.refreshReject(error);
-                                    this._clearPendingRefreshState();
-                                }
-                                return;
-                            }
-
-                            this.accessToken = response.access_token;
-                            localStorage.setItem(STORAGE_KEY_GDRIVE_TOKEN, JSON.stringify({
-                                access_token: this.accessToken,
-                                expires_at: Date.now() + (response.expires_in * 1000)
-                            }));
-
-                            // Set token for gapi requests
-                            if (window.gapi && window.gapi.client) {
-                                window.gapi.client.setToken({ access_token: this.accessToken });
-                            }
-
-                            // Handle refresh promise if pending
-                            if (this.refreshResolve) {
-                                this.refreshResolve(true);
-                                this._clearPendingRefreshState();
-                            }
-                        }
+                        callback: (response) => this._handleTokenResponse(response)
                     });
                 }
 
