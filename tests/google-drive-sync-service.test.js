@@ -8,6 +8,10 @@ describe('GoogleDriveSyncService', () => {
     let mockGoogleAccounts;
 
     beforeEach(() => {
+        // Mock console.warn and console.error to suppress expected warnings during tests
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
+        jest.spyOn(console, 'error').mockImplementation(() => {});
+        
         // Mock localStorage
         global.localStorage = {
             getItem: jest.fn(),
@@ -76,6 +80,8 @@ describe('GoogleDriveSyncService', () => {
 
     afterEach(() => {
         jest.clearAllMocks();
+        // Restore console methods
+        jest.restoreAllMocks();
     });
 
     describe('initialization', () => {

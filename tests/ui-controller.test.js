@@ -232,15 +232,34 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-    // Clear any pending timers
+    // Clear any pending timers first
     jest.clearAllTimers();
     jest.useRealTimers();
     
+    // Clean up event listeners by closing the JSDOM window BEFORE deleting globals
+    // This ensures all event listeners are removed and the worker can exit gracefully
+    if (dom && dom.window) {
+        try {
+            // Remove all event listeners by closing the window
+            if (!dom.window.closed) {
+                dom.window.close();
+            }
+        } catch (e) {
+            // Window might already be closed, ignore
+        }
+    }
+    
+    // Clear all references to allow garbage collection
     delete global.document;
     delete global.window;
     delete global.navigator;
     delete global.confirm;
     delete global.alert;
+    
+    // Force garbage collection hint (if available)
+    if (global.gc) {
+        global.gc();
+    }
 });
 
 describe('UIController', () => {
