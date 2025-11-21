@@ -24,3 +24,10 @@ export const HISTORY_EVENTS = {
     ROLLBACK: 'rollback'
 };
 
+// UI constants
+export const MOBILE_BREAKPOINT_PX = 900;
+export const GOAL_HISTORY_LIMIT = 50;
+export const MAX_RATING_VALUE = 5;
+export const DEADLINE_BONUS_DAYS = 30;
+export const URGENT_DEADLINE_DAYS = 7;
+

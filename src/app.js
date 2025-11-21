@@ -14,6 +14,7 @@ import TimerService from './domain/services/timer-service.js';
 import ErrorHandler from './domain/services/error-handler.js';
 import { GOAL_FILE_VERSION } from './domain/utils/versioning.js';
 import { DEVELOPER_MODE_PRESS_DURATION_MS, DEVELOPER_MODE_VISUAL_FEEDBACK_MS, GOAL_SAVE_INTERVAL_MS } from './domain/utils/constants.js';
+import { getOptionalElement } from './ui/utils/dom-utils.js';
 
 class GoalyApp {
     constructor() {
@@ -63,7 +64,7 @@ class GoalyApp {
     }
 
     setupDeveloperMode() {
-        const logo = document.getElementById('goalyLogo');
+        const logo = getOptionalElement('goalyLogo');
         if (!logo) {
             return;
         }

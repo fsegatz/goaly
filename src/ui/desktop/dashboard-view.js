@@ -1,6 +1,8 @@
 // src/ui/desktop/dashboard-view.js
 
 import { BaseUIController } from './base-ui-controller.js';
+import { MAX_RATING_VALUE } from '../../domain/utils/constants.js';
+import { getElement, getOptionalElement } from '../utils/dom-utils.js';
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const BLUR_SAVE_DELAY_MS = 200;
@@ -22,8 +24,8 @@ export class DashboardView extends BaseUIController {
         // (not limited by maxActiveGoals - all goals needing review should show review cards)
         const reviews = Array.isArray(this.app.reviews) ? this.app.reviews : [];
 
-        const dashboardList = document.getElementById('goalsList');
-        const feedbackElement = document.getElementById('dashboardFeedback');
+        const dashboardList = getElement('goalsList');
+        const feedbackElement = getOptionalElement('dashboardFeedback');
         
         dashboardList.innerHTML = '';
 
@@ -189,7 +191,7 @@ export class DashboardView extends BaseUIController {
         input.type = 'number';
         input.name = name;
         input.min = '1';
-        input.max = '5';
+        input.max = String(MAX_RATING_VALUE);
         input.step = '1';
         input.value = value;
         input.className = 'review-card__field-input';
@@ -215,8 +217,8 @@ export class DashboardView extends BaseUIController {
         // Use a unique but consistent name for the radio group
         const groupName = `review_${name}_${goalId || Date.now()}`;
 
-        // Create radio buttons for values 1-5
-        for (let i = 1; i <= 5; i++) {
+        // Create radio buttons for values 1-MAX_RATING_VALUE
+        for (let i = 1; i <= MAX_RATING_VALUE; i++) {
             const radioWrapper = document.createElement('label');
             radioWrapper.className = 'review-card__radio-option';
             if (i === currentValue) {

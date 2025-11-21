@@ -1,5 +1,7 @@
 // src/ui/desktop/modals-view.js
 
+import { getElement, getOptionalElement } from '../utils/dom-utils.js';
+
 import { BaseUIController } from './base-ui-controller.js';
 import { computeLineDiff } from '../../domain/utils/diff-utils.js';
 
@@ -7,11 +9,11 @@ export class ModalsView extends BaseUIController {
     constructor(app) {
         super(app);
         this.completionModalRefs = {
-            completionModal: document.getElementById('completionModal'),
-            completionSuccessBtn: document.getElementById('completionSuccessBtn'),
-            completionFailureBtn: document.getElementById('completionFailureBtn'),
-            completionCancelBtn: document.getElementById('completionCancelBtn'),
-            completionCloseBtn: document.getElementById('completionCloseBtn')
+            completionModal: getElement('completionModal'),
+            completionSuccessBtn: getElement('completionSuccessBtn'),
+            completionFailureBtn: getElement('completionFailureBtn'),
+            completionCancelBtn: getElement('completionCancelBtn'),
+            completionCloseBtn: getElement('completionCloseBtn')
         };
         this.pendingCompletionGoalId = null;
         this.completionModalInitialized = false;
@@ -319,7 +321,7 @@ export class ModalsView extends BaseUIController {
         if (cached && cached.isConnected) {
             return cached;
         }
-        const element = document.getElementById(id);
+        const element = getOptionalElement(id);
         this.completionModalRefs[id] = element || null;
         return element || null;
     }
@@ -329,7 +331,7 @@ export class ModalsView extends BaseUIController {
         if (cached && cached.isConnected) {
             return cached;
         }
-        const element = document.getElementById(id);
+        const element = getOptionalElement(id);
         this.migrationModalRefs[id] = element || null;
         return element || null;
     }
@@ -514,7 +516,7 @@ export class ModalsView extends BaseUIController {
         if (cached && cached.isConnected) {
             return cached;
         }
-        const element = document.getElementById(id);
+        const element = getOptionalElement(id);
         if (element) {
             this.pauseModalRefs[id] = element;
         }
