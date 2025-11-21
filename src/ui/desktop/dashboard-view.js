@@ -3,6 +3,7 @@
 import { BaseUIController } from './base-ui-controller.js';
 import { MAX_RATING_VALUE } from '../../domain/utils/constants.js';
 import { getElement, getOptionalElement } from '../utils/dom-utils.js';
+import { EventManager } from '../utils/event-manager.js';
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const BLUR_SAVE_DELAY_MS = 200;
@@ -584,10 +585,10 @@ export class DashboardView extends BaseUIController {
      * Sets up step management for a goal card, including rendering and event handling.
      * 
      * Event Listener Lifecycle:
-     * - Listener references are stored on the card element (_stepListeners) for explicit cleanup
-     * - Before re-rendering, existing step element listeners are removed via removeEventListener
-     * - The addStepBtn listener is stored and removed before re-attaching to prevent duplicates
-     * - This eliminates the need for cloneNode(true) workaround and makes listener management explicit
+     * - Uses EventManager utility class to handle listener lifecycle management
+     * - Before re-rendering, existing step element listeners are automatically cleaned up
+     * - The addStepBtn listener is managed via EventManager to prevent duplicates
+     * - This simplifies listener management compared to manual Map-based tracking
      * 
      * @param {HTMLElement} card - The goal card element
      * @param {Object} goal - The goal object
@@ -597,15 +598,12 @@ export class DashboardView extends BaseUIController {
         const stepsList = card.querySelector('.goal-steps-list');
         const addStepBtn = card.querySelector('.add-step');
 
-        // Store event listener references for proper cleanup
-        // This allows us to remove listeners explicitly instead of using cloneNode workaround
-        // The _stepListeners object persists across re-renders to track all attached listeners
-        if (!card._stepListeners) {
-            card._stepListeners = {
-                addStepBtn: null,
-                stepElements: new Map()
-            };
+        // Initialize EventManager for this card if it doesn't exist
+        // This manages all event listeners for steps on this card
+        if (!card._stepEventManager) {
+            card._stepEventManager = new EventManager();
         }
+        const eventManager = card._stepEventManager;
 
         const saveSteps = () => {
             const steps = Array.from(stepsList.querySelectorAll('.goal-step')).map((el, index) => {
@@ -627,32 +625,19 @@ export class DashboardView extends BaseUIController {
 
         const renderSteps = () => {
             // Clean up existing step element listeners before re-rendering
+            // EventManager tracks all listeners, so we can clean them up easily
             // This prevents duplicate listeners when steps are re-rendered
-            // Each listener is explicitly removed using the stored reference
-            // Element references are stored to avoid redundant DOM queries
-            if (card._stepListeners.stepElements) {
-                card._stepListeners.stepElements.forEach((listenerData, stepEl) => {
-                    if (stepEl.parentNode) {
-                        // Remove listeners using stored element references
-                        // This avoids redundant DOM queries and improves performance
-                        const { elements, listeners } = listenerData;
-                        
-                        if (elements.checkbox && listeners.checkbox) {
-                            elements.checkbox.removeEventListener('change', listeners.checkbox);
-                        }
-                        if (elements.textEl && listeners.textBlur) {
-                            elements.textEl.removeEventListener('blur', listeners.textBlur);
-                        }
-                        if (elements.textEl && listeners.textKeydown) {
-                            elements.textEl.removeEventListener('keydown', listeners.textKeydown);
-                        }
-                        if (elements.deleteBtn && listeners.deleteHandler) {
-                            elements.deleteBtn.removeEventListener('click', listeners.deleteHandler);
-                        }
-                    }
-                });
-                card._stepListeners.stepElements.clear();
-            }
+            const existingSteps = stepsList.querySelectorAll('.goal-step');
+            existingSteps.forEach(stepEl => {
+                // Clean up listeners for all child elements of each step
+                const checkbox = stepEl.querySelector('.step-checkbox');
+                const textEl = stepEl.querySelector('.step-text');
+                const deleteBtn = stepEl.querySelector('.step-delete');
+                
+                if (checkbox) eventManager.off(checkbox);
+                if (textEl) eventManager.off(textEl);
+                if (deleteBtn) eventManager.off(deleteBtn);
+            });
 
             const sortedSteps = [...(goal.steps || [])].sort((a, b) => (a.order || 0) - (b.order || 0));
             if (sortedSteps.length === 0) {
@@ -665,18 +650,15 @@ export class DashboardView extends BaseUIController {
                         <button type="button" class="step-delete" aria-label="${this.translate('goalCard.steps.delete')}">×</button>
                     </li>
                 `).join('');
-                this.attachStepListeners(stepsList, saveSteps, renderSteps, card, goal, updateGoalInline);
+                this.attachStepListeners(stepsList, saveSteps, renderSteps, card, goal, updateGoalInline, eventManager);
             }
         };
 
-        // Remove existing addStepBtn listener if it exists
+        // Remove existing addStepBtn listener if it exists (via EventManager)
         // This prevents duplicate listeners when setupSteps is called multiple times
-        if (card._stepListeners.addStepBtn) {
-            addStepBtn.removeEventListener('click', card._stepListeners.addStepBtn);
-        }
+        eventManager.off(addStepBtn);
 
-        // Create and store the addStepBtn click handler
-        // The handler reference is stored so it can be removed later if needed
+        // Create and attach the addStepBtn click handler via EventManager
         const handleAddStepClick = () => {
             const newStep = {
                 id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
@@ -699,21 +681,20 @@ export class DashboardView extends BaseUIController {
             }
         };
 
-        // Store the listener reference and attach it
-        card._stepListeners.addStepBtn = handleAddStepClick;
-        addStepBtn.addEventListener('click', handleAddStepClick);
+        // Attach listener via EventManager
+        eventManager.on(addStepBtn, 'click', handleAddStepClick);
 
         // Initial render
         renderSteps();
     }
 
     /**
-     * Attaches event listeners to step elements and stores references for cleanup.
+     * Attaches event listeners to step elements using EventManager.
      * 
      * Listener Management:
-     * - All listeners are stored in card._stepListeners.stepElements Map
-     * - Named handler functions are used so references can be stored and removed later
-     * - When steps are re-rendered, these listeners are explicitly removed before new ones are attached
+     * - All listeners are managed via EventManager for automatic cleanup
+     * - When steps are re-rendered, EventManager automatically removes old listeners
+     * - This simplifies listener lifecycle management compared to manual tracking
      * 
      * @param {HTMLElement} stepsList - The container element for all steps
      * @param {Function} saveSteps - Callback to save step changes
@@ -721,16 +702,15 @@ export class DashboardView extends BaseUIController {
      * @param {HTMLElement} card - The goal card element
      * @param {Object} goal - The goal object
      * @param {Function} updateGoalInline - Callback to update goal data
+     * @param {EventManager} eventManager - The EventManager instance for this card
      */
-    attachStepListeners(stepsList, saveSteps, renderSteps, card, goal, updateGoalInline) {
-        // setupSteps already ensures card._stepListeners is initialized before calling this function
+    attachStepListeners(stepsList, saveSteps, renderSteps, card, goal, updateGoalInline, eventManager) {
         stepsList.querySelectorAll('.goal-step').forEach(stepEl => {
             const checkbox = stepEl.querySelector('.step-checkbox');
             const textEl = stepEl.querySelector('.step-text');
             const deleteBtn = stepEl.querySelector('.step-delete');
 
-            // Create named handler functions so we can store references for cleanup
-            // These named functions allow explicit removal via removeEventListener
+            // Create named handler functions
             const handleCheckboxChange = () => {
                 stepEl.classList.toggle('completed', checkbox.checked);
                 saveSteps();
@@ -775,27 +755,11 @@ export class DashboardView extends BaseUIController {
                 renderSteps();
             };
 
-            // Store element references and listener functions for cleanup
-            // Storing element references avoids redundant DOM queries during cleanup
-            card._stepListeners.stepElements.set(stepEl, {
-                elements: {
-                    checkbox,
-                    textEl,
-                    deleteBtn
-                },
-                listeners: {
-                    checkbox: handleCheckboxChange,
-                    textBlur: handleTextBlur,
-                    textKeydown: handleTextKeydown,
-                    deleteHandler: handleDeleteClick
-                }
-            });
-
-            // Attach listeners
-            checkbox.addEventListener('change', handleCheckboxChange);
-            textEl.addEventListener('blur', handleTextBlur);
-            textEl.addEventListener('keydown', handleTextKeydown);
-            deleteBtn.addEventListener('click', handleDeleteClick);
+            // Attach listeners via EventManager for automatic lifecycle management
+            eventManager.on(checkbox, 'change', handleCheckboxChange);
+            eventManager.on(textEl, 'blur', handleTextBlur);
+            eventManager.on(textEl, 'keydown', handleTextKeydown);
+            eventManager.on(deleteBtn, 'click', handleDeleteClick);
         });
     }
 
