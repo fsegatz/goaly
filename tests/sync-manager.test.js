@@ -196,6 +196,24 @@ describe('SyncManager', () => {
         expect(() => manager.hookGoalSavesForBackgroundSync()).not.toThrow();
     });
 
+    test('hookSettingsUpdatesForBackgroundSync should register listener', () => {
+        manager.hookSettingsUpdatesForBackgroundSync();
+
+        expect(mockApp.settingsService.onAfterSave).toHaveBeenCalled();
+    });
+
+    test('hookSettingsUpdatesForBackgroundSync should handle missing settingsService', () => {
+        mockApp.settingsService = null;
+
+        expect(() => manager.hookSettingsUpdatesForBackgroundSync()).not.toThrow();
+    });
+
+    test('hookSettingsUpdatesForBackgroundSync should handle missing onAfterSave', () => {
+        mockApp.settingsService = {};
+
+        expect(() => manager.hookSettingsUpdatesForBackgroundSync()).not.toThrow();
+    });
+
     test('scheduleBackgroundSyncSoon should not schedule without service', () => {
         manager.googleDriveSyncService = null;
 
@@ -583,6 +601,38 @@ describe('SyncManager', () => {
         callback();
 
         expect(manager.scheduleBackgroundSyncSoon).not.toHaveBeenCalled();
+    });
+
+    test('hookSettingsUpdatesForBackgroundSync listener should respect _suppressAutoSync', () => {
+        manager.googleDriveSyncService = {
+            isAuthenticated: jest.fn(() => true)
+        };
+        manager.scheduleBackgroundSyncSoon = jest.fn();
+        manager._suppressAutoSync = true;
+
+        manager.hookSettingsUpdatesForBackgroundSync();
+
+        // Get the callback that was registered
+        const callback = mockApp.settingsService.onAfterSave.mock.calls[0][0];
+        callback();
+
+        expect(manager.scheduleBackgroundSyncSoon).not.toHaveBeenCalled();
+    });
+
+    test('hookSettingsUpdatesForBackgroundSync listener should trigger sync when not suppressed', () => {
+        manager.googleDriveSyncService = {
+            isAuthenticated: jest.fn(() => true)
+        };
+        manager.scheduleBackgroundSyncSoon = jest.fn();
+        manager._suppressAutoSync = false;
+
+        manager.hookSettingsUpdatesForBackgroundSync();
+
+        // Get the callback that was registered
+        const callback = mockApp.settingsService.onAfterSave.mock.calls[0][0];
+        callback();
+
+        expect(manager.scheduleBackgroundSyncSoon).toHaveBeenCalled();
     });
 
     test('authenticateGoogleDrive should handle error without message', async () => {

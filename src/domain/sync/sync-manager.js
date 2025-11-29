@@ -57,6 +57,20 @@ class SyncManager {
     }
 
     /**
+     * Hook into settings updates to trigger background sync
+     */
+    hookSettingsUpdatesForBackgroundSync() {
+        if (!this.app.settingsService || typeof this.app.settingsService.onAfterSave !== 'function') {
+            return;
+        }
+        this.app.settingsService.onAfterSave(() => {
+            if (!this._suppressAutoSync) {
+                this.scheduleBackgroundSyncSoon();
+            }
+        });
+    }
+
+    /**
      * Schedule a background sync after a debounce period
      */
     scheduleBackgroundSyncSoon() {

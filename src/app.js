@@ -50,6 +50,7 @@ class GoalyApp {
         this.goalService.migrateGoalsToAutoActivation(this.settingsService.getSettings().maxActiveGoals);
         this.reviewService = new ReviewService(this.goalService, this.settingsService);
         this.syncManager.hookGoalSavesForBackgroundSync();
+        this.syncManager.hookSettingsUpdatesForBackgroundSync();
         
         // Initialize Google Drive sync service if credentials are available
         this.syncManager.initGoogleDriveSync();
