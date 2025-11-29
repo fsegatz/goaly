@@ -33,6 +33,7 @@ function createMockSettingsService(overrides = {}) {
         getSettings: jest.fn(() => overrides.settings || defaultSettings),
         updateSettings: jest.fn(),
         getReviewIntervals: jest.fn(() => overrides.reviewIntervals || [30, 14, 7]),
+        onAfterSave: jest.fn(),
         ...overrides
     };
 }

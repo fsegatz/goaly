@@ -129,4 +129,57 @@ describe('Settings Service', () => {
         settingsService.updateSettings({ language: '' });
         expect(settingsService.getSettings().language).toBe('en');
     });
+
+    it('onAfterSave should register listener', () => {
+        const listener = jest.fn();
+        settingsService.onAfterSave(listener);
+        
+        settingsService.updateSettings({ maxActiveGoals: 5 });
+        
+        expect(listener).toHaveBeenCalled();
+    });
+
+    it('onAfterSave should ignore non-function listeners', () => {
+        settingsService.onAfterSave('not a function');
+        settingsService.onAfterSave(null);
+        settingsService.onAfterSave(undefined);
+        settingsService.onAfterSave({});
+        
+        // Should not throw
+        expect(() => settingsService.updateSettings({ maxActiveGoals: 5 })).not.toThrow();
+    });
+
+    it('onAfterSave should call all registered listeners', () => {
+        const listener1 = jest.fn();
+        const listener2 = jest.fn();
+        
+        settingsService.onAfterSave(listener1);
+        settingsService.onAfterSave(listener2);
+        
+        settingsService.updateSettings({ maxActiveGoals: 5 });
+        
+        expect(listener1).toHaveBeenCalled();
+        expect(listener2).toHaveBeenCalled();
+    });
+
+    it('onAfterSave should handle listener errors gracefully', () => {
+        const goodListener = jest.fn();
+        const badListener = jest.fn(() => {
+            throw new Error('Listener error');
+        });
+        const anotherGoodListener = jest.fn();
+        
+        global.console.error = jest.fn();
+        
+        settingsService.onAfterSave(goodListener);
+        settingsService.onAfterSave(badListener);
+        settingsService.onAfterSave(anotherGoodListener);
+        
+        settingsService.updateSettings({ maxActiveGoals: 5 });
+        
+        expect(goodListener).toHaveBeenCalled();
+        expect(badListener).toHaveBeenCalled();
+        expect(anotherGoodListener).toHaveBeenCalled();
+        expect(console.error).toHaveBeenCalled();
+    });
 });

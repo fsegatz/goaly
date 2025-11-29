@@ -90,6 +90,9 @@ class SettingsService {
             language: 'en',
             reviewIntervals: [...FALLBACK_REVIEW_INTERVALS]
         };
+        this._listeners = {
+            afterSave: []
+        };
         this._cleanupDeprecatedSettings();
         this.settings.reviewIntervals = normalizeReviewIntervals(this.settings.reviewIntervals);
     }
@@ -129,6 +132,25 @@ class SettingsService {
             this.settings.language = 'en';
         }
         this.saveSettings();
+        this._notifyAfterSave();
+    }
+
+    onAfterSave(listener) {
+        if (typeof listener === 'function') {
+            this._listeners.afterSave.push(listener);
+        }
+    }
+
+    _notifyAfterSave() {
+        const listeners = this._listeners?.afterSave || [];
+        for (const fn of listeners) {
+            try {
+                fn();
+            } catch (error) {
+                // Log and continue so one faulty listener does not break others
+                console.error('SettingsService afterSave listener error', error);
+            }
+        }
     }
 
     getReviewIntervals() {
