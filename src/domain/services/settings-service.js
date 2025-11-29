@@ -136,13 +136,22 @@ class SettingsService {
     }
 
     onAfterSave(listener) {
-        if (typeof listener === 'function') {
-            this._listeners.afterSave.push(listener);
+        if (typeof listener !== 'function') {
+            return () => {}; // Return a no-op for invalid listeners
         }
+        this._listeners.afterSave.push(listener);
+
+        // Return a function to unsubscribe the listener
+        return () => {
+            this._listeners.afterSave = this._listeners.afterSave.filter(
+                (registeredListener) => registeredListener !== listener
+            );
+        };
     }
 
     _notifyAfterSave() {
-        const listeners = this._listeners?.afterSave || [];
+        // Iterate over a copy of the listeners array to prevent issues if a listener unsubscribes during execution.
+        const listeners = [...(this._listeners?.afterSave || [])];
         for (const fn of listeners) {
             try {
                 fn();

@@ -182,4 +182,67 @@ describe('Settings Service', () => {
         expect(anotherGoodListener).toHaveBeenCalled();
         expect(console.error).toHaveBeenCalled();
     });
+
+    it('onAfterSave should return unsubscribe function', () => {
+        const listener = jest.fn();
+        const unsubscribe = settingsService.onAfterSave(listener);
+        
+        expect(typeof unsubscribe).toBe('function');
+    });
+
+    it('onAfterSave unsubscribe function should remove listener', () => {
+        const listener = jest.fn();
+        const unsubscribe = settingsService.onAfterSave(listener);
+        
+        settingsService.updateSettings({ maxActiveGoals: 5 });
+        expect(listener).toHaveBeenCalledTimes(1);
+        
+        unsubscribe();
+        
+        settingsService.updateSettings({ maxActiveGoals: 3 });
+        expect(listener).toHaveBeenCalledTimes(1); // Should not be called again
+    });
+
+    it('onAfterSave should handle unsubscribe during notification', () => {
+        const listener1 = jest.fn();
+        const listener2 = jest.fn(() => {
+            unsubscribe1(); // Unsubscribe listener1 during notification
+        });
+        const listener3 = jest.fn();
+        
+        const unsubscribe1 = settingsService.onAfterSave(listener1);
+        settingsService.onAfterSave(listener2);
+        settingsService.onAfterSave(listener3);
+        
+        settingsService.updateSettings({ maxActiveGoals: 5 });
+        
+        // All listeners should be called, even if one unsubscribes another
+        expect(listener1).toHaveBeenCalled();
+        expect(listener2).toHaveBeenCalled();
+        expect(listener3).toHaveBeenCalled();
+        
+        // listener1 should not be called on next update since it was unsubscribed
+        settingsService.updateSettings({ maxActiveGoals: 7 });
+        expect(listener1).toHaveBeenCalledTimes(1); // Still only called once
+        expect(listener2).toHaveBeenCalledTimes(2);
+        expect(listener3).toHaveBeenCalledTimes(2);
+    });
+
+    it('onAfterSave should return no-op for invalid listeners', () => {
+        const unsubscribe1 = settingsService.onAfterSave('not a function');
+        const unsubscribe2 = settingsService.onAfterSave(null);
+        const unsubscribe3 = settingsService.onAfterSave(undefined);
+        const unsubscribe4 = settingsService.onAfterSave({});
+        
+        expect(typeof unsubscribe1).toBe('function');
+        expect(typeof unsubscribe2).toBe('function');
+        expect(typeof unsubscribe3).toBe('function');
+        expect(typeof unsubscribe4).toBe('function');
+        
+        // Calling unsubscribe should not throw
+        expect(() => unsubscribe1()).not.toThrow();
+        expect(() => unsubscribe2()).not.toThrow();
+        expect(() => unsubscribe3()).not.toThrow();
+        expect(() => unsubscribe4()).not.toThrow();
+    });
 });
