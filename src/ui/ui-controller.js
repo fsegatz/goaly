@@ -30,8 +30,24 @@ class UIController {
             const wasMobile = this.isMobile;
             this.isMobile = isMobileDevice();
             if (wasMobile !== this.isMobile) {
+                // Preserve dashboard index if switching from mobile
+                const oldDashboardIndex = wasMobile && this.dashboardView.currentIndex !== undefined 
+                    ? this.dashboardView.currentIndex 
+                    : undefined;
+                
+                // Clean up old dashboard view
+                if (this.dashboardView.destroy) {
+                    this.dashboardView.destroy();
+                }
+                
                 // Switch dashboard view
                 this.dashboardView = this.isMobile ? new MobileDashboardView(app) : new DashboardView(app);
+                
+                // Restore index if applicable
+                if (this.isMobile && oldDashboardIndex !== undefined && this.dashboardView.currentIndex !== undefined) {
+                    this.dashboardView.currentIndex = oldDashboardIndex;
+                }
+                
                 // Preserve filter state
                 const oldState = this.allGoalsView.allGoalsState;
                 this.allGoalsView = this.isMobile ? new MobileAllGoalsView(app) : new AllGoalsView(app);

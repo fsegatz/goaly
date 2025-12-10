@@ -1067,7 +1067,7 @@ describe('UIController', () => {
             expect(dashboardView.currentIndex).toBe(0);
             
             // Swipe right (next card)
-            dashboardView.swipeRight();
+            dashboardView.goToNextCard();
             expect(dashboardView.currentIndex).toBe(1);
             
             const goalsList = document.getElementById('goalsList');
@@ -1089,7 +1089,7 @@ describe('UIController', () => {
             dashboardView.currentIndex = 1;
             
             // Swipe left (previous card)
-            dashboardView.swipeLeft();
+            dashboardView.goToPreviousCard();
             expect(dashboardView.currentIndex).toBe(0);
             
             const goalsList = document.getElementById('goalsList');
@@ -1111,12 +1111,12 @@ describe('UIController', () => {
             
             // Try to swipe right at the end
             dashboardView.currentIndex = 1;
-            dashboardView.swipeRight();
+            dashboardView.goToNextCard();
             expect(dashboardView.currentIndex).toBe(1); // Should not change
             
             // Try to swipe left at the beginning
             dashboardView.currentIndex = 0;
-            dashboardView.swipeLeft();
+            dashboardView.goToPreviousCard();
             expect(dashboardView.currentIndex).toBe(0); // Should not change
         });
 
@@ -1322,15 +1322,15 @@ describe('UIController', () => {
             mobileController.renderViews();
 
             const dashboardView = mobileController.dashboardView;
-            dashboardView.swipeRight = jest.fn();
+            dashboardView.goToNextCard = jest.fn();
             
             // Simulate swipe left (touchStartX > touchEndX, deltaX > 0)
             dashboardView.touchStartX = 200;
             dashboardView.touchEndX = 100; // 100px swipe left
             dashboardView.handleSwipe();
             
-            // Should call swipeRight (next card)
-            expect(dashboardView.swipeRight).toHaveBeenCalled();
+            // Should call goToNextCard (next card)
+            expect(dashboardView.goToNextCard).toHaveBeenCalled();
         });
 
         test('should handle handleSwipe with sufficient distance to right', () => {
@@ -1344,15 +1344,15 @@ describe('UIController', () => {
 
             const dashboardView = mobileController.dashboardView;
             dashboardView.currentIndex = 1;
-            dashboardView.swipeLeft = jest.fn();
+            dashboardView.goToPreviousCard = jest.fn();
             
             // Simulate swipe right (touchStartX < touchEndX, deltaX < 0)
             dashboardView.touchStartX = 100;
             dashboardView.touchEndX = 200; // 100px swipe right
             dashboardView.handleSwipe();
             
-            // Should call swipeLeft (previous card)
-            expect(dashboardView.swipeLeft).toHaveBeenCalled();
+            // Should call goToPreviousCard (previous card)
+            expect(dashboardView.goToPreviousCard).toHaveBeenCalled();
         });
     });
 

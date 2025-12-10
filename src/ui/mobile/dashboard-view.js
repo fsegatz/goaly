@@ -69,23 +69,19 @@ export class MobileDashboardView extends DashboardView {
         }
 
         // Combine review cards and active goal cards, with review cards first
-        const allCards = [];
+        const reviewCardData = reviews.map((review, index) => ({
+            type: 'review',
+            data: review,
+            position: index + 1,
+            total: reviews.length
+        }));
 
-        reviews.forEach((review, index) => {
-            allCards.push({
-                type: 'review',
-                data: review,
-                position: index + 1,
-                total: reviews.length
-            });
-        });
+        const goalCardData = dashboardGoals.map(goal => ({
+            type: 'goal',
+            data: goal
+        }));
 
-        dashboardGoals.forEach(goal => {
-            allCards.push({
-                type: 'goal',
-                data: goal
-            });
-        });
+        const allCards = [...reviewCardData, ...goalCardData];
 
         if (allCards.length === 0) {
             const emptyState = document.createElement('p');
@@ -236,7 +232,6 @@ export class MobileDashboardView extends DashboardView {
                 card.style.transition = '';
             });
             this.handleSwipe();
-            this.resetCardPositions();
         }, { passive: true });
 
         cardsWrapper.addEventListener('touchcancel', () => {
@@ -287,9 +282,9 @@ export class MobileDashboardView extends DashboardView {
             const deltaX = mouseEndX - mouseStartX;
             if (Math.abs(deltaX) > this.minSwipeDistance) {
                 if (deltaX > 0) {
-                    this.swipeLeft();
+                    this.goToPreviousCard();
                 } else {
-                    this.swipeRight();
+                    this.goToNextCard();
                 }
             } else {
                 this.resetCardPositions();
@@ -389,21 +384,23 @@ export class MobileDashboardView extends DashboardView {
         if (Math.abs(deltaX) > this.minSwipeDistance) {
             if (deltaX > 0) {
                 // Swipe left (next card)
-                this.swipeRight();
+                this.goToNextCard();
             } else {
                 // Swipe right (previous card)
-                this.swipeLeft();
+                this.goToPreviousCard();
             }
+        } else {
+            this.resetCardPositions();
         }
     }
 
-    swipeLeft() {
+    goToPreviousCard() {
         if (this.currentIndex > 0) {
             this.goToCard(this.currentIndex - 1);
         }
     }
 
-    swipeRight() {
+    goToNextCard() {
         if (this.currentIndex < this.cards.length - 1) {
             this.goToCard(this.currentIndex + 1);
         }
@@ -417,6 +414,10 @@ export class MobileDashboardView extends DashboardView {
         const previousIndex = this.currentIndex;
         const direction = index > previousIndex ? 1 : -1;
         this.currentIndex = index;
+        
+        // Reset drag state
+        this.dragOffset = 0;
+        this.isDragging = false;
 
         // Animate cards sliding
         this.cards.forEach((card, i) => {
@@ -459,6 +460,13 @@ export class MobileDashboardView extends DashboardView {
         setTimeout(() => {
             this.updateWrapperHeight();
         }, 300);
+    }
+
+    destroy() {
+        const existingIndicators = document.querySelector('.mobile-dashboard-indicators');
+        if (existingIndicators) {
+            existingIndicators.remove();
+        }
     }
 }
 
