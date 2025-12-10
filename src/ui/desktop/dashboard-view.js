@@ -283,7 +283,7 @@ export class DashboardView extends BaseUIController {
             ? this.formatDeadline(goal.deadline)
             : this.translate('goalCard.noDeadline');
 
-        const sortedSteps = [...(goal.steps || [])].sort((a, b) => (a.order || 0) - (b.order || 0));
+        const sortedSteps = this.sortStepsWithCompletedAtBottom(goal.steps || []);
         const stepsHtml = sortedSteps.length > 0
             ? sortedSteps.map(step => `
                 <li class="goal-step ${step.completed ? 'completed' : ''}" data-step-id="${step.id}">
@@ -641,7 +641,7 @@ export class DashboardView extends BaseUIController {
                 }
             }
 
-            const sortedSteps = [...(goal.steps || [])].sort((a, b) => (a.order || 0) - (b.order || 0));
+            const sortedSteps = this.sortStepsWithCompletedAtBottom(goal.steps || []);
             if (sortedSteps.length === 0) {
                 stepsList.innerHTML = `<li class="steps-empty">${this.translate('goalCard.steps.empty')}</li>`;
             } else {
@@ -715,7 +715,17 @@ export class DashboardView extends BaseUIController {
             // Create named handler functions
             const handleCheckboxChange = () => {
                 stepEl.classList.toggle('completed', checkbox.checked);
+                // Update the goal.steps array to reflect the checkbox state
+                const stepId = stepEl.dataset.stepId;
+                if (goal.steps) {
+                    const step = goal.steps.find(s => s.id === stepId);
+                    if (step) {
+                        step.completed = checkbox.checked;
+                    }
+                }
                 saveSteps();
+                // Re-render steps to move completed steps to bottom
+                renderSteps();
             };
 
             const handleTextBlur = () => {
@@ -763,6 +773,29 @@ export class DashboardView extends BaseUIController {
             eventManager.on(textEl, 'keydown', handleTextKeydown);
             eventManager.on(deleteBtn, 'click', handleDeleteClick);
         });
+    }
+
+    /**
+     * Sorts steps so that uncompleted steps appear at the top and completed steps at the bottom.
+     * Within each group, steps maintain their original order.
+     * @param {Array} steps - Array of step objects with completed and order properties
+     * @returns {Array} Sorted array of steps
+     */
+    sortStepsWithCompletedAtBottom(steps) {
+        if (!Array.isArray(steps) || steps.length === 0) {
+            return [];
+        }
+
+        // Separate completed and uncompleted steps
+        const uncompleted = steps.filter(step => !step.completed);
+        const completed = steps.filter(step => step.completed);
+
+        // Sort each group by order
+        uncompleted.sort((a, b) => (a.order || 0) - (b.order || 0));
+        completed.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+        // Return uncompleted first, then completed
+        return [...uncompleted, ...completed];
     }
 
 }

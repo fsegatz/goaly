@@ -401,6 +401,45 @@ describe('DashboardView', () => {
         expect(stepsList.textContent).toContain('Step 2');
     });
 
+    test('createGoalCard should display completed steps at the bottom', () => {
+        const goal = new Goal({
+            id: 'sorting-test',
+            title: 'Sorting Test',
+            description: '',
+            motivation: 3,
+            urgency: 2,
+            status: 'active',
+            deadline: null,
+            steps: [
+                { id: 'step1', text: 'Step 1', completed: true, order: 0 },
+                { id: 'step2', text: 'Step 2', completed: false, order: 1 },
+                { id: 'step3', text: 'Step 3', completed: true, order: 2 },
+                { id: 'step4', text: 'Step 4', completed: false, order: 3 }
+            ]
+        });
+        mockGoalService.calculatePriority.mockReturnValue(5);
+        const openCompletionModal = jest.fn();
+        const updateGoalInline = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
+        const stepsList = card.querySelector('.goal-steps-list');
+        const stepElements = stepsList.querySelectorAll('.goal-step');
+
+        expect(stepElements.length).toBe(4);
+        
+        // First two steps should be uncompleted (Step 2, Step 4)
+        expect(stepElements[0].textContent).toContain('Step 2');
+        expect(stepElements[0].classList.contains('completed')).toBe(false);
+        expect(stepElements[1].textContent).toContain('Step 4');
+        expect(stepElements[1].classList.contains('completed')).toBe(false);
+        
+        // Last two steps should be completed (Step 1, Step 3)
+        expect(stepElements[2].textContent).toContain('Step 1');
+        expect(stepElements[2].classList.contains('completed')).toBe(true);
+        expect(stepElements[3].textContent).toContain('Step 3');
+        expect(stepElements[3].classList.contains('completed')).toBe(true);
+    });
+
     test('createGoalCard should handle step checkbox toggle', () => {
         const goal = new Goal({
             id: 'checkbox-test',
@@ -433,6 +472,51 @@ describe('DashboardView', () => {
 
         expect(stepEl.classList.contains('completed')).toBe(true);
         expect(mockGoalService.updateGoal).toHaveBeenCalled();
+    });
+
+    test('createGoalCard should move step to bottom when completed via checkbox', () => {
+        const goal = new Goal({
+            id: 'toggle-complete-test',
+            title: 'Toggle Complete Test',
+            description: '',
+            motivation: 3,
+            urgency: 2,
+            status: 'active',
+            deadline: null,
+            steps: [
+                { id: 'step1', text: 'Step 1', completed: false, order: 0 },
+                { id: 'step2', text: 'Step 2', completed: false, order: 1 }
+            ]
+        });
+        mockGoalService.calculatePriority.mockReturnValue(5);
+        mockGoalService.goals = [goal];
+        mockGoalService.getActiveGoals.mockReturnValue([goal]);
+        mockGoalService.updateGoal.mockImplementation(() => goal);
+        const openCompletionModal = jest.fn();
+        const updateGoalInline = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
+        const stepsList = card.querySelector('.goal-steps-list');
+        let stepElements = stepsList.querySelectorAll('.goal-step');
+
+        // Initially, both steps are uncompleted, so order should be preserved
+        expect(stepElements.length).toBe(2);
+        expect(stepElements[0].textContent).toContain('Step 1');
+        expect(stepElements[1].textContent).toContain('Step 2');
+
+        // Toggle first step to completed
+        const firstCheckbox = stepElements[0].querySelector('.step-checkbox');
+        firstCheckbox.checked = true;
+        const changeEvent = new window.Event('change');
+        firstCheckbox.dispatchEvent(changeEvent);
+
+        // Wait for async update (if any) and check that Step 1 moved to bottom
+        stepElements = stepsList.querySelectorAll('.goal-step');
+        expect(stepElements.length).toBe(2);
+        expect(stepElements[0].textContent).toContain('Step 2');
+        expect(stepElements[0].classList.contains('completed')).toBe(false);
+        expect(stepElements[1].textContent).toContain('Step 1');
+        expect(stepElements[1].classList.contains('completed')).toBe(true);
     });
 
     test('createGoalCard should handle step deletion', () => {
