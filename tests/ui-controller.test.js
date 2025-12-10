@@ -261,6 +261,12 @@ afterEach(() => {
     jest.clearAllTimers();
     jest.useRealTimers();
     
+    // Clean up mobile dashboard indicators
+    if (global.document) {
+        const indicators = global.document.querySelectorAll('.mobile-dashboard-indicators');
+        indicators.forEach(indicator => indicator.remove());
+    }
+    
     // Clean up event listeners by closing the JSDOM window BEFORE deleting globals
     // This ensures all event listeners are removed and the worker can exit gracefully
     if (dom && dom.window) {
@@ -928,6 +934,426 @@ describe('UIController', () => {
         expect(() => {
             const newController = new UIController(mockApp);
         }).not.toThrow();
+    });
+
+    describe('Mobile Dashboard', () => {
+        let originalInnerWidth;
+        let originalUserAgent;
+
+        beforeEach(() => {
+            // Save original values
+            originalInnerWidth = window.innerWidth;
+            originalUserAgent = navigator.userAgent;
+            
+            // Mock mobile device
+            Object.defineProperty(window, 'innerWidth', {
+                writable: true,
+                configurable: true,
+                value: 600
+            });
+            Object.defineProperty(navigator, 'userAgent', {
+                writable: true,
+                configurable: true,
+                value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15'
+            });
+        });
+
+        afterEach(() => {
+            // Restore original values
+            Object.defineProperty(window, 'innerWidth', {
+                writable: true,
+                configurable: true,
+                value: originalInnerWidth
+            });
+            Object.defineProperty(navigator, 'userAgent', {
+                writable: true,
+                configurable: true,
+                value: originalUserAgent
+            });
+        });
+
+        test('should use MobileDashboardView on mobile devices', () => {
+            const mobileController = new UIController(mockApp);
+            expect(mobileController.dashboardView.constructor.name).toBe('MobileDashboardView');
+        });
+
+        test('should render single card view with swipe container on mobile', () => {
+            // Create test goals
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            const goal2 = new Goal('2', 'Goal 2', 4, 3, 'active');
+            mockGoalService.goals = [goal1, goal2];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const goalsList = document.getElementById('goalsList');
+            const swipeContainer = goalsList.querySelector('.mobile-dashboard-swipe-container');
+            expect(swipeContainer).toBeTruthy();
+        });
+
+        test('should show only first card initially on mobile', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            const goal2 = new Goal('2', 'Goal 2', 4, 3, 'active');
+            mockGoalService.goals = [goal1, goal2];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const goalsList = document.getElementById('goalsList');
+            const cards = goalsList.querySelectorAll('.mobile-dashboard-card');
+            expect(cards.length).toBe(2);
+            
+            // First card should be visible, second should be hidden
+            expect(cards[0].classList.contains('mobile-dashboard-card-hidden')).toBe(false);
+            expect(cards[1].classList.contains('mobile-dashboard-card-hidden')).toBe(true);
+        });
+
+        test('should show indicators when multiple cards exist on mobile', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            const goal2 = new Goal('2', 'Goal 2', 4, 3, 'active');
+            mockGoalService.goals = [goal1, goal2];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            // Indicators are now appended to body, not goalsList
+            const indicators = document.querySelectorAll('.mobile-dashboard-indicator');
+            expect(indicators.length).toBe(2);
+            
+            // First indicator should be active
+            expect(indicators[0].classList.contains('active')).toBe(true);
+            expect(indicators[1].classList.contains('active')).toBe(false);
+        });
+
+        test('should not show indicators when only one card exists on mobile', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            mockGoalService.goals = [goal1];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const goalsList = document.getElementById('goalsList');
+            const indicators = goalsList.querySelector('.mobile-dashboard-indicators');
+            expect(indicators).toBeFalsy();
+        });
+
+        test('should handle empty state on mobile', () => {
+            mockGoalService.goals = [];
+            mockGoalService.getActiveGoals.mockReturnValue([]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const goalsList = document.getElementById('goalsList');
+            const emptyState = goalsList.querySelector('p');
+            expect(emptyState).toBeTruthy();
+            expect(emptyState.textContent).toContain('No active goals');
+        });
+
+        test('should navigate to next card on swipe right', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            const goal2 = new Goal('2', 'Goal 2', 4, 3, 'active');
+            mockGoalService.goals = [goal1, goal2];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const dashboardView = mobileController.dashboardView;
+            expect(dashboardView.currentIndex).toBe(0);
+            
+            // Swipe right (next card)
+            dashboardView.swipeRight();
+            expect(dashboardView.currentIndex).toBe(1);
+            
+            const goalsList = document.getElementById('goalsList');
+            const cards = goalsList.querySelectorAll('.mobile-dashboard-card');
+            expect(cards[0].classList.contains('mobile-dashboard-card-hidden')).toBe(true);
+            expect(cards[1].classList.contains('mobile-dashboard-card-hidden')).toBe(false);
+        });
+
+        test('should navigate to previous card on swipe left', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            const goal2 = new Goal('2', 'Goal 2', 4, 3, 'active');
+            mockGoalService.goals = [goal1, goal2];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const dashboardView = mobileController.dashboardView;
+            dashboardView.currentIndex = 1;
+            
+            // Swipe left (previous card)
+            dashboardView.swipeLeft();
+            expect(dashboardView.currentIndex).toBe(0);
+            
+            const goalsList = document.getElementById('goalsList');
+            const cards = goalsList.querySelectorAll('.mobile-dashboard-card');
+            expect(cards[0].classList.contains('mobile-dashboard-card-hidden')).toBe(false);
+            expect(cards[1].classList.contains('mobile-dashboard-card-hidden')).toBe(true);
+        });
+
+        test('should not navigate beyond boundaries', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            const goal2 = new Goal('2', 'Goal 2', 4, 3, 'active');
+            mockGoalService.goals = [goal1, goal2];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const dashboardView = mobileController.dashboardView;
+            
+            // Try to swipe right at the end
+            dashboardView.currentIndex = 1;
+            dashboardView.swipeRight();
+            expect(dashboardView.currentIndex).toBe(1); // Should not change
+            
+            // Try to swipe left at the beginning
+            dashboardView.currentIndex = 0;
+            dashboardView.swipeLeft();
+            expect(dashboardView.currentIndex).toBe(0); // Should not change
+        });
+
+        test('should update indicators when navigating', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            const goal2 = new Goal('2', 'Goal 2', 4, 3, 'active');
+            mockGoalService.goals = [goal1, goal2];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            // Indicators are now appended to body
+            const indicators = document.querySelectorAll('.mobile-dashboard-indicator');
+            
+            // Navigate to second card
+            const dashboardView = mobileController.dashboardView;
+            dashboardView.goToCard(1);
+            
+            expect(indicators[0].classList.contains('active')).toBe(false);
+            expect(indicators[1].classList.contains('active')).toBe(true);
+        });
+
+        test('should handle goToCard with invalid index', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            mockGoalService.goals = [goal1];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const dashboardView = mobileController.dashboardView;
+            const initialIndex = dashboardView.currentIndex;
+            
+            // Try invalid indices
+            dashboardView.goToCard(-1);
+            expect(dashboardView.currentIndex).toBe(initialIndex);
+            
+            dashboardView.goToCard(10);
+            expect(dashboardView.currentIndex).toBe(initialIndex);
+        });
+
+        test('should navigate when clicking indicators', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            const goal2 = new Goal('2', 'Goal 2', 4, 3, 'active');
+            mockGoalService.goals = [goal1, goal2];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            // Indicators are now appended to body
+            const indicators = document.querySelectorAll('.mobile-dashboard-indicator');
+            
+            // Click second indicator
+            indicators[1].click();
+            
+            const dashboardView = mobileController.dashboardView;
+            expect(dashboardView.currentIndex).toBe(1);
+            expect(indicators[0].classList.contains('active')).toBe(false);
+            expect(indicators[1].classList.contains('active')).toBe(true);
+        });
+
+        test('should handle updateCardPositions with drag offset', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            const goal2 = new Goal('2', 'Goal 2', 4, 3, 'active');
+            mockGoalService.goals = [goal1, goal2];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const dashboardView = mobileController.dashboardView;
+            const goalsList = document.getElementById('goalsList');
+            
+            // Simulate drag to the right (negative dragPercentage)
+            dashboardView.dragOffset = -100; // Drag left (showing next card)
+            dashboardView.updateCardPositions();
+            
+            const cards = goalsList.querySelectorAll('.mobile-dashboard-card');
+            expect(cards.length).toBe(2);
+        });
+
+        test('should handle updateCardPositions with drag to left', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            const goal2 = new Goal('2', 'Goal 2', 4, 3, 'active');
+            mockGoalService.goals = [goal1, goal2];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const dashboardView = mobileController.dashboardView;
+            dashboardView.currentIndex = 1; // Start at second card
+            
+            // Simulate drag to the left (positive dragPercentage)
+            dashboardView.dragOffset = 100; // Drag right (showing prev card)
+            dashboardView.updateCardPositions();
+            
+            const goalsList = document.getElementById('goalsList');
+            const cards = goalsList.querySelectorAll('.mobile-dashboard-card');
+            expect(cards.length).toBe(2);
+        });
+
+        test('should handle updateCardPositions with empty cards', () => {
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const dashboardView = mobileController.dashboardView;
+            dashboardView.cards = [];
+            
+            // Should not throw
+            expect(() => {
+                dashboardView.updateCardPositions();
+            }).not.toThrow();
+        });
+
+        test('should handle updateWrapperHeight when card is missing', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            mockGoalService.goals = [goal1];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const dashboardView = mobileController.dashboardView;
+            dashboardView.cards = [];
+            
+            // Should not throw
+            expect(() => {
+                dashboardView.updateWrapperHeight();
+            }).not.toThrow();
+        });
+
+        test('should handle updateWrapperHeight when currentIndex is out of bounds', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            mockGoalService.goals = [goal1];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const dashboardView = mobileController.dashboardView;
+            dashboardView.currentIndex = 10; // Out of bounds
+            
+            // Should not throw
+            expect(() => {
+                dashboardView.updateWrapperHeight();
+            }).not.toThrow();
+        });
+
+        test('should preserve index when cards decrease in number', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            const goal2 = new Goal('2', 'Goal 2', 4, 3, 'active');
+            const goal3 = new Goal('3', 'Goal 3', 5, 2, 'active');
+            mockGoalService.goals = [goal1, goal2, goal3];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2, goal3]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const dashboardView = mobileController.dashboardView;
+            dashboardView.goToCard(2); // Navigate to third card
+            expect(dashboardView.currentIndex).toBe(2);
+            
+            // Remove a goal
+            mockGoalService.goals = [goal1, goal2];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
+            mobileController.renderViews();
+            
+            // Should adjust to last card (index 1)
+            expect(dashboardView.currentIndex).toBe(1);
+        });
+
+        test('should handle handleSwipe with insufficient distance', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            const goal2 = new Goal('2', 'Goal 2', 4, 3, 'active');
+            mockGoalService.goals = [goal1, goal2];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const dashboardView = mobileController.dashboardView;
+            const initialIndex = dashboardView.currentIndex;
+            
+            // Simulate small swipe (less than minSwipeDistance)
+            dashboardView.touchStartX = 100;
+            dashboardView.touchEndX = 130; // Only 30px, less than 50px threshold
+            dashboardView.handleSwipe();
+            
+            // Should not change index
+            expect(dashboardView.currentIndex).toBe(initialIndex);
+        });
+
+        test('should handle handleSwipe with sufficient distance to left', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            const goal2 = new Goal('2', 'Goal 2', 4, 3, 'active');
+            mockGoalService.goals = [goal1, goal2];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const dashboardView = mobileController.dashboardView;
+            dashboardView.swipeRight = jest.fn();
+            
+            // Simulate swipe left (touchStartX > touchEndX, deltaX > 0)
+            dashboardView.touchStartX = 200;
+            dashboardView.touchEndX = 100; // 100px swipe left
+            dashboardView.handleSwipe();
+            
+            // Should call swipeRight (next card)
+            expect(dashboardView.swipeRight).toHaveBeenCalled();
+        });
+
+        test('should handle handleSwipe with sufficient distance to right', () => {
+            const goal1 = new Goal('1', 'Goal 1', 3, 4, 'active');
+            const goal2 = new Goal('2', 'Goal 2', 4, 3, 'active');
+            mockGoalService.goals = [goal1, goal2];
+            mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
+
+            const mobileController = new UIController(mockApp);
+            mobileController.renderViews();
+
+            const dashboardView = mobileController.dashboardView;
+            dashboardView.currentIndex = 1;
+            dashboardView.swipeLeft = jest.fn();
+            
+            // Simulate swipe right (touchStartX < touchEndX, deltaX < 0)
+            dashboardView.touchStartX = 100;
+            dashboardView.touchEndX = 200; // 100px swipe right
+            dashboardView.handleSwipe();
+            
+            // Should call swipeLeft (previous card)
+            expect(dashboardView.swipeLeft).toHaveBeenCalled();
+        });
     });
 
 });
