@@ -2399,6 +2399,27 @@ main {
         max-height: 300px;
         padding-right: 4px;
         touch-action: pan-y;
+        /* Show scrollbar when content overflows */
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e0 transparent;
+    }
+    
+    /* WebKit scrollbar styling for mobile */
+    .mobile-dashboard-card .goal-steps-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .mobile-dashboard-card .goal-steps-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .mobile-dashboard-card .goal-steps-list::-webkit-scrollbar-thumb {
+        background-color: #cbd5e0;
+        border-radius: 3px;
+    }
+    
+    .mobile-dashboard-card .goal-steps-list::-webkit-scrollbar-thumb:hover {
+        background-color: #a0aec0;
     }
     
     /* Allow scrolling in steps list even during horizontal swipe detection */
