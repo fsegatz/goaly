@@ -115,6 +115,9 @@ beforeEach(() => {
     mockApp = {
         goalService: mockGoalService,
         languageService,
+        settingsService: {
+            getSettings: jest.fn(() => ({ maxActiveGoals: 3 }))
+        }
     };
 
     allGoalsView = new AllGoalsView(mockApp);
@@ -465,6 +468,80 @@ describe('AllGoalsView', () => {
 
         const rows = document.querySelectorAll('#allGoalsTableBody tr');
         expect(rows.length).toBe(1);
+    });
+
+    test('render should show Force Activate button for inactive goals', () => {
+        const goal = new Goal({ id: '1', title: 'Test', motivation: 3, urgency: 4, status: 'inactive' });
+        mockGoalService.goals = [goal];
+        mockGoalService.calculatePriority.mockImplementation(() => 10);
+
+        const openGoalForm = jest.fn();
+        allGoalsView.render(openGoalForm);
+
+        const rows = document.querySelectorAll('#allGoalsTableBody tr');
+        expect(rows.length).toBe(1);
+        const forceActivateBtn = rows[0].querySelector('.force-activate-btn');
+        expect(forceActivateBtn).toBeTruthy();
+    });
+
+    test('render should not show Force Activate button for active goals', () => {
+        const goal = new Goal({ id: '1', title: 'Test', motivation: 3, urgency: 4, status: 'active' });
+        mockGoalService.goals = [goal];
+        mockGoalService.calculatePriority.mockImplementation(() => 10);
+
+        const openGoalForm = jest.fn();
+        allGoalsView.render(openGoalForm);
+
+        const rows = document.querySelectorAll('#allGoalsTableBody tr');
+        expect(rows.length).toBe(1);
+        const forceActivateBtn = rows[0].querySelector('.force-activate-btn');
+        expect(forceActivateBtn).toBeFalsy();
+    });
+
+    test('render should show force-activated indicator for force-activated goals', () => {
+        const goal = new Goal({ id: '1', title: 'Test', motivation: 3, urgency: 4, status: 'active', forceActivated: true });
+        mockGoalService.goals = [goal];
+        mockGoalService.calculatePriority.mockImplementation(() => 10);
+
+        const openGoalForm = jest.fn();
+        allGoalsView.render(openGoalForm);
+
+        const rows = document.querySelectorAll('#allGoalsTableBody tr');
+        expect(rows.length).toBe(1);
+        const indicator = rows[0].querySelector('.force-activated-indicator');
+        expect(indicator).toBeTruthy();
+    });
+
+    test('handleForceActivate should call forceActivateGoal and re-render', () => {
+        const goal = new Goal({ id: '1', title: 'Test', motivation: 3, urgency: 4, status: 'inactive' });
+        mockGoalService.goals = [goal];
+        mockGoalService.forceActivateGoal = jest.fn(() => goal);
+
+        const openGoalForm = jest.fn();
+        allGoalsView.render = jest.fn();
+        allGoalsView.handleForceActivate('1', openGoalForm);
+
+        expect(mockGoalService.forceActivateGoal).toHaveBeenCalledWith('1', 3);
+        expect(allGoalsView.render).toHaveBeenCalledWith(openGoalForm);
+    });
+
+    test('clicking Force Activate button should not open goal form', () => {
+        const goal = new Goal({ id: '1', title: 'Test', motivation: 3, urgency: 4, status: 'inactive' });
+        mockGoalService.goals = [goal];
+        mockGoalService.calculatePriority.mockImplementation(() => 10);
+        mockGoalService.forceActivateGoal = jest.fn(() => goal);
+
+        const openGoalForm = jest.fn();
+        allGoalsView.render(openGoalForm);
+
+        const rows = document.querySelectorAll('#allGoalsTableBody tr');
+        const forceActivateBtn = rows[0].querySelector('.force-activate-btn');
+        
+        const clickEvent = new dom.window.MouseEvent('click', { bubbles: true });
+        forceActivateBtn.dispatchEvent(clickEvent);
+
+        expect(openGoalForm).not.toHaveBeenCalled();
+        expect(mockGoalService.forceActivateGoal).toHaveBeenCalled();
     });
 });
 

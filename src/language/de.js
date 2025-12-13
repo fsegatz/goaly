@@ -101,6 +101,16 @@ const de = {
             save: 'Speichern',
             cancel: 'Abbrechen',
             delete: 'Löschen'
+        },
+        stateManagement: {
+            title: 'Ziel-Status',
+            complete: 'Abschließen',
+            abandon: 'Aufgeben',
+            unpause: 'Fortsetzen',
+            reactivate: 'Reaktivieren',
+            help: 'Verwalte den Lebenszyklus dieses Ziels.',
+            confirmComplete: 'Dieses Ziel als abgeschlossen markieren?',
+            confirmAbandon: 'Dieses Ziel aufgeben? Diese Aktion kann nicht rückgängig gemacht werden.'
         }
     },
     goalHistory: {
@@ -110,8 +120,7 @@ const de = {
         title: 'Ziel abschließen',
         question: 'Hast du dein Ziel erreicht?',
         success: 'Ziel erreicht',
-        failure: 'Nicht erreicht',
-        cancel: 'Abbrechen'
+        failure: 'Nicht erreicht'
     },
     pauseModal: {
         title: 'Ziel pausieren',
@@ -202,7 +211,11 @@ const de = {
         titleRequired: 'Der Titel darf nicht leer sein.'
     },
     allGoals: {
-        openGoalAria: 'Ziel {{title}} öffnen'
+        openGoalAria: 'Ziel {{title}} öffnen',
+        forceActivate: 'Erzwingen aktivieren',
+        forceActivateAria: 'Ziel {{title}} erzwingen aktivieren',
+        forceActivated: 'Erzwungen aktiviert',
+        forceActivatedAria: 'Dieses Ziel wurde erzwungen aktiviert'
     },
     tables: {
         allGoals: {
@@ -213,7 +226,8 @@ const de = {
                 motivation: 'Motivation',
                 urgency: 'Dringlichkeit',
                 deadline: 'Deadline',
-                lastUpdated: 'Letzte Änderung'
+                lastUpdated: 'Letzte Änderung',
+                actions: 'Aktionen'
             },
             emptyState: 'Keine Ziele vorhanden, die den aktuellen Filtern entsprechen.'
         }

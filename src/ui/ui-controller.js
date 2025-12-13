@@ -24,30 +24,30 @@ class UIController {
 
         this.settingsView.initializeLanguageControls();
         this.setupEventListeners();
-        
+
         // Handle window resize to switch between mobile/desktop views
         window.addEventListener('resize', () => {
             const wasMobile = this.isMobile;
             this.isMobile = isMobileDevice();
             if (wasMobile !== this.isMobile) {
                 // Preserve dashboard index if switching from mobile
-                const oldDashboardIndex = wasMobile && this.dashboardView.currentIndex !== undefined 
-                    ? this.dashboardView.currentIndex 
+                const oldDashboardIndex = wasMobile && this.dashboardView.currentIndex !== undefined
+                    ? this.dashboardView.currentIndex
                     : undefined;
-                
+
                 // Clean up old dashboard view
                 if (this.dashboardView.destroy) {
                     this.dashboardView.destroy();
                 }
-                
+
                 // Switch dashboard view
                 this.dashboardView = this.isMobile ? new MobileDashboardView(app) : new DashboardView(app);
-                
+
                 // Restore index if applicable
                 if (this.isMobile && oldDashboardIndex !== undefined && this.dashboardView.currentIndex !== undefined) {
                     this.dashboardView.currentIndex = oldDashboardIndex;
                 }
-                
+
                 // Preserve filter state
                 const oldState = this.allGoalsView.allGoalsState;
                 this.allGoalsView = this.isMobile ? new MobileAllGoalsView(app) : new AllGoalsView(app);
@@ -98,7 +98,8 @@ class UIController {
         this.goalFormView.setupEventListeners(
             () => this.goalFormView.handleGoalSubmit(() => this.renderViews()),
             () => this.goalFormView.handleDelete(() => this.renderViews()),
-            () => this.renderViews()
+            () => this.renderViews(),
+            (goalId) => this.openCompletionModal(goalId)
         );
 
         this.settingsView.setupEventListeners(
@@ -142,7 +143,7 @@ class UIController {
         // Mobile menu
         const mobileMenuToggle = getOptionalElement('mobileMenuToggle');
         const mobileMenuDropdown = getOptionalElement('mobileMenuDropdown');
-        
+
         if (mobileMenuToggle && mobileMenuDropdown) {
             const updateDropdownPosition = () => {
                 const toggleRect = mobileMenuToggle.getBoundingClientRect();
@@ -219,8 +220,20 @@ class UIController {
         if (!goalId) {
             return;
         }
+
+        // Check if the goal modal is currently open for this goal
+        const goalModal = getOptionalElement('goalModal');
+        const goalIdInput = getOptionalElement('goalId');
+        const isGoalModalOpen = goalModal && goalModal.classList.contains('is-visible') &&
+            goalIdInput && goalIdInput.value === goalId;
+
         this.changeGoalStatus(goalId, status);
         this.modalsView.closeCompletionModal();
+
+        // If the goal form was open, refresh it to show the updated status
+        if (isGoalModalOpen) {
+            this.goalFormView.openGoalForm(goalId, () => this.renderViews());
+        }
     }
 
     handlePauseChoice(pauseData) {

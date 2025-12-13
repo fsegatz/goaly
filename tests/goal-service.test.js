@@ -588,4 +588,100 @@ describe('Goal Service', () => {
         expect(goalService.isGoalPaused(goal1)).toBe(false);
     });
 
+    describe('forceActivateGoal', () => {
+        it('should force-activate an inactive goal', () => {
+            const goal1 = goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 1);
+            const goal2 = goalService.createGoal({ title: 'Low Priority', motivation: 1, urgency: 1 }, 1);
+            
+            // goal1 should be active, goal2 inactive
+            expect(goal1.status).toBe('active');
+            expect(goal2.status).toBe('inactive');
+            expect(goal2.forceActivated).toBe(false);
+            
+            // Force-activate goal2
+            const result = goalService.forceActivateGoal(goal2.id, 1);
+            
+            expect(result).toBe(goal2);
+            expect(goal2.status).toBe('active');
+            expect(goal2.forceActivated).toBe(true);
+            // goal1 should be deactivated
+            expect(goal1.status).toBe('inactive');
+        });
+
+        it('should clear pause metadata when force-activating', () => {
+            const goal1 = goalService.createGoal({ title: 'Goal 1', motivation: 5, urgency: 5 }, 2);
+            const goal2 = goalService.createGoal({ title: 'Goal 2', motivation: 1, urgency: 1 }, 2);
+            
+            // Pause goal2
+            const futureDate = new Date();
+            futureDate.setDate(futureDate.getDate() + 7);
+            goalService.pauseGoal(goal2.id, { pauseUntil: futureDate }, 2);
+            expect(goal2.pauseUntil).not.toBeNull();
+            
+            // Force-activate goal2
+            goalService.forceActivateGoal(goal2.id, 2);
+            
+            expect(goal2.pauseUntil).toBeNull();
+            expect(goal2.status).toBe('active');
+        });
+
+        it('should return null for non-existent goal', () => {
+            const result = goalService.forceActivateGoal('non-existent', 3);
+            expect(result).toBeNull();
+        });
+
+        it('should return null for completed goal', () => {
+            const goal = goalService.createGoal({ title: 'Goal', motivation: 3, urgency: 3 }, 3);
+            goalService.setGoalStatus(goal.id, 'completed', 3);
+            
+            const result = goalService.forceActivateGoal(goal.id, 3);
+            expect(result).toBeNull();
+        });
+
+        it('should return null for abandoned goal', () => {
+            const goal = goalService.createGoal({ title: 'Goal', motivation: 3, urgency: 3 }, 3);
+            goalService.setGoalStatus(goal.id, 'abandoned', 3);
+            
+            const result = goalService.forceActivateGoal(goal.id, 3);
+            expect(result).toBeNull();
+        });
+
+        it('should deactivate lowest-priority active goal when limit is reached', () => {
+            const goal1 = goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 2);
+            const goal2 = goalService.createGoal({ title: 'Medium Priority', motivation: 3, urgency: 3 }, 2);
+            const goal3 = goalService.createGoal({ title: 'Low Priority', motivation: 1, urgency: 1 }, 2);
+            
+            // goal1 and goal2 should be active
+            expect(goal1.status).toBe('active');
+            expect(goal2.status).toBe('active');
+            expect(goal3.status).toBe('inactive');
+            
+            // Force-activate goal3 (should deactivate goal2, the lower priority active goal)
+            goalService.forceActivateGoal(goal3.id, 2);
+            
+            expect(goal1.status).toBe('active');
+            expect(goal2.status).toBe('inactive');
+            expect(goal3.status).toBe('active');
+            expect(goal3.forceActivated).toBe(true);
+        });
+
+        it('should preserve force-activated goals during auto-activation', () => {
+            const goal1 = goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 2);
+            const goal2 = goalService.createGoal({ title: 'Medium Priority', motivation: 3, urgency: 3 }, 2);
+            const goal3 = goalService.createGoal({ title: 'Low Priority', motivation: 1, urgency: 1 }, 2);
+            
+            // Force-activate goal3
+            goalService.forceActivateGoal(goal3.id, 2);
+            expect(goal3.forceActivated).toBe(true);
+            expect(goal3.status).toBe('active');
+            
+            // Increase goal2's priority (should trigger auto-activation)
+            goalService.updateGoal(goal2.id, { motivation: 10, urgency: 10 }, 2);
+            
+            // goal3 should still be active (force-activated)
+            expect(goal3.status).toBe('active');
+            expect(goal3.forceActivated).toBe(true);
+        });
+    });
+
 });

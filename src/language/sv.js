@@ -101,6 +101,16 @@ const sv = {
             save: 'Spara',
             cancel: 'Avbryt',
             delete: 'Ta bort'
+        },
+        stateManagement: {
+            title: 'Målstatus',
+            complete: 'Slutför',
+            abandon: 'Avbryt',
+            unpause: 'Återuppta',
+            reactivate: 'Återaktivera',
+            help: 'Hantera livscykeln för detta mål.',
+            confirmComplete: 'Markera detta mål som slutfört?',
+            confirmAbandon: 'Avbryt detta mål? Denna åtgärd kan inte ångras.'
         }
     },
     goalHistory: {
@@ -110,8 +120,7 @@ const sv = {
         title: 'Slutför mål',
         question: 'Uppnådde du målet?',
         success: 'Mål slutfört',
-        failure: 'Inte slutfört',
-        cancel: 'Avbryt'
+        failure: 'Inte slutfört'
     },
     pauseModal: {
         title: 'Pausa mål',
@@ -203,7 +212,11 @@ const sv = {
         titleRequired: 'Titeln får inte vara tom.'
     },
     allGoals: {
-        openGoalAria: 'Öppna mål {{title}}'
+        openGoalAria: 'Öppna mål {{title}}',
+        forceActivate: 'Tvinga aktivering',
+        forceActivateAria: 'Tvinga aktivering av mål {{title}}',
+        forceActivated: 'Tvingad aktiverad',
+        forceActivatedAria: 'Detta mål tvingades aktiveras'
     },
     tables: {
         allGoals: {
@@ -214,7 +227,8 @@ const sv = {
                 motivation: 'Motivation',
                 urgency: 'Brådska',
                 deadline: 'Deadline',
-                lastUpdated: 'Senast uppdaterad'
+                lastUpdated: 'Senast uppdaterad',
+                actions: 'Åtgärder'
             },
             emptyState: 'Inga mål matchar de aktuella filtren.'
         }

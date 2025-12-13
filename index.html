@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,8 @@
     <link rel="icon" type="image/png" href="styles/icon/favicon.png">
     <link rel="stylesheet" href="styles/styles.css">
     <!-- Load local config for development (if available) -->
-    <script src="config.local.js" onerror="console.log('config.local.js not found - using defaults or environment variables')"></script>
+    <script src="config.local.js"
+        onerror="console.log('config.local.js not found - using defaults or environment variables')"></script>
     <script>
         // Google API credentials are loaded from:
         // 1. config.local.js (for local development, not in version control)
@@ -17,18 +19,22 @@
         window.GOOGLE_CLIENT_ID = window.GOOGLE_CLIENT_ID || "";
     </script>
 </head>
+
 <body>
     <div class="container">
         <header>
             <div class="header-actions">
-                <button id="addGoalBtn" class="mobile-add-button" data-i18n-key="actions.addGoal" data-i18n-attr="aria-label">
+                <button id="addGoalBtn" class="mobile-add-button" data-i18n-key="actions.addGoal"
+                    data-i18n-attr="aria-label">
                     <span></span>
                     <span></span>
                 </button>
             </div>
-            <button id="goalyLogo" class="logo-button" aria-label="Go to Dashboard" data-i18n-key="navigation.goToDashboard" data-i18n-attr="aria-label">🎯 Goaly</button>
+            <button id="goalyLogo" class="logo-button" aria-label="Go to Dashboard"
+                data-i18n-key="navigation.goToDashboard" data-i18n-attr="aria-label">🎯 Goaly</button>
             <nav class="menu desktop-menu">
-                <button class="menu-btn active" data-view="dashboard" data-i18n-key="navigation.dashboard">Dashboard</button>
+                <button class="menu-btn active" data-view="dashboard"
+                    data-i18n-key="navigation.dashboard">Dashboard</button>
                 <button class="menu-btn" data-view="all-goals" data-i18n-key="navigation.allGoals">All goals</button>
                 <button class="menu-btn" data-view="settings" data-i18n-key="navigation.settings">Settings</button>
                 <button class="menu-btn" data-view="help" data-i18n-key="navigation.help">Help</button>
@@ -43,9 +49,12 @@
                     <span></span>
                 </button>
                 <div class="mobile-menu-dropdown" id="mobileMenuDropdown" aria-hidden="true">
-                    <button class="mobile-menu-btn active" data-view="dashboard" data-i18n-key="navigation.dashboard">Dashboard</button>
-                    <button class="mobile-menu-btn" data-view="all-goals" data-i18n-key="navigation.allGoals">All goals</button>
-                    <button class="mobile-menu-btn" data-view="settings" data-i18n-key="navigation.settings">Settings</button>
+                    <button class="mobile-menu-btn active" data-view="dashboard"
+                        data-i18n-key="navigation.dashboard">Dashboard</button>
+                    <button class="mobile-menu-btn" data-view="all-goals" data-i18n-key="navigation.allGoals">All
+                        goals</button>
+                    <button class="mobile-menu-btn" data-view="settings"
+                        data-i18n-key="navigation.settings">Settings</button>
                     <button class="mobile-menu-btn" data-view="help" data-i18n-key="navigation.help">Help</button>
                 </div>
             </nav>
@@ -62,11 +71,14 @@
                     <label for="allGoalsStatusFilter">
                         <span data-i18n-key="filters.statusLabel">Status</span>
                         <div class="status-filter-dropdown" id="allGoalsStatusFilter">
-                            <button type="button" class="status-filter-button" id="allGoalsStatusFilterButton" aria-haspopup="true" aria-expanded="false">
-                                <span class="status-filter-button-text" data-i18n-key="filters.statusOptions.all">All statuses</span>
+                            <button type="button" class="status-filter-button" id="allGoalsStatusFilterButton"
+                                aria-haspopup="true" aria-expanded="false">
+                                <span class="status-filter-button-text" data-i18n-key="filters.statusOptions.all">All
+                                    statuses</span>
                                 <span class="status-filter-button-arrow">▼</span>
                             </button>
-                            <div class="status-filter-dropdown-menu" id="allGoalsStatusFilterMenu" role="menu" aria-hidden="true">
+                            <div class="status-filter-dropdown-menu" id="allGoalsStatusFilterMenu" role="menu"
+                                aria-hidden="true">
                                 <label class="status-filter-option" role="menuitem">
                                     <input type="checkbox" value="all" class="status-filter-checkbox" checked>
                                     <span data-i18n-key="filters.statusOptions.all">All statuses</span>
@@ -91,7 +103,8 @@
                                     <input type="checkbox" value="abandoned" class="status-filter-checkbox">
                                     <span data-i18n-key="filters.statusOptions.abandoned">Abandoned</span>
                                 </label>
-                                <button type="button" class="status-filter-clear" id="allGoalsStatusFilterClear" data-i18n-key="filters.clearFilter">Clear filter</button>
+                                <button type="button" class="status-filter-clear" id="allGoalsStatusFilterClear"
+                                    data-i18n-key="filters.clearFilter">Clear filter</button>
                             </div>
                         </div>
                     </label>
@@ -102,10 +115,14 @@
                     <label for="allGoalsSort">
                         <span data-i18n-key="filters.sortLabel">Sorting</span>
                         <select id="allGoalsSort">
-                            <option value="priority-desc" data-i18n-key="filters.sortOptions.priorityDesc">Priority (high → low)</option>
-                            <option value="priority-asc" data-i18n-key="filters.sortOptions.priorityAsc">Priority (low → high)</option>
-                            <option value="updated-desc" data-i18n-key="filters.sortOptions.updatedDesc">Last update (new → old)</option>
-                            <option value="updated-asc" data-i18n-key="filters.sortOptions.updatedAsc">Last update (old → new)</option>
+                            <option value="priority-desc" data-i18n-key="filters.sortOptions.priorityDesc">Priority
+                                (high → low)</option>
+                            <option value="priority-asc" data-i18n-key="filters.sortOptions.priorityAsc">Priority (low →
+                                high)</option>
+                            <option value="updated-desc" data-i18n-key="filters.sortOptions.updatedDesc">Last update
+                                (new → old)</option>
+                            <option value="updated-asc" data-i18n-key="filters.sortOptions.updatedAsc">Last update (old
+                                → new)</option>
                         </select>
                     </label>
                 </div>
@@ -120,11 +137,13 @@
                                 <th data-i18n-key="tables.allGoals.headers.urgency">Urgency</th>
                                 <th data-i18n-key="tables.allGoals.headers.deadline">Deadline</th>
                                 <th data-i18n-key="tables.allGoals.headers.lastUpdated">Last updated</th>
+                                <th data-i18n-key="tables.allGoals.headers.actions">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="allGoalsTableBody"></tbody>
                     </table>
-                    <div id="allGoalsEmptyState" class="empty-state" hidden data-i18n-key="tables.allGoals.emptyState">No goals match the current filters.</div>
+                    <div id="allGoalsEmptyState" class="empty-state" hidden data-i18n-key="tables.allGoals.emptyState">
+                        No goals match the current filters.</div>
                 </div>
                 <div id="allGoalsMobileContainer" class="mobile-goals-container mobile-only"></div>
             </div>
@@ -133,13 +152,16 @@
             <div id="settingsView" class="view">
                 <div class="settings-panel" id="settingsPanel">
                     <div class="setting-item">
-                        <label for="maxActiveGoals" data-i18n-key="settingsPanel.maxActiveGoals">Maximum active goals:</label>
+                        <label for="maxActiveGoals" data-i18n-key="settingsPanel.maxActiveGoals">Maximum active
+                            goals:</label>
                         <input type="number" id="maxActiveGoals" min="1" max="10" value="3">
                     </div>
                     <div class="setting-item">
-                        <label for="reviewIntervals" data-i18n-key="settingsPanel.reviewIntervals">Review intervals (days, longest to shortest):</label>
+                        <label for="reviewIntervals" data-i18n-key="settingsPanel.reviewIntervals">Review intervals
+                            (days, longest to shortest):</label>
                         <input type="text" id="reviewIntervals" placeholder="30, 14, 7">
-                        <p class="setting-help" data-i18n-key="settingsPanel.reviewIntervalsHelp">Separate days with commas, e.g. 30, 14, 7.</p>
+                        <p class="setting-help" data-i18n-key="settingsPanel.reviewIntervalsHelp">Separate days with
+                            commas, e.g. 30, 14, 7.</p>
                     </div>
                     <div class="setting-item">
                         <label for="languageSelect" data-i18n-key="settingsPanel.languageLabel">Language</label>
@@ -148,28 +170,38 @@
                     <div class="setting-item" id="dataManagementSection" style="display: none;">
                         <label data-i18n-key="settingsPanel.dataManagement">Data Management</label>
                         <div class="data-management-actions">
-                            <button id="exportBtn" class="btn btn-secondary" data-i18n-key="actions.export">Export</button>
-                            <button id="importBtn" class="btn btn-secondary" data-i18n-key="actions.import">Import</button>
+                            <button id="exportBtn" class="btn btn-secondary"
+                                data-i18n-key="actions.export">Export</button>
+                            <button id="importBtn" class="btn btn-secondary"
+                                data-i18n-key="actions.import">Import</button>
                             <input type="file" id="importFile" accept=".json" style="display: none;">
                         </div>
-                        <p class="setting-help" data-i18n-key="settingsPanel.dataManagementHelp">Export your data for backup or import previously exported data.</p>
+                        <p class="setting-help" data-i18n-key="settingsPanel.dataManagementHelp">Export your data for
+                            backup or import previously exported data.</p>
                     </div>
                     <div class="setting-item">
                         <label data-i18n-key="settingsPanel.googleDriveSync">Google Drive Sync</label>
                         <div id="googleDriveSyncContainer">
                             <div id="googleDriveTesterInfo" class="google-drive-tester-info">
-                                <p data-i18n-key="googleDrive.testerOnly">Google Drive sync is currently only available to testers. Send your Google email account to the developer to grant testing access.</p>
+                                <p data-i18n-key="googleDrive.testerOnly">Google Drive sync is currently only available
+                                    to testers. Send your Google email account to the developer to grant testing access.
+                                </p>
                             </div>
                             <div id="googleDriveAuthStatus" class="google-drive-status" hidden></div>
                             <div class="data-management-actions">
-                                <button id="googleDriveAuthBtn" class="btn btn-secondary" data-i18n-key="googleDrive.signIn">Sign in with Google</button>
-                                <button id="googleDriveSignOutBtn" class="btn btn-secondary" data-i18n-key="googleDrive.signOut" hidden>Sign out</button>
-                                <button id="googleDriveSyncBtn" class="btn btn-secondary" data-i18n-key="googleDrive.syncNow" hidden>Sync Now</button>
+                                <button id="googleDriveAuthBtn" class="btn btn-secondary"
+                                    data-i18n-key="googleDrive.signIn">Sign in with Google</button>
+                                <button id="googleDriveSignOutBtn" class="btn btn-secondary"
+                                    data-i18n-key="googleDrive.signOut" hidden>Sign out</button>
+                                <button id="googleDriveSyncBtn" class="btn btn-secondary"
+                                    data-i18n-key="googleDrive.syncNow" hidden>Sync Now</button>
                             </div>
-                            <p class="setting-help" data-i18n-key="settingsPanel.googleDriveSyncHelp">Sync your goal data with Google Drive for backup and multi-device access.</p>
+                            <p class="setting-help" data-i18n-key="settingsPanel.googleDriveSyncHelp">Sync your goal
+                                data with Google Drive for backup and multi-device access.</p>
                         </div>
                     </div>
-                    <button id="saveSettingsBtn" class="btn btn-primary" data-i18n-key="settingsPanel.save">Save</button>
+                    <button id="saveSettingsBtn" class="btn btn-primary"
+                        data-i18n-key="settingsPanel.save">Save</button>
                 </div>
             </div>
 
@@ -177,20 +209,29 @@
                 <div class="settings-panel" id="helpPanel">
                     <div class="setting-item">
                         <h2 data-i18n-key="help.title">Help</h2>
-                        <p data-i18n-key="help.description">Have you found a bug or would you like to request a new feature? We'd love to hear from you!</p>
+                        <p data-i18n-key="help.description">Have you found a bug or would you like to request a new
+                            feature? We'd love to hear from you!</p>
                     </div>
                     <div class="setting-item">
                         <h3 data-i18n-key="help.reportBug">Report a Bug</h3>
-                        <p class="setting-help" data-i18n-key="help.reportBugHelp">Found something that's not working? Let us know!</p>
+                        <p class="setting-help" data-i18n-key="help.reportBugHelp">Found something that's not working?
+                            Let us know!</p>
                         <div class="data-management-actions">
-                            <a id="bugReportLink" href="https://github.com/fsegatz/goaly/issues/new?template=bug_report.md" target="_blank" rel="noopener noreferrer" class="btn btn-danger" data-i18n-key="help.reportBugButton">Report Bug</a>
+                            <a id="bugReportLink"
+                                href="https://github.com/fsegatz/goaly/issues/new?template=bug_report.md"
+                                target="_blank" rel="noopener noreferrer" class="btn btn-danger"
+                                data-i18n-key="help.reportBugButton">Report Bug</a>
                         </div>
                     </div>
                     <div class="setting-item">
                         <h3 data-i18n-key="help.requestFeature">Request a Feature</h3>
-                        <p class="setting-help" data-i18n-key="help.requestFeatureHelp">Have an idea for a new feature? We'd love to hear it!</p>
+                        <p class="setting-help" data-i18n-key="help.requestFeatureHelp">Have an idea for a new feature?
+                            We'd love to hear it!</p>
                         <div class="data-management-actions">
-                            <a id="featureRequestLink" href="https://github.com/fsegatz/goaly/issues/new?template=feature_request.md" target="_blank" rel="noopener noreferrer" class="btn btn-primary" data-i18n-key="help.requestFeatureButton">Request Feature</a>
+                            <a id="featureRequestLink"
+                                href="https://github.com/fsegatz/goaly/issues/new?template=feature_request.md"
+                                target="_blank" rel="noopener noreferrer" class="btn btn-primary"
+                                data-i18n-key="help.requestFeatureButton">Request Feature</a>
                         </div>
                     </div>
                 </div>
@@ -205,7 +246,7 @@
             <h2 id="modalTitle" data-i18n-key="goalForm.createTitle">New goal</h2>
             <form id="goalForm">
                 <input type="hidden" id="goalId">
-                
+
                 <div class="form-group">
                     <label for="goalTitle" data-i18n-key="goalModal.titleLabel">Title *</label>
                     <input type="text" id="goalTitle" required>
@@ -228,10 +269,26 @@
                     <input type="date" id="goalDeadline">
                 </div>
 
+                <div class="form-group" id="goalStateManagementSection" style="display: none;">
+                    <label data-i18n-key="goalModal.stateManagement.title">Goal State</label>
+                    <div class="goal-state-actions">
+                        <button type="button" id="completeGoalBtn" class="btn btn-primary"
+                            data-i18n-key="goalModal.stateManagement.complete">Complete</button>
+                        <button type="button" id="unpauseGoalBtn" class="btn btn-secondary" style="display: none;"
+                            data-i18n-key="goalModal.stateManagement.unpause">Unpause</button>
+                        <button type="button" id="reactivateGoalBtn" class="btn btn-primary" style="display: none;"
+                            data-i18n-key="goalModal.stateManagement.reactivate">Reactivate</button>
+                    </div>
+                    <p class="setting-help" data-i18n-key="goalModal.stateManagement.help">Manage the lifecycle of this
+                        goal.</p>
+                </div>
+
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary" data-i18n-key="goalModal.actions.save">Save</button>
-                    <button type="button" id="cancelBtn" class="btn btn-secondary" data-i18n-key="goalModal.actions.cancel">Cancel</button>
-                    <button type="button" id="deleteBtn" class="btn btn-danger" style="display: none;" data-i18n-key="goalModal.actions.delete">Delete</button>
+                    <button type="button" id="cancelBtn" class="btn btn-secondary"
+                        data-i18n-key="goalModal.actions.cancel">Cancel</button>
+                    <button type="button" id="deleteBtn" class="btn btn-danger" style="display: none;"
+                        data-i18n-key="goalModal.actions.delete">Delete</button>
                 </div>
             </form>
         </div>
@@ -243,8 +300,10 @@
             <h2 id="migrationPromptTitle">Migration required</h2>
             <p id="migrationPromptMessage"></p>
             <div class="modal-actions">
-                <button id="migrationReviewBtn" class="btn btn-primary" data-i18n-key="migration.prompt.reviewCta">Review changes</button>
-                <button id="migrationPromptCancelBtn" class="btn btn-secondary" data-i18n-key="migration.prompt.cancel">Cancel</button>
+                <button id="migrationReviewBtn" class="btn btn-primary"
+                    data-i18n-key="migration.prompt.reviewCta">Review changes</button>
+                <button id="migrationPromptCancelBtn" class="btn btn-secondary"
+                    data-i18n-key="migration.prompt.cancel">Cancel</button>
             </div>
         </div>
     </div>
@@ -265,8 +324,10 @@
                 </div>
             </div>
             <div class="modal-actions">
-                <button id="migrationApplyBtn" class="btn btn-primary" data-i18n-key="migration.diff.applyCta">Apply migration</button>
-                <button id="migrationCancelBtn" class="btn btn-secondary" data-i18n-key="migration.diff.cancel">Cancel</button>
+                <button id="migrationApplyBtn" class="btn btn-primary" data-i18n-key="migration.diff.applyCta">Apply
+                    migration</button>
+                <button id="migrationCancelBtn" class="btn btn-secondary"
+                    data-i18n-key="migration.diff.cancel">Cancel</button>
             </div>
         </div>
     </div>
@@ -277,9 +338,10 @@
             <h2 data-i18n-key="completionModal.title">Complete goal</h2>
             <p data-i18n-key="completionModal.question">Did you achieve your goal?</p>
             <div class="completion-actions">
-                <button id="completionSuccessBtn" class="btn btn-primary" data-i18n-key="completionModal.success">Goal completed</button>
-                <button id="completionFailureBtn" class="btn btn-danger" data-i18n-key="completionModal.failure">Not completed</button>
-                <button id="completionCancelBtn" class="btn btn-secondary" data-i18n-key="completionModal.cancel">Cancel</button>
+                <button id="completionSuccessBtn" class="btn btn-primary" data-i18n-key="completionModal.success">Goal
+                    completed</button>
+                <button id="completionFailureBtn" class="btn btn-danger" data-i18n-key="completionModal.failure">Not
+                    completed</button>
             </div>
         </div>
     </div>
@@ -297,7 +359,8 @@
                 </div>
                 <div class="pause-option">
                     <input type="radio" id="pauseUntilGoal" name="pauseType" value="goal">
-                    <label for="pauseUntilGoal" data-i18n-key="pauseModal.untilGoal">Until another goal is completed</label>
+                    <label for="pauseUntilGoal" data-i18n-key="pauseModal.untilGoal">Until another goal is
+                        completed</label>
                     <select id="pauseUntilGoalSelect" class="pause-goal-select" disabled>
                         <option value="" data-i18n-key="pauseModal.selectGoal">Select a goal...</option>
                     </select>
@@ -312,5 +375,5 @@
 
     <script type="module" src="src/app.js"></script>
 </body>
-</html>
 
+</html>

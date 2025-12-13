@@ -124,6 +124,16 @@ const en = {
             save: 'Save',
             cancel: 'Cancel',
             delete: 'Delete'
+        },
+        stateManagement: {
+            title: 'Goal State',
+            complete: 'Complete',
+            abandon: 'Abandon',
+            unpause: 'Unpause',
+            reactivate: 'Reactivate',
+            help: 'Manage the lifecycle of this goal.',
+            confirmComplete: 'Mark this goal as completed?',
+            confirmAbandon: 'Abandon this goal? This action cannot be undone.'
         }
     },
     goalHistory: {
@@ -133,8 +143,7 @@ const en = {
         title: 'Complete goal',
         question: 'Did you achieve your goal?',
         success: 'Goal completed',
-        failure: 'Not completed',
-        cancel: 'Cancel'
+        failure: 'Not completed'
     },
     pauseModal: {
         title: 'Pause goal',
@@ -227,7 +236,11 @@ const en = {
         titleRequired: 'Title cannot be empty.'
     },
     allGoals: {
-        openGoalAria: 'Open goal {{title}}'
+        openGoalAria: 'Open goal {{title}}',
+        forceActivate: 'Force Activate',
+        forceActivateAria: 'Force activate goal {{title}}',
+        forceActivated: 'Force-activated',
+        forceActivatedAria: 'This goal was force-activated'
     },
     tables: {
         allGoals: {
@@ -238,7 +251,8 @@ const en = {
                 motivation: 'Motivation',
                 urgency: 'Urgency',
                 deadline: 'Deadline',
-                lastUpdated: 'Last updated'
+                lastUpdated: 'Last updated',
+                actions: 'Actions'
             },
             emptyState: 'No goals match the current filters.'
         }

@@ -320,7 +320,39 @@ export class AllGoalsView extends BaseUIController {
                 row.appendChild(cell);
             });
 
-            row.addEventListener('click', () => openGoalForm(goal.id));
+            // Add actions cell with Force Activate button
+            const actionsCell = document.createElement('td');
+            actionsCell.className = 'cell-actions';
+            actionsCell.dataset.label = this.translate('tables.allGoals.headers.actions');
+            
+            // Only show Force Activate for goals that are not active, completed, or abandoned
+            if (goal.status !== 'active' && goal.status !== 'completed' && goal.status !== 'abandoned') {
+                const forceActivateBtn = document.createElement('button');
+                forceActivateBtn.className = 'btn btn-small btn-secondary force-activate-btn';
+                forceActivateBtn.textContent = this.translate('allGoals.forceActivate');
+                forceActivateBtn.setAttribute('aria-label', this.translate('allGoals.forceActivateAria', { title: goal.title }));
+                forceActivateBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.handleForceActivate(goal.id, openGoalForm);
+                });
+                actionsCell.appendChild(forceActivateBtn);
+            } else if (goal.status === 'active' && goal.forceActivated) {
+                // Show indicator for force-activated goals
+                const indicator = document.createElement('span');
+                indicator.className = 'force-activated-indicator';
+                indicator.textContent = this.translate('allGoals.forceActivated');
+                indicator.setAttribute('aria-label', this.translate('allGoals.forceActivatedAria'));
+                actionsCell.appendChild(indicator);
+            }
+            
+            row.appendChild(actionsCell);
+
+            row.addEventListener('click', (e) => {
+                // Don't open form if clicking on action buttons
+                if (!e.target.closest('.force-activate-btn') && !e.target.closest('.force-activated-indicator')) {
+                    openGoalForm(goal.id);
+                }
+            });
             row.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
@@ -343,6 +375,24 @@ export class AllGoalsView extends BaseUIController {
         const element = getOptionalElement(id);
         this.allGoalsControlRefs[id] = element || null;
         return element || null;
+    }
+
+    handleForceActivate(goalId, openGoalForm) {
+        const goal = this.app.goalService.goals.find(g => g.id === goalId);
+        if (!goal) return;
+
+        // Cannot force-activate completed or abandoned goals
+        if (goal.status === 'completed' || goal.status === 'abandoned') {
+            return;
+        }
+
+        const maxActiveGoals = this.app.settingsService.getSettings().maxActiveGoals;
+        const result = this.app.goalService.forceActivateGoal(goalId, maxActiveGoals);
+        
+        if (result) {
+            // Re-render the view
+            this.render(openGoalForm);
+        }
     }
 }
 

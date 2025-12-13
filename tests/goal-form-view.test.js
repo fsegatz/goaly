@@ -304,5 +304,178 @@ describe('GoalFormView', () => {
         
         expect(goalFormView.closeGoalForm).not.toHaveBeenCalled();
     });
+
+    test('openGoalForm should show state management section for existing goals', () => {
+        const goal = new Goal({
+            id: '1',
+            title: 'Test Goal',
+            motivation: 3,
+            urgency: 4,
+            status: 'active'
+        });
+        mockGoalService.goals = [goal];
+        
+        const stateSection = document.createElement('div');
+        stateSection.id = 'goalStateManagementSection';
+        stateSection.style.display = 'none';
+        document.getElementById('goalModal').appendChild(stateSection);
+        
+        const completeBtn = document.createElement('button');
+        completeBtn.id = 'completeGoalBtn';
+        stateSection.appendChild(completeBtn);
+        
+        const abandonBtn = document.createElement('button');
+        abandonBtn.id = 'abandonGoalBtn';
+        stateSection.appendChild(abandonBtn);
+        
+        const unpauseBtn = document.createElement('button');
+        unpauseBtn.id = 'unpauseGoalBtn';
+        stateSection.appendChild(unpauseBtn);
+        
+        goalFormView.openGoalForm('1', jest.fn());
+        
+        expect(stateSection.style.display).toBe('block');
+    });
+
+    test('complete button should open completion modal without closing goal form', () => {
+        const goal = new Goal({
+            id: '1',
+            title: 'Test Goal',
+            motivation: 3,
+            urgency: 4,
+            status: 'active'
+        });
+        mockGoalService.goals = [goal];
+        document.getElementById('goalId').value = '1';
+        
+        const openCompletionModal = jest.fn();
+        goalFormView.closeGoalForm = jest.fn();
+        
+        const completeBtn = document.createElement('button');
+        completeBtn.id = 'completeGoalBtn';
+        document.getElementById('goalModal').appendChild(completeBtn);
+        
+        goalFormView.setupEventListeners(jest.fn(), jest.fn(), jest.fn(), openCompletionModal);
+        
+        const clickEvent = new dom.window.MouseEvent('click', { bubbles: true });
+        completeBtn.dispatchEvent(clickEvent);
+        
+        expect(goalFormView.closeGoalForm).not.toHaveBeenCalled();
+        expect(openCompletionModal).toHaveBeenCalledWith('1');
+    });
+
+    test('handleUnpauseGoal should unpause goal', () => {
+        const goal = new Goal({
+            id: '1',
+            title: 'Test Goal',
+            motivation: 3,
+            urgency: 4,
+            status: 'paused',
+            pauseUntil: new Date('2025-12-01')
+        });
+        mockGoalService.goals = [goal];
+        mockGoalService.unpauseGoal = jest.fn();
+        document.getElementById('goalId').value = '1';
+        
+        const renderViews = jest.fn();
+        goalFormView.openGoalForm = jest.fn();
+        goalFormView.handleUnpauseGoal(renderViews);
+        
+        expect(mockGoalService.unpauseGoal).toHaveBeenCalledWith('1', 3);
+        expect(goalFormView.openGoalForm).toHaveBeenCalledWith('1', renderViews);
+        expect(renderViews).toHaveBeenCalled();
+    });
+
+    test('openGoalForm should show reactivate button for completed goals', () => {
+        const goal = new Goal({
+            id: '1',
+            title: 'Test Goal',
+            motivation: 3,
+            urgency: 4,
+            status: 'completed'
+        });
+        mockGoalService.goals = [goal];
+        
+        const stateSection = document.createElement('div');
+        stateSection.id = 'goalStateManagementSection';
+        stateSection.style.display = 'none';
+        document.getElementById('goalModal').appendChild(stateSection);
+        
+        const reactivateBtn = document.createElement('button');
+        reactivateBtn.id = 'reactivateGoalBtn';
+        reactivateBtn.style.display = 'none';
+        stateSection.appendChild(reactivateBtn);
+        
+        goalFormView.openGoalForm('1', jest.fn());
+        
+        expect(reactivateBtn.style.display).toBe('inline-block');
+    });
+
+    test('openGoalForm should show reactivate button for abandoned goals', () => {
+        const goal = new Goal({
+            id: '1',
+            title: 'Test Goal',
+            motivation: 3,
+            urgency: 4,
+            status: 'abandoned'
+        });
+        mockGoalService.goals = [goal];
+        
+        const stateSection = document.createElement('div');
+        stateSection.id = 'goalStateManagementSection';
+        stateSection.style.display = 'none';
+        document.getElementById('goalModal').appendChild(stateSection);
+        
+        const reactivateBtn = document.createElement('button');
+        reactivateBtn.id = 'reactivateGoalBtn';
+        reactivateBtn.style.display = 'none';
+        stateSection.appendChild(reactivateBtn);
+        
+        goalFormView.openGoalForm('1', jest.fn());
+        
+        expect(reactivateBtn.style.display).toBe('inline-block');
+    });
+
+    test('handleReactivateGoal should reactivate completed goal and refresh form', () => {
+        const goal = new Goal({
+            id: '1',
+            title: 'Test Goal',
+            motivation: 3,
+            urgency: 4,
+            status: 'completed'
+        });
+        mockGoalService.goals = [goal];
+        mockGoalService.setGoalStatus = jest.fn();
+        document.getElementById('goalId').value = '1';
+        
+        const renderViews = jest.fn();
+        goalFormView.openGoalForm = jest.fn();
+        goalFormView.handleReactivateGoal(renderViews);
+        
+        expect(mockGoalService.setGoalStatus).toHaveBeenCalledWith('1', 'inactive', 3);
+        expect(goalFormView.openGoalForm).toHaveBeenCalledWith('1', renderViews);
+        expect(renderViews).toHaveBeenCalled();
+    });
+
+    test('handleReactivateGoal should reactivate abandoned goal and refresh form', () => {
+        const goal = new Goal({
+            id: '1',
+            title: 'Test Goal',
+            motivation: 3,
+            urgency: 4,
+            status: 'abandoned'
+        });
+        mockGoalService.goals = [goal];
+        mockGoalService.setGoalStatus = jest.fn();
+        document.getElementById('goalId').value = '1';
+        
+        const renderViews = jest.fn();
+        goalFormView.openGoalForm = jest.fn();
+        goalFormView.handleReactivateGoal(renderViews);
+        
+        expect(mockGoalService.setGoalStatus).toHaveBeenCalledWith('1', 'inactive', 3);
+        expect(goalFormView.openGoalForm).toHaveBeenCalledWith('1', renderViews);
+        expect(renderViews).toHaveBeenCalled();
+    });
 });
 
