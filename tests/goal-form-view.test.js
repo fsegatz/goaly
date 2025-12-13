@@ -24,10 +24,6 @@ beforeEach(() => {
             </form>
             <button id="cancelBtn"></button>
             <button id="deleteBtn"></button>
-            <div id="goalHistorySection" class="goal-history" hidden>
-                <h3>History</h3>
-                <div id="goalHistoryList" class="goal-history-list"></div>
-            </div>
         </div>
     </body></html>`, { url: "http://localhost" });
     document = dom.window.document;
@@ -95,7 +91,6 @@ describe('GoalFormView', () => {
         expect(document.getElementById('goalId').value).toBe('');
         expect(document.getElementById('deleteBtn').style.display).toBe('none');
         expect(document.getElementById('goalModal').classList.contains('is-visible')).toBe(true);
-        expect(document.getElementById('goalHistorySection').hidden).toBe(true);
     });
 
     test('openGoalForm should populate form with goal data for existing goal', () => {
@@ -113,7 +108,6 @@ describe('GoalFormView', () => {
         expect(document.getElementById('goalDeadline').value).toBe('2025-12-25');
         expect(document.getElementById('deleteBtn').style.display).toBe('inline-block');
         expect(document.getElementById('goalModal').classList.contains('is-visible')).toBe(true);
-        expect(document.getElementById('goalHistorySection').hidden).toBe(false);
     });
 
     test('openGoalForm should return early if modal elements are missing', () => {
@@ -242,147 +236,6 @@ describe('GoalFormView', () => {
         expect(handleDelete).not.toHaveBeenCalled();
     });
 
-    test('formatHistoryValue should format different field types correctly', () => {
-        expect(goalFormView.formatHistoryValue('deadline', '')).toBe('No deadline');
-        expect(goalFormView.formatHistoryValue('deadline', 'invalid-date')).toBe('—');
-        expect(goalFormView.formatHistoryValue('priority', 12.345)).toBe('12.3');
-        expect(goalFormView.formatHistoryValue('priority', 'not-a-number')).toBe('—');
-        expect(goalFormView.formatHistoryValue('motivation', '4')).toBe('4');
-        expect(goalFormView.formatHistoryValue('status', 'active')).toBe('Active');
-        expect(goalFormView.formatHistoryValue('status', 'completed')).toBe('Completed');
-        expect(goalFormView.formatHistoryValue('status', 'abandoned')).toBe('Abandoned');
-        expect(goalFormView.formatHistoryValue('title', 'My Goal')).toBe('My Goal');
-        expect(goalFormView.formatHistoryValue('title', null)).toBe('—');
-    });
-
-    test('formatHistoryValue handles numeric branches and fallbacks', () => {
-        expect(goalFormView.formatHistoryValue('priority', 'not-a-number')).toBe('—');
-        expect(goalFormView.formatHistoryValue('motivation', 'not-a-number')).toBe('—');
-        expect(goalFormView.formatHistoryValue('priority', 3)).toBe('3.0');
-        expect(goalFormView.formatHistoryValue('status', 'active')).toBe('Active');
-        expect(goalFormView.formatHistoryValue('deadline', '')).toBe('No deadline');
-        expect(goalFormView.formatHistoryValue('other', null)).toBe('—');
-    });
-
-    test('resetGoalHistoryView should return early when history elements are missing', () => {
-        const section = document.getElementById('goalHistorySection');
-        const list = document.getElementById('goalHistoryList');
-        section.remove();
-        list.remove();
-        expect(() => goalFormView.resetGoalHistoryView()).not.toThrow();
-        expect(() => goalFormView.renderGoalHistory(null)).not.toThrow();
-    });
-
-    test('handleHistoryRevert should abort when identifiers are missing or user cancels', () => {
-        window.confirm.mockReturnValue(false);
-        const renderViews = jest.fn();
-        expect(() => goalFormView.handleHistoryRevert('', 'entry', renderViews)).not.toThrow();
-        expect(() => goalFormView.handleHistoryRevert('goal', '', renderViews)).not.toThrow();
-        expect(() => goalFormView.handleHistoryRevert('goal', 'entry', renderViews)).not.toThrow();
-        expect(window.confirm).toHaveBeenCalled();
-    });
-
-    test('handleHistoryRevert should alert when rollback is not possible', () => {
-        window.confirm.mockReturnValue(true);
-        window.alert.mockClear();
-        mockGoalService.revertGoalToHistoryEntry.mockReturnValue(null);
-        const renderViews = jest.fn();
-        goalFormView.handleHistoryRevert('missing', 'entry', renderViews);
-        expect(window.alert).toHaveBeenCalledWith('Unable to revert this goal.');
-    });
-
-    test('renderGoalHistory should handle entries without changes or rollback option', () => {
-        const goal = new Goal({
-            id: 'history-none',
-            title: 'History Without Changes',
-            motivation: 2,
-            urgency: 2,
-            status: 'active',
-            history: [
-                {
-                    id: 'entry-none',
-                    event: 'status-change',
-                    timestamp: '2025-11-10T12:00:00.000Z',
-                    changes: [],
-                    before: null,
-                    after: { status: 'active' }
-                }
-            ]
-        });
-        mockGoalService.goals = [goal];
-        window.confirm.mockReturnValue(true);
-        mockGoalService.revertGoalToHistoryEntry.mockReturnValue(goal);
-
-        goalFormView.renderGoalHistory(goal);
-
-        const entry = document.querySelector('.goal-history-entry');
-        expect(entry).not.toBeNull();
-        expect(entry.querySelector('.goal-history-entry__changes')).toBeNull();
-        expect(entry.querySelector('.goal-history-revert')).toBeNull();
-    });
-
-    test('renderGoalHistory sorts entries and renders fallback', () => {
-        const goal = {
-            history: [
-                { event: 'updated', timestamp: undefined, changes: [] },
-                { event: 'created', timestamp: new Date('2025-01-01T00:00:00Z'), changes: [] }
-            ]
-        };
-
-        goalFormView.renderGoalHistory(goal);
-
-        const historySection = document.getElementById('goalHistorySection');
-        expect(historySection.hidden).toBe(false);
-        const entries = historySection.querySelectorAll('.goal-history-entry');
-        expect(entries.length).toBe(2);
-    });
-
-    test('openGoalForm should render history entries and handle rollback action', () => {
-        const historyEntryTimestamp = '2025-11-10T12:00:00.000Z';
-        const historyGoal = new Goal({
-            id: 'hist-1',
-            title: 'History Goal',
-            motivation: 3,
-            urgency: 2,
-            status: 'active',
-            history: [
-                {
-                    id: 'entry-1',
-                    event: 'updated',
-                    timestamp: historyEntryTimestamp,
-                    changes: [
-                        { field: 'title', from: 'Old Title', to: 'History Goal' }
-                    ],
-                    before: {
-                        title: 'Old Title'
-                    },
-                    after: {
-                        title: 'History Goal'
-                    }
-                }
-            ]
-        });
-
-        mockGoalService.goals = [historyGoal];
-        mockGoalService.revertGoalToHistoryEntry.mockImplementation(() => historyGoal);
-        window.confirm.mockReturnValue(true);
-        const renderViews = jest.fn();
-
-        goalFormView.openGoalForm('hist-1', renderViews);
-
-        const historySection = document.getElementById('goalHistorySection');
-        expect(historySection.hidden).toBe(false);
-        const entries = document.querySelectorAll('.goal-history-entry');
-        expect(entries.length).toBe(1);
-        const revertBtn = entries[0].querySelector('.goal-history-revert');
-        expect(revertBtn).not.toBeNull();
-
-        revertBtn.click();
-
-        expect(mockGoalService.revertGoalToHistoryEntry).toHaveBeenCalledWith('hist-1', historyGoal.history[0].id, 3);
-        expect(window.confirm).toHaveBeenCalled();
-        expect(renderViews).toHaveBeenCalled();
-    });
 
     test('window mousedown should close modal when clicking outside', () => {
         const modal = document.getElementById('goalModal');

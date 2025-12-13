@@ -96,10 +96,6 @@ beforeEach(() => {
             <input type="number" id="goalMotivation" />
             <input type="number" id="goalUrgency" />
             <input type="date" id="goalDeadline" />
-            <div id="goalHistorySection" class="goal-history" hidden>
-                <h3>History</h3>
-                <div id="goalHistoryList" class="goal-history-list"></div>
-            </div>
         </div>
         <div id="migrationPromptModal" class="modal">
             <div class="modal-content migration-modal">
@@ -199,7 +195,6 @@ beforeEach(() => {
         deleteGoal: jest.fn(),
         calculatePriority: jest.fn(() => 0),
         autoActivateGoalsByPriority: jest.fn(),
-        revertGoalToHistoryEntry: jest.fn(),
         isGoalPaused: jest.fn(() => false),
         pauseGoal: jest.fn(),
         priorityCache: {
