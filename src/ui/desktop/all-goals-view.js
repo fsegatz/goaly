@@ -157,12 +157,12 @@ export class AllGoalsView extends BaseUIController {
         }
 
         const statusCount = this.allGoalsState.statusFilter.length;
-        const isAll = this.allGoalsState.statusFilter.includes('all') || 
-                     (statusCount === 5 && this.allGoalsState.statusFilter.includes('active') && 
-                      this.allGoalsState.statusFilter.includes('inactive') &&
-                      this.allGoalsState.statusFilter.includes('paused') && 
-                      this.allGoalsState.statusFilter.includes('completed') && 
-                      this.allGoalsState.statusFilter.includes('abandoned'));
+        const isAll = this.allGoalsState.statusFilter.includes('all') ||
+            (statusCount === 5 && this.allGoalsState.statusFilter.includes('active') &&
+                this.allGoalsState.statusFilter.includes('inactive') &&
+                this.allGoalsState.statusFilter.includes('paused') &&
+                this.allGoalsState.statusFilter.includes('completed') &&
+                this.allGoalsState.statusFilter.includes('abandoned'));
 
         if (isAll) {
             buttonText.textContent = this.translate('filters.statusOptions.all');
@@ -222,7 +222,7 @@ export class AllGoalsView extends BaseUIController {
                 return false;
             }
             // Check if status matches any of the selected filters
-            if (!this.allGoalsState.statusFilter.includes('all') && 
+            if (!this.allGoalsState.statusFilter.includes('all') &&
                 !this.allGoalsState.statusFilter.includes(goal.status)) {
                 return false;
             }
@@ -324,7 +324,7 @@ export class AllGoalsView extends BaseUIController {
             const actionsCell = document.createElement('td');
             actionsCell.className = 'cell-actions';
             actionsCell.dataset.label = this.translate('tables.allGoals.headers.actions');
-            
+
             // Only show Force Activate for goals that are not active, completed, or abandoned
             if (goal.status !== 'active' && goal.status !== 'completed' && goal.status !== 'abandoned') {
                 const forceActivateBtn = document.createElement('button');
@@ -344,7 +344,7 @@ export class AllGoalsView extends BaseUIController {
                 indicator.setAttribute('aria-label', this.translate('allGoals.forceActivatedAria'));
                 actionsCell.appendChild(indicator);
             }
-            
+
             row.appendChild(actionsCell);
 
             row.addEventListener('click', (e) => {
@@ -381,14 +381,9 @@ export class AllGoalsView extends BaseUIController {
         const goal = this.app.goalService.goals.find(g => g.id === goalId);
         if (!goal) return;
 
-        // Cannot force-activate completed or abandoned goals
-        if (goal.status === 'completed' || goal.status === 'abandoned') {
-            return;
-        }
-
         const maxActiveGoals = this.app.settingsService.getSettings().maxActiveGoals;
         const result = this.app.goalService.forceActivateGoal(goalId, maxActiveGoals);
-        
+
         if (result) {
             // Re-render the view
             this.render(openGoalForm);

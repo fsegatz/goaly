@@ -45,6 +45,7 @@ beforeEach(() => {
         updateGoal: jest.fn(),
         deleteGoal: jest.fn(),
         revertGoalToHistoryEntry: jest.fn(),
+        isGoalPaused: jest.fn(() => false),
         calculatePriority: jest.fn(() => 0),
         priorityCache: {
             getPriority: jest.fn(() => 0),
@@ -244,13 +245,13 @@ describe('GoalFormView', () => {
         const handleDelete = jest.fn();
         const renderViews = jest.fn();
         goalFormView.setupEventListeners(handleGoalSubmit, handleDelete, renderViews);
-        
+
         const outsideElement = document.createElement('div');
         outsideElement.id = 'outsideElement';
         document.body.appendChild(outsideElement);
-        
+
         // Event listener is set up synchronously, so we can dispatch immediately
-        const mousedownEvent = new dom.window.MouseEvent('mousedown', { 
+        const mousedownEvent = new dom.window.MouseEvent('mousedown', {
             bubbles: true,
             cancelable: true
         });
@@ -260,7 +261,7 @@ describe('GoalFormView', () => {
             configurable: true
         });
         window.dispatchEvent(mousedownEvent);
-        
+
         // The modal should be closed by the event handler
         // Note: The actual implementation checks for modal visibility and target containment
         // This test verifies the event handler is set up correctly
@@ -276,14 +277,14 @@ describe('GoalFormView', () => {
         document.body.appendChild(addGoalBtn);
         goalFormView.closeGoalForm = jest.fn();
         goalFormView.setupEventListeners(jest.fn(), jest.fn(), jest.fn());
-        
-        const mousedownEvent = new dom.window.MouseEvent('mousedown', { 
+
+        const mousedownEvent = new dom.window.MouseEvent('mousedown', {
             bubbles: true,
             cancelable: true,
             target: addGoalBtn
         });
         window.dispatchEvent(mousedownEvent);
-        
+
         expect(goalFormView.closeGoalForm).not.toHaveBeenCalled();
         document.body.removeChild(addGoalBtn);
     });
@@ -293,15 +294,15 @@ describe('GoalFormView', () => {
         modal.classList.add('is-visible');
         goalFormView.closeGoalForm = jest.fn();
         goalFormView.setupEventListeners(jest.fn(), jest.fn(), jest.fn());
-        
+
         const modalTitle = document.getElementById('modalTitle');
-        const mousedownEvent = new dom.window.MouseEvent('mousedown', { 
+        const mousedownEvent = new dom.window.MouseEvent('mousedown', {
             bubbles: true,
             cancelable: true,
             target: modalTitle
         });
         window.dispatchEvent(mousedownEvent);
-        
+
         expect(goalFormView.closeGoalForm).not.toHaveBeenCalled();
     });
 
@@ -314,26 +315,26 @@ describe('GoalFormView', () => {
             status: 'active'
         });
         mockGoalService.goals = [goal];
-        
+
         const stateSection = document.createElement('div');
         stateSection.id = 'goalStateManagementSection';
         stateSection.style.display = 'none';
         document.getElementById('goalModal').appendChild(stateSection);
-        
+
         const completeBtn = document.createElement('button');
         completeBtn.id = 'completeGoalBtn';
         stateSection.appendChild(completeBtn);
-        
+
         const abandonBtn = document.createElement('button');
         abandonBtn.id = 'abandonGoalBtn';
         stateSection.appendChild(abandonBtn);
-        
+
         const unpauseBtn = document.createElement('button');
         unpauseBtn.id = 'unpauseGoalBtn';
         stateSection.appendChild(unpauseBtn);
-        
+
         goalFormView.openGoalForm('1', jest.fn());
-        
+
         expect(stateSection.style.display).toBe('block');
     });
 
@@ -347,19 +348,19 @@ describe('GoalFormView', () => {
         });
         mockGoalService.goals = [goal];
         document.getElementById('goalId').value = '1';
-        
+
         const openCompletionModal = jest.fn();
         goalFormView.closeGoalForm = jest.fn();
-        
+
         const completeBtn = document.createElement('button');
         completeBtn.id = 'completeGoalBtn';
         document.getElementById('goalModal').appendChild(completeBtn);
-        
+
         goalFormView.setupEventListeners(jest.fn(), jest.fn(), jest.fn(), openCompletionModal);
-        
+
         const clickEvent = new dom.window.MouseEvent('click', { bubbles: true });
         completeBtn.dispatchEvent(clickEvent);
-        
+
         expect(goalFormView.closeGoalForm).not.toHaveBeenCalled();
         expect(openCompletionModal).toHaveBeenCalledWith('1');
     });
@@ -376,11 +377,11 @@ describe('GoalFormView', () => {
         mockGoalService.goals = [goal];
         mockGoalService.unpauseGoal = jest.fn();
         document.getElementById('goalId').value = '1';
-        
+
         const renderViews = jest.fn();
         goalFormView.openGoalForm = jest.fn();
         goalFormView.handleUnpauseGoal(renderViews);
-        
+
         expect(mockGoalService.unpauseGoal).toHaveBeenCalledWith('1', 3);
         expect(goalFormView.openGoalForm).toHaveBeenCalledWith('1', renderViews);
         expect(renderViews).toHaveBeenCalled();
@@ -395,19 +396,19 @@ describe('GoalFormView', () => {
             status: 'completed'
         });
         mockGoalService.goals = [goal];
-        
+
         const stateSection = document.createElement('div');
         stateSection.id = 'goalStateManagementSection';
         stateSection.style.display = 'none';
         document.getElementById('goalModal').appendChild(stateSection);
-        
+
         const reactivateBtn = document.createElement('button');
         reactivateBtn.id = 'reactivateGoalBtn';
         reactivateBtn.style.display = 'none';
         stateSection.appendChild(reactivateBtn);
-        
+
         goalFormView.openGoalForm('1', jest.fn());
-        
+
         expect(reactivateBtn.style.display).toBe('inline-block');
     });
 
@@ -420,19 +421,19 @@ describe('GoalFormView', () => {
             status: 'abandoned'
         });
         mockGoalService.goals = [goal];
-        
+
         const stateSection = document.createElement('div');
         stateSection.id = 'goalStateManagementSection';
         stateSection.style.display = 'none';
         document.getElementById('goalModal').appendChild(stateSection);
-        
+
         const reactivateBtn = document.createElement('button');
         reactivateBtn.id = 'reactivateGoalBtn';
         reactivateBtn.style.display = 'none';
         stateSection.appendChild(reactivateBtn);
-        
+
         goalFormView.openGoalForm('1', jest.fn());
-        
+
         expect(reactivateBtn.style.display).toBe('inline-block');
     });
 
@@ -447,11 +448,11 @@ describe('GoalFormView', () => {
         mockGoalService.goals = [goal];
         mockGoalService.setGoalStatus = jest.fn();
         document.getElementById('goalId').value = '1';
-        
+
         const renderViews = jest.fn();
         goalFormView.openGoalForm = jest.fn();
         goalFormView.handleReactivateGoal(renderViews);
-        
+
         expect(mockGoalService.setGoalStatus).toHaveBeenCalledWith('1', 'inactive', 3);
         expect(goalFormView.openGoalForm).toHaveBeenCalledWith('1', renderViews);
         expect(renderViews).toHaveBeenCalled();
@@ -468,11 +469,11 @@ describe('GoalFormView', () => {
         mockGoalService.goals = [goal];
         mockGoalService.setGoalStatus = jest.fn();
         document.getElementById('goalId').value = '1';
-        
+
         const renderViews = jest.fn();
         goalFormView.openGoalForm = jest.fn();
         goalFormView.handleReactivateGoal(renderViews);
-        
+
         expect(mockGoalService.setGoalStatus).toHaveBeenCalledWith('1', 'inactive', 3);
         expect(goalFormView.openGoalForm).toHaveBeenCalledWith('1', renderViews);
         expect(renderViews).toHaveBeenCalled();

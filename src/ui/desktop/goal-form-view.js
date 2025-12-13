@@ -48,9 +48,7 @@ export class GoalFormView extends BaseUIController {
                         : 'none';
                 }
                 if (unpauseBtn) {
-                    const isPaused = goal.status === 'paused' ||
-                        (goal.pauseUntil && new Date(goal.pauseUntil) > new Date()) ||
-                        (goal.pauseUntilGoalId && this.app.goalService.goals.find(g => g.id === goal.pauseUntilGoalId && g.status !== 'completed'));
+                    const isPaused = goal.status === 'paused' || this.app.goalService.isGoalPaused(goal);
                     unpauseBtn.style.display = isPaused ? 'inline-block' : 'none';
                 }
                 if (reactivateBtn) {
@@ -204,32 +202,33 @@ export class GoalFormView extends BaseUIController {
         renderViews();
     }
 
-
-    handleUnpauseGoal(renderViews) {
+    _getGoalFromForm() {
         const id = getElement('goalId').value;
-        if (!id) return;
+        if (!id) return null;
 
         const goal = this.app.goalService.goals.find(g => g.id === id);
+        return goal || null;
+    }
+
+    handleUnpauseGoal(renderViews) {
+        const goal = this._getGoalFromForm();
         if (!goal) return;
 
-        this.app.goalService.unpauseGoal(id, this.app.settingsService.getSettings().maxActiveGoals);
+        this.app.goalService.unpauseGoal(goal.id, this.app.settingsService.getSettings().maxActiveGoals);
         // Refresh the goal form to update button visibility
-        this.openGoalForm(id, renderViews);
+        this.openGoalForm(goal.id, renderViews);
         renderViews();
     }
 
     handleReactivateGoal(renderViews) {
-        const id = getElement('goalId').value;
-        if (!id) return;
-
-        const goal = this.app.goalService.goals.find(g => g.id === id);
+        const goal = this._getGoalFromForm();
         if (!goal) return;
 
         // Reactivate by setting status to inactive, then let auto-activation handle it
         // This ensures the goal is reactivated based on priority
-        this.app.goalService.setGoalStatus(id, 'inactive', this.app.settingsService.getSettings().maxActiveGoals);
+        this.app.goalService.setGoalStatus(goal.id, 'inactive', this.app.settingsService.getSettings().maxActiveGoals);
         // Refresh the goal form to update button visibility
-        this.openGoalForm(id, renderViews);
+        this.openGoalForm(goal.id, renderViews);
         renderViews();
     }
 
