@@ -2,25 +2,9 @@
 
 import Goal from '../models/goal.js';
 import { prepareGoalsStoragePayload } from '../migration/migration-service.js';
-import { HISTORY_EVENTS, STORAGE_KEY_GOALS, GOAL_HISTORY_LIMIT, DEADLINE_BONUS_DAYS } from '../utils/constants.js';
+import { STORAGE_KEY_GOALS, DEADLINE_BONUS_DAYS } from '../utils/constants.js';
 import { PriorityCacheManager } from '../priority-cache-manager.js';
 import { setToMidnight, normalizeDate } from '../utils/date-utils.js';
-
-const HISTORY_LIMIT = GOAL_HISTORY_LIMIT;
-const TRACKED_HISTORY_FIELDS = ['title', 'motivation', 'urgency', 'deadline', 'status', 'priority'];
-
-function valuesEqual(a, b) {
-    if (a === b) {
-        return true;
-    }
-    if (Number.isNaN(a) && Number.isNaN(b)) {
-        return true;
-    }
-    if ((a === undefined || a === null) && (b === undefined || b === null)) {
-        return true;
-    }
-    return false;
-}
 
 class GoalService {
     constructor(goals = [], errorHandler = null) {
@@ -98,110 +82,11 @@ class GoalService {
 		this._notifyAfterSave();
     }
 
-    generateHistoryId() {
-        return `${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 10)}`;
-    }
-
-    createSnapshot(goal) {
-        return {
-            title: goal.title ?? '',
-            motivation: Number.isNaN(goal.motivation) ? null : goal.motivation,
-            urgency: Number.isNaN(goal.urgency) ? null : goal.urgency,
-            deadline: goal.deadline
-                ? goal.deadline.toISOString()
-                : null,
-            status: goal.status ?? 'active',
-            priority: this.calculatePriority(goal),
-            pauseUntil: goal.pauseUntil ? goal.pauseUntil.toISOString() : null,
-            pauseUntilGoalId: goal.pauseUntilGoalId || null
-        };
-    }
-
-    diffSnapshots(before = {}, after = {}) {
-        return TRACKED_HISTORY_FIELDS.reduce((changes, field) => {
-            const previous = before ? before[field] : undefined;
-            const next = after ? after[field] : undefined;
-            if (!valuesEqual(previous, next)) {
-                changes.push({
-                    field,
-                    from: previous ?? null,
-                    to: next ?? null
-                });
-            }
-            return changes;
-        }, []);
-    }
-
-    appendHistoryEntry(goal, entry) {
-        if (!goal.history) {
-            goal.history = [];
-        }
-        goal.history.push(entry);
-        if (goal.history.length > HISTORY_LIMIT) {
-            goal.history = goal.history.slice(goal.history.length - HISTORY_LIMIT);
-        }
-    }
-
-    recordHistory(goal, { event, timestamp, before, after, changes, meta }) {
-        if (!changes || changes.length === 0) {
-            return;
-        }
-        this.appendHistoryEntry(goal, {
-            id: this.generateHistoryId(),
-            event,
-            timestamp,
-            changes,
-            before,
-            after,
-            meta
-        });
-    }
-
-    applySnapshotToGoal(goal, snapshot) {
-        if (!snapshot) {
-            return;
-        }
-        const updatedFields = {};
-
-        if (snapshot.title !== undefined) {
-            updatedFields.title = snapshot.title;
-        }
-        if (snapshot.motivation !== undefined) {
-            updatedFields.motivation = snapshot.motivation === null ? NaN : Number(snapshot.motivation);
-        }
-        if (snapshot.urgency !== undefined) {
-            updatedFields.urgency = snapshot.urgency === null ? NaN : Number(snapshot.urgency);
-        }
-        if (snapshot.deadline !== undefined) {
-            updatedFields.deadline = snapshot.deadline ? new Date(snapshot.deadline) : null;
-        }
-        if (snapshot.status !== undefined) {
-            updatedFields.status = snapshot.status;
-        }
-        // Handle pause metadata
-        // If reverting to active status, always clear pause metadata
-        const targetStatus = snapshot.status !== undefined ? snapshot.status : goal.status;
-        if (targetStatus === 'active') {
-            updatedFields.pauseUntil = null;
-            updatedFields.pauseUntilGoalId = null;
-        } else {
-            // For other statuses, restore pause metadata if present in snapshot
-            if (snapshot.pauseUntil !== undefined) {
-                updatedFields.pauseUntil = snapshot.pauseUntil ? new Date(snapshot.pauseUntil) : null;
-            }
-            if (snapshot.pauseUntilGoalId !== undefined) {
-                updatedFields.pauseUntilGoalId = snapshot.pauseUntilGoalId || null;
-            }
-        }
-
-        Object.assign(goal, updatedFields);
-    }
 
     handleStatusTransition(goal, newStatus) {
         if (goal.status === newStatus) {
             return;
         }
-        const beforeSnapshot = this.createSnapshot(goal);
         goal.status = newStatus;
         // Clear pause metadata when transitioning to active status
         if (newStatus === 'active') {
@@ -209,15 +94,6 @@ class GoalService {
             goal.pauseUntilGoalId = null;
         }
         goal.lastUpdated = new Date();
-        const afterSnapshot = this.createSnapshot(goal);
-        const changes = this.diffSnapshots(beforeSnapshot, afterSnapshot).filter(change => change.field === 'status' || change.field === 'priority');
-        this.recordHistory(goal, {
-            event: HISTORY_EVENTS.STATUS_CHANGE,
-            timestamp: goal.lastUpdated,
-            before: beforeSnapshot,
-            after: afterSnapshot,
-            changes
-        });
     }
 
     setGoalStatus(id, newStatus, maxActiveGoals) {
@@ -252,15 +128,6 @@ class GoalService {
     createGoal(goalData, maxActiveGoals) {
         // Status is determined automatically rather than set manually
         const goal = new Goal({ ...goalData, status: 'inactive' }); // Temporarily set to inactive
-        const creationSnapshot = this.createSnapshot(goal);
-        const creationChanges = this.diffSnapshots({}, creationSnapshot);
-        this.recordHistory(goal, {
-            event: HISTORY_EVENTS.CREATED,
-            timestamp: goal.createdAt || new Date(),
-            before: null,
-            after: creationSnapshot,
-            changes: creationChanges
-        });
         this.goals.push(goal);
         this.priorityCache.invalidate();
         
@@ -273,8 +140,6 @@ class GoalService {
     updateGoal(id, goalData, maxActiveGoals) {
         const goal = this.goals.find(g => g.id === id);
         if (!goal) return null;
-
-        const beforeSnapshot = this.createSnapshot(goal);
 
         let priorityChanged = false;
         const updates = {};
@@ -321,16 +186,6 @@ class GoalService {
         // Status is determined automatically; ignore goalData.status input
 
         Object.assign(goal, updates);
-
-        const afterSnapshot = this.createSnapshot(goal);
-        const changes = this.diffSnapshots(beforeSnapshot, afterSnapshot);
-        this.recordHistory(goal, {
-            event: HISTORY_EVENTS.UPDATED,
-            timestamp: goal.lastUpdated,
-            before: beforeSnapshot,
-            after: afterSnapshot,
-            changes
-        });
         
         // Invalidate cache when goal is updated (priority may have changed)
         this.priorityCache.invalidate();
@@ -345,41 +200,6 @@ class GoalService {
         return goal;
     }
 
-    revertGoalToHistoryEntry(id, historyEntryId, maxActiveGoals) {
-        const goal = this.goals.find(g => g.id === id);
-        if (!goal || !Array.isArray(goal.history)) {
-            return null;
-        }
-
-        const targetEntry = goal.history.find(entry => entry.id === historyEntryId);
-        if (!targetEntry || !targetEntry.before) {
-            return null;
-        }
-
-        const beforeSnapshot = this.createSnapshot(goal);
-        this.applySnapshotToGoal(goal, targetEntry.before);
-        goal.lastUpdated = new Date();
-        const afterSnapshot = this.createSnapshot(goal);
-        const changes = this.diffSnapshots(beforeSnapshot, afterSnapshot);
-
-        if (changes.length === 0) {
-            this.saveGoals();
-            return goal;
-        }
-
-        this.recordHistory(goal, {
-            event: HISTORY_EVENTS.ROLLBACK,
-            timestamp: goal.lastUpdated,
-            before: beforeSnapshot,
-            after: afterSnapshot,
-            changes,
-            meta: { revertedEntryId: historyEntryId }
-        });
-
-        this.priorityCache.invalidate();
-        this.autoActivateGoalsByPriority(maxActiveGoals);
-        return goal;
-    }
 
     deleteGoal(id, maxActiveGoals) {
         const wasActive = this.goals.find(g => g.id === id)?.status === 'active';
@@ -464,8 +284,6 @@ class GoalService {
         if (!goal) {
             return null;
         }
-
-        const beforeSnapshot = this.createSnapshot(goal);
         
         // Set pause metadata
         goal.pauseUntil = pauseData.pauseUntil || null;
@@ -476,16 +294,6 @@ class GoalService {
         if (goal.status === 'active' && this.isGoalPaused(goal)) {
             this.handleStatusTransition(goal, 'paused');
         }
-
-        const afterSnapshot = this.createSnapshot(goal);
-        const changes = this.diffSnapshots(beforeSnapshot, afterSnapshot);
-        this.recordHistory(goal, {
-            event: HISTORY_EVENTS.UPDATED,
-            timestamp: goal.lastUpdated,
-            before: beforeSnapshot,
-            after: afterSnapshot,
-            changes
-        });
 
         this.priorityCache.invalidate();
         
@@ -506,23 +314,11 @@ class GoalService {
         if (!goal) {
             return null;
         }
-
-        const beforeSnapshot = this.createSnapshot(goal);
         
         // Clear pause metadata
         goal.pauseUntil = null;
         goal.pauseUntilGoalId = null;
         goal.lastUpdated = new Date();
-
-        const afterSnapshot = this.createSnapshot(goal);
-        const changes = this.diffSnapshots(beforeSnapshot, afterSnapshot);
-        this.recordHistory(goal, {
-            event: HISTORY_EVENTS.UPDATED,
-            timestamp: goal.lastUpdated,
-            before: beforeSnapshot,
-            after: afterSnapshot,
-            changes
-        });
 
         this.priorityCache.invalidate();
         
@@ -644,19 +440,12 @@ class GoalService {
         let anyChanged = false;
 
         this.goals.forEach(goal => {
-            const beforeSnapshot = this.createSnapshot(goal);
             let changed = false;
-            const pauseChanges = [];
 
             // Clear expired date-based pauses
             if (goal.pauseUntil) {
                 const pauseUntil = setToMidnight(goal.pauseUntil);
                 if (pauseUntil <= now) {
-                    pauseChanges.push({
-                        field: 'pauseUntil',
-                        from: beforeSnapshot.pauseUntil,
-                        to: null
-                    });
                     goal.pauseUntil = null;
                     changed = true;
                     anyChanged = true;
@@ -667,11 +456,6 @@ class GoalService {
             if (goal.pauseUntilGoalId) {
                 const dependencyGoal = this.goals.find(g => g.id === goal.pauseUntilGoalId);
                 if (!dependencyGoal || dependencyGoal.status === 'completed') {
-                    pauseChanges.push({
-                        field: 'pauseUntilGoalId',
-                        from: beforeSnapshot.pauseUntilGoalId,
-                        to: null
-                    });
                     goal.pauseUntilGoalId = null;
                     changed = true;
                     anyChanged = true;
@@ -680,15 +464,6 @@ class GoalService {
 
             if (changed) {
                 goal.lastUpdated = new Date();
-                const afterSnapshot = this.createSnapshot(goal);
-                const changes = [...this.diffSnapshots(beforeSnapshot, afterSnapshot), ...pauseChanges];
-                this.recordHistory(goal, {
-                    event: HISTORY_EVENTS.UPDATED,
-                    timestamp: goal.lastUpdated,
-                    before: beforeSnapshot,
-                    after: afterSnapshot,
-                    changes
-                });
             }
         });
         

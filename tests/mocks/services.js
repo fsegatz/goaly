@@ -13,7 +13,6 @@ function createMockGoalService(overrides = {}) {
         deleteGoal: jest.fn(),
         calculatePriority: jest.fn(() => overrides.calculatePriority || 0),
         autoActivateGoalsByPriority: jest.fn(),
-        revertGoalToHistoryEntry: jest.fn(),
         onAfterSave: jest.fn(),
         ...overrides
     };

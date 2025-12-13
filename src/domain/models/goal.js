@@ -1,30 +1,5 @@
 // src/domain/goal.js
 
-const DEFAULT_HISTORY_EVENT = 'update';
-
-function normalizeHistoryEntry(entry) {
-    if (!entry) {
-        return null;
-    }
-
-    const timestamp = entry.timestamp ? new Date(entry.timestamp) : new Date();
-    return {
-        id: entry.id || `${timestamp.getTime()}-${Math.random().toString(16).slice(2, 10)}`,
-        event: entry.event || DEFAULT_HISTORY_EVENT,
-        timestamp,
-        changes: Array.isArray(entry.changes)
-            ? entry.changes.map(change => ({
-                field: change?.field ?? null,
-                from: change?.from ?? null,
-                to: change?.to ?? null
-            }))
-            : [],
-        before: entry.before ? { ...entry.before } : null,
-        after: entry.after ? { ...entry.after } : null,
-        meta: entry.meta ? { ...entry.meta } : undefined
-    };
-}
-
 class Goal {
     constructor(goalData) {
         this.id = goalData.id || (Date.now().toString() + Math.random().toString());
@@ -45,8 +20,6 @@ class Goal {
         this.reviewIntervalIndex = Number.isInteger(goalData.reviewIntervalIndex)
             ? goalData.reviewIntervalIndex
             : null;
-        const history = Array.isArray(goalData.history) ? goalData.history.map(normalizeHistoryEntry).filter(Boolean) : [];
-        this.history = history;
         this.steps = Array.isArray(goalData.steps) ? goalData.steps.map((step, index) => ({
             id: step.id || `${Date.now()}-${index}-${Math.random().toString(16).slice(2, 10)}`,
             text: step.text || '',

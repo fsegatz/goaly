@@ -15,11 +15,7 @@ describe('sync-merge-service', () => {
             urgency: 2,
             status: 'active',
             createdAt: '2025-01-01T00:00:00.000Z',
-            lastUpdated: '2025-01-01T01:00:00.000Z',
-            history: [
-                { id: 'h0', event: 'PREV_UPDATE', timestamp: '2025-01-01T00:30:00.000Z', changes: [] },
-                { id: 'h1', event: 'CREATED', timestamp: '2025-01-01T00:00:00.000Z', changes: [] }
-            ]
+            lastUpdated: '2025-01-01T01:00:00.000Z'
         }]
     };
 
@@ -31,15 +27,12 @@ describe('sync-merge-service', () => {
             goals: [{
                 ...basePayload.goals[0],
                 title: 'Remote New',
-                lastUpdated: '2025-01-01T02:00:00.000Z',
-                history: [...basePayload.goals[0].history, { id: 'h2', event: 'UPDATED', timestamp: '2025-01-01T02:00:00.000Z', changes: [] }]
+                lastUpdated: '2025-01-01T02:00:00.000Z'
             }]
         };
 
         const merged = mergePayloads({ base: basePayload, local, remote });
         expect(merged.goals.find(g => g.id === 'g1').title).toBe('Remote New');
-        const hist = merged.goals.find(g => g.id === 'g1').history;
-        expect(hist.map(h => h.id)).toEqual(['h1', 'h0', 'h2']);
     });
 
     test('latest edit wins when both diverged from base', () => {
@@ -107,31 +100,6 @@ describe('sync-merge-service', () => {
         expect(merged.goals.find(g => g.id === 'g1').title).toBe('Local Same Updated');
     });
 
-    test('merges histories with de-duplication and ordering', () => {
-        const local = {
-            ...basePayload,
-            goals: [{
-                ...basePayload.goals[0],
-                history: [
-                    { id: 'h1', event: 'CREATED', timestamp: '2025-01-01T00:00:00.000Z', changes: [] },
-                    { id: 'h2', event: 'UPDATED', timestamp: '2025-01-01T02:00:00.000Z', changes: [] }
-                ]
-            }]
-        };
-        const remote = {
-            ...basePayload,
-            goals: [{
-                ...basePayload.goals[0],
-                history: [
-                    { id: 'h2', event: 'UPDATED', timestamp: '2025-01-01T02:00:00.000Z', changes: [] },
-                    { id: 'h3', event: 'UPDATED', timestamp: '2025-01-01T03:00:00.000Z', changes: [] }
-                ]
-            }]
-        };
-        const merged = mergePayloads({ base: basePayload, local, remote });
-        const hist = merged.goals.find(g => g.id === 'g1').history;
-        expect(hist.map(h => h.id)).toEqual(['h1', 'h0', 'h2', 'h3']);
-    });
 
     test('settings fall back to local when local exportDate newer', () => {
         const local = { ...basePayload, exportDate: '2025-01-05T00:00:00.000Z', settings: { language: 'de' } };
@@ -183,45 +151,6 @@ describe('sync-merge-service', () => {
         expect(merged.goals.find(g => g.id === 'g').title).toBe('Local Change');
     });
 
-    test('history is capped to last 100 entries and ordered by timestamp', () => {
-        const many = [];
-        for (let i = 0; i < 120; i += 1) {
-            // strictly increasing timestamps per minute
-            const hour = Math.floor(i / 60);
-            const minute = i % 60;
-            many.push({ id: `h${i}`, event: 'UPDATED', timestamp: `2025-01-01T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:00.000Z`, changes: [] });
-        }
-        const base = {
-            version: '1.0.0',
-            exportDate: '2025-01-01T00:00:00.000Z',
-            settings: {},
-            goals: [{ id: 'g', title: 'Base', lastUpdated: '2025-01-01T00:00:00.000Z', history: many.slice(0, 60) }]
-        };
-        const local = {
-            ...base,
-            goals: [{ id: 'g', title: 'Local', lastUpdated: '2025-01-01T01:00:00.000Z', history: many.slice(60) }]
-        };
-        const remote = { ...base };
-        const merged = mergePayloads({ base, local, remote });
-        const hist = merged.goals.find(g => g.id === 'g').history;
-        expect(hist.length).toBe(100);
-        // Ensure the last entry has the highest index timestamp present
-        expect(hist[hist.length - 1].id).toBe('h119');
-    });
-
-    test('ignores history entries without id and keeps valid ones', () => {
-        const base = {
-            version: '1.0.0',
-            exportDate: '2025-01-01T00:00:00.000Z',
-            settings: {},
-            goals: [{ id: 'g', title: 'Base', lastUpdated: '2025-01-01T00:00:00.000Z', history: [{ id: 'ok', timestamp: '2025-01-01T00:00:00.000Z' }, { timestamp: '2025-01-01T00:01:00.000Z' }] }]
-        };
-        const local = { ...base };
-        const remote = { ...base };
-        const merged = mergePayloads({ base, local, remote });
-        const hist = merged.goals.find(g => g.id === 'g').history;
-        expect(hist.map(h => h.id)).toEqual(['ok']);
-    });
 
     test('settings selection tolerates invalid date strings', () => {
         const local = { ...basePayload, exportDate: 'not-a-date', settings: { language: 'en' } };

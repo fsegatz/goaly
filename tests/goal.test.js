@@ -25,7 +25,7 @@ describe('Goal', () => {
         expect(goal.createdAt).toEqual(new Date(goalData.createdAt));
         expect(goal.lastUpdated).toEqual(new Date(goalData.lastUpdated));
         expect(goal.reviewDates).toEqual(goalData.reviewDates);
-        expect(goal.history).toEqual([]);
+        expect(goal.history).toBeUndefined();
         expect(goal.steps).toEqual([]);
         expect(goal.resources).toEqual([]);
     });
@@ -45,7 +45,7 @@ describe('Goal', () => {
         expect(goal.createdAt).toBeInstanceOf(Date);
         expect(goal.lastUpdated).toBeInstanceOf(Date);
         expect(goal.reviewDates).toEqual([]);
-        expect(goal.history).toEqual([]);
+        expect(goal.history).toBeUndefined();
         expect(goal.steps).toEqual([]);
         expect(goal.resources).toEqual([]);
     });
@@ -74,49 +74,6 @@ describe('Goal', () => {
         expect(goal.urgency).toBeNaN();
     });
 
-    test('should normalize history entries with timestamps and meta data', () => {
-        const timestamp = '2025-01-05T10:00:00.000Z';
-        const goalData = {
-            title: 'History Goal',
-            motivation: 3,
-            urgency: 2,
-            history: [
-                {
-                    id: 'hist-1',
-                    event: 'updated',
-                    timestamp,
-                    changes: [
-                        {
-                            field: 'title',
-                            from: 'Old',
-                            to: 'New'
-                        }
-                    ],
-                    before: { title: 'Old' },
-                    after: { title: 'New' },
-                    meta: { user: 'tester' }
-                }
-            ]
-        };
-
-        const goal = new Goal(goalData);
-        expect(goal.history).toHaveLength(1);
-        const [entry] = goal.history;
-        expect(entry.id).toBe('hist-1');
-        expect(entry.event).toBe('updated');
-        expect(entry.timestamp).toBeInstanceOf(Date);
-        expect(entry.timestamp.toISOString()).toBe(timestamp);
-        expect(entry.changes).toEqual([
-            {
-                field: 'title',
-                from: 'Old',
-                to: 'New'
-            }
-        ]);
-        expect(entry.before).toEqual({ title: 'Old' });
-        expect(entry.after).toEqual({ title: 'New' });
-        expect(entry.meta).toEqual({ user: 'tester' });
-    });
 
     test('should initialize steps and resources from goalData', () => {
         const goalData = {
@@ -164,17 +121,4 @@ describe('Goal', () => {
         expect(typeof goal.resources[0].id).toBe('string');
     });
 
-    test('should handle null history entry', () => {
-        const goalData = {
-            title: 'Goal with null history',
-            motivation: 3,
-            urgency: 4,
-            history: [null, undefined, { timestamp: '2024-01-01', event: 'update' }]
-        };
-        const goal = new Goal(goalData);
-
-        // Should filter out null/undefined entries
-        expect(goal.history).toHaveLength(1);
-        expect(goal.history[0].event).toBe('update');
-    });
 });

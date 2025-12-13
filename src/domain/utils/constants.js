@@ -16,17 +16,8 @@ export const STORAGE_KEY_GDRIVE_TOKEN = 'goaly_gdrive_token';
 export const STORAGE_KEY_GDRIVE_FILE_ID = 'goaly_gdrive_file_id';
 export const STORAGE_KEY_GDRIVE_FOLDER_ID = 'goaly_gdrive_folder_id';
 
-// Goal history events
-export const HISTORY_EVENTS = {
-    CREATED: 'created',
-    UPDATED: 'updated',
-    STATUS_CHANGE: 'status-change',
-    ROLLBACK: 'rollback'
-};
-
 // UI constants
 export const MOBILE_BREAKPOINT_PX = 900;
-export const GOAL_HISTORY_LIMIT = 50;
 export const MAX_RATING_VALUE = 5;
 export const DEADLINE_BONUS_DAYS = 30;
 export const URGENT_DEADLINE_DAYS = 7;
