@@ -708,6 +708,36 @@ main {
     border-bottom: none;
 }
 
+.goal-state-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.goal-state-actions .btn {
+    flex: 1;
+    min-width: 100px;
+}
+
+.cell-actions {
+    text-align: center;
+}
+
+.force-activate-btn {
+    white-space: nowrap;
+}
+
+.force-activated-indicator {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #fff3cd;
+    color: #856404;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
 .goal-row {
     cursor: pointer;
     transition: background 0.2s ease, transform 0.2s ease;

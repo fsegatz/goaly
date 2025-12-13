@@ -34,6 +34,8 @@ class Goal {
         // Pause metadata: pauseUntil (date) or pauseUntilGoalId (goal ID that must be completed)
         this.pauseUntil = goalData.pauseUntil ? new Date(goalData.pauseUntil) : null;
         this.pauseUntilGoalId = goalData.pauseUntilGoalId || null;
+        // Track if goal was force-activated by user (not priority-based)
+        this.forceActivated = Boolean(goalData.forceActivated);
     }
 }
 

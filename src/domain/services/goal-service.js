@@ -359,6 +359,10 @@ class GoalService {
                 return true;
             })
             .sort((a, b) => {
+                // Force-activated goals should be sorted first (to preserve them)
+                if (a.forceActivated && !b.forceActivated) return -1;
+                if (!a.forceActivated && b.forceActivated) return 1;
+                
                 const priorityA = this.calculatePriority(a);
                 const priorityB = this.calculatePriority(b);
                 // Prefer older goals when priorities tie to keep sorting stable
@@ -376,8 +380,20 @@ class GoalService {
      * @private
      */
     _activateTopPriorityGoals(eligibleGoals, maxActiveGoals) {
-        const goalsToActivate = eligibleGoals.slice(0, maxActiveGoals);
-        const goalsToInactivate = eligibleGoals.slice(maxActiveGoals);
+        // Separate force-activated goals from others
+        const forceActivatedGoals = this.goals.filter(g => g.status === 'active' && g.forceActivated);
+        const forceActivatedCount = forceActivatedGoals.length;
+        
+        // Calculate how many slots are available for priority-based activation
+        const availableSlots = Math.max(0, maxActiveGoals - forceActivatedCount);
+        
+        // Get goals to activate by priority (excluding force-activated ones)
+        const goalsToActivate = eligibleGoals
+            .filter(g => !g.forceActivated)
+            .slice(0, availableSlots);
+        const goalsToInactivate = eligibleGoals
+            .filter(g => !g.forceActivated)
+            .slice(availableSlots);
 
         // Update status
         goalsToActivate.forEach(goal => {
@@ -471,6 +487,64 @@ class GoalService {
         if (anyChanged) {
             this.priorityCache.invalidate();
         }
+    }
+
+    /**
+     * Force-activate a goal regardless of priority
+     * Deactivates the lowest-priority active goal if needed to maintain maxActiveGoals limit
+     * @param {string} goalId - The ID of the goal to force-activate
+     * @param {number} maxActiveGoals - Maximum number of active goals
+     * @returns {Goal|null} - The force-activated goal or null if not found
+     */
+    forceActivateGoal(goalId, maxActiveGoals) {
+        const goal = this.goals.find(g => g.id === goalId);
+        if (!goal) {
+            return null;
+        }
+
+        // Cannot force-activate completed or abandoned goals
+        if (goal.status === 'completed' || goal.status === 'abandoned') {
+            return null;
+        }
+
+        // Clear pause metadata if goal is paused
+        if (goal.pauseUntil || goal.pauseUntilGoalId) {
+            goal.pauseUntil = null;
+            goal.pauseUntilGoalId = null;
+        }
+
+        // Mark as force-activated and activate
+        goal.forceActivated = true;
+        this.handleStatusTransition(goal, 'active');
+        goal.lastUpdated = new Date();
+
+        // Get current active goals (excluding the one we just force-activated)
+        const activeGoals = this.goals
+            .filter(g => g.status === 'active' && g.id !== goalId && !this.isGoalPaused(g))
+            .map(g => ({
+                goal: g,
+                priority: this.calculatePriority(g)
+            }))
+            .sort((a, b) => {
+                // Sort by priority, then by creation date for stability
+                if (a.priority !== b.priority) {
+                    return a.priority - b.priority; // Lower priority first (to deactivate)
+                }
+                return b.goal.createdAt - a.goal.createdAt; // Newer first (to deactivate)
+            });
+
+        // If we exceed maxActiveGoals, deactivate the lowest-priority active goal
+        if (activeGoals.length >= maxActiveGoals) {
+            const goalToDeactivate = activeGoals[0].goal;
+            goalToDeactivate.forceActivated = false; // Clear force flag if it was set
+            this.handleStatusTransition(goalToDeactivate, 'inactive');
+            goalToDeactivate.lastUpdated = new Date();
+        }
+
+        this.priorityCache.invalidate();
+        this.saveGoals();
+
+        return goal;
     }
 }
 

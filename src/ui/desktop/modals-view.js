@@ -12,7 +12,6 @@ export class ModalsView extends BaseUIController {
             completionModal: getElement('completionModal'),
             completionSuccessBtn: getElement('completionSuccessBtn'),
             completionFailureBtn: getElement('completionFailureBtn'),
-            completionCancelBtn: getElement('completionCancelBtn'),
             completionCloseBtn: getElement('completionCloseBtn')
         };
         this.pendingCompletionGoalId = null;
@@ -44,11 +43,6 @@ export class ModalsView extends BaseUIController {
         const failureBtn = this.getCompletionElement('completionFailureBtn');
         if (failureBtn) {
             failureBtn.addEventListener('click', () => handleCompletionChoice('abandoned'));
-        }
-
-        const cancelBtn = this.getCompletionElement('completionCancelBtn');
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => this.closeCompletionModal());
         }
 
         const closeBtn = this.getCompletionElement('completionCloseBtn');
