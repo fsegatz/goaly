@@ -21,7 +21,6 @@ beforeEach(() => {
                 <div class="completion-actions">
                     <button id="completionSuccessBtn" class="btn btn-primary">Goal completed</button>
                     <button id="completionFailureBtn" class="btn btn-danger">Not completed</button>
-                    <button id="completionCancelBtn" class="btn btn-secondary">Cancel</button>
                 </div>
             </div>
         </div>
@@ -206,20 +205,14 @@ describe('ModalsView', () => {
         expect(handleCompletionChoice).toHaveBeenCalledWith('abandoned');
     });
 
-    test('completion modal cancel and close should close modal', () => {
+    test('completion modal close button should close modal', () => {
         const handleCompletionChoice = jest.fn();
         modalsView.setupCompletionModal(handleCompletionChoice);
         modalsView.openCompletionModal('goal-1');
 
         const modal = document.getElementById('completionModal');
-        const cancelBtn = document.getElementById('completionCancelBtn');
         const closeBtn = document.getElementById('completionCloseBtn');
 
-        cancelBtn.click();
-        expect(modal.classList.contains('is-visible')).toBe(false);
-        expect(handleCompletionChoice).not.toHaveBeenCalled();
-
-        modalsView.openCompletionModal('goal-1');
         closeBtn.click();
         expect(modal.classList.contains('is-visible')).toBe(false);
         expect(handleCompletionChoice).not.toHaveBeenCalled();
@@ -421,17 +414,17 @@ describe('ModalsView', () => {
 
         const oldView = document.getElementById('migrationDiffOld');
         const newView = document.getElementById('migrationDiffNew');
-        
+
         // Manually set the flag to simulate an ongoing sync
         modalsView.isSyncingMigrationScroll = true;
-        
+
         // Trigger scroll - should return early due to guard
         oldView.scrollTop = 50;
         oldView.dispatchEvent(new dom.window.Event('scroll'));
-        
+
         // The newView should not have been updated because of the guard
         expect(newView.scrollTop).not.toBe(50);
-        
+
         modalsView.closeMigrationModals();
     });
 
