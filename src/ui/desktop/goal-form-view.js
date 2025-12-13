@@ -17,6 +17,7 @@ export class GoalFormView extends BaseUIController {
         const completeBtn = getOptionalElement('completeGoalBtn');
         const unpauseBtn = getOptionalElement('unpauseGoalBtn');
         const reactivateBtn = getOptionalElement('reactivateGoalBtn');
+        const forceActivateBtn = getOptionalElement('forceActivateGoalBtn');
 
         if (!modal || !form || !deleteBtn || !modalTitle) {
             return;
@@ -55,6 +56,12 @@ export class GoalFormView extends BaseUIController {
                     reactivateBtn.style.display = goal.status === 'completed' || goal.status === 'abandoned'
                         ? 'inline-block'
                         : 'none';
+                }
+                if (forceActivateBtn) {
+                    const canForceActivate = goal.status !== 'active' &&
+                        goal.status !== 'completed' &&
+                        goal.status !== 'abandoned';
+                    forceActivateBtn.style.display = canForceActivate ? 'inline-block' : 'none';
                 }
             }
         } else {
@@ -133,6 +140,14 @@ export class GoalFormView extends BaseUIController {
             reactivateBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.handleReactivateGoal(renderViews);
+            });
+        }
+
+        const forceActivateBtn = getOptionalElement('forceActivateGoalBtn');
+        if (forceActivateBtn) {
+            forceActivateBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.handleForceActivateGoal(renderViews);
             });
         }
 
@@ -227,6 +242,18 @@ export class GoalFormView extends BaseUIController {
         // Reactivate by setting status to inactive, then let auto-activation handle it
         // This ensures the goal is reactivated based on priority
         this.app.goalService.setGoalStatus(goal.id, 'inactive', this.app.settingsService.getSettings().maxActiveGoals);
+        // Refresh the goal form to update button visibility
+        this.openGoalForm(goal.id, renderViews);
+        renderViews();
+    }
+
+    handleForceActivateGoal(renderViews) {
+        const goal = this._getGoalFromForm();
+        if (!goal) return;
+
+        const maxActiveGoals = this.app.settingsService.getSettings().maxActiveGoals;
+        this.app.goalService.forceActivateGoal(goal.id, maxActiveGoals);
+
         // Refresh the goal form to update button visibility
         this.openGoalForm(goal.id, renderViews);
         renderViews();

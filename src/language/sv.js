@@ -293,6 +293,9 @@ const sv = {
             uploading: 'Laddar upp sammanslagen data till Google Drive…'
         }
     },
+    allGoals: {
+        forceActivate: 'Tvinga Aktivera'
+    },
     help: {
         title: 'Hjälp',
         description: 'Har du hittat en bugg eller vill du begära en ny funktion? Vi skulle gärna höra från dig!',

@@ -25,7 +25,7 @@ export class DashboardView extends BaseUIController {
 
         const dashboardList = getElement('goalsList');
         const feedbackElement = getOptionalElement('dashboardFeedback');
-        
+
         // Clean up EventManager instances for existing cards before clearing the list
         // This prevents memory leaks when cards are removed from the DOM
         for (const card of dashboardList.querySelectorAll('.goal-card, .review-card')) {
@@ -33,7 +33,7 @@ export class DashboardView extends BaseUIController {
                 card._stepEventManager.cleanup();
             }
         }
-        
+
         dashboardList.innerHTML = '';
 
         // Display feedback if available
@@ -54,7 +54,7 @@ export class DashboardView extends BaseUIController {
         // Review cards show ALL active and paused goals that need review (not limited by maxActiveGoals)
         // Active goal cards show up to maxActiveGoals goals (including those that also have review cards)
         const allCards = [];
-        
+
         // Add review cards first - these include ALL active and paused goals that need review
         // (not limited by maxActiveGoals - all goals needing review should show review cards)
         reviews.forEach((review, index) => {
@@ -65,7 +65,7 @@ export class DashboardView extends BaseUIController {
                 total: reviews.length
             });
         });
-        
+
         // Add active goal cards - show all active goals up to maxActiveGoals
         // (some of these may also have review cards above, which is fine)
         dashboardGoals.forEach(goal => {
@@ -86,7 +86,7 @@ export class DashboardView extends BaseUIController {
         } else {
             let hasReviewCards = false;
             let firstGoalCard = true;
-            
+
             allCards.forEach(cardItem => {
                 if (cardItem.type === 'review') {
                     hasReviewCards = true;
@@ -135,7 +135,7 @@ export class DashboardView extends BaseUIController {
         // Bottom section: fields and actions grouped together
         const bottomSection = document.createElement('div');
         bottomSection.className = 'review-card__bottom';
-        
+
         const fields = document.createElement('div');
         fields.className = 'review-card__fields';
 
@@ -321,10 +321,17 @@ export class DashboardView extends BaseUIController {
             }
         }
 
+        // Get force activated indicator
+        let forceActivatedIndicator = '';
+        if (goal.status === 'active' && goal.forceActivated) {
+            forceActivatedIndicator = `<span class="goal-force-activated-indicator" data-i18n-key="allGoals.forceActivated">⚡ ${this.translate('allGoals.forceActivated')}</span>`;
+        }
+
         card.innerHTML = `
             <div class="goal-header">
                 <div>
                     <div class="goal-title">${this.escapeHtml(goal.title)}</div>
+                    ${forceActivatedIndicator}
                     ${pauseIndicator}
                 </div>
             </div>
@@ -364,7 +371,7 @@ export class DashboardView extends BaseUIController {
                 });
                 actionsContainer.appendChild(pauseButton);
             }
-            
+
             const completeButton = document.createElement('button');
             completeButton.type = 'button';
             completeButton.className = 'btn btn-secondary complete-goal';
@@ -464,7 +471,7 @@ export class DashboardView extends BaseUIController {
             if (!input) return;
             input.classList.add('goal-title-input-error');
             input.setAttribute('aria-invalid', 'true');
-            
+
             // Create or update error message
             if (!errorMessage) {
                 errorMessage = document.createElement('span');
