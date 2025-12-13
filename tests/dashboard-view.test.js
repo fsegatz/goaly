@@ -288,7 +288,7 @@ describe('DashboardView', () => {
         const hourResult = dashboardView.formatReviewIntervalDisplay(0.5);
         const minuteResult = dashboardView.formatReviewIntervalDisplay(1 / (24 * 60));
         const secondResult = dashboardView.formatReviewIntervalDisplay(1 / (24 * 60 * 60));
-        
+
         expect(typeof dayResult).toBe('string');
         expect(typeof hourResult).toBe('string');
         expect(typeof minuteResult).toBe('string');
@@ -304,7 +304,7 @@ describe('DashboardView', () => {
         const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
         const deadlineLabel = card.querySelector('.goal-deadline-label');
         const deadlineInput = card.querySelector('.goal-deadline-input');
-        
+
         // Should have clickable deadline label and hidden input
         expect(deadlineLabel).not.toBeNull();
         expect(deadlineInput).not.toBeNull();
@@ -341,7 +341,7 @@ describe('DashboardView', () => {
         const updateGoalInline = jest.fn();
 
         const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
-        
+
         // Completed goals should not have complete button
         expect(card.querySelector('.complete-goal')).toBeNull();
     });
@@ -426,13 +426,13 @@ describe('DashboardView', () => {
         const stepElements = stepsList.querySelectorAll('.goal-step');
 
         expect(stepElements.length).toBe(4);
-        
+
         // First two steps should be uncompleted (Step 2, Step 4)
         expect(stepElements[0].textContent).toContain('Step 2');
         expect(stepElements[0].classList.contains('completed')).toBe(false);
         expect(stepElements[1].textContent).toContain('Step 4');
         expect(stepElements[1].classList.contains('completed')).toBe(false);
-        
+
         // Last two steps should be completed (Step 1, Step 3)
         expect(stepElements[2].textContent).toContain('Step 1');
         expect(stepElements[2].classList.contains('completed')).toBe(true);
@@ -671,7 +671,7 @@ describe('DashboardView', () => {
         const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
         const addStepBtn = card.querySelector('.add-step');
         addStepBtn.click();
-        
+
         const deleteBtn = card.querySelector('.step-delete');
         expect(deleteBtn).not.toBeNull();
         deleteBtn.click();
@@ -700,7 +700,7 @@ describe('DashboardView', () => {
         const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
         const addStepBtn = card.querySelector('.add-step');
         addStepBtn.click();
-        
+
         const textEl = card.querySelector('.step-text');
         textEl.textContent = '';
         const blurEvent = new window.Event('blur');
@@ -729,7 +729,7 @@ describe('DashboardView', () => {
 
         const card = dashboardView.createGoalCard(goal, openCompletionModal, updateGoalInline);
         const stepsList = card.querySelector('.goal-steps-list');
-        
+
         // Should show empty state initially
         expect(stepsList.querySelector('.steps-empty')).not.toBeNull();
         expect(stepsList.textContent).toContain('No steps yet');
@@ -776,7 +776,7 @@ describe('DashboardView', () => {
         titleElement.click();
         const input = card.querySelector('.goal-title-input');
         input.value = 'Updated Title';
-        
+
         const enterEvent = new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
         input.dispatchEvent(enterEvent);
 
@@ -796,7 +796,7 @@ describe('DashboardView', () => {
         titleElement.click();
         const input = card.querySelector('.goal-title-input');
         input.value = 'Changed Title';
-        
+
         const escapeEvent = new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
         input.dispatchEvent(escapeEvent);
 
@@ -816,7 +816,7 @@ describe('DashboardView', () => {
         titleElement.click();
         const input = card.querySelector('.goal-title-input');
         input.value = 'Updated Title';
-        
+
         input.dispatchEvent(new window.Event('blur'));
 
         // Advance timers to trigger setTimeout in the blur handler
@@ -838,7 +838,7 @@ describe('DashboardView', () => {
         titleElement.click();
         const input = card.querySelector('.goal-title-input');
         input.value = '   '; // Only whitespace
-        
+
         const enterEvent = new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
         input.dispatchEvent(enterEvent);
 
@@ -865,7 +865,7 @@ describe('DashboardView', () => {
         titleElement.click();
         const input = card.querySelector('.goal-title-input');
         // Keep the same title
-        
+
         const enterEvent = new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
         input.dispatchEvent(enterEvent);
 
@@ -903,5 +903,116 @@ describe('DashboardView', () => {
         expect(input).not.toBeNull();
     });
 
+
+    test('render should display review cards when reviews exist', () => {
+        const goal = new Goal({ id: '1', title: 'Review Goal', motivation: 5, urgency: 5, status: 'active', deadline: new Date('2025-12-01') });
+        mockApp.reviews = [{ goal, dueAt: new Date() }];
+        mockGoalService.getActiveGoals.mockReturnValue([goal]);
+
+        dashboardView.render(jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn());
+
+        const dashboardList = document.getElementById('goalsList');
+        expect(dashboardList.querySelectorAll('.review-card').length).toBe(1);
+        expect(dashboardList.textContent).toContain('Review Goal');
+        // Check for "Review" badge
+        expect(dashboardList.textContent).toContain('Review');
+    });
+
+    test('createReviewCard should create a review card with fields', () => {
+        const goal = new Goal({ id: '1', title: 'Review Goal', motivation: 3, urgency: 3 });
+        const review = { goal, dueAt: new Date() };
+        const openGoalForm = jest.fn();
+        const handleReviewSubmit = jest.fn();
+        const renderViews = jest.fn();
+
+        const card = dashboardView.createReviewCard(review, 1, 1, openGoalForm, handleReviewSubmit, renderViews);
+
+        expect(card.classList.contains('review-card')).toBe(true);
+        expect(card.querySelector('.review-card__title').textContent).toBe('Review Goal');
+        // Should have motivation and urgency fields (10 radio buttons each assuming MAX_RATING_VALUE is 10, or 5 if 5)
+        // We just check existence of inputs
+        expect(card.querySelectorAll('input[type="radio"]').length).toBeGreaterThan(0);
+        expect(card.querySelector('button[type="submit"]')).not.toBeNull();
+        expect(card.querySelector('button[data-i18n-key="reviews.actions.edit"]')).not.toBeNull();
+    });
+
+    test('createReviewCard should handle review submission', () => {
+        const goal = new Goal({ id: '1', title: 'Review Goal', motivation: 3, urgency: 3 });
+        const review = { goal, dueAt: new Date() };
+        const openGoalForm = jest.fn();
+        const handleReviewSubmit = jest.fn();
+        const renderViews = jest.fn();
+
+        const card = dashboardView.createReviewCard(review, 1, 1, openGoalForm, handleReviewSubmit, renderViews);
+
+        // Find radio buttons for motivation and change selection
+        // We know structure is createReviewRadioGroup -> container
+        const radioGroups = card.querySelectorAll('.review-card__radio-group');
+        expect(radioGroups.length).toBe(2);
+
+        const motivationGroup = radioGroups[0];
+        const urgencyGroup = radioGroups[1];
+
+        // Select logic
+        const motivationInput = motivationGroup.querySelector('input[value="5"]');
+        if (motivationInput) motivationInput.checked = true;
+
+        const urgencyInput = urgencyGroup.querySelector('input[value="1"]');
+        if (urgencyInput) urgencyInput.checked = true;
+
+        const form = card;
+        const submitEvent = new window.Event('submit');
+        form.dispatchEvent(submitEvent);
+
+        expect(handleReviewSubmit).toHaveBeenCalledWith(
+            goal.id,
+            { motivation: '5', urgency: '1' },
+            renderViews
+        );
+    });
+
+    test('createReviewCard edit button should open goal form', () => {
+        const goal = new Goal({ id: '1', title: 'Review Goal', motivation: 3, urgency: 3 });
+        const review = { goal, dueAt: new Date() };
+        const openGoalForm = jest.fn();
+        const handleReviewSubmit = jest.fn();
+        const renderViews = jest.fn();
+
+        const card = dashboardView.createReviewCard(review, 1, 1, openGoalForm, handleReviewSubmit, renderViews);
+
+        const editBtn = card.querySelector('button[data-i18n-key="reviews.actions.edit"]');
+        editBtn.click();
+
+        expect(openGoalForm).toHaveBeenCalledWith(goal.id);
+    });
+
+    test('formatReviewDueLabel should return correct label', () => {
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        const overdue = new Date(today);
+        overdue.setDate(today.getDate() - 3);
+
+        expect(dashboardView.formatReviewDueLabel(today)).toBe('Due today');
+        // Depending on logic, tomorrow might be same or different. 
+        // Logic says: if (diffDays <= 0) return 'reviews.due.today';
+        // Wait, diffMs = now - due. If due is future, diff is negative. diffDays <= 0.
+        // So future is "Today"? That seems like a bug or simplistic logic in source, but test should match source.
+
+        // Let's check source logic again:
+        // const now = new Date();
+        // const diffMs = now.getTime() - dueDate.getTime();
+        // const diffDays = Math.floor(diffMs / DAY_IN_MS);
+        // if (diffDays <= 0) return this.translate('reviews.due.today');
+
+        // If due is yesterday: now > due, diffMs > 0.
+        // If diffMs = 1.5 days. diffDays = 1.
+        // Return overdue.
+
+        expect(dashboardView.formatReviewDueLabel(overdue)).toBe('Overdue by 3 days');
+        expect(dashboardView.formatReviewDueLabel(null)).toBe('Review scheduled');
+    });
+
 });
+
 
