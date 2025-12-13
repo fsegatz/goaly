@@ -809,13 +809,11 @@ main {
     left: 0;
     right: 0;
     bottom: 0;
-    background: repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 10px,
-        rgba(0, 0, 0, 0.03) 10px,
-        rgba(0, 0, 0, 0.03) 20px
-    );
+    background: repeating-linear-gradient(45deg,
+            transparent,
+            transparent 10px,
+            rgba(0, 0, 0, 0.03) 10px,
+            rgba(0, 0, 0, 0.03) 20px);
     pointer-events: none;
     border-radius: 12px;
 }
@@ -829,6 +827,19 @@ main {
     border-radius: 4px;
     font-size: 0.85rem;
     color: #856404;
+    font-weight: 500;
+}
+
+.goal-force-activated-indicator {
+    display: inline-block;
+    margin-top: 8px;
+    margin-right: 8px;
+    padding: 4px 8px;
+    background: #e3f2fd;
+    border: 1px solid #2196f3;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #0d47a1;
     font-weight: 500;
 }
 
@@ -1779,7 +1790,7 @@ main {
     background: #f0f4ff;
 }
 
-.review-card__radio-option input[type="radio"]:checked + .review-card__radio-label {
+.review-card__radio-option input[type="radio"]:checked+.review-card__radio-label {
     border-color: #667eea;
     background: #667eea;
     color: white;
@@ -1793,7 +1804,7 @@ main {
     font-weight: 600;
 }
 
-.review-card__radio-option.is-current input[type="radio"]:checked + .review-card__radio-label {
+.review-card__radio-option.is-current input[type="radio"]:checked+.review-card__radio-label {
     border-color: #f59e0b;
     background: #f59e0b;
     color: white;
@@ -1853,7 +1864,7 @@ main {
     .review-card__actions {
         flex-direction: column;
     }
-    
+
     .review-card__actions .btn {
         min-width: 100%;
         width: 100%;
@@ -1873,7 +1884,7 @@ main {
         box-shadow: none;
         padding: 0;
     }
-    
+
     #dashboardView {
         background: transparent;
     }
@@ -2302,7 +2313,7 @@ main {
     .mobile-dashboard-swipe-container {
         display: none;
     }
-    
+
     .goals-list:has(.mobile-dashboard-swipe-container) {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -2317,18 +2328,18 @@ main {
         grid-template-columns: none;
         height: 100%;
     }
-    
-    .goals-list > .goal-card:not(.mobile-dashboard-card),
-    .goals-list > .review-card:not(.mobile-dashboard-card),
-    .goals-list > .dashboard-card-separator {
+
+    .goals-list>.goal-card:not(.mobile-dashboard-card),
+    .goals-list>.review-card:not(.mobile-dashboard-card),
+    .goals-list>.dashboard-card-separator {
         display: none;
     }
-    
+
     .mobile-dashboard-card {
         margin-bottom: 0;
         position: relative;
     }
-    
+
     .mobile-dashboard-card.goal-card,
     .mobile-dashboard-card.review-card {
         width: 100%;
@@ -2338,14 +2349,14 @@ main {
         flex-direction: column;
         position: relative;
     }
-    
+
     /* Make steps section scrollable when content is long */
     .mobile-dashboard-card .goal-steps-section {
         display: flex;
         flex-direction: column;
         touch-action: pan-y;
     }
-    
+
     .mobile-dashboard-card .goal-steps-list {
         overflow-y: auto;
         overflow-x: hidden;
@@ -2357,40 +2368,40 @@ main {
         scrollbar-width: thin;
         scrollbar-color: #cbd5e0 transparent;
     }
-    
+
     /* WebKit scrollbar styling for mobile */
     .mobile-dashboard-card .goal-steps-list::-webkit-scrollbar {
         width: 6px;
     }
-    
+
     .mobile-dashboard-card .goal-steps-list::-webkit-scrollbar-track {
         background: transparent;
     }
-    
+
     .mobile-dashboard-card .goal-steps-list::-webkit-scrollbar-thumb {
         background-color: #cbd5e0;
         border-radius: 3px;
     }
-    
+
     .mobile-dashboard-card .goal-steps-list::-webkit-scrollbar-thumb:hover {
         background-color: #a0aec0;
     }
-    
+
     /* Allow scrolling in steps list even during horizontal swipe detection */
     .mobile-dashboard-card .goal-steps-list * {
         touch-action: pan-y;
     }
-    
+
     /* Ensure goal header and footer don't shrink */
     .mobile-dashboard-card .goal-header {
         flex-shrink: 0;
     }
-    
+
     .mobile-dashboard-card .goal-footer {
         flex-shrink: 0;
         margin-top: auto;
     }
-    
+
     /* Make description scrollable if needed */
     .mobile-dashboard-card .goal-description {
         max-height: 150px;
@@ -2398,4 +2409,3 @@ main {
         -webkit-overflow-scrolling: touch;
     }
 }
-

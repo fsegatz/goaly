@@ -234,146 +234,161 @@
                                 data-i18n-key="help.requestFeatureButton">Request Feature</a>
                         </div>
                     </div>
-                </div>
             </div>
         </main>
     </div>
 
-    <!-- Goal Form Modal -->
-    <div id="goalModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2 id="modalTitle" data-i18n-key="goalForm.createTitle">New goal</h2>
-            <form id="goalForm">
-                <input type="hidden" id="goalId">
+                <!-- Goal Form Modal -->
+                <div id="goalModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <h2 id="modalTitle" data-i18n-key="goalForm.createTitle">New goal</h2>
+                        <form id="goalForm">
+                            <input type="hidden" id="goalId">
 
-                <div class="form-group">
-                    <label for="goalTitle" data-i18n-key="goalModal.titleLabel">Title *</label>
-                    <input type="text" id="goalTitle" required>
-                </div>
+                            <div class="form-group">
+                                <label for="goalTitle" data-i18n-key="goalModal.titleLabel">Title *</label>
+                                <input type="text" id="goalTitle" required>
+                            </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="goalMotivation" data-i18n-key="goalModal.motivationLabel">Motivation (1-5) *</label>
-                        <input type="number" id="goalMotivation" min="1" max="5" required>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="goalMotivation" data-i18n-key="goalModal.motivationLabel">Motivation
+                                        (1-5) *</label>
+                                    <input type="number" id="goalMotivation" min="1" max="5" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="goalUrgency" data-i18n-key="goalModal.urgencyLabel">Urgency (1-5)
+                                        *</label>
+                                    <input type="number" id="goalUrgency" min="1" max="5" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="goalDeadline" data-i18n-key="goalModal.deadlineLabel">Deadline
+                                    (optional)</label>
+                                <input type="date" id="goalDeadline">
+                            </div>
+
+                            <div class="form-group" id="goalStateManagementSection" style="display: none;">
+                                <label data-i18n-key="goalModal.stateManagement.title">Goal State</label>
+                                <div class="goal-state-actions">
+                                    <button type="button" id="completeGoalBtn" class="btn btn-primary"
+                                        data-i18n-key="goalModal.stateManagement.complete">Complete</button>
+                                    <button type="button" id="unpauseGoalBtn" class="btn btn-secondary"
+                                        style="display: none;"
+                                        data-i18n-key="goalModal.stateManagement.unpause">Unpause</button>
+                                    <button type="button" id="reactivateGoalBtn" class="btn btn-primary"
+                                        style="display: none;"
+                                        data-i18n-key="goalModal.stateManagement.reactivate">Reactivate</button>
+                                    <button type="button" id="forceActivateGoalBtn" class="btn btn-secondary"
+                                        style="display: none;" data-i18n-key="allGoals.forceActivate">Force
+                                        Activate</button>
+                                </div>
+                                <p class="setting-help" data-i18n-key="goalModal.stateManagement.help">Manage the
+                                    lifecycle of this
+                                    goal.</p>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary"
+                                    data-i18n-key="goalModal.actions.save">Save</button>
+                                <button type="button" id="cancelBtn" class="btn btn-secondary"
+                                    data-i18n-key="goalModal.actions.cancel">Cancel</button>
+                                <button type="button" id="deleteBtn" class="btn btn-danger" style="display: none;"
+                                    data-i18n-key="goalModal.actions.delete">Delete</button>
+                            </div>
+                        </form>
                     </div>
+                </div>
 
-                    <div class="form-group">
-                        <label for="goalUrgency" data-i18n-key="goalModal.urgencyLabel">Urgency (1-5) *</label>
-                        <input type="number" id="goalUrgency" min="1" max="5" required>
+                <div id="migrationPromptModal" class="modal">
+                    <div class="modal-content migration-modal">
+                        <span id="migrationPromptClose" class="close">&times;</span>
+                        <h2 id="migrationPromptTitle">Migration required</h2>
+                        <p id="migrationPromptMessage"></p>
+                        <div class="modal-actions">
+                            <button id="migrationReviewBtn" class="btn btn-primary"
+                                data-i18n-key="migration.prompt.reviewCta">Review changes</button>
+                            <button id="migrationPromptCancelBtn" class="btn btn-secondary"
+                                data-i18n-key="migration.prompt.cancel">Cancel</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="goalDeadline" data-i18n-key="goalModal.deadlineLabel">Deadline (optional)</label>
-                    <input type="date" id="goalDeadline">
-                </div>
-
-                <div class="form-group" id="goalStateManagementSection" style="display: none;">
-                    <label data-i18n-key="goalModal.stateManagement.title">Goal State</label>
-                    <div class="goal-state-actions">
-                        <button type="button" id="completeGoalBtn" class="btn btn-primary"
-                            data-i18n-key="goalModal.stateManagement.complete">Complete</button>
-                        <button type="button" id="unpauseGoalBtn" class="btn btn-secondary" style="display: none;"
-                            data-i18n-key="goalModal.stateManagement.unpause">Unpause</button>
-                        <button type="button" id="reactivateGoalBtn" class="btn btn-primary" style="display: none;"
-                            data-i18n-key="goalModal.stateManagement.reactivate">Reactivate</button>
+                <div id="migrationDiffModal" class="modal">
+                    <div class="modal-content migration-diff-modal">
+                        <span id="migrationDiffClose" class="close">&times;</span>
+                        <h2 id="migrationDiffTitle">Migration preview</h2>
+                        <p id="migrationDiffSubtitle"></p>
+                        <div class="migration-diff-columns">
+                            <div class="diff-column">
+                                <h3 id="migrationDiffOldLabel">Original</h3>
+                                <div id="migrationDiffOld" class="diff-view"></div>
+                            </div>
+                            <div class="diff-column">
+                                <h3 id="migrationDiffNewLabel">Migrated</h3>
+                                <div id="migrationDiffNew" class="diff-view"></div>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button id="migrationApplyBtn" class="btn btn-primary"
+                                data-i18n-key="migration.diff.applyCta">Apply
+                                migration</button>
+                            <button id="migrationCancelBtn" class="btn btn-secondary"
+                                data-i18n-key="migration.diff.cancel">Cancel</button>
+                        </div>
                     </div>
-                    <p class="setting-help" data-i18n-key="goalModal.stateManagement.help">Manage the lifecycle of this
-                        goal.</p>
                 </div>
 
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" data-i18n-key="goalModal.actions.save">Save</button>
-                    <button type="button" id="cancelBtn" class="btn btn-secondary"
-                        data-i18n-key="goalModal.actions.cancel">Cancel</button>
-                    <button type="button" id="deleteBtn" class="btn btn-danger" style="display: none;"
-                        data-i18n-key="goalModal.actions.delete">Delete</button>
+                <div id="completionModal" class="modal">
+                    <div class="modal-content completion-modal">
+                        <span id="completionCloseBtn" class="close">&times;</span>
+                        <h2 data-i18n-key="completionModal.title">Complete goal</h2>
+                        <p data-i18n-key="completionModal.question">Did you achieve your goal?</p>
+                        <div class="completion-actions">
+                            <button id="completionSuccessBtn" class="btn btn-primary"
+                                data-i18n-key="completionModal.success">Goal
+                                completed</button>
+                            <button id="completionFailureBtn" class="btn btn-danger"
+                                data-i18n-key="completionModal.failure">Not
+                                completed</button>
+                        </div>
+                    </div>
                 </div>
-            </form>
-        </div>
-    </div>
 
-    <div id="migrationPromptModal" class="modal">
-        <div class="modal-content migration-modal">
-            <span id="migrationPromptClose" class="close">&times;</span>
-            <h2 id="migrationPromptTitle">Migration required</h2>
-            <p id="migrationPromptMessage"></p>
-            <div class="modal-actions">
-                <button id="migrationReviewBtn" class="btn btn-primary"
-                    data-i18n-key="migration.prompt.reviewCta">Review changes</button>
-                <button id="migrationPromptCancelBtn" class="btn btn-secondary"
-                    data-i18n-key="migration.prompt.cancel">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="migrationDiffModal" class="modal">
-        <div class="modal-content migration-diff-modal">
-            <span id="migrationDiffClose" class="close">&times;</span>
-            <h2 id="migrationDiffTitle">Migration preview</h2>
-            <p id="migrationDiffSubtitle"></p>
-            <div class="migration-diff-columns">
-                <div class="diff-column">
-                    <h3 id="migrationDiffOldLabel">Original</h3>
-                    <div id="migrationDiffOld" class="diff-view"></div>
+                <div id="pauseModal" class="modal">
+                    <div class="modal-content pause-modal">
+                        <span id="pauseCloseBtn" class="close">&times;</span>
+                        <h2 data-i18n-key="pauseModal.title">Pause goal</h2>
+                        <p data-i18n-key="pauseModal.description">Choose when this goal should become active again:</p>
+                        <div class="pause-options">
+                            <div class="pause-option">
+                                <input type="radio" id="pauseUntilDate" name="pauseType" value="date" checked>
+                                <label for="pauseUntilDate" data-i18n-key="pauseModal.untilDate">Until a specific
+                                    date</label>
+                                <input type="date" id="pauseUntilDateInput" class="pause-date-input" min="">
+                            </div>
+                            <div class="pause-option">
+                                <input type="radio" id="pauseUntilGoal" name="pauseType" value="goal">
+                                <label for="pauseUntilGoal" data-i18n-key="pauseModal.untilGoal">Until another goal is
+                                    completed</label>
+                                <select id="pauseUntilGoalSelect" class="pause-goal-select" disabled>
+                                    <option value="" data-i18n-key="pauseModal.selectGoal">Select a goal...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button id="pauseConfirmBtn" class="btn btn-primary"
+                                data-i18n-key="pauseModal.confirm">Pause</button>
+                            <button id="pauseCancelBtn" class="btn btn-secondary"
+                                data-i18n-key="pauseModal.cancel">Cancel</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="diff-column">
-                    <h3 id="migrationDiffNewLabel">Migrated</h3>
-                    <div id="migrationDiffNew" class="diff-view"></div>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button id="migrationApplyBtn" class="btn btn-primary" data-i18n-key="migration.diff.applyCta">Apply
-                    migration</button>
-                <button id="migrationCancelBtn" class="btn btn-secondary"
-                    data-i18n-key="migration.diff.cancel">Cancel</button>
-            </div>
-        </div>
-    </div>
 
-    <div id="completionModal" class="modal">
-        <div class="modal-content completion-modal">
-            <span id="completionCloseBtn" class="close">&times;</span>
-            <h2 data-i18n-key="completionModal.title">Complete goal</h2>
-            <p data-i18n-key="completionModal.question">Did you achieve your goal?</p>
-            <div class="completion-actions">
-                <button id="completionSuccessBtn" class="btn btn-primary" data-i18n-key="completionModal.success">Goal
-                    completed</button>
-                <button id="completionFailureBtn" class="btn btn-danger" data-i18n-key="completionModal.failure">Not
-                    completed</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="pauseModal" class="modal">
-        <div class="modal-content pause-modal">
-            <span id="pauseCloseBtn" class="close">&times;</span>
-            <h2 data-i18n-key="pauseModal.title">Pause goal</h2>
-            <p data-i18n-key="pauseModal.description">Choose when this goal should become active again:</p>
-            <div class="pause-options">
-                <div class="pause-option">
-                    <input type="radio" id="pauseUntilDate" name="pauseType" value="date" checked>
-                    <label for="pauseUntilDate" data-i18n-key="pauseModal.untilDate">Until a specific date</label>
-                    <input type="date" id="pauseUntilDateInput" class="pause-date-input" min="">
-                </div>
-                <div class="pause-option">
-                    <input type="radio" id="pauseUntilGoal" name="pauseType" value="goal">
-                    <label for="pauseUntilGoal" data-i18n-key="pauseModal.untilGoal">Until another goal is
-                        completed</label>
-                    <select id="pauseUntilGoalSelect" class="pause-goal-select" disabled>
-                        <option value="" data-i18n-key="pauseModal.selectGoal">Select a goal...</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button id="pauseConfirmBtn" class="btn btn-primary" data-i18n-key="pauseModal.confirm">Pause</button>
-                <button id="pauseCancelBtn" class="btn btn-secondary" data-i18n-key="pauseModal.cancel">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <script type="module" src="src/app.js"></script>
+                <script type="module" src="src/app.js"></script>
 </body>
 
 </html>
