@@ -292,9 +292,7 @@ const de = {
             uploading: 'Zusammengeführte Daten werden zu Google Drive hochgeladen…'
         }
     },
-    allGoals: {
-        forceActivate: 'Erzwingen Aktivieren'
-    },
+
     help: {
         title: 'Hilfe',
         description: 'Hast du einen Fehler gefunden oder möchtest du ein neues Feature anfragen? Wir würden uns über dein Feedback freuen!',

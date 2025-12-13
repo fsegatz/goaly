@@ -317,9 +317,7 @@ const en = {
             uploading: 'Uploading merged data to Google Drive…'
         }
     },
-    allGoals: {
-        forceActivate: 'Force Activate'
-    },
+
     help: {
         title: 'Help',
         description: 'Have you found a bug or would you like to request a new feature? We\'d love to hear from you!',
