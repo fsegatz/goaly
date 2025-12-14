@@ -350,7 +350,8 @@ export class ModalsView extends BaseUIController {
                 if (pauseType === 'date') {
                     const dateInput = this.getPauseElement('pauseUntilDateInput');
                     if (dateInput && dateInput.value) {
-                        pauseUntil = new Date(dateInput.value);
+                        // Parse date in local timezone to avoid off-by-one-day errors
+                        pauseUntil = new Date(dateInput.value + 'T00:00:00');
                     }
                 } else {
                     const goalSelect = this.getPauseElement('pauseUntilGoalSelect');

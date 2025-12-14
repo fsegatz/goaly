@@ -6,16 +6,17 @@ class Goal {
         this.title = goalData.title;
         this.motivation = parseInt(goalData.motivation);
         this.urgency = parseInt(goalData.urgency);
-        this.deadline = goalData.deadline ? new Date(goalData.deadline) : null;
+        // Parse deadline in local timezone to avoid off-by-one-day errors
+        this.deadline = goalData.deadline ? new Date(typeof goalData.deadline === 'string' && !goalData.deadline.includes('T') ? goalData.deadline + 'T00:00:00' : goalData.deadline) : null;
         this.status = goalData.status || 'active';
         this.createdAt = goalData.createdAt ? new Date(goalData.createdAt) : new Date();
         this.lastUpdated = goalData.lastUpdated ? new Date(goalData.lastUpdated) : new Date();
         // Support both old checkIn* and new review* field names for migration compatibility
-        this.reviewDates = Array.isArray(goalData.reviewDates) ? [...goalData.reviewDates] 
+        this.reviewDates = Array.isArray(goalData.reviewDates) ? [...goalData.reviewDates]
             : (Array.isArray(goalData.checkInDates) ? [...goalData.checkInDates] : []);
-        this.lastReviewAt = goalData.lastReviewAt ? new Date(goalData.lastReviewAt) 
+        this.lastReviewAt = goalData.lastReviewAt ? new Date(goalData.lastReviewAt)
             : (goalData.lastCheckInAt ? new Date(goalData.lastCheckInAt) : null);
-        this.nextReviewAt = goalData.nextReviewAt ? new Date(goalData.nextReviewAt) 
+        this.nextReviewAt = goalData.nextReviewAt ? new Date(goalData.nextReviewAt)
             : (goalData.nextCheckInAt ? new Date(goalData.nextCheckInAt) : null);
         this.reviewIntervalIndex = Number.isInteger(goalData.reviewIntervalIndex)
             ? goalData.reviewIntervalIndex
@@ -32,7 +33,8 @@ class Goal {
             type: resource.type || 'general'
         })) : [];
         // Pause metadata: pauseUntil (date) or pauseUntilGoalId (goal ID that must be completed)
-        this.pauseUntil = goalData.pauseUntil ? new Date(goalData.pauseUntil) : null;
+        // Parse pauseUntil in local timezone to avoid off-by-one-day errors
+        this.pauseUntil = goalData.pauseUntil ? new Date(typeof goalData.pauseUntil === 'string' && !goalData.pauseUntil.includes('T') ? goalData.pauseUntil + 'T00:00:00' : goalData.pauseUntil) : null;
         this.pauseUntilGoalId = goalData.pauseUntilGoalId || null;
         // Track if goal was force-activated by user (not priority-based)
         this.forceActivated = Boolean(goalData.forceActivated);

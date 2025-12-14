@@ -8,33 +8,33 @@ import { setToMidnight, normalizeDate } from '../utils/date-utils.js';
 
 class GoalService {
     constructor(goals = [], errorHandler = null) {
-		this.goals = goals.map(g => new Goal(g));
-		this._listeners = { afterSave: [] };
-		this.errorHandler = errorHandler;
-		this.priorityCache = new PriorityCacheManager(this);
+        this.goals = goals.map(g => new Goal(g));
+        this._listeners = { afterSave: [] };
+        this.errorHandler = errorHandler;
+        this.priorityCache = new PriorityCacheManager(this);
     }
 
-	onAfterSave(listener) {
-		if (typeof listener === 'function') {
-			this._listeners.afterSave.push(listener);
-		}
-	}
+    onAfterSave(listener) {
+        if (typeof listener === 'function') {
+            this._listeners.afterSave.push(listener);
+        }
+    }
 
-	_notifyAfterSave() {
-		const listeners = this._listeners?.afterSave || [];
-		for (const fn of listeners) {
-			try {
-				fn();
-			} catch (error) {
-				// Log and continue so one faulty listener does not break others
-				if (this.errorHandler) {
-					this.errorHandler.warning('errors.generic', { message: 'GoalService afterSave listener error' }, error, { context: 'afterSaveListener' });
-				} else {
-					console.error('GoalService afterSave listener error', error);
-				}
-			}
-		}
-	}
+    _notifyAfterSave() {
+        const listeners = this._listeners?.afterSave || [];
+        for (const fn of listeners) {
+            try {
+                fn();
+            } catch (error) {
+                // Log and continue so one faulty listener does not break others
+                if (this.errorHandler) {
+                    this.errorHandler.warning('errors.generic', { message: 'GoalService afterSave listener error' }, error, { context: 'afterSaveListener' });
+                } else {
+                    console.error('GoalService afterSave listener error', error);
+                }
+            }
+        }
+    }
 
     loadGoals() {
         const saved = localStorage.getItem(STORAGE_KEY_GOALS);
@@ -71,7 +71,7 @@ class GoalService {
      */
     migrateGoalsToAutoActivation(maxActiveGoals) {
         if (this.goals.length === 0) return;
-        
+
         // Automatically activate the top N goals by priority
         this.autoActivateGoalsByPriority(maxActiveGoals);
     }
@@ -79,7 +79,7 @@ class GoalService {
     saveGoals() {
         const payload = prepareGoalsStoragePayload(this.goals);
         localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(payload));
-		this._notifyAfterSave();
+        this._notifyAfterSave();
     }
 
 
@@ -118,7 +118,7 @@ class GoalService {
         } else {
             this.saveGoals();
         }
-        
+
         // Status changes may affect priority (e.g., deadline calculations)
         this.priorityCache.invalidate();
 
@@ -130,10 +130,10 @@ class GoalService {
         const goal = new Goal({ ...goalData, status: 'inactive' }); // Temporarily set to inactive
         this.goals.push(goal);
         this.priorityCache.invalidate();
-        
+
         // Automatically activate the top N goals by priority
         this.autoActivateGoalsByPriority(maxActiveGoals);
-        
+
         return goal;
     }
 
@@ -162,7 +162,12 @@ class GoalService {
             }
         }
         if (goalData.deadline !== undefined) {
-            const newDeadline = goalData.deadline ? new Date(goalData.deadline) : null;
+            // Parse deadline in local timezone to avoid off-by-one-day errors
+            const newDeadline = goalData.deadline
+                ? new Date(typeof goalData.deadline === 'string' && !goalData.deadline.includes('T')
+                    ? goalData.deadline + 'T00:00:00'
+                    : goalData.deadline)
+                : null;
             const currentTime = goal.deadline instanceof Date ? goal.deadline.getTime() : null;
             const newTime = newDeadline instanceof Date ? newDeadline.getTime() : null;
             if (currentTime !== newTime) {
@@ -186,17 +191,17 @@ class GoalService {
         // Status is determined automatically; ignore goalData.status input
 
         Object.assign(goal, updates);
-        
+
         // Invalidate cache when goal is updated (priority may have changed)
         this.priorityCache.invalidate();
-        
+
         // Automatically re-activate goals if the priority changed
         if (priorityChanged) {
             this.autoActivateGoalsByPriority(maxActiveGoals);
         } else {
             this.saveGoals();
         }
-        
+
         return goal;
     }
 
@@ -205,7 +210,7 @@ class GoalService {
         const wasActive = this.goals.find(g => g.id === id)?.status === 'active';
         this.goals = this.goals.filter(g => g.id !== id);
         this.priorityCache.invalidate();
-        
+
         // Automatically re-activate goals if an active goal was deleted
         if (wasActive) {
             this.autoActivateGoalsByPriority(maxActiveGoals);
@@ -222,7 +227,7 @@ class GoalService {
             const deadlineDate = normalizeDate(goal.deadline);
             if (deadlineDate) {
                 const daysUntilDeadline = Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                
+
                 if (daysUntilDeadline > DEADLINE_BONUS_DAYS) {
                     priority += 0;
                 } else {
@@ -284,7 +289,7 @@ class GoalService {
         if (!goal) {
             return null;
         }
-        
+
         // Set pause metadata
         goal.pauseUntil = pauseData.pauseUntil || null;
         goal.pauseUntilGoalId = pauseData.pauseUntilGoalId || null;
@@ -296,10 +301,10 @@ class GoalService {
         }
 
         this.priorityCache.invalidate();
-        
+
         // Re-activate goals to fill the slot if needed
         this.autoActivateGoalsByPriority(maxActiveGoals);
-        
+
         return goal;
     }
 
@@ -314,17 +319,17 @@ class GoalService {
         if (!goal) {
             return null;
         }
-        
+
         // Clear pause metadata
         goal.pauseUntil = null;
         goal.pauseUntilGoalId = null;
         goal.lastUpdated = new Date();
 
         this.priorityCache.invalidate();
-        
+
         // Re-activate goals based on priority
         this.autoActivateGoalsByPriority(maxActiveGoals);
-        
+
         return goal;
     }
 
@@ -362,7 +367,7 @@ class GoalService {
                 // Force-activated goals should be sorted first (to preserve them)
                 if (a.forceActivated && !b.forceActivated) return -1;
                 if (!a.forceActivated && b.forceActivated) return 1;
-                
+
                 const priorityA = this.calculatePriority(a);
                 const priorityB = this.calculatePriority(b);
                 // Prefer older goals when priorities tie to keep sorting stable
@@ -383,10 +388,10 @@ class GoalService {
         // Separate force-activated goals from others
         const forceActivatedGoals = this.goals.filter(g => g.status === 'active' && g.forceActivated);
         const forceActivatedCount = forceActivatedGoals.length;
-        
+
         // Calculate how many slots are available for priority-based activation
         const availableSlots = Math.max(0, maxActiveGoals - forceActivatedCount);
-        
+
         // Get goals to activate by priority (excluding force-activated ones)
         const goalsToActivate = eligibleGoals
             .filter(g => !g.forceActivated)
@@ -482,7 +487,7 @@ class GoalService {
                 goal.lastUpdated = new Date();
             }
         });
-        
+
         // Invalidate cache if any pause conditions were cleared (may affect priority)
         if (anyChanged) {
             this.priorityCache.invalidate();
