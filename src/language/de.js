@@ -45,7 +45,7 @@ const de = {
             inactive: 'Inaktiv',
             paused: 'Pausiert',
             completed: 'Erreicht',
-            abandoned: 'Nicht erreicht'
+            notCompleted: 'Nicht erreicht'
         },
         sortOptions: {
             priorityDesc: 'Priorität (hoch → niedrig)',
@@ -141,7 +141,7 @@ const de = {
         active: 'Aktiv',
         paused: 'Pausiert',
         completed: 'Erreicht',
-        abandoned: 'Nicht erreicht'
+        notCompleted: 'Nicht erreicht'
     },
     reviews: {
         prompt: 'Zeit für ein Review zu "{{title}}". Bitte bestätige Motivation und Dringlichkeit.',

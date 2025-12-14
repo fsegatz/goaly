@@ -38,6 +38,14 @@ class Goal {
         this.pauseUntilGoalId = goalData.pauseUntilGoalId || null;
         // Track if goal was force-activated by user (not priority-based)
         this.forceActivated = Boolean(goalData.forceActivated);
+        // Recurring goal metadata
+        this.isRecurring = Boolean(goalData.isRecurring);
+        this.recurCount = Number.isInteger(goalData.recurCount) ? goalData.recurCount : 0;
+        this.completionCount = Number.isInteger(goalData.completionCount) ? goalData.completionCount : 0;
+        this.notCompletedCount = Number.isInteger(goalData.notCompletedCount) ? goalData.notCompletedCount : 0;
+        // Recurrence period (e.g., 7 days, 2 weeks)
+        this.recurPeriod = Number.isInteger(goalData.recurPeriod) && goalData.recurPeriod > 0 ? goalData.recurPeriod : 7;
+        this.recurPeriodUnit = ['days', 'weeks', 'months'].includes(goalData.recurPeriodUnit) ? goalData.recurPeriodUnit : 'days';
     }
 }
 

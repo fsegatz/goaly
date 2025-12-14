@@ -37,7 +37,7 @@ const en = {
         minPriorityLabel: 'Minimum priority',
         sortLabel: 'Sorting',
         includeCompleted: 'Show completed',
-        includeAbandoned: 'Show abandoned',
+        includeNotCompleted: 'Show not completed',
         clearFilter: 'Clear filter',
         statusOptions: {
             all: 'All statuses',
@@ -45,7 +45,7 @@ const en = {
             inactive: 'Inactive',
             paused: 'Paused',
             completed: 'Completed',
-            abandoned: 'Abandoned'
+            notCompleted: 'Not completed'
         },
         sortOptions: {
             priorityDesc: 'Priority (high → low)',
@@ -101,6 +101,10 @@ const en = {
                 knowledge: 'Knowledge',
                 financial: 'Financial'
             }
+        },
+        recurring: {
+            badge: 'Recurring',
+            stats: 'Recurred: {{recurCount}} | Completed: {{completionCount}} | Not completed: {{notCompletedCount}}'
         }
     },
     settingsPanel: {
@@ -120,6 +124,15 @@ const en = {
         motivationLabel: 'Motivation (1-5) *',
         urgencyLabel: 'Urgency (1-5) *',
         deadlineLabel: 'Deadline (optional)',
+        recurringLabel: 'Recurring goal',
+        recurringHelp: 'This goal will repeat after completion',
+        recurPeriodLabel: 'Recurrence period',
+        recurPeriodHelp: 'Goal will recur this many periods after completion',
+        periodUnits: {
+            days: 'Days',
+            weeks: 'Weeks',
+            months: 'Months'
+        },
         actions: {
             save: 'Save',
             cancel: 'Cancel',
@@ -128,12 +141,12 @@ const en = {
         stateManagement: {
             title: 'Goal State',
             complete: 'Complete',
-            abandon: 'Abandon',
+            notComplete: 'Not Completed',
             unpause: 'Unpause',
             reactivate: 'Reactivate',
             help: 'Manage the lifecycle of this goal.',
             confirmComplete: 'Mark this goal as completed?',
-            confirmAbandon: 'Abandon this goal? This action cannot be undone.'
+            confirmNotComplete: 'Mark this goal as not completed?'
         }
     },
     goalHistory: {
@@ -143,7 +156,11 @@ const en = {
         title: 'Complete goal',
         question: 'Did you achieve your goal?',
         success: 'Goal completed',
-        failure: 'Not completed'
+        failure: 'Not completed',
+        makeRecurring: 'Make this goal recur',
+        recurDate: 'Recurrence date',
+        recurDateRequired: 'Please select a recurrence date',
+        nextRecurrence: 'Next recurrence:'
     },
     pauseModal: {
         title: 'Pause goal',
@@ -166,7 +183,7 @@ const en = {
         inactive: 'Inactive',
         paused: 'Paused',
         completed: 'Completed',
-        abandoned: 'Abandoned'
+        notCompleted: 'Not completed'
     },
     reviews: {
         prompt: 'Time for a review on "{{title}}". Please confirm motivation and urgency.',

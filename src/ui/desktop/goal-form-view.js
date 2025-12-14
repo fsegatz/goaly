@@ -35,6 +35,36 @@ export class GoalFormView extends BaseUIController {
                 getElement('goalDeadline').value = goal.deadline
                     ? goal.deadline.toISOString().split('T')[0]
                     : '';
+
+                // Set recurring checkbox and period
+                const recurringCheckbox = getOptionalElement('goalIsRecurring');
+                const recurringPeriodContainer = getOptionalElement('recurringPeriodContainer');
+                const recurPeriodInput = getOptionalElement('goalRecurPeriod');
+                const recurPeriodUnitSelect = getOptionalElement('goalRecurPeriodUnit');
+
+                if (recurringCheckbox) {
+                    recurringCheckbox.checked = Boolean(goal.isRecurring);
+
+                    // Show/hide recurrence period container
+                    if (recurringPeriodContainer) {
+                        recurringPeriodContainer.style.display = goal.isRecurring ? 'block' : 'none';
+                    }
+                }
+
+                // Set recurrence period if available
+                if (recurPeriodInput && goal.isRecurring) {
+                    recurPeriodInput.value = goal.recurPeriod || 7;
+                } else if (recurPeriodInput) {
+                    recurPeriodInput.value = 7;
+                }
+
+                // Set recurrence period unit if available
+                if (recurPeriodUnitSelect && goal.isRecurring) {
+                    recurPeriodUnitSelect.value = goal.recurPeriodUnit || 'days';
+                } else if (recurPeriodUnitSelect) {
+                    recurPeriodUnitSelect.value = 'days';
+                }
+
                 deleteBtn.style.display = 'inline-block';
 
                 // Show state management section for existing goals
@@ -44,7 +74,7 @@ export class GoalFormView extends BaseUIController {
 
                 // Show/hide state management buttons based on current status
                 if (completeBtn) {
-                    completeBtn.style.display = goal.status !== 'completed' && goal.status !== 'abandoned'
+                    completeBtn.style.display = goal.status !== 'completed' && goal.status !== 'notCompleted'
                         ? 'inline-block'
                         : 'none';
                 }
@@ -53,14 +83,14 @@ export class GoalFormView extends BaseUIController {
                     unpauseBtn.style.display = isPaused ? 'inline-block' : 'none';
                 }
                 if (reactivateBtn) {
-                    reactivateBtn.style.display = goal.status === 'completed' || goal.status === 'abandoned'
+                    reactivateBtn.style.display = goal.status === 'completed' || goal.status === 'notCompleted'
                         ? 'inline-block'
                         : 'none';
                 }
                 if (forceActivateBtn) {
                     const canForceActivate = goal.status !== 'active' &&
                         goal.status !== 'completed' &&
-                        goal.status !== 'abandoned';
+                        goal.status !== 'notCompleted';
                     forceActivateBtn.style.display = canForceActivate ? 'inline-block' : 'none';
                 }
             }
@@ -104,6 +134,26 @@ export class GoalFormView extends BaseUIController {
         const cancelBtn = getOptionalElement('cancelBtn');
         if (cancelBtn) {
             cancelBtn.addEventListener('click', () => this.closeGoalForm());
+        }
+
+        // Toggle recurrence period container visibility
+        const recurringCheckbox = getOptionalElement('goalIsRecurring');
+        const recurringPeriodContainer = getOptionalElement('recurringPeriodContainer');
+        if (recurringCheckbox && recurringPeriodContainer) {
+            recurringCheckbox.addEventListener('change', () => {
+                recurringPeriodContainer.style.display = recurringCheckbox.checked ? 'block' : 'none';
+                // Reset to defaults if unchecked
+                if (!recurringCheckbox.checked) {
+                    const recurPeriodInput = getOptionalElement('goalRecurPeriod');
+                    const recurPeriodUnitSelect = getOptionalElement('goalRecurPeriodUnit');
+                    if (recurPeriodInput) {
+                        recurPeriodInput.value = 7;
+                    }
+                    if (recurPeriodUnitSelect) {
+                        recurPeriodUnitSelect.value = 'days';
+                    }
+                }
+            });
         }
 
         const deleteBtn = getOptionalElement('deleteBtn');
@@ -190,18 +240,43 @@ export class GoalFormView extends BaseUIController {
 
     handleGoalSubmit(renderViews) {
         const id = getElement('goalId').value;
+        const recurringCheckbox = getOptionalElement('goalIsRecurring');
+
         const goalData = {
             title: getElement('goalTitle').value,
             motivation: getElement('goalMotivation').value,
             urgency: getElement('goalUrgency').value,
-            deadline: getElement('goalDeadline').value || null
+            deadline: getElement('goalDeadline').value || null,
+            isRecurring: recurringCheckbox ? recurringCheckbox.checked : false
         };
+
+        // Add period fields if recurring
+        if (goalData.isRecurring) {
+            const recurPeriodInput = getOptionalElement('goalRecurPeriod');
+            const recurPeriodUnitSelect = getOptionalElement('goalRecurPeriodUnit');
+            if (recurPeriodInput) {
+                goalData.recurPeriod = parseInt(recurPeriodInput.value) || 7;
+            } else {
+                goalData.recurPeriod = 7; // Default
+            }
+            if (recurPeriodUnitSelect) {
+                goalData.recurPeriodUnit = recurPeriodUnitSelect.value || 'days';
+            } else {
+                goalData.recurPeriodUnit = 'days'; // Default
+            }
+        }
 
         try {
             if (id) {
+                // Update existing goal
                 this.app.goalService.updateGoal(id, goalData, this.app.settingsService.getSettings().maxActiveGoals);
+
+                // No need to handle recurrence date separately - it's in goalData
             } else {
-                this.app.goalService.createGoal(goalData, this.app.settingsService.getSettings().maxActiveGoals);
+                // Create new goal
+                const newGoal = this.app.goalService.createGoal(goalData, this.app.settingsService.getSettings().maxActiveGoals);
+
+                // No need to handle recurrence date separately - it's in goalData
             }
             this.closeGoalForm();
             renderViews();

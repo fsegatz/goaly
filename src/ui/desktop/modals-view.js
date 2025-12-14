@@ -12,7 +12,10 @@ export class ModalsView extends BaseUIController {
             completionModal: getElement('completionModal'),
             completionSuccessBtn: getElement('completionSuccessBtn'),
             completionFailureBtn: getElement('completionFailureBtn'),
-            completionCloseBtn: getElement('completionCloseBtn')
+            completionCloseBtn: getElement('completionCloseBtn'),
+            completionRecurringCheckbox: null,
+            completionRecurDateContainer: null,
+            completionRecurDate: null
         };
         this.pendingCompletionGoalId = null;
         this.completionModalInitialized = false;
@@ -35,14 +38,47 @@ export class ModalsView extends BaseUIController {
             return;
         }
 
+        // Get recurring elements
+        const recurringCheckbox = this.getCompletionElement('completionRecurringCheckbox');
+        const recurDateContainer = this.getCompletionElement('completionRecurDateContainer');
+        const recurDate = this.getCompletionElement('completionRecurDate');
+
+        // Toggle recurrence date visibility
+        if (recurringCheckbox && recurDateContainer) {
+            recurringCheckbox.addEventListener('change', () => {
+                if (recurringCheckbox.checked) {
+                    recurDateContainer.style.display = 'block';
+                } else {
+                    recurDateContainer.style.display = 'none';
+                    if (recurDate) {
+                        recurDate.value = '';
+                    }
+                }
+            });
+        }
+
         const successBtn = this.getCompletionElement('completionSuccessBtn');
         if (successBtn) {
-            successBtn.addEventListener('click', () => handleCompletionChoice('completed'));
+            successBtn.addEventListener('click', () => {
+                const recurrenceData = this.getRecurrenceData();
+                // If validation failed (returns false), don't proceed
+                if (recurrenceData === false) {
+                    return;
+                }
+                handleCompletionChoice('completed', recurrenceData);
+            });
         }
 
         const failureBtn = this.getCompletionElement('completionFailureBtn');
         if (failureBtn) {
-            failureBtn.addEventListener('click', () => handleCompletionChoice('abandoned'));
+            failureBtn.addEventListener('click', () => {
+                const recurrenceData = this.getRecurrenceData();
+                // If validation failed (returns false), don't proceed
+                if (recurrenceData === false) {
+                    return;
+                }
+                handleCompletionChoice('notCompleted', recurrenceData);
+            });
         }
 
         const closeBtn = this.getCompletionElement('completionCloseBtn');
@@ -73,8 +109,68 @@ export class ModalsView extends BaseUIController {
         if (!modal) {
             return;
         }
+
+        // Get the goal to check if it's recurring
+        const goal = this.app.goalService.goals.find(g => g.id === goalId);
+
+        // Set up recurring fields
+        const recurringCheckbox = this.getCompletionElement('completionRecurringCheckbox');
+        const recurDateContainer = this.getCompletionElement('completionRecurDateContainer');
+        const recurDateDisplay = getOptionalElement('completionRecurDateDisplay');
+
+        if (goal && goal.isRecurring) {
+            // Pre-check checkbox for recurring goals
+            if (recurringCheckbox) {
+                recurringCheckbox.checked = true;
+            }
+
+            // Calculate and display next recurrence date
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            let nextDate = new Date(today);
+
+            const period = goal.recurPeriod || 7;
+            const unit = goal.recurPeriodUnit || 'days';
+
+            if (unit === 'days') {
+                nextDate.setDate(nextDate.getDate() + period);
+            } else if (unit === 'weeks') {
+                nextDate.setDate(nextDate.getDate() + (period * 7));
+            } else if (unit === 'months') {
+                nextDate.setMonth(nextDate.getMonth() + period);
+            }
+
+            // Set the date input value
+            const recurDateInput = this.getCompletionElement('completionRecurDate');
+            if (recurDateInput) {
+                recurDateInput.value = nextDate.toISOString().split('T')[0];
+                // Set minimum date to today
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                recurDateInput.min = today.toISOString().split('T')[0];
+            }
+
+            // Show the date container
+            if (recurDateContainer) {
+                recurDateContainer.style.display = 'block';
+            }
+        } else {
+            // Reset for non-recurring goals
+            if (recurringCheckbox) {
+                recurringCheckbox.checked = false;
+            }
+            if (recurDateContainer) {
+                recurDateContainer.style.display = 'none';
+            }
+            const recurDateInput = this.getCompletionElement('completionRecurDate');
+            if (recurDateInput) {
+                recurDateInput.value = '';
+            }
+        }
+
         this.pendingCompletionGoalId = goalId;
         modal.classList.add('is-visible');
+        this.languageService.applyTranslations(modal);
     }
 
     closeCompletionModal() {
@@ -87,6 +183,29 @@ export class ModalsView extends BaseUIController {
 
     getPendingCompletionGoalId() {
         return this.pendingCompletionGoalId;
+    }
+
+    getRecurrenceData() {
+        const recurringCheckbox = this.getCompletionElement('completionRecurringCheckbox');
+        const recurDate = this.getCompletionElement('completionRecurDate');
+
+        if (!recurringCheckbox || !recurringCheckbox.checked) {
+            return null;
+        }
+
+        if (!recurDate || !recurDate.value) {
+            // Show error if recurring is checked but no date provided
+            alert(this.translate('completionModal.recurDateRequired') || 'Please select a recurrence date');
+            return false; // Return false to indicate validation error
+        }
+
+        // Parse date in local timezone to avoid off-by-one-day errors
+        const recurrenceDate = new Date(recurDate.value + 'T00:00:00');
+
+        return {
+            isRecurring: true,
+            recurrenceDate
+        };
     }
 
     setupMigrationModals(cancelMigration, handleMigrationReviewRequest, completeMigration) {
@@ -452,7 +571,7 @@ export class ModalsView extends BaseUIController {
         if (goalSelect) {
             goalSelect.innerHTML = '<option value="" data-i18n-key="pauseModal.selectGoal">Select a goal...</option>';
             const goals = this.app.goalService.goals.filter(
-                g => g.id !== goalId && g.status !== 'completed' && g.status !== 'abandoned'
+                g => g.id !== goalId && g.status !== 'completed' && g.status !== 'notCompleted'
             );
             if (goals.length === 0) {
                 const option = document.createElement('option');
