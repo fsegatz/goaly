@@ -107,7 +107,7 @@ class UIController {
             () => this.app.startReviewTimer()
         );
 
-        this.modalsView.setupCompletionModal((status) => this.handleCompletionChoice(status));
+        this.modalsView.setupCompletionModal((status, recurrenceData) => this.handleCompletionChoice(status, recurrenceData));
         this.modalsView.setupPauseModal((pauseData) => this.handlePauseChoice(pauseData));
         this.modalsView.setupMigrationModals(
             () => this.app.cancelMigration(),
@@ -215,7 +215,7 @@ class UIController {
         }
     }
 
-    handleCompletionChoice(status) {
+    handleCompletionChoice(status, recurrenceData = null) {
         const goalId = this.modalsView.getPendingCompletionGoalId();
         if (!goalId) {
             return;
@@ -227,12 +227,73 @@ class UIController {
         const isGoalModalOpen = goalModal && goalModal.classList.contains('is-visible') &&
             goalIdInput && goalIdInput.value === goalId;
 
-        this.changeGoalStatus(goalId, status);
+        // Handle recurring goals
+        if (recurrenceData && recurrenceData.isRecurring && recurrenceData.recurrenceDate) {
+            this.handleRecurringGoalCompletion(goalId, status, recurrenceData.recurrenceDate);
+        } else {
+            // Normal completion flow
+            this.changeGoalStatus(goalId, status);
+        }
+
         this.modalsView.closeCompletionModal();
 
         // If the goal form was open, refresh it to show the updated status
         if (isGoalModalOpen) {
             this.goalFormView.openGoalForm(goalId, () => this.renderViews());
+        }
+    }
+
+    handleRecurringGoalCompletion(goalId, status, recurrenceDate) {
+        try {
+            const { maxActiveGoals } = this.app.settingsService.getSettings();
+            const goal = this.app.goalService.goals.find(g => g.id === goalId);
+
+            if (!goal) {
+                this.app.errorHandler.error('errors.goalNotFound');
+                return;
+            }
+
+            // Mark goal as recurring if not already
+            if (!goal.isRecurring) {
+                goal.isRecurring = true;
+            }
+
+            // Increment appropriate counter
+            if (status === 'completed') {
+                goal.completionCount++;
+            } else if (status === 'notCompleted') {
+                goal.notCompletedCount++;
+            }
+
+            // Increment recurrence counter
+            goal.recurCount++;
+
+            // Calculate next recurrence date from period
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            let nextDate = new Date(today);
+
+            const period = goal.recurPeriod || 7;
+            const unit = goal.recurPeriodUnit || 'days';
+
+            if (unit === 'days') {
+                nextDate.setDate(nextDate.getDate() + period);
+            } else if (unit === 'weeks') {
+                nextDate.setDate(nextDate.getDate() + (period * 7));
+            } else if (unit === 'months') {
+                nextDate.setMonth(nextDate.getMonth() + period);
+            }
+
+            // Update deadline to calculated recurrence date
+            goal.deadline = nextDate;
+
+            // Pause the goal until the recurrence date
+            this.app.goalService.pauseGoal(goalId, { pauseUntil: nextDate }, maxActiveGoals);
+
+            this.app.reviews = this.app.reviewService.getReviews();
+            this.renderViews();
+        } catch (error) {
+            this.app.errorHandler.error('errors.statusChangeFailed', { message: error?.message || '' }, error);
         }
     }
 

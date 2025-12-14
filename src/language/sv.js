@@ -45,7 +45,7 @@ const sv = {
             inactive: 'Inaktiv',
             paused: 'Pausad',
             completed: 'Slutförd',
-            abandoned: 'Avbruten'
+            notCompleted: 'Inte slutf�rd'
         },
         sortOptions: {
             priorityDesc: 'Prioritet (hög → låg)',
@@ -142,7 +142,7 @@ const sv = {
         inactive: 'Inaktiv',
         paused: 'Pausad',
         completed: 'Slutförd',
-        abandoned: 'Avbruten'
+        notCompleted: 'Inte slutf�rd'
     },
     reviews: {
         prompt: 'Dags för ett review för "{{title}}". Bekräfta motivation och brådska.',

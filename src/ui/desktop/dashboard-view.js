@@ -327,10 +327,17 @@ export class DashboardView extends BaseUIController {
             forceActivatedIndicator = `<span class="goal-force-activated-indicator" data-i18n-key="allGoals.forceActivated">⚡ ${this.translate('allGoals.forceActivated')}</span>`;
         }
 
+        // Get recurring badge
+        let recurringBadge = '';
+        if (goal.isRecurring) {
+            recurringBadge = `<span class="goal-recurring-badge" data-i18n-key="goalCard.recurring.badge">🔄 ${this.translate('goalCard.recurring.badge')}</span>`;
+        }
+
         card.innerHTML = `
             <div class="goal-header">
                 <div>
                     <div class="goal-title">${this.escapeHtml(goal.title)}</div>
+                    ${recurringBadge}
                     ${forceActivatedIndicator}
                     ${pauseIndicator}
                 </div>
@@ -353,7 +360,7 @@ export class DashboardView extends BaseUIController {
         `;
 
         const actionsContainer = card.querySelector('.goal-actions');
-        if (actionsContainer && goal.status !== 'completed' && goal.status !== 'abandoned') {
+        if (actionsContainer && goal.status !== 'completed' && goal.status !== 'notCompleted') {
             // Add pause button for active goals
             if (goal.status === 'active') {
                 const pauseButton = document.createElement('button');

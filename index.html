@@ -100,8 +100,8 @@
                                     <span data-i18n-key="filters.statusOptions.completed">Completed</span>
                                 </label>
                                 <label class="status-filter-option" role="menuitem">
-                                    <input type="checkbox" value="abandoned" class="status-filter-checkbox">
-                                    <span data-i18n-key="filters.statusOptions.abandoned">Abandoned</span>
+                                    <input type="checkbox" value="notCompleted" class="status-filter-checkbox">
+                                    <span data-i18n-key="filters.statusOptions.notCompleted">Not completed</span>
                                 </label>
                                 <button type="button" class="status-filter-clear" id="allGoalsStatusFilterClear"
                                     data-i18n-key="filters.clearFilter">Clear filter</button>
@@ -272,6 +272,31 @@
                     <input type="date" id="goalDeadline">
                 </div>
 
+                <div class="recurring-section">
+                    <div class="recurring-header">
+                        <label>
+                            <input type="checkbox" id="goalIsRecurring">
+                            <span data-i18n-key="goalModal.recurringLabel">Recurring goal</span>
+                        </label>
+                    </div>
+                    <p class="setting-help" data-i18n-key="goalModal.recurringHelp">This goal will repeat after
+                        completion</p>
+
+                    <div id="recurringPeriodContainer" class="recurring-period-container" style="display: none;">
+                        <label data-i18n-key="goalModal.recurPeriodLabel">Recurrence period</label>
+                        <div class="recurring-period-inputs">
+                            <input type="number" id="goalRecurPeriod" min="1" value="7" placeholder="7">
+                            <select id="goalRecurPeriodUnit">
+                                <option value="days" data-i18n-key="goalModal.periodUnits.days">Days</option>
+                                <option value="weeks" data-i18n-key="goalModal.periodUnits.weeks">Weeks</option>
+                                <option value="months" data-i18n-key="goalModal.periodUnits.months">Months</option>
+                            </select>
+                        </div>
+                        <p class="setting-help" data-i18n-key="goalModal.recurPeriodHelp">Goal will recur this many
+                            periods after completion</p>
+                    </div>
+                </div>
+
                 <div class="form-group" id="goalStateManagementSection" style="display: none;">
                     <label data-i18n-key="goalModal.stateManagement.title">Goal State</label>
                     <div class="goal-state-actions">
@@ -344,6 +369,21 @@
             <span id="completionCloseBtn" class="close">&times;</span>
             <h2 data-i18n-key="completionModal.title">Complete goal</h2>
             <p data-i18n-key="completionModal.question">Did you achieve your goal?</p>
+
+            <div class="completion-recurring-section">
+                <div class="completion-recurring-header">
+                    <label>
+                        <input type="checkbox" id="completionRecurringCheckbox">
+                        <span data-i18n-key="completionModal.makeRecurring">Make this goal recur</span>
+                    </label>
+                </div>
+                <div id="completionRecurDateContainer" class="completion-recur-date-info" style="display: none;">
+                    <label for="completionRecurDate" data-i18n-key="completionModal.nextRecurrence">Next
+                        recurrence:</label>
+                    <input type="date" id="completionRecurDate" class="completion-recur-date-input">
+                </div>
+            </div>
+
             <div class="completion-actions">
                 <button id="completionSuccessBtn" class="btn btn-primary" data-i18n-key="completionModal.success">Goal
                     completed</button>

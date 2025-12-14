@@ -181,6 +181,20 @@ class GoalService {
         if (goalData.resources !== undefined) {
             updates.resources = Array.isArray(goalData.resources) ? goalData.resources : [];
         }
+        // Add recurring goal fields
+        if (goalData.isRecurring !== undefined) {
+            updates.isRecurring = Boolean(goalData.isRecurring);
+        }
+        if (goalData.recurPeriod !== undefined) {
+            updates.recurPeriod = Number.isInteger(goalData.recurPeriod) && goalData.recurPeriod > 0
+                ? goalData.recurPeriod
+                : 7;
+        }
+        if (goalData.recurPeriodUnit !== undefined) {
+            updates.recurPeriodUnit = ['days', 'weeks', 'months'].includes(goalData.recurPeriodUnit)
+                ? goalData.recurPeriodUnit
+                : 'days';
+        }
 
         if (Object.keys(updates).length === 0) {
             return goal;
@@ -342,7 +356,7 @@ class GoalService {
     }
 
     /**
-     * Get goals eligible for activation (excluding completed, abandoned, and manually paused goals)
+     * Get goals eligible for activation (excluding completed, notCompleted, and manually paused goals)
      * @param {Set<string>} ineligibleStatuses - Set of statuses that are not eligible
      * @returns {Goal[]} - Array of eligible goals sorted by priority
      * @private
@@ -440,7 +454,7 @@ class GoalService {
         this._checkExpiredPauses();
 
         // Sort all non-completed goals by priority, excluding manually paused goals
-        const ineligibleStatuses = new Set(['completed', 'abandoned']);
+        const ineligibleStatuses = new Set(['completed', 'notCompleted']);
         const eligibleGoals = this._getEligibleGoalsForActivation(ineligibleStatuses);
 
         // Activate the top N goals by priority
@@ -507,8 +521,8 @@ class GoalService {
             return null;
         }
 
-        // Cannot force-activate completed or abandoned goals
-        if (goal.status === 'completed' || goal.status === 'abandoned') {
+        // Cannot force-activate completed or notCompleted goals
+        if (goal.status === 'completed' || goal.status === 'notCompleted') {
             return null;
         }
 
