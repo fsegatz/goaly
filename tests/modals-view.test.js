@@ -208,7 +208,7 @@ describe('ModalsView', () => {
         const failureBtn = document.getElementById('completionFailureBtn');
         failureBtn.click();
 
-        expect(handleCompletionChoice).toHaveBeenCalledWith('abandoned', null);
+        expect(handleCompletionChoice).toHaveBeenCalledWith('notCompleted', null);
     });
 
     test('completion modal close button should close modal', () => {

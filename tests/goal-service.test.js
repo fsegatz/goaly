@@ -20,18 +20,18 @@ describe('Goal Service', () => {
             { id: '1', title: 'Goal 1', motivation: 3, urgency: 4, status: 'active', createdAt: '2025-01-01T00:00:00.000Z', lastUpdated: '2025-01-01T00:00:00.000Z' }
         ];
         global.localStorage.getItem.mockReturnValue(JSON.stringify(savedGoals));
-        
+
         goalService.loadGoals();
-        
+
         expect(goalService.goals.length).toBe(1);
         expect(goalService.goals[0].title).toBe('Goal 1');
     });
 
     it('should handle empty localStorage when loading goals', () => {
         global.localStorage.getItem.mockReturnValue(null);
-        
+
         goalService.loadGoals();
-        
+
         expect(goalService.goals.length).toBe(0);
     });
 
@@ -52,7 +52,7 @@ describe('Goal Service', () => {
         const goal1 = goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 2);
         const goal2 = goalService.createGoal({ title: 'Medium Priority', motivation: 3, urgency: 3 }, 2);
         const goal3 = goalService.createGoal({ title: 'Low Priority', motivation: 1, urgency: 1 }, 2);
-        
+
         // The two highest priority goals should be active
         const activeGoals = goalService.getActiveGoals();
         expect(activeGoals.length).toBe(2);
@@ -72,14 +72,14 @@ describe('Goal Service', () => {
     it('should automatically reactivate goals when priority changes', () => {
         const goal1 = goalService.createGoal({ title: 'Goal 1', motivation: 5, urgency: 5 }, 1);
         const goal2 = goalService.createGoal({ title: 'Goal 2', motivation: 1, urgency: 1 }, 1);
-        
+
         // Initially goal1 should be active (higher priority)
         expect(goal1.status).toBe('active');
         expect(goal2.status).toBe('inactive');
-        
+
         // Increase goal2's priority
         goalService.updateGoal(goal2.id, { motivation: 10, urgency: 10 }, 1);
-        
+
         // Now goal2 should be active (higher priority)
         expect(goal2.status).toBe('active');
         expect(goal1.status).toBe('inactive');
@@ -96,15 +96,15 @@ describe('Goal Service', () => {
         const goal1 = goalService.createGoal({ title: 'Goal 1', motivation: 5, urgency: 5 }, 1);
         const goal2 = goalService.createGoal({ title: 'Goal 2', motivation: 3, urgency: 3 }, 1);
         const goal3 = goalService.createGoal({ title: 'Goal 3', motivation: 1, urgency: 1 }, 1);
-        
+
         // goal1 should be active
         expect(goal1.status).toBe('active');
         expect(goal2.status).toBe('inactive');
         expect(goal3.status).toBe('inactive');
-        
+
         // Delete goal1
         goalService.deleteGoal(goal1.id, 1);
-        
+
         // goal2 should now be active
         expect(goal2.status).toBe('active');
         expect(goal3.status).toBe('inactive');
@@ -143,10 +143,10 @@ describe('Goal Service', () => {
             { id: '2', title: 'Loaded Goal 2', motivation: 2, urgency: 2, status: 'paused', createdAt: new Date().toISOString(), lastUpdated: new Date().toISOString() }
         ];
         localStorage.getItem.mockReturnValue(JSON.stringify(mockGoals));
-        
+
         goalService = new GoalService(); // Re-initialize to trigger loadGoals
         goalService.loadGoals(); // Explicitly call loadGoals after re-initialization
-        
+
         expect(goalService.goals.length).toBe(2);
         expect(goalService.goals[0].title).toBe('Loaded Goal 1');
         expect(localStorage.getItem).toHaveBeenCalledWith('goaly_goals');
@@ -154,10 +154,10 @@ describe('Goal Service', () => {
 
     it('should handle no goals in localStorage', () => {
         localStorage.getItem.mockReturnValue(null);
-        
+
         goalService = new GoalService(); // Re-initialize to trigger loadGoals
         goalService.loadGoals(); // Explicitly call loadGoals after re-initialization
-        
+
         expect(goalService.goals.length).toBe(0);
         expect(localStorage.getItem).toHaveBeenCalledWith('goaly_goals');
     });
@@ -189,10 +189,10 @@ describe('Goal Service', () => {
         const goal1 = goalService.createGoal({ title: 'Low Priority', motivation: 1, urgency: 1 }, 2);
         const goal2 = goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 2);
         const goal3 = goalService.createGoal({ title: 'Medium Priority', motivation: 3, urgency: 3 }, 2);
-        
+
         // Manually call autoActivateGoalsByPriority
         goalService.autoActivateGoalsByPriority(2);
-        
+
         const activeGoals = goalService.getActiveGoals();
         expect(activeGoals.length).toBe(2);
         // Should be sorted by priority (highest first)
@@ -204,31 +204,31 @@ describe('Goal Service', () => {
     it('should not activate completed goals', () => {
         const goal1 = goalService.createGoal({ title: 'Active Goal', motivation: 5, urgency: 5 }, 1);
         const goal2 = goalService.createGoal({ title: 'Completed Goal', motivation: 10, urgency: 10 }, 1);
-        
+
         // Mark goal2 as completed
         goal2.status = 'completed';
         goalService.saveGoals();
-        
+
         // Auto activate should only consider non-completed goals
         goalService.autoActivateGoalsByPriority(1);
-        
+
         expect(goal1.status).toBe('active');
         expect(goal2.status).toBe('completed'); // Should remain completed
     });
 
     it('should migrate goals to auto activation', () => {
         // Manually set goals with different statuses
-        const goal1 = new (require('../src/domain/models/goal').default)({ 
-            id: '1', title: 'Goal 1', motivation: 1, urgency: 1, status: 'active' 
+        const goal1 = new (require('../src/domain/models/goal').default)({
+            id: '1', title: 'Goal 1', motivation: 1, urgency: 1, status: 'active'
         });
-        const goal2 = new (require('../src/domain/models/goal').default)({ 
-            id: '2', title: 'Goal 2', motivation: 5, urgency: 5, status: 'inactive' 
+        const goal2 = new (require('../src/domain/models/goal').default)({
+            id: '2', title: 'Goal 2', motivation: 5, urgency: 5, status: 'inactive'
         });
         goalService.goals = [goal1, goal2];
-        
+
         // Migrate - should activate goal2 (higher priority) and inactivate goal1
         goalService.migrateGoalsToAutoActivation(1);
-        
+
         expect(goal2.status).toBe('active');
         expect(goal1.status).toBe('inactive');
     });
@@ -236,9 +236,9 @@ describe('Goal Service', () => {
     it('should return early when migrating empty goals list', () => {
         goalService.goals = [];
         const autoActivateSpy = jest.spyOn(goalService, 'autoActivateGoalsByPriority');
-        
+
         goalService.migrateGoalsToAutoActivation(3);
-        
+
         expect(autoActivateSpy).not.toHaveBeenCalled();
     });
 
@@ -246,31 +246,31 @@ describe('Goal Service', () => {
         const today = new Date();
         const deadline = new Date(today);
         deadline.setDate(today.getDate() + 10);
-        const goal = goalService.createGoal({ 
-            title: 'Goal with deadline', 
-            motivation: 3, 
+        const goal = goalService.createGoal({
+            title: 'Goal with deadline',
+            motivation: 3,
             urgency: 4,
             deadline: deadline
         }, 3);
-        
+
         // Update deadline to null
         goalService.updateGoal(goal.id, { deadline: null }, 3);
-        
+
         expect(goal.deadline).toBeNull();
     });
 
     it('should not reactivate when deleting a paused goal', () => {
         const goal1 = goalService.createGoal({ title: 'Goal 1', motivation: 5, urgency: 5 }, 1);
         const goal2 = goalService.createGoal({ title: 'Goal 2', motivation: 3, urgency: 3 }, 1);
-        
+
         // goal1 should be active, goal2 paused
         expect(goal1.status).toBe('active');
         expect(goal2.status).toBe('inactive');
-        
+
         // Delete paused goal2 - should not trigger reactivation
         const saveGoalsSpy = jest.spyOn(goalService, 'saveGoals');
         goalService.deleteGoal(goal2.id, 1);
-        
+
         // Should call saveGoals, not autoActivateGoalsByPriority
         expect(saveGoalsSpy).toHaveBeenCalled();
         expect(goal1.status).toBe('active');
@@ -280,13 +280,13 @@ describe('Goal Service', () => {
         const today = new Date();
         const deadline = new Date(today);
         deadline.setDate(today.getDate() + 35); // 35 days from now
-        
+
         const goal = {
             motivation: 3,
             urgency: 5,
             deadline: deadline
         };
-        
+
         // priority = 3 + (5 * 10) = 53
         // No bonus for deadlines > 30 days
         expect(goalService.calculatePriority(goal)).toBe(53);
@@ -294,22 +294,22 @@ describe('Goal Service', () => {
 
     it('should handle goals with same priority in autoActivateGoalsByPriority', () => {
         const today = new Date();
-        const goal1 = goalService.createGoal({ 
-            title: 'Goal 1', 
-            motivation: 3, 
+        const goal1 = goalService.createGoal({
+            title: 'Goal 1',
+            motivation: 3,
             urgency: 3,
             createdAt: new Date(today.getTime() - 1000) // Older
         }, 1);
-        const goal2 = goalService.createGoal({ 
-            title: 'Goal 2', 
-            motivation: 3, 
+        const goal2 = goalService.createGoal({
+            title: 'Goal 2',
+            motivation: 3,
             urgency: 3,
             createdAt: new Date(today.getTime()) // Newer
         }, 1);
-        
+
         // Both have same priority, older should be preferred
         goalService.autoActivateGoalsByPriority(1);
-        
+
         // The older goal should be active
         expect(goal1.status).toBe('active');
         expect(goal2.status).toBe('inactive');
@@ -348,9 +348,9 @@ describe('Goal Service', () => {
         expect(first.status).toBe('active');
         expect(second.status).toBe('inactive');
 
-        goalService.setGoalStatus(first.id, 'abandoned', 1);
+        goalService.setGoalStatus(first.id, 'notCompleted', 1);
 
-        expect(first.status).toBe('abandoned');
+        expect(first.status).toBe('notCompleted');
         expect(second.status).toBe('active');
         expect(autoSpy).toHaveBeenCalledWith(1);
         autoSpy.mockRestore();
@@ -371,17 +371,17 @@ describe('Goal Service', () => {
         autoSpy.mockRestore();
     });
 
-    it('autoActivateGoalsByPriority should ignore completed and abandoned goals', () => {
+    it('autoActivateGoalsByPriority should ignore completed and notCompleted goals', () => {
         const candidate = goalService.createGoal({ title: 'Candidate', motivation: 4, urgency: 4 }, 2);
-        const abandonedGoal = goalService.createGoal({ title: 'Abandoned', motivation: 5, urgency: 5 }, 2);
+        const notCompletedGoal = goalService.createGoal({ title: 'Not Completed', motivation: 5, urgency: 5 }, 2);
         const completedGoal = goalService.createGoal({ title: 'Completed', motivation: 5, urgency: 5 }, 2);
 
-        goalService.setGoalStatus(abandonedGoal.id, 'abandoned', 2);
+        goalService.setGoalStatus(notCompletedGoal.id, 'notCompleted', 2);
         goalService.setGoalStatus(completedGoal.id, 'completed', 2);
 
         goalService.autoActivateGoalsByPriority(2);
 
-        expect(abandonedGoal.status).toBe('abandoned');
+        expect(notCompletedGoal.status).toBe('notCompleted');
         expect(completedGoal.status).toBe('completed');
         expect(candidate.status).toBe('active');
     });
@@ -396,7 +396,7 @@ describe('Goal Service', () => {
     });
 
     it('_notifyAfterSave should handle listener errors gracefully', () => {
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
         const goodListener = jest.fn();
         const badListener = jest.fn(() => {
             throw new Error('Listener error');
@@ -418,7 +418,7 @@ describe('Goal Service', () => {
     });
 
     it('loadGoals should handle JSON parse errors', () => {
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
         localStorage.getItem.mockReturnValue('invalid json');
 
         goalService.loadGoals();
@@ -580,10 +580,10 @@ describe('Goal Service', () => {
     it('isGoalPaused should return false when dependency goal is completed', () => {
         const goal1 = goalService.createGoal({ title: 'Goal 1', motivation: 5, urgency: 5 }, 3);
         const goal2 = goalService.createGoal({ title: 'Goal 2', motivation: 3, urgency: 3 }, 3);
-        
+
         goalService.pauseGoal(goal1.id, { pauseUntilGoalId: goal2.id }, 3);
         expect(goalService.isGoalPaused(goal1)).toBe(true);
-        
+
         goalService.setGoalStatus(goal2.id, 'completed', 3);
         expect(goalService.isGoalPaused(goal1)).toBe(false);
     });
@@ -592,15 +592,15 @@ describe('Goal Service', () => {
         it('should force-activate an inactive goal', () => {
             const goal1 = goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 1);
             const goal2 = goalService.createGoal({ title: 'Low Priority', motivation: 1, urgency: 1 }, 1);
-            
+
             // goal1 should be active, goal2 inactive
             expect(goal1.status).toBe('active');
             expect(goal2.status).toBe('inactive');
             expect(goal2.forceActivated).toBe(false);
-            
+
             // Force-activate goal2
             const result = goalService.forceActivateGoal(goal2.id, 1);
-            
+
             expect(result).toBe(goal2);
             expect(goal2.status).toBe('active');
             expect(goal2.forceActivated).toBe(true);
@@ -611,16 +611,16 @@ describe('Goal Service', () => {
         it('should clear pause metadata when force-activating', () => {
             const goal1 = goalService.createGoal({ title: 'Goal 1', motivation: 5, urgency: 5 }, 2);
             const goal2 = goalService.createGoal({ title: 'Goal 2', motivation: 1, urgency: 1 }, 2);
-            
+
             // Pause goal2
             const futureDate = new Date();
             futureDate.setDate(futureDate.getDate() + 7);
             goalService.pauseGoal(goal2.id, { pauseUntil: futureDate }, 2);
             expect(goal2.pauseUntil).not.toBeNull();
-            
+
             // Force-activate goal2
             goalService.forceActivateGoal(goal2.id, 2);
-            
+
             expect(goal2.pauseUntil).toBeNull();
             expect(goal2.status).toBe('active');
         });
@@ -633,15 +633,15 @@ describe('Goal Service', () => {
         it('should return null for completed goal', () => {
             const goal = goalService.createGoal({ title: 'Goal', motivation: 3, urgency: 3 }, 3);
             goalService.setGoalStatus(goal.id, 'completed', 3);
-            
+
             const result = goalService.forceActivateGoal(goal.id, 3);
             expect(result).toBeNull();
         });
 
-        it('should return null for abandoned goal', () => {
+        it('should return null for notCompleted goal', () => {
             const goal = goalService.createGoal({ title: 'Goal', motivation: 3, urgency: 3 }, 3);
-            goalService.setGoalStatus(goal.id, 'abandoned', 3);
-            
+            goalService.setGoalStatus(goal.id, 'notCompleted', 3);
+
             const result = goalService.forceActivateGoal(goal.id, 3);
             expect(result).toBeNull();
         });
@@ -650,15 +650,15 @@ describe('Goal Service', () => {
             const goal1 = goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 2);
             const goal2 = goalService.createGoal({ title: 'Medium Priority', motivation: 3, urgency: 3 }, 2);
             const goal3 = goalService.createGoal({ title: 'Low Priority', motivation: 1, urgency: 1 }, 2);
-            
+
             // goal1 and goal2 should be active
             expect(goal1.status).toBe('active');
             expect(goal2.status).toBe('active');
             expect(goal3.status).toBe('inactive');
-            
+
             // Force-activate goal3 (should deactivate goal2, the lower priority active goal)
             goalService.forceActivateGoal(goal3.id, 2);
-            
+
             expect(goal1.status).toBe('active');
             expect(goal2.status).toBe('inactive');
             expect(goal3.status).toBe('active');
@@ -669,15 +669,15 @@ describe('Goal Service', () => {
             const goal1 = goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 2);
             const goal2 = goalService.createGoal({ title: 'Medium Priority', motivation: 3, urgency: 3 }, 2);
             const goal3 = goalService.createGoal({ title: 'Low Priority', motivation: 1, urgency: 1 }, 2);
-            
+
             // Force-activate goal3
             goalService.forceActivateGoal(goal3.id, 2);
             expect(goal3.forceActivated).toBe(true);
             expect(goal3.status).toBe('active');
-            
+
             // Increase goal2's priority (should trigger auto-activation)
             goalService.updateGoal(goal2.id, { motivation: 10, urgency: 10 }, 2);
-            
+
             // goal3 should still be active (force-activated)
             expect(goal3.status).toBe('active');
             expect(goal3.forceActivated).toBe(true);

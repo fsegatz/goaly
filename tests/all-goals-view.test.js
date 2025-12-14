@@ -46,10 +46,6 @@ beforeEach(() => {
                                 <input type="checkbox" value="notCompleted" class="status-filter-checkbox">
                                 <span>Not Completed</span>
                             </label>
-                            <label class="status-filter-option" role="menuitem">
-                                <input type="checkbox" value="abandoned" class="status-filter-checkbox">
-                                <span>Abandoned</span>
-                            </label>
                             <button type="button" class="status-filter-clear" id="allGoalsStatusFilterClear">Clear filter</button>
                         </div>
                     </div>
@@ -397,12 +393,12 @@ describe('AllGoalsView', () => {
         expect(rows[0].dataset.goalId).toBe('1');
     });
 
-    test('render should filter out abandoned goals when includeAbandoned is false', () => {
+    test('render should filter out notCompleted goals when includeNotCompleted is false', () => {
         const activeGoal = new Goal({ id: '1', title: 'Active', motivation: 3, urgency: 4, status: 'active' });
-        const abandonedGoal = new Goal({ id: '2', title: 'Abandoned', motivation: 3, urgency: 4, status: 'abandoned' });
-        mockGoalService.goals = [activeGoal, abandonedGoal];
+        const notCompletedGoal = new Goal({ id: '2', title: 'Not Completed', motivation: 3, urgency: 4, status: 'notCompleted' });
+        mockGoalService.goals = [activeGoal, notCompletedGoal];
         mockGoalService.calculatePriority.mockImplementation(() => 10);
-        allGoalsView.allGoalsState.includeAbandoned = false;
+        allGoalsView.allGoalsState.includeNotCompleted = false;
 
         const openGoalForm = jest.fn();
         allGoalsView.render(openGoalForm);

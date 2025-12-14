@@ -46,10 +46,6 @@ beforeEach(() => {
                             <input type="checkbox" value="notCompleted" class="status-filter-checkbox">
                             <span>Not Completed</span>
                         </label>
-                        <label class="status-filter-option" role="menuitem">
-                            <input type="checkbox" value="abandoned" class="status-filter-checkbox">
-                            <span>Abandoned</span>
-                        </label>
                         <button type="button" class="status-filter-clear" id="allGoalsStatusFilterClear">Clear filter</button>
                     </div>
                 </div>
@@ -197,11 +193,11 @@ describe('MobileAllGoalsView', () => {
         expect(cards[0].textContent).toContain('Active Goal');
     });
 
-    test('render should filter out abandoned goals when includeAbandoned is false', () => {
+    test('render should filter out notCompleted goals when includeNotCompleted is false', () => {
         const goal1 = new Goal({ id: '1', title: 'Active Goal', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
-        const goal2 = new Goal({ id: '2', title: 'Abandoned Goal', motivation: 3, urgency: 2, status: 'abandoned', deadline: null, lastUpdated: new Date('2025-11-08T10:00:00.000Z') });
+        const goal2 = new Goal({ id: '2', title: 'Not Completed Goal', motivation: 3, urgency: 2, status: 'notCompleted', deadline: null, lastUpdated: new Date('2025-11-08T10:00:00.000Z') });
         mockGoalService.goals = [goal1, goal2];
-        mobileAllGoalsView.allGoalsState.includeAbandoned = false;
+        mobileAllGoalsView.allGoalsState.includeNotCompleted = false;
         const openGoalForm = jest.fn();
 
         mobileAllGoalsView.render(openGoalForm);
@@ -335,7 +331,6 @@ describe('MobileAllGoalsView', () => {
         const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
         const completedCheckbox = dropdown.querySelector('input[value="completed"]');
         const notCompletedCheckbox = dropdown.querySelector('input[value="notCompleted"]');
-        const abandonedCheckbox = dropdown.querySelector('input[value="abandoned"]');
         const allCheckbox = dropdown.querySelector('input[value="all"]');
 
         // Uncheck "all" first - this will check all others
@@ -347,7 +342,6 @@ describe('MobileAllGoalsView', () => {
         inactiveCheckbox.checked = false;
         completedCheckbox.checked = false;
         notCompletedCheckbox.checked = false;
-        abandonedCheckbox.checked = false;
         activeCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
 
         expect(mobileAllGoalsView.allGoalsState.statusFilter).toEqual(['paused']);
@@ -479,7 +473,7 @@ describe('MobileAllGoalsView', () => {
         const activeCheckbox = dropdown.querySelector('input[value="active"]');
         const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
         const completedCheckbox = dropdown.querySelector('input[value="completed"]');
-        const abandonedCheckbox = dropdown.querySelector('input[value="abandoned"]');
+        const notCompletedCheckbox = dropdown.querySelector('input[value="notCompleted"]');
         const checkboxes = dropdown.querySelectorAll('.status-filter-checkbox');
 
         // Uncheck all first
@@ -494,7 +488,7 @@ describe('MobileAllGoalsView', () => {
         expect(activeCheckbox.checked).toBe(false);
         expect(pausedCheckbox.checked).toBe(false);
         expect(completedCheckbox.checked).toBe(false);
-        expect(abandonedCheckbox.checked).toBe(false);
+        expect(notCompletedCheckbox.checked).toBe(false);
     });
 
     test('handleStatusFilterChange should uncheck "all" when specific status is changed', () => {
@@ -532,7 +526,6 @@ describe('MobileAllGoalsView', () => {
         const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
         const completedCheckbox = dropdown.querySelector('input[value="completed"]');
         const notCompletedCheckbox = dropdown.querySelector('input[value="notCompleted"]');
-        const abandonedCheckbox = dropdown.querySelector('input[value="abandoned"]');
         const checkboxes = dropdown.querySelectorAll('.status-filter-checkbox');
 
         // Uncheck all first - this checks all others
@@ -552,12 +545,9 @@ describe('MobileAllGoalsView', () => {
         completedCheckbox.checked = false;
         completedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
 
+        // Last one should trigger "select all"
         notCompletedCheckbox.checked = false;
         notCompletedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        // Last one should trigger "select all"
-        abandonedCheckbox.checked = false;
-        abandonedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
 
         expect(allCheckbox.checked).toBe(true);
         expect(mobileAllGoalsView.allGoalsState.statusFilter).toEqual(['all']);

@@ -54,26 +54,26 @@ describe('Review Service', () => {
         expect(reviews[0].goal.id).toBe(goal.id);
     });
 
-    it('should ignore completed and abandoned goals even if nextReviewAt is in the past', () => {
+    it('should ignore completed and notCompleted goals even if nextReviewAt is in the past', () => {
         // Paused goals should be included for reviews
         const pausedGoal = createActiveGoal({ status: 'paused' });
         pausedGoal.reviewIntervalIndex = 0;
         pausedGoal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
-        
+
         // Completed goals should be excluded
         const completedGoal = createActiveGoal({ status: 'completed' });
         completedGoal.reviewIntervalIndex = 0;
         completedGoal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
-        
-        // Abandoned goals should be excluded
-        const abandonedGoal = createActiveGoal({ status: 'abandoned' });
-        abandonedGoal.reviewIntervalIndex = 0;
-        abandonedGoal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
-        
-        goalService.goals = [pausedGoal, completedGoal, abandonedGoal];
+
+        // Not completed goals should be excluded
+        const notCompletedGoal = createActiveGoal({ status: 'notCompleted' });
+        notCompletedGoal.reviewIntervalIndex = 0;
+        notCompletedGoal.nextReviewAt = new Date(Date.now() - DAY_IN_MS);
+
+        goalService.goals = [pausedGoal, completedGoal, notCompletedGoal];
 
         const reviews = reviewService.getReviews();
-        // Should only include paused goal, not completed or abandoned
+        // Should only include paused goal, not completed or notCompleted
         expect(reviews).toHaveLength(1);
         expect(reviews[0].goal.status).toBe('paused');
     });
@@ -165,18 +165,18 @@ describe('Review Service', () => {
         expect(result).toBeNull();
     });
 
-    it('should return null when scheduling completed or abandoned goals', () => {
+    it('should return null when scheduling completed or notCompleted goals', () => {
         // Paused goals should be schedulable
         const pausedGoal = createActiveGoal({ status: 'paused' });
         expect(reviewService.ensureGoalSchedule(pausedGoal)).not.toBeNull();
-        
+
         // Completed goals should not be schedulable
         const completedGoal = createActiveGoal({ status: 'completed' });
         expect(reviewService.ensureGoalSchedule(completedGoal)).toBeNull();
-        
-        // Abandoned goals should not be schedulable
-        const abandonedGoal = createActiveGoal({ status: 'abandoned' });
-        expect(reviewService.ensureGoalSchedule(abandonedGoal)).toBeNull();
+
+        // Not completed goals should not be schedulable
+        const notCompletedGoal = createActiveGoal({ status: 'notCompleted' });
+        expect(reviewService.ensureGoalSchedule(notCompletedGoal)).toBeNull();
     });
 
     it('should fallback to default intervals when settings provide none', () => {
@@ -337,7 +337,7 @@ describe('Review Service', () => {
         expect(result).toBeTruthy();
         expect(goal.motivation).toBe(5);
         expect(goal.urgency).toBe(5);
-        
+
         // Restore method
         goalService.updateGoal = originalUpdateGoal;
     });
@@ -360,7 +360,7 @@ describe('Review Service', () => {
 
         expect(result).toBeTruthy();
         expect(goal.reviewDates).toHaveLength(1);
-        
+
         // Restore method
         goalService.saveGoals = originalSaveGoals;
     });
