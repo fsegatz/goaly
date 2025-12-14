@@ -177,7 +177,7 @@ beforeEach(() => {
     global.alert = jest.fn();
     window.confirm = global.confirm;
     window.alert = global.alert;
-    
+
     // Ensure navigator is available on window
     if (!window.navigator) {
         window.navigator = global.navigator;
@@ -255,13 +255,13 @@ afterEach(() => {
     // Clear any pending timers first
     jest.clearAllTimers();
     jest.useRealTimers();
-    
+
     // Clean up mobile dashboard indicators
     if (global.document) {
         const indicators = global.document.querySelectorAll('.mobile-dashboard-indicators');
         indicators.forEach(indicator => indicator.remove());
     }
-    
+
     // Clean up event listeners by closing the JSDOM window BEFORE deleting globals
     // This ensures all event listeners are removed and the worker can exit gracefully
     if (dom && dom.window) {
@@ -274,14 +274,14 @@ afterEach(() => {
             // Window might already be closed, ignore
         }
     }
-    
+
     // Clear all references to allow garbage collection
     delete global.document;
     delete global.window;
     delete global.navigator;
     delete global.confirm;
     delete global.alert;
-    
+
     // Force garbage collection hint (if available)
     if (global.gc) {
         global.gc();
@@ -364,6 +364,21 @@ describe('UIController', () => {
         expect(dashboardView.classList.contains('active')).toBe(true);
         expect(allGoalsBtn.classList.contains('active')).toBe(false);
         expect(allGoalsView.classList.contains('active')).toBe(false);
+    });
+
+    test('switchView should handle invalid view name gracefully', () => {
+        const dashboardBtn = document.querySelector('.menu-btn[data-view="dashboard"]');
+
+        // Initial state
+        expect(dashboardBtn.classList.contains('active')).toBe(true);
+
+        // Switch to invalid view
+        uiController.switchView('invalid-view');
+
+        // Should update buttons (remove active from all) but not crash
+        expect(dashboardBtn.classList.contains('active')).toBe(false);
+
+        // Should not throw and active classes should be removed from known buttons
     });
 
     test('menu-btn click should activate correct view', () => {
@@ -598,7 +613,7 @@ describe('UIController', () => {
             configurable: true
         });
         window.innerWidth = 1200;
-        
+
         // Recreate controller to get updated isMobile value
         const testController = new UIController(mockApp);
         // Should be true because of mobile user agent
@@ -686,12 +701,12 @@ describe('UIController', () => {
     test('handleReviewSubmit should process review submission', () => {
         const mockGoal = { id: 'goal-1', title: 'Test Goal', reviewIntervalIndex: 0, motivation: 3, urgency: 4 };
         const mockResult = { goal: mockGoal, ratingsMatch: true };
-        
+
         mockReviewService.recordReview.mockReturnValue(mockResult);
         mockSettingsService.getReviewIntervals.mockReturnValue([7, 14, 30]);
         mockReviewService.getReviews.mockReturnValue([]);
-        
-        uiController.handleReviewSubmit('goal-1', { motivation: 3, urgency: 4 }, () => {});
+
+        uiController.handleReviewSubmit('goal-1', { motivation: 3, urgency: 4 }, () => { });
 
         expect(mockReviewService.recordReview).toHaveBeenCalledWith('goal-1', { motivation: 3, urgency: 4 });
         expect(mockReviewService.getReviews).toHaveBeenCalled();
@@ -800,12 +815,12 @@ describe('UIController', () => {
     test('mobile menu dropdown should update position on window resize', () => {
         const mobileMenuToggle = document.getElementById('mobileMenuToggle');
         const mobileMenuDropdown = document.getElementById('mobileMenuDropdown');
-        
+
         mobileMenuToggle.click();
         expect(mobileMenuDropdown.getAttribute('aria-hidden')).toBe('false');
 
         const initialTop = mobileMenuDropdown.style.top;
-        
+
         // Simulate window resize
         window.dispatchEvent(new window.Event('resize'));
 
@@ -816,12 +831,12 @@ describe('UIController', () => {
     test('mobile menu dropdown should update position on scroll when visible', () => {
         const mobileMenuToggle = document.getElementById('mobileMenuToggle');
         const mobileMenuDropdown = document.getElementById('mobileMenuDropdown');
-        
+
         mobileMenuToggle.click();
         mobileMenuDropdown.setAttribute('aria-hidden', 'false');
-        
+
         const initialTop = mobileMenuDropdown.style.top;
-        
+
         // Simulate scroll
         window.dispatchEvent(new window.Event('scroll'));
 
@@ -832,10 +847,10 @@ describe('UIController', () => {
     test('mobile menu dropdown should not update position on scroll when hidden', () => {
         const mobileMenuToggle = document.getElementById('mobileMenuToggle');
         const mobileMenuDropdown = document.getElementById('mobileMenuDropdown');
-        
+
         mobileMenuDropdown.setAttribute('aria-hidden', 'true');
         const initialTop = mobileMenuDropdown.style.top;
-        
+
         // Simulate scroll
         window.dispatchEvent(new window.Event('scroll'));
 
@@ -855,13 +870,13 @@ describe('UIController', () => {
 
     test('switchView should handle missing desktop menu button', () => {
         document.querySelectorAll('.desktop-menu .menu-btn').forEach(btn => btn.remove());
-        
+
         expect(() => uiController.switchView('dashboard')).not.toThrow();
     });
 
     test('switchView should handle missing mobile menu button', () => {
         document.querySelectorAll('.mobile-menu-btn').forEach(btn => btn.remove());
-        
+
         expect(() => uiController.switchView('dashboard')).not.toThrow();
     });
 
@@ -869,15 +884,15 @@ describe('UIController', () => {
         const goalyLogo = document.getElementById('goalyLogo');
         const dashboardView = document.getElementById('dashboardView');
         const allGoalsView = document.getElementById('all-goalsView');
-        
+
         // Switch to all-goals view first
         uiController.switchView('all-goals');
         expect(allGoalsView.classList.contains('active')).toBe(true);
         expect(dashboardView.classList.contains('active')).toBe(false);
-        
+
         // Click logo
         goalyLogo.click();
-        
+
         // Should switch to dashboard
         expect(dashboardView.classList.contains('active')).toBe(true);
         expect(allGoalsView.classList.contains('active')).toBe(false);
@@ -887,16 +902,16 @@ describe('UIController', () => {
         const goalyLogo = document.getElementById('goalyLogo');
         const dashboardView = document.getElementById('dashboardView');
         const allGoalsView = document.getElementById('all-goalsView');
-        
+
         // Switch to all-goals view first
         uiController.switchView('all-goals');
         expect(allGoalsView.classList.contains('active')).toBe(true);
         expect(dashboardView.classList.contains('active')).toBe(false);
-        
+
         // Simulate Enter key press
         const enterEvent = new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
         goalyLogo.dispatchEvent(enterEvent);
-        
+
         // Should switch to dashboard
         expect(dashboardView.classList.contains('active')).toBe(true);
         expect(allGoalsView.classList.contains('active')).toBe(false);
@@ -906,16 +921,16 @@ describe('UIController', () => {
         const goalyLogo = document.getElementById('goalyLogo');
         const dashboardView = document.getElementById('dashboardView');
         const allGoalsView = document.getElementById('all-goalsView');
-        
+
         // Switch to all-goals view first
         uiController.switchView('all-goals');
         expect(allGoalsView.classList.contains('active')).toBe(true);
         expect(dashboardView.classList.contains('active')).toBe(false);
-        
+
         // Simulate Space key press
         const spaceEvent = new window.KeyboardEvent('keydown', { key: ' ', bubbles: true });
         goalyLogo.dispatchEvent(spaceEvent);
-        
+
         // Should switch to dashboard
         expect(dashboardView.classList.contains('active')).toBe(true);
         expect(allGoalsView.classList.contains('active')).toBe(false);
@@ -924,7 +939,7 @@ describe('UIController', () => {
     test('goalyLogo should handle missing logo element gracefully', () => {
         const goalyLogo = document.getElementById('goalyLogo');
         goalyLogo.remove();
-        
+
         // Creating a new controller should not throw
         expect(() => {
             const newController = new UIController(mockApp);
@@ -939,7 +954,7 @@ describe('UIController', () => {
             // Save original values
             originalInnerWidth = window.innerWidth;
             originalUserAgent = navigator.userAgent;
-            
+
             // Mock mobile device
             Object.defineProperty(window, 'innerWidth', {
                 writable: true,
@@ -999,7 +1014,7 @@ describe('UIController', () => {
             const goalsList = document.getElementById('goalsList');
             const cards = goalsList.querySelectorAll('.mobile-dashboard-card');
             expect(cards.length).toBe(2);
-            
+
             // First card should be visible, second should be hidden
             expect(cards[0].classList.contains('mobile-dashboard-card-hidden')).toBe(false);
             expect(cards[1].classList.contains('mobile-dashboard-card-hidden')).toBe(true);
@@ -1017,7 +1032,7 @@ describe('UIController', () => {
             // Indicators are now appended to body, not goalsList
             const indicators = document.querySelectorAll('.mobile-dashboard-indicator');
             expect(indicators.length).toBe(2);
-            
+
             // First indicator should be active
             expect(indicators[0].classList.contains('active')).toBe(true);
             expect(indicators[1].classList.contains('active')).toBe(false);
@@ -1060,11 +1075,11 @@ describe('UIController', () => {
 
             const dashboardView = mobileController.dashboardView;
             expect(dashboardView.currentIndex).toBe(0);
-            
+
             // Swipe right (next card)
             dashboardView.goToNextCard();
             expect(dashboardView.currentIndex).toBe(1);
-            
+
             const goalsList = document.getElementById('goalsList');
             const cards = goalsList.querySelectorAll('.mobile-dashboard-card');
             expect(cards[0].classList.contains('mobile-dashboard-card-hidden')).toBe(true);
@@ -1082,11 +1097,11 @@ describe('UIController', () => {
 
             const dashboardView = mobileController.dashboardView;
             dashboardView.currentIndex = 1;
-            
+
             // Swipe left (previous card)
             dashboardView.goToPreviousCard();
             expect(dashboardView.currentIndex).toBe(0);
-            
+
             const goalsList = document.getElementById('goalsList');
             const cards = goalsList.querySelectorAll('.mobile-dashboard-card');
             expect(cards[0].classList.contains('mobile-dashboard-card-hidden')).toBe(false);
@@ -1103,12 +1118,12 @@ describe('UIController', () => {
             mobileController.renderViews();
 
             const dashboardView = mobileController.dashboardView;
-            
+
             // Try to swipe right at the end
             dashboardView.currentIndex = 1;
             dashboardView.goToNextCard();
             expect(dashboardView.currentIndex).toBe(1); // Should not change
-            
+
             // Try to swipe left at the beginning
             dashboardView.currentIndex = 0;
             dashboardView.goToPreviousCard();
@@ -1126,11 +1141,11 @@ describe('UIController', () => {
 
             // Indicators are now appended to body
             const indicators = document.querySelectorAll('.mobile-dashboard-indicator');
-            
+
             // Navigate to second card
             const dashboardView = mobileController.dashboardView;
             dashboardView.goToCard(1);
-            
+
             expect(indicators[0].classList.contains('active')).toBe(false);
             expect(indicators[1].classList.contains('active')).toBe(true);
         });
@@ -1145,11 +1160,11 @@ describe('UIController', () => {
 
             const dashboardView = mobileController.dashboardView;
             const initialIndex = dashboardView.currentIndex;
-            
+
             // Try invalid indices
             dashboardView.goToCard(-1);
             expect(dashboardView.currentIndex).toBe(initialIndex);
-            
+
             dashboardView.goToCard(10);
             expect(dashboardView.currentIndex).toBe(initialIndex);
         });
@@ -1165,10 +1180,10 @@ describe('UIController', () => {
 
             // Indicators are now appended to body
             const indicators = document.querySelectorAll('.mobile-dashboard-indicator');
-            
+
             // Click second indicator
             indicators[1].click();
-            
+
             const dashboardView = mobileController.dashboardView;
             expect(dashboardView.currentIndex).toBe(1);
             expect(indicators[0].classList.contains('active')).toBe(false);
@@ -1186,11 +1201,11 @@ describe('UIController', () => {
 
             const dashboardView = mobileController.dashboardView;
             const goalsList = document.getElementById('goalsList');
-            
+
             // Simulate drag to the right (negative dragPercentage)
             dashboardView.dragOffset = -100; // Drag left (showing next card)
             dashboardView.updateCardPositions();
-            
+
             const cards = goalsList.querySelectorAll('.mobile-dashboard-card');
             expect(cards.length).toBe(2);
         });
@@ -1206,11 +1221,11 @@ describe('UIController', () => {
 
             const dashboardView = mobileController.dashboardView;
             dashboardView.currentIndex = 1; // Start at second card
-            
+
             // Simulate drag to the left (positive dragPercentage)
             dashboardView.dragOffset = 100; // Drag right (showing prev card)
             dashboardView.updateCardPositions();
-            
+
             const goalsList = document.getElementById('goalsList');
             const cards = goalsList.querySelectorAll('.mobile-dashboard-card');
             expect(cards.length).toBe(2);
@@ -1222,7 +1237,7 @@ describe('UIController', () => {
 
             const dashboardView = mobileController.dashboardView;
             dashboardView.cards = [];
-            
+
             // Should not throw
             expect(() => {
                 dashboardView.updateCardPositions();
@@ -1239,7 +1254,7 @@ describe('UIController', () => {
 
             const dashboardView = mobileController.dashboardView;
             dashboardView.cards = [];
-            
+
             // Should not throw
             expect(() => {
                 dashboardView.updateWrapperHeight();
@@ -1256,7 +1271,7 @@ describe('UIController', () => {
 
             const dashboardView = mobileController.dashboardView;
             dashboardView.currentIndex = 10; // Out of bounds
-            
+
             // Should not throw
             expect(() => {
                 dashboardView.updateWrapperHeight();
@@ -1276,12 +1291,12 @@ describe('UIController', () => {
             const dashboardView = mobileController.dashboardView;
             dashboardView.goToCard(2); // Navigate to third card
             expect(dashboardView.currentIndex).toBe(2);
-            
+
             // Remove a goal
             mockGoalService.goals = [goal1, goal2];
             mockGoalService.getActiveGoals.mockReturnValue([goal1, goal2]);
             mobileController.renderViews();
-            
+
             // Should adjust to last card (index 1)
             expect(dashboardView.currentIndex).toBe(1);
         });
@@ -1297,12 +1312,12 @@ describe('UIController', () => {
 
             const dashboardView = mobileController.dashboardView;
             const initialIndex = dashboardView.currentIndex;
-            
+
             // Simulate small swipe (less than minSwipeDistance)
             dashboardView.touchStartX = 100;
             dashboardView.touchEndX = 130; // Only 30px, less than 50px threshold
             dashboardView.handleSwipe();
-            
+
             // Should not change index
             expect(dashboardView.currentIndex).toBe(initialIndex);
         });
@@ -1318,12 +1333,12 @@ describe('UIController', () => {
 
             const dashboardView = mobileController.dashboardView;
             dashboardView.goToNextCard = jest.fn();
-            
+
             // Simulate swipe left (touchStartX > touchEndX, deltaX > 0)
             dashboardView.touchStartX = 200;
             dashboardView.touchEndX = 100; // 100px swipe left
             dashboardView.handleSwipe();
-            
+
             // Should call goToNextCard (next card)
             expect(dashboardView.goToNextCard).toHaveBeenCalled();
         });
@@ -1340,14 +1355,110 @@ describe('UIController', () => {
             const dashboardView = mobileController.dashboardView;
             dashboardView.currentIndex = 1;
             dashboardView.goToPreviousCard = jest.fn();
-            
+
             // Simulate swipe right (touchStartX < touchEndX, deltaX < 0)
             dashboardView.touchStartX = 100;
             dashboardView.touchEndX = 200; // 100px swipe right
             dashboardView.handleSwipe();
-            
+
             // Should call goToPreviousCard (previous card)
             expect(dashboardView.goToPreviousCard).toHaveBeenCalled();
+        });
+    });
+
+    describe('handleRecurringGoalCompletion', () => {
+        beforeEach(() => {
+            mockGoalService.pauseGoal.mockClear();
+            mockReviewService.getReviews.mockClear();
+            mockApp.errorHandler.error.mockClear();
+        });
+
+        test('should handle daily recurrence', () => {
+            const goal = new Goal({ id: 'goal-r1', title: 'Daily', isRecurring: true, recurPeriod: 2, recurPeriodUnit: 'days', status: 'active' });
+            mockGoalService.goals = [goal];
+            mockGoalService.setGoalStatus.mockReturnValue(goal);
+
+            uiController.handleRecurringGoalCompletion('goal-r1', 'completed', new Date());
+
+            expect(goal.recurCount).toBe(1);
+            expect(mockGoalService.pauseGoal).toHaveBeenCalled();
+            const pauseCall = mockGoalService.pauseGoal.mock.calls[0];
+            expect(pauseCall[0]).toBe('goal-r1');
+            // Check if deadline was updated
+            expect(goal.deadline.getTime()).toBeGreaterThan(Date.now());
+        });
+
+        test('should handle weekly recurrence', () => {
+            const goal = new Goal({ id: 'goal-r2', title: 'Weekly', isRecurring: true, recurPeriod: 1, recurPeriodUnit: 'weeks', status: 'active' });
+            mockGoalService.goals = [goal];
+
+            uiController.handleRecurringGoalCompletion('goal-r2', 'completed', new Date());
+
+            expect(goal.recurCount).toBe(1);
+            // Deadline should be ~1 week from now
+            const now = new Date();
+            const expected = new Date(now.setHours(0, 0, 0, 0) + 7 * 24 * 60 * 60 * 1000);
+            // Allow small difference if exact time calculation differs
+            expect(goal.deadline.getDate()).toBe(expected.getDate());
+        });
+
+        test('should handle monthly recurrence', () => {
+            const goal = new Goal({ id: 'goal-r3', title: 'Monthly', isRecurring: true, recurPeriod: 1, recurPeriodUnit: 'months', status: 'active' });
+            mockGoalService.goals = [goal];
+
+            uiController.handleRecurringGoalCompletion('goal-r3', 'completed', new Date());
+
+            expect(goal.recurCount).toBe(1);
+            // Deadline should be ~1 month from now
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            now.setMonth(now.getMonth() + 1);
+            expect(goal.deadline.getMonth()).toBe(now.getMonth());
+        });
+
+        test('should handle notCompleted status', () => {
+            const goal = new Goal({ id: 'goal-r4', title: 'Failed', isRecurring: true, recurPeriod: 1, recurPeriodUnit: 'days', notCompletedCount: 0 });
+            mockGoalService.goals = [goal];
+
+            uiController.handleRecurringGoalCompletion('goal-r4', 'notCompleted', new Date());
+
+            expect(goal.notCompletedCount).toBe(1);
+            expect(goal.completionCount).toBe(0);
+        });
+
+        test('should handle completed status', () => {
+            const goal = new Goal({ id: 'goal-r5', title: 'Success', isRecurring: true, recurPeriod: 1, recurPeriodUnit: 'days', completionCount: 0 });
+            mockGoalService.goals = [goal];
+
+            uiController.handleRecurringGoalCompletion('goal-r5', 'completed', new Date());
+
+            expect(goal.completionCount).toBe(1);
+        });
+
+        test('should handle missing goal gracefully', () => {
+            mockGoalService.goals = [];
+            uiController.handleRecurringGoalCompletion('missing', 'completed', new Date());
+            expect(mockApp.errorHandler.error).toHaveBeenCalledWith('errors.goalNotFound');
+        });
+
+        test('should initialize recurrence fields if missing', () => {
+            const goal = new Goal({ id: 'goal-r6', title: 'New Recurring' }); // isRecurring false by default
+            mockGoalService.goals = [goal];
+
+            uiController.handleRecurringGoalCompletion('goal-r6', 'completed', new Date());
+
+            expect(goal.isRecurring).toBe(true);
+        });
+
+        test('should handle error during execution', () => {
+            const goal = new Goal({ id: 'goal-error', title: 'Error' });
+            mockGoalService.goals = [goal];
+            // Trigger error by making pauseGoal throw
+            mockGoalService.pauseGoal.mockImplementation(() => { throw new Error('Recur error'); });
+
+            uiController.handleRecurringGoalCompletion('goal-error', 'completed', new Date());
+
+            expect(mockApp.errorHandler.error).toHaveBeenCalledWith('errors.statusChangeFailed', expect.anything(), expect.anything());
         });
     });
 

@@ -22,6 +22,12 @@ beforeEach(() => {
                     <button id="completionSuccessBtn" class="btn btn-primary">Goal completed</button>
                     <button id="completionFailureBtn" class="btn btn-danger">Not completed</button>
                 </div>
+                <div class="completion-recurrence">
+                    <input type="checkbox" id="completionRecurringCheckbox" />
+                    <div id="completionRecurDateContainer" style="display: none;">
+                        <input type="date" id="completionRecurDate" />
+                    </div>
+                </div>
             </div>
         </div>
         <div id="migrationPromptModal" class="modal">
@@ -191,7 +197,7 @@ describe('ModalsView', () => {
         const successBtn = document.getElementById('completionSuccessBtn');
         successBtn.click();
 
-        expect(handleCompletionChoice).toHaveBeenCalledWith('completed');
+        expect(handleCompletionChoice).toHaveBeenCalledWith('completed', null);
     });
 
     test('completion modal failure button should call handleCompletionChoice', () => {
@@ -202,7 +208,7 @@ describe('ModalsView', () => {
         const failureBtn = document.getElementById('completionFailureBtn');
         failureBtn.click();
 
-        expect(handleCompletionChoice).toHaveBeenCalledWith('abandoned');
+        expect(handleCompletionChoice).toHaveBeenCalledWith('abandoned', null);
     });
 
     test('completion modal close button should close modal', () => {
@@ -232,6 +238,41 @@ describe('ModalsView', () => {
         modalsView.openCompletionModal('goal-1');
         document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape' }));
         expect(modal.classList.contains('is-visible')).toBe(false);
+    });
+
+    test('completion modal success button should handle recurrence', () => {
+        const handleCompletionChoice = jest.fn();
+        modalsView.setupCompletionModal(handleCompletionChoice);
+        modalsView.openCompletionModal('goal-1');
+
+        const checkbox = document.getElementById('completionRecurringCheckbox');
+        checkbox.checked = true;
+
+        const dateInput = document.getElementById('completionRecurDate');
+        dateInput.value = '2025-12-31';
+
+        const successBtn = document.getElementById('completionSuccessBtn');
+        successBtn.click();
+
+        expect(handleCompletionChoice).toHaveBeenCalledWith('completed', {
+            isRecurring: true,
+            recurrenceDate: expect.any(Date)
+        });
+    });
+
+    test('completion modal should require date if recurring', () => {
+        const handleCompletionChoice = jest.fn();
+        modalsView.setupCompletionModal(handleCompletionChoice);
+        modalsView.openCompletionModal('goal-1');
+
+        const checkbox = document.getElementById('completionRecurringCheckbox');
+        checkbox.checked = true;
+
+        const successBtn = document.getElementById('completionSuccessBtn');
+        successBtn.click();
+
+        expect(global.alert).toHaveBeenCalled();
+        expect(handleCompletionChoice).not.toHaveBeenCalled();
     });
 
     test('openMigrationPrompt displays prompt modal with translated content', () => {

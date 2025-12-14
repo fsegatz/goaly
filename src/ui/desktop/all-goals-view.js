@@ -14,7 +14,8 @@ export class AllGoalsView extends BaseUIController {
             minPriority: 0,
             sort: 'priority-desc',
             includeCompleted: true,
-            includeNotCompleted: true
+            includeNotCompleted: true,
+            includeAbandoned: true
         };
         this.allGoalsControlRefs = {
             allGoalsStatusFilter: getOptionalElement('allGoalsStatusFilter'),
@@ -124,7 +125,7 @@ export class AllGoalsView extends BaseUIController {
                         cb.checked = true;
                     }
                 });
-                this.allGoalsState.statusFilter = ['active', 'inactive', 'paused', 'completed', 'notCompleted'];
+                this.allGoalsState.statusFilter = ['active', 'inactive', 'paused', 'completed', 'notCompleted', 'abandoned'];
             }
         } else {
             // If a specific status is changed, uncheck "all" if it was checked
@@ -158,11 +159,12 @@ export class AllGoalsView extends BaseUIController {
 
         const statusCount = this.allGoalsState.statusFilter.length;
         const isAll = this.allGoalsState.statusFilter.includes('all') ||
-            (statusCount === 5 && this.allGoalsState.statusFilter.includes('active') &&
+            (statusCount === 6 && this.allGoalsState.statusFilter.includes('active') &&
                 this.allGoalsState.statusFilter.includes('inactive') &&
                 this.allGoalsState.statusFilter.includes('paused') &&
                 this.allGoalsState.statusFilter.includes('completed') &&
-                this.allGoalsState.statusFilter.includes('notCompleted'));
+                this.allGoalsState.statusFilter.includes('notCompleted') &&
+                this.allGoalsState.statusFilter.includes('abandoned'));
 
         if (isAll) {
             buttonText.textContent = this.translate('filters.statusOptions.all');
@@ -219,6 +221,9 @@ export class AllGoalsView extends BaseUIController {
                 return false;
             }
             if (!this.allGoalsState.includeNotCompleted && goal.status === 'notCompleted') {
+                return false;
+            }
+            if (!this.allGoalsState.includeAbandoned && goal.status === 'abandoned') {
                 return false;
             }
             // Check if status matches any of the selected filters

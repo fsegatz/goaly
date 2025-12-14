@@ -121,4 +121,93 @@ describe('Goal', () => {
         expect(typeof goal.resources[0].id).toBe('string');
     });
 
+    test('should parse pauseUntil date safely', () => {
+        const goalData = {
+            title: 'Paused Goal',
+            pauseUntil: '2025-01-01'
+        };
+        const goal = new Goal(goalData);
+        expect(goal.pauseUntil).toEqual(new Date('2025-01-01T00:00:00'));
+    });
+
+    test('should handle existing pauseUntil date object', () => {
+        const date = new Date();
+        const goalData = {
+            title: 'Paused Goal',
+            pauseUntil: date
+        };
+        const goal = new Goal(goalData);
+        expect(goal.pauseUntil).toEqual(date);
+    });
+
+    test('should initialize forceActivated', () => {
+        const goal = new Goal({ title: 'Force', forceActivated: true });
+        expect(goal.forceActivated).toBe(true);
+
+        const goalDefault = new Goal({ title: 'Default' });
+        expect(goalDefault.forceActivated).toBe(false);
+    });
+
+    test('should initialize recurring fields', () => {
+        const goalData = {
+            title: 'Recurring',
+            isRecurring: true,
+            recurCount: 5,
+            completionCount: 3,
+            notCompletedCount: 1,
+            recurPeriod: 14,
+            recurPeriodUnit: 'weeks'
+        };
+        const goal = new Goal(goalData);
+        expect(goal.isRecurring).toBe(true);
+        expect(goal.recurCount).toBe(5);
+        expect(goal.completionCount).toBe(3);
+        expect(goal.notCompletedCount).toBe(1);
+        expect(goal.recurPeriod).toBe(14);
+        expect(goal.recurPeriodUnit).toBe('weeks');
+    });
+
+    test('should default recurring fields', () => {
+        const goal = new Goal({ title: 'Default Recurring' });
+        expect(goal.isRecurring).toBe(false);
+        expect(goal.recurCount).toBe(0);
+        expect(goal.recurPeriod).toBe(7);
+        expect(goal.recurPeriodUnit).toBe('days');
+    });
+
+    test('should handle legacy checkIn fields', () => {
+        const goalData = {
+            title: 'Legacy',
+            checkInDates: ['2024-01-01'],
+            lastCheckInAt: '2024-01-01',
+            nextCheckInAt: '2024-01-08'
+        };
+        const goal = new Goal(goalData);
+        expect(goal.reviewDates).toEqual(['2024-01-01']);
+        expect(goal.lastReviewAt).toEqual(new Date('2024-01-01'));
+        expect(goal.nextReviewAt).toEqual(new Date('2024-01-08'));
+    });
+
+    test('should prefer review fields over checkIn fields', () => {
+        const goalData = {
+            title: 'Hybrid',
+            reviewDates: ['2024-02-01'],
+            checkInDates: ['2024-01-01'],
+            lastReviewAt: '2024-02-01',
+            lastCheckInAt: '2024-01-01'
+        };
+        const goal = new Goal(goalData);
+        expect(goal.reviewDates).toEqual(['2024-02-01']);
+        expect(goal.lastReviewAt).toEqual(new Date('2024-02-01'));
+    });
+
+    test('should handle steps default/malformed', () => {
+        const goal = new Goal({ title: 'No Steps', steps: 'invalid' });
+        expect(goal.steps).toEqual([]);
+    });
+
+    test('should handle resources default/malformed', () => {
+        const goal = new Goal({ title: 'No Resources', resources: 'invalid' });
+        expect(goal.resources).toEqual([]);
+    });
 });

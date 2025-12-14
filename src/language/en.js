@@ -183,7 +183,8 @@ const en = {
         inactive: 'Inactive',
         paused: 'Paused',
         completed: 'Completed',
-        notCompleted: 'Not completed'
+        notCompleted: 'Not completed',
+        abandoned: 'Abandoned'
     },
     reviews: {
         prompt: 'Time for a review on "{{title}}". Please confirm motivation and urgency.',

@@ -31,12 +31,20 @@ beforeEach(() => {
                             <span>Active</span>
                         </label>
                         <label class="status-filter-option" role="menuitem">
+                            <input type="checkbox" value="inactive" class="status-filter-checkbox">
+                            <span>Inactive</span>
+                        </label>
+                        <label class="status-filter-option" role="menuitem">
                             <input type="checkbox" value="paused" class="status-filter-checkbox">
                             <span>Paused</span>
                         </label>
                         <label class="status-filter-option" role="menuitem">
                             <input type="checkbox" value="completed" class="status-filter-checkbox">
                             <span>Completed</span>
+                        </label>
+                        <label class="status-filter-option" role="menuitem">
+                            <input type="checkbox" value="notCompleted" class="status-filter-checkbox">
+                            <span>Not Completed</span>
                         </label>
                         <label class="status-filter-option" role="menuitem">
                             <input type="checkbox" value="abandoned" class="status-filter-checkbox">
@@ -249,6 +257,27 @@ describe('MobileAllGoalsView', () => {
         expect(cards[1].textContent).toContain('New Goal');
     });
 
+    test('render should sort by updated with string dates', () => {
+        // Goal constructor might convert strings to Dates, but let's force them to be strings 
+        // by modifying them after creation or ensuring we mock the behavior if strict types aren't enforced
+        const goal1 = new Goal({ id: '1', title: 'Old String Goal', status: 'active' });
+        goal1.lastUpdated = '2025-11-08T10:00:00.000Z'; // Explicitly string
+
+        const goal2 = new Goal({ id: '2', title: 'New String Goal', status: 'active' });
+        goal2.lastUpdated = '2025-11-10T10:00:00.000Z'; // Explicitly string
+
+        mockGoalService.goals = [goal1, goal2];
+        mobileAllGoalsView.allGoalsState.sort = 'updated-desc';
+        const openGoalForm = jest.fn();
+
+        mobileAllGoalsView.render(openGoalForm);
+
+        const container = document.getElementById('allGoalsMobileContainer');
+        const cards = container.querySelectorAll('.mobile-goal-card');
+        expect(cards[0].textContent).toContain('New String Goal');
+        expect(cards[1].textContent).toContain('Old String Goal');
+    });
+
     test('createGoalCard should create card with correct structure', () => {
         const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-12-01'), lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
         const openGoalForm = jest.fn();
@@ -302,8 +331,10 @@ describe('MobileAllGoalsView', () => {
 
         const dropdown = document.getElementById('allGoalsStatusFilter');
         const activeCheckbox = dropdown.querySelector('input[value="active"]');
+        const inactiveCheckbox = dropdown.querySelector('input[value="inactive"]');
         const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
         const completedCheckbox = dropdown.querySelector('input[value="completed"]');
+        const notCompletedCheckbox = dropdown.querySelector('input[value="notCompleted"]');
         const abandonedCheckbox = dropdown.querySelector('input[value="abandoned"]');
         const allCheckbox = dropdown.querySelector('input[value="all"]');
 
@@ -313,7 +344,9 @@ describe('MobileAllGoalsView', () => {
 
         // Uncheck all except paused
         activeCheckbox.checked = false;
+        inactiveCheckbox.checked = false;
         completedCheckbox.checked = false;
+        notCompletedCheckbox.checked = false;
         abandonedCheckbox.checked = false;
         activeCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
 
@@ -495,8 +528,10 @@ describe('MobileAllGoalsView', () => {
         const dropdown = document.getElementById('allGoalsStatusFilter');
         const allCheckbox = dropdown.querySelector('input[value="all"]');
         const activeCheckbox = dropdown.querySelector('input[value="active"]');
+        const inactiveCheckbox = dropdown.querySelector('input[value="inactive"]');
         const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
         const completedCheckbox = dropdown.querySelector('input[value="completed"]');
+        const notCompletedCheckbox = dropdown.querySelector('input[value="notCompleted"]');
         const abandonedCheckbox = dropdown.querySelector('input[value="abandoned"]');
         const checkboxes = dropdown.querySelectorAll('.status-filter-checkbox');
 
@@ -508,11 +543,17 @@ describe('MobileAllGoalsView', () => {
         activeCheckbox.checked = false;
         activeCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
 
+        inactiveCheckbox.checked = false;
+        inactiveCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
         pausedCheckbox.checked = false;
         pausedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
 
         completedCheckbox.checked = false;
         completedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+        notCompletedCheckbox.checked = false;
+        notCompletedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
 
         // Last one should trigger "select all"
         abandonedCheckbox.checked = false;
@@ -527,6 +568,30 @@ describe('MobileAllGoalsView', () => {
         // No buttonText element inside
 
         expect(() => mobileAllGoalsView.updateStatusFilterButtonText(button)).not.toThrow();
+    });
+
+    test('updateStatusFilterButtonText should update to "All statuses" when all individual statuses are selected', () => {
+        const openGoalForm = jest.fn();
+        mobileAllGoalsView.setupControls(openGoalForm);
+
+        const dropdown = document.getElementById('allGoalsStatusFilter');
+        const checkboxes = dropdown.querySelectorAll('.status-filter-checkbox:not([value="all"])');
+        const allCheckbox = dropdown.querySelector('input[value="all"]');
+
+        // Uncheck "all" first
+        allCheckbox.checked = false;
+        allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+        // Check all individual statuses
+        checkboxes.forEach(cb => {
+            cb.checked = true;
+            cb.dispatchEvent(new window.Event('change', { bubbles: true }));
+        });
+
+        const button = document.getElementById('allGoalsStatusFilterButton');
+        const buttonText = button.querySelector('.status-filter-button-text');
+
+        expect(buttonText.textContent).toMatch(/All statuses|filters.statusOptions.all/);
     });
 
     test('updateStatusFilterButtonText should show count when multiple statuses selected', () => {

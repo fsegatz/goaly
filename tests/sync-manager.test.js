@@ -121,26 +121,26 @@ describe('SyncManager', () => {
     test('initGoogleDriveSync should initialize with window credentials', async () => {
         window.GOOGLE_API_KEY = 'test-api-key';
         window.GOOGLE_CLIENT_ID = 'test-client-id';
-        
+
         // Create a new manager instance for this test
         const testManager = new SyncManager(mockApp);
         testManager.syncWithGoogleDrive = jest.fn(() => Promise.resolve());
-        
+
         // Mock the GoogleDriveSyncService's initialize method after creation
         // Since we can't easily mock the constructor, we'll let it create and then mock initialize
         const originalInit = GoogleDriveSyncService.prototype.initialize;
-        GoogleDriveSyncService.prototype.initialize = jest.fn(function(apiKey, clientId) {
+        GoogleDriveSyncService.prototype.initialize = jest.fn(function (apiKey, clientId) {
             this.initialized = true;
             return Promise.resolve();
         });
-        
+
         await testManager.initGoogleDriveSync();
 
         // The service should be created when credentials are present
         // Note: initialize might fail in test environment due to missing Google APIs,
         // but we verify the service was attempted to be created
         expect(GoogleDriveSyncService.prototype.initialize).toHaveBeenCalled();
-        
+
         // Restore original
         GoogleDriveSyncService.prototype.initialize = originalInit;
         delete window.GOOGLE_API_KEY;
@@ -150,27 +150,27 @@ describe('SyncManager', () => {
     test('initGoogleDriveSync should perform background sync when already authenticated', async () => {
         window.GOOGLE_API_KEY = 'test-api-key';
         window.GOOGLE_CLIENT_ID = 'test-client-id';
-        
+
         const testManager = new SyncManager(mockApp);
         testManager.syncWithGoogleDrive = jest.fn(() => Promise.resolve());
-        
+
         const originalInit = GoogleDriveSyncService.prototype.initialize;
         const originalIsAuthenticated = GoogleDriveSyncService.prototype.isAuthenticated;
-        
-        GoogleDriveSyncService.prototype.initialize = jest.fn(function(apiKey, clientId) {
+
+        GoogleDriveSyncService.prototype.initialize = jest.fn(function (apiKey, clientId) {
             this.initialized = true;
             return Promise.resolve();
         });
-        
-        GoogleDriveSyncService.prototype.isAuthenticated = jest.fn(function() {
+
+        GoogleDriveSyncService.prototype.isAuthenticated = jest.fn(function () {
             return true;
         });
-        
+
         await testManager.initGoogleDriveSync();
 
         // Should attempt background sync when authenticated
         expect(testManager.syncWithGoogleDrive).toHaveBeenCalledWith({ background: true });
-        
+
         // Restore originals
         GoogleDriveSyncService.prototype.initialize = originalInit;
         GoogleDriveSyncService.prototype.isAuthenticated = originalIsAuthenticated;
@@ -326,7 +326,7 @@ describe('SyncManager', () => {
             signOut: jest.fn()
         };
         manager.googleDriveSyncService = mockSyncService;
-        manager.syncDebounce = setTimeout(() => {}, 1000);
+        manager.syncDebounce = setTimeout(() => { }, 1000);
 
         manager.signOutGoogleDrive();
 
@@ -550,7 +550,7 @@ describe('SyncManager', () => {
             isAuthenticated: jest.fn(() => true)
         };
         manager.syncWithGoogleDrive = jest.fn(() => Promise.resolve());
-        
+
         const unrefSpy = jest.fn();
         const originalSetTimeout = global.setTimeout;
         global.setTimeout = jest.fn((callback, delay) => {
@@ -571,7 +571,7 @@ describe('SyncManager', () => {
             isAuthenticated: jest.fn(() => true)
         };
         manager.syncWithGoogleDrive = jest.fn(() => Promise.resolve());
-        
+
         const originalSetTimeout = global.setTimeout;
         global.setTimeout = jest.fn((callback, delay) => {
             const timer = originalSetTimeout(callback, delay);
@@ -668,7 +668,7 @@ describe('SyncManager', () => {
         const originalIsSame = versioning.isSameVersion;
         const originalIsOlder = versioning.isOlderVersion;
         const originalIsNewer = versioning.isNewerVersion;
-        
+
         jest.spyOn(versioning, 'isSameVersion').mockReturnValue(false);
         jest.spyOn(versioning, 'isOlderVersion').mockReturnValue(false);
         jest.spyOn(versioning, 'isNewerVersion').mockReturnValue(false);
@@ -676,7 +676,7 @@ describe('SyncManager', () => {
         await manager.downloadFromGoogleDrive();
 
         expect(mockApp.errorHandler.error).toHaveBeenCalledWith('import.incompatible', {});
-        
+
         // Restore mocks
         jest.restoreAllMocks();
     });
@@ -753,20 +753,20 @@ describe('SyncManager', () => {
         delete window.GOOGLE_CLIENT_ID;
         process.env.GOOGLE_API_KEY = 'env-api-key';
         process.env.GOOGLE_CLIENT_ID = 'env-client-id';
-        
+
         const testManager = new SyncManager(mockApp);
         testManager.syncWithGoogleDrive = jest.fn(() => Promise.resolve());
-        
+
         const originalInit = GoogleDriveSyncService.prototype.initialize;
-        GoogleDriveSyncService.prototype.initialize = jest.fn(function(apiKey, clientId) {
+        GoogleDriveSyncService.prototype.initialize = jest.fn(function (apiKey, clientId) {
             this.initialized = true;
             return Promise.resolve();
         });
-        
+
         await testManager.initGoogleDriveSync();
 
         expect(GoogleDriveSyncService.prototype.initialize).toHaveBeenCalledWith('env-api-key', 'env-client-id');
-        
+
         GoogleDriveSyncService.prototype.initialize = originalInit;
         delete process.env.GOOGLE_API_KEY;
         delete process.env.GOOGLE_CLIENT_ID;
@@ -1052,16 +1052,16 @@ describe('SyncManager', () => {
     test('initGoogleDriveSync should handle initialization errors', async () => {
         window.GOOGLE_API_KEY = 'test-api-key';
         window.GOOGLE_CLIENT_ID = 'test-client-id';
-        
+
         // Create a new manager instance
         const testManager = new SyncManager(mockApp);
-        
+
         // Mock initialize to throw an error
         const initError = new Error('Initialization failed');
         const originalInit = GoogleDriveSyncService.prototype.initialize;
         GoogleDriveSyncService.prototype.initialize = jest.fn(() => Promise.reject(initError));
-        
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
         await testManager.initGoogleDriveSync();
 
@@ -1073,7 +1073,7 @@ describe('SyncManager', () => {
             initError,
             { context: 'initialization' }
         );
-        
+
         // Restore
         GoogleDriveSyncService.prototype.initialize = originalInit;
         consoleErrorSpy.mockRestore();
@@ -1241,6 +1241,33 @@ describe('SyncManager', () => {
             expect.any(Error),
             { context: 'debounced' }
         );
+    });
+    test('getSyncStatus should return default status when service is null', async () => {
+        manager.googleDriveSyncService = null;
+
+        const status = await manager.getSyncStatus();
+
+        expect(status).toEqual({
+            authenticated: false,
+            synced: false,
+            lastSyncTime: null
+        });
+    });
+
+    test('getSyncStatus should return service status', async () => {
+        const expectedStatus = {
+            authenticated: true,
+            synced: true,
+            lastSyncTime: new Date()
+        };
+        manager.googleDriveSyncService = {
+            getSyncStatus: jest.fn(() => Promise.resolve(expectedStatus))
+        };
+
+        const status = await manager.getSyncStatus();
+
+        expect(status).toEqual(expectedStatus);
+        expect(manager.googleDriveSyncService.getSyncStatus).toHaveBeenCalled();
     });
 });
 
