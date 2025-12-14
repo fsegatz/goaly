@@ -404,7 +404,9 @@ export class DashboardView extends BaseUIController {
             // Update the label when deadline changes (for immediate visual feedback)
             deadlineInput.addEventListener('input', () => {
                 if (deadlineInput.value) {
-                    const newDate = new Date(deadlineInput.value);
+                    // Parse date in local timezone to avoid off-by-one-day errors
+                    // for users in timezones west of UTC
+                    const newDate = new Date(deadlineInput.value + 'T00:00:00');
                     const newDeadlineText = this.formatDeadline(newDate);
                     deadlineLabel.textContent = this.translate('goalCard.deadlinePrefix', { deadline: newDeadlineText });
                     deadlineLabel.classList.toggle('urgent', this.isDeadlineUrgent(newDate));

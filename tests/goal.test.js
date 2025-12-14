@@ -20,7 +20,7 @@ describe('Goal', () => {
         expect(goal.title).toBe(goalData.title);
         expect(goal.motivation).toBe(goalData.motivation);
         expect(goal.urgency).toBe(goalData.urgency);
-        expect(goal.deadline).toEqual(new Date(goalData.deadline));
+        expect(goal.deadline).toEqual(new Date(goalData.deadline + 'T00:00:00'));
         expect(goal.status).toBe(goalData.status);
         expect(goal.createdAt).toEqual(new Date(goalData.createdAt));
         expect(goal.lastUpdated).toEqual(new Date(goalData.lastUpdated));
