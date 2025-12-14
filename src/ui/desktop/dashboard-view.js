@@ -389,19 +389,8 @@ export class DashboardView extends BaseUIController {
         const deadlineInput = card.querySelector('.goal-deadline-input');
 
         if (deadlineLabel && deadlineInput) {
-            // Click on label opens the date picker
-            deadlineLabel.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                deadlineInput.showPicker();
-            });
-
-            deadlineLabel.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    deadlineInput.showPicker();
-                }
-            });
+            // The date input is now positioned over the label and directly clickable
+            // No need for showPicker() - iOS Safari will open the native picker when tapping the input
 
             // Update deadline when date input changes
             deadlineInput.addEventListener('change', (event) => {

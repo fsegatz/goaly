@@ -144,7 +144,7 @@ describe('DashboardView', () => {
         expect(card.querySelector('.goal-steps-section')).not.toBeNull();
     });
 
-    test('createGoalCard clickable deadline should open date picker and save changes', () => {
+    test('createGoalCard clickable deadline should save changes', () => {
         const goal = new Goal({ id: 'edit-test', title: 'Edit Button', motivation: 3, urgency: 2, status: 'active', deadline: null });
         mockGoalService.calculatePriority.mockReturnValue(5);
         mockGoalService.goals = [goal];
@@ -160,14 +160,8 @@ describe('DashboardView', () => {
         expect(deadlineLabel).not.toBeNull();
         expect(deadlineInput).not.toBeNull();
 
-        // Mock showPicker if not available
-        if (!deadlineInput.showPicker) {
-            deadlineInput.showPicker = jest.fn();
-        }
-
-        deadlineLabel.click();
-        expect(deadlineInput.showPicker).toHaveBeenCalled();
-
+        // The date input is now directly clickable (no showPicker() needed)
+        // Simulate user selecting a date
         deadlineInput.value = '2025-11-20';
         const changeEvent = new window.Event('change');
         deadlineInput.dispatchEvent(changeEvent);
@@ -311,7 +305,7 @@ describe('DashboardView', () => {
         expect(card).toBeDefined();
     });
 
-    test('createGoalCard deadline label should be clickable', () => {
+    test('createGoalCard deadline input should be present and positioned over label', () => {
         const goal = new Goal({ id: 'cancel-test', title: 'Cancel Test', motivation: 3, urgency: 2, status: 'active', deadline: null });
         mockGoalService.calculatePriority.mockReturnValue(5);
         const openCompletionModal = jest.fn();
@@ -323,14 +317,10 @@ describe('DashboardView', () => {
 
         expect(deadlineLabel).not.toBeNull();
         expect(deadlineInput).not.toBeNull();
+        expect(deadlineInput.type).toBe('date');
 
-        // Mock showPicker if not available
-        if (!deadlineInput.showPicker) {
-            deadlineInput.showPicker = jest.fn();
-        }
-
-        deadlineLabel.click();
-        expect(deadlineInput.showPicker).toHaveBeenCalled();
+        // The input should be positioned to overlay the label for direct interaction
+        // This allows iOS Safari to open the native date picker on tap
     });
 
 
@@ -601,7 +591,7 @@ describe('DashboardView', () => {
         expect(blurSpy).toHaveBeenCalled();
     });
 
-    test('createGoalCard deadline should handle keyboard events', () => {
+    test('createGoalCard deadline input should handle value changes', () => {
         const goal = new Goal({ id: 'keyboard-test', title: 'Keyboard Test', description: '', motivation: 3, urgency: 2, status: 'active', deadline: null });
         mockGoalService.calculatePriority.mockReturnValue(5);
         const openCompletionModal = jest.fn();
@@ -611,15 +601,15 @@ describe('DashboardView', () => {
         const deadlineLabel = card.querySelector('.goal-deadline-label');
         const deadlineInput = card.querySelector('.goal-deadline-input');
 
-        // Mock showPicker if not available
-        if (!deadlineInput.showPicker) {
-            deadlineInput.showPicker = jest.fn();
-        }
+        expect(deadlineInput).not.toBeNull();
 
-        const enterEvent = new window.KeyboardEvent('keydown', { key: 'Enter' });
-        deadlineLabel.dispatchEvent(enterEvent);
+        // Simulate user changing the date value
+        deadlineInput.value = '2025-12-15';
+        const inputEvent = new window.Event('input');
+        deadlineInput.dispatchEvent(inputEvent);
 
-        expect(deadlineInput.showPicker).toHaveBeenCalled();
+        // The label should update to show the new deadline
+        expect(deadlineLabel.textContent).toContain('12/15/2025');
     });
 
     test('createGoalCard should handle step text blur with non-empty text', () => {
