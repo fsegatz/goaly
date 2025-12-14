@@ -420,7 +420,7 @@ describe('GoalFormView', () => {
             title: 'Test Goal',
             motivation: 3,
             urgency: 4,
-            status: 'abandoned'
+            status: 'notCompleted'
         });
         mockGoalService.goals = [goal];
 
@@ -537,13 +537,13 @@ describe('GoalFormView', () => {
         expect(forceActivateBtn.style.display).toBe('inline-block');
     });
 
-    test('openGoalForm should hide force activate button for abandoned goals', () => {
+    test('openGoalForm should hide force activate button for notCompleted goals', () => {
         const goal = new Goal({
             id: '1',
             title: 'Test Goal',
             motivation: 3,
             urgency: 4,
-            status: 'abandoned'
+            status: 'notCompleted'
         });
         mockGoalService.goals = [goal];
 

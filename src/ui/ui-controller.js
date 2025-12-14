@@ -268,27 +268,11 @@ class UIController {
             // Increment recurrence counter
             goal.recurCount++;
 
-            // Calculate next recurrence date from period
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            let nextDate = new Date(today);
-
-            const period = goal.recurPeriod || 7;
-            const unit = goal.recurPeriodUnit || 'days';
-
-            if (unit === 'days') {
-                nextDate.setDate(nextDate.getDate() + period);
-            } else if (unit === 'weeks') {
-                nextDate.setDate(nextDate.getDate() + (period * 7));
-            } else if (unit === 'months') {
-                nextDate.setMonth(nextDate.getMonth() + period);
-            }
-
-            // Update deadline to calculated recurrence date
-            goal.deadline = nextDate;
+            // Update deadline to the user-provided recurrence date
+            goal.deadline = recurrenceDate;
 
             // Pause the goal until the recurrence date
-            this.app.goalService.pauseGoal(goalId, { pauseUntil: nextDate }, maxActiveGoals);
+            this.app.goalService.pauseGoal(goalId, { pauseUntil: recurrenceDate }, maxActiveGoals);
 
             this.app.reviews = this.app.reviewService.getReviews();
             this.renderViews();

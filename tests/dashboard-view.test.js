@@ -225,7 +225,7 @@ describe('DashboardView', () => {
         expect(dashboardView.getStatusText('active')).toBe('Active');
         expect(dashboardView.getStatusText('paused')).toBe('Paused');
         expect(dashboardView.getStatusText('completed')).toBe('Completed');
-        expect(dashboardView.getStatusText('abandoned')).toBe('Abandoned');
+        expect(dashboardView.getStatusText('notCompleted')).toBe('Not completed');
         expect(dashboardView.getStatusText('unknown')).toBe('unknown');
     });
 

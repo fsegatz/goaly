@@ -454,7 +454,7 @@ class GoalService {
         this._checkExpiredPauses();
 
         // Sort all non-completed goals by priority, excluding manually paused goals
-        const ineligibleStatuses = new Set(['completed', 'notCompleted', 'abandoned']);
+        const ineligibleStatuses = new Set(['completed', 'notCompleted']);
         const eligibleGoals = this._getEligibleGoalsForActivation(ineligibleStatuses);
 
         // Activate the top N goals by priority
@@ -522,7 +522,7 @@ class GoalService {
         }
 
         // Cannot force-activate completed or notCompleted goals
-        if (goal.status === 'completed' || goal.status === 'notCompleted' || goal.status === 'abandoned') {
+        if (goal.status === 'completed' || goal.status === 'notCompleted') {
             return null;
         }
 

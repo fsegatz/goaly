@@ -1378,42 +1378,42 @@ describe('UIController', () => {
             mockGoalService.goals = [goal];
             mockGoalService.setGoalStatus.mockReturnValue(goal);
 
-            uiController.handleRecurringGoalCompletion('goal-r1', 'completed', new Date());
+            const recurrenceDate = new Date();
+            recurrenceDate.setDate(recurrenceDate.getDate() + 2);
+            uiController.handleRecurringGoalCompletion('goal-r1', 'completed', recurrenceDate);
 
             expect(goal.recurCount).toBe(1);
             expect(mockGoalService.pauseGoal).toHaveBeenCalled();
             const pauseCall = mockGoalService.pauseGoal.mock.calls[0];
             expect(pauseCall[0]).toBe('goal-r1');
-            // Check if deadline was updated
-            expect(goal.deadline.getTime()).toBeGreaterThan(Date.now());
+            // Check if deadline was updated to recurrenceDate
+            expect(goal.deadline).toEqual(recurrenceDate);
         });
 
         test('should handle weekly recurrence', () => {
             const goal = new Goal({ id: 'goal-r2', title: 'Weekly', isRecurring: true, recurPeriod: 1, recurPeriodUnit: 'weeks', status: 'active' });
             mockGoalService.goals = [goal];
 
-            uiController.handleRecurringGoalCompletion('goal-r2', 'completed', new Date());
+            const recurrenceDate = new Date();
+            recurrenceDate.setDate(recurrenceDate.getDate() + 7);
+            uiController.handleRecurringGoalCompletion('goal-r2', 'completed', recurrenceDate);
 
             expect(goal.recurCount).toBe(1);
-            // Deadline should be ~1 week from now
-            const now = new Date();
-            const expected = new Date(now.setHours(0, 0, 0, 0) + 7 * 24 * 60 * 60 * 1000);
-            // Allow small difference if exact time calculation differs
-            expect(goal.deadline.getDate()).toBe(expected.getDate());
+            // Deadline should be set to the recurrenceDate
+            expect(goal.deadline).toEqual(recurrenceDate);
         });
 
         test('should handle monthly recurrence', () => {
             const goal = new Goal({ id: 'goal-r3', title: 'Monthly', isRecurring: true, recurPeriod: 1, recurPeriodUnit: 'months', status: 'active' });
             mockGoalService.goals = [goal];
 
-            uiController.handleRecurringGoalCompletion('goal-r3', 'completed', new Date());
+            const recurrenceDate = new Date();
+            recurrenceDate.setMonth(recurrenceDate.getMonth() + 1);
+            uiController.handleRecurringGoalCompletion('goal-r3', 'completed', recurrenceDate);
 
             expect(goal.recurCount).toBe(1);
-            // Deadline should be ~1 month from now
-            const now = new Date();
-            now.setHours(0, 0, 0, 0);
-            now.setMonth(now.getMonth() + 1);
-            expect(goal.deadline.getMonth()).toBe(now.getMonth());
+            // Deadline should be set to the recurrenceDate
+            expect(goal.deadline).toEqual(recurrenceDate);
         });
 
         test('should handle notCompleted status', () => {
