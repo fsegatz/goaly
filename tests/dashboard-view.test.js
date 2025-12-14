@@ -795,6 +795,123 @@ describe('DashboardView', () => {
         expect(titleElement.textContent).toBe('Original Title');
     });
 
+    test('createGoalCard should show recurring badge for recurring goals', () => {
+        const goal = new Goal({
+            id: 'recurring-test',
+            title: 'Recurring Goal',
+            motivation: 3,
+            urgency: 3,
+            status: 'active',
+            isRecurring: true,
+            recurrence: { type: 'daily', interval: 1 }
+        });
+        mockGoalService.calculatePriority.mockReturnValue(5);
+        const openCompletionModal = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, openCompletionModal, jest.fn());
+
+        expect(card.querySelector('.goal-recurring-badge')).not.toBeNull();
+        expect(card.querySelector('.goal-recurring-badge').textContent).toContain('Recurring');
+    });
+
+    test('createGoalCard should show force activated indicator', () => {
+        const goal = new Goal({
+            id: 'force-active-test',
+            title: 'Force Active Goal',
+            motivation: 3,
+            urgency: 3,
+            status: 'active',
+            forceActivated: true
+        });
+        mockGoalService.calculatePriority.mockReturnValue(5);
+
+        const card = dashboardView.createGoalCard(goal, jest.fn(), jest.fn());
+
+        expect(card.querySelector('.goal-force-activated-indicator')).not.toBeNull();
+        expect(card.querySelector('.goal-force-activated-indicator').textContent).toContain('Force-activated');
+    });
+
+    test('createGoalCard should show pause indicator for manually paused goals (until date)', () => {
+        const pauseUntil = new Date();
+        pauseUntil.setDate(pauseUntil.getDate() + 5);
+        const goal = new Goal({
+            id: 'paused-date-test',
+            title: 'Paused Goal',
+            motivation: 3,
+            urgency: 3,
+            status: 'paused',
+            pauseUntil: pauseUntil
+        });
+        mockGoalService.isGoalPaused.mockReturnValue(true);
+
+        const card = dashboardView.createGoalCard(goal, jest.fn(), jest.fn());
+
+        expect(card.querySelector('.goal-pause-indicator')).not.toBeNull();
+        expect(card.classList.contains('manually-paused')).toBe(true);
+    });
+
+    test('createGoalCard should show pause indicator for manually paused goals (until goal)', () => {
+        const dependencyGoal = new Goal({ id: 'dep-1', title: 'Dependency' });
+        const goal = new Goal({
+            id: 'paused-dep-test',
+            title: 'Paused Goal',
+            motivation: 3,
+            urgency: 3,
+            status: 'paused',
+            pauseUntilGoalId: 'dep-1'
+        });
+        mockGoalService.goals = [goal, dependencyGoal];
+        mockGoalService.isGoalPaused.mockReturnValue(true);
+
+        const card = dashboardView.createGoalCard(goal, jest.fn(), jest.fn());
+
+        expect(card.querySelector('.goal-pause-indicator')).not.toBeNull();
+        expect(card.querySelector('.goal-pause-indicator').textContent).toContain('Dependency');
+    });
+
+    test('createGoalCard pause button should trigger openPauseModal', () => {
+        const goal = new Goal({
+            id: 'pause-btn-test',
+            title: 'Active Goal',
+            status: 'active'
+        });
+        const openPauseModal = jest.fn();
+        // createGoalCard doesn't take openPauseModal directly, it's stored on the instance from render
+        // But for testing createGoalCard directly, checking the click listener is tricky without rendering
+        // Let's use render() to set up the spy
+        mockGoalService.getActiveGoals.mockReturnValue([goal]);
+
+        dashboardView.render(jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn(), openPauseModal);
+
+        const card = document.querySelector('.goal-card');
+        const pauseBtn = card.querySelector('.pause-goal');
+
+        expect(pauseBtn).not.toBeNull();
+        pauseBtn.click();
+
+        expect(openPauseModal).toHaveBeenCalledWith(goal.id);
+    });
+
+    test('handleTitleEditing should show error for empty title', () => {
+        const goal = new Goal({ id: 'empty-title-test', title: 'Original' });
+        const updateGoalInline = jest.fn();
+
+        const card = dashboardView.createGoalCard(goal, jest.fn(), updateGoalInline);
+        const titleElement = card.querySelector('.goal-title');
+
+        // Start editing
+        titleElement.click();
+        const input = card.querySelector('.goal-title-input');
+
+        // Clear input and try to save
+        input.value = '';
+        const enterEvent = new window.KeyboardEvent('keydown', { key: 'Enter' });
+        input.dispatchEvent(enterEvent);
+
+        expect(updateGoalInline).not.toHaveBeenCalled();
+        expect(card.querySelector('.goal-title-error-message')).not.toBeNull();
+        expect(card.querySelector('.goal-title-input-error')).not.toBeNull();
+    });
     test('createGoalCard blur should save title changes', () => {
         const goal = new Goal({ id: 'title-test', title: 'Original Title', motivation: 3, urgency: 2, status: 'active' });
         const openCompletionModal = jest.fn();

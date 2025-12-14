@@ -147,7 +147,8 @@ describe('GoalFormView', () => {
                 title: 'New Goal',
                 motivation: '5',
                 urgency: '4',
-                deadline: '2025-12-31'
+                deadline: '2025-12-31',
+                isRecurring: false
             },
             expect.any(Number)
         );
@@ -173,7 +174,8 @@ describe('GoalFormView', () => {
                 title: 'Updated Goal',
                 motivation: '3',
                 urgency: '2',
-                deadline: '2026-01-01'
+                deadline: '2026-01-01',
+                isRecurring: false
             },
             expect.any(Number)
         );
@@ -477,6 +479,86 @@ describe('GoalFormView', () => {
         expect(mockGoalService.setGoalStatus).toHaveBeenCalledWith('1', 'inactive', 3);
         expect(goalFormView.openGoalForm).toHaveBeenCalledWith('1', renderViews);
         expect(renderViews).toHaveBeenCalled();
+    });
+
+    test('openGoalForm should show reactivate button and hide complete for notCompleted goals', () => {
+        const goal = new Goal({
+            id: '1',
+            title: 'Test Goal',
+            motivation: 3,
+            urgency: 4,
+            status: 'notCompleted'
+        });
+        mockGoalService.goals = [goal];
+
+        const stateSection = document.createElement('div');
+        stateSection.id = 'goalStateManagementSection';
+        stateSection.style.display = 'none';
+        document.getElementById('goalModal').appendChild(stateSection);
+
+        const reactivateBtn = document.createElement('button');
+        reactivateBtn.id = 'reactivateGoalBtn';
+        reactivateBtn.style.display = 'none';
+        stateSection.appendChild(reactivateBtn);
+
+        const completeBtn = document.createElement('button');
+        completeBtn.id = 'completeGoalBtn';
+        stateSection.appendChild(completeBtn);
+
+        goalFormView.openGoalForm('1', jest.fn());
+
+        expect(reactivateBtn.style.display).toBe('inline-block');
+        expect(completeBtn.style.display).toBe('none');
+    });
+
+    test('openGoalForm should show force activate button for paused goals', () => {
+        const goal = new Goal({
+            id: '1',
+            title: 'Test Goal',
+            motivation: 3,
+            urgency: 4,
+            status: 'paused',
+            pauseUntil: new Date('2025-12-01')
+        });
+        mockGoalService.goals = [goal];
+        mockGoalService.isGoalPaused.mockReturnValue(true);
+
+        const stateSection = document.createElement('div');
+        stateSection.id = 'goalStateManagementSection';
+        document.getElementById('goalModal').appendChild(stateSection);
+
+        const forceActivateBtn = document.createElement('button');
+        forceActivateBtn.id = 'forceActivateGoalBtn';
+        forceActivateBtn.style.display = 'none';
+        stateSection.appendChild(forceActivateBtn);
+
+        goalFormView.openGoalForm('1', jest.fn());
+
+        expect(forceActivateBtn.style.display).toBe('inline-block');
+    });
+
+    test('openGoalForm should hide force activate button for abandoned goals', () => {
+        const goal = new Goal({
+            id: '1',
+            title: 'Test Goal',
+            motivation: 3,
+            urgency: 4,
+            status: 'abandoned'
+        });
+        mockGoalService.goals = [goal];
+
+        const stateSection = document.createElement('div');
+        stateSection.id = 'goalStateManagementSection';
+        document.getElementById('goalModal').appendChild(stateSection);
+
+        const forceActivateBtn = document.createElement('button');
+        forceActivateBtn.id = 'forceActivateGoalBtn';
+        forceActivateBtn.style.display = 'inline-block';
+        stateSection.appendChild(forceActivateBtn);
+
+        goalFormView.openGoalForm('1', jest.fn());
+
+        expect(forceActivateBtn.style.display).toBe('none');
     });
 });
 

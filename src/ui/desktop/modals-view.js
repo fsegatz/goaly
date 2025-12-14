@@ -77,7 +77,7 @@ export class ModalsView extends BaseUIController {
                 if (recurrenceData === false) {
                     return;
                 }
-                handleCompletionChoice('notCompleted', recurrenceData);
+                handleCompletionChoice('abandoned', recurrenceData);
             });
         }
 
@@ -571,7 +571,7 @@ export class ModalsView extends BaseUIController {
         if (goalSelect) {
             goalSelect.innerHTML = '<option value="" data-i18n-key="pauseModal.selectGoal">Select a goal...</option>';
             const goals = this.app.goalService.goals.filter(
-                g => g.id !== goalId && g.status !== 'completed' && g.status !== 'notCompleted'
+                g => g.id !== goalId && g.status !== 'completed' && g.status !== 'notCompleted' && g.status !== 'abandoned'
             );
             if (goals.length === 0) {
                 const option = document.createElement('option');

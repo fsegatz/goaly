@@ -74,7 +74,7 @@ export class GoalFormView extends BaseUIController {
 
                 // Show/hide state management buttons based on current status
                 if (completeBtn) {
-                    completeBtn.style.display = goal.status !== 'completed' && goal.status !== 'notCompleted'
+                    completeBtn.style.display = goal.status !== 'completed' && goal.status !== 'notCompleted' && goal.status !== 'abandoned'
                         ? 'inline-block'
                         : 'none';
                 }
@@ -83,14 +83,15 @@ export class GoalFormView extends BaseUIController {
                     unpauseBtn.style.display = isPaused ? 'inline-block' : 'none';
                 }
                 if (reactivateBtn) {
-                    reactivateBtn.style.display = goal.status === 'completed' || goal.status === 'notCompleted'
+                    reactivateBtn.style.display = goal.status === 'completed' || goal.status === 'notCompleted' || goal.status === 'abandoned'
                         ? 'inline-block'
                         : 'none';
                 }
                 if (forceActivateBtn) {
                     const canForceActivate = goal.status !== 'active' &&
                         goal.status !== 'completed' &&
-                        goal.status !== 'notCompleted';
+                        goal.status !== 'notCompleted' &&
+                        goal.status !== 'abandoned';
                     forceActivateBtn.style.display = canForceActivate ? 'inline-block' : 'none';
                 }
             }
