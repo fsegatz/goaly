@@ -40,6 +40,12 @@ export class SettingsView extends BaseUIController {
                     .join(', ');
             }
         }
+
+        // Update Google Drive UI
+        this.updateGoogleDriveUI();
+
+        // Update developer mode visibility
+        this.updateDeveloperModeVisibility();
     }
 
     updateLanguageOptions() {
@@ -48,7 +54,6 @@ export class SettingsView extends BaseUIController {
             return;
         }
 
-        const currentValue = languageSelect.value;
         languageSelect.innerHTML = '';
 
         this.languageService.getSupportedLanguages().forEach((languageCode) => {
@@ -78,12 +83,12 @@ export class SettingsView extends BaseUIController {
                 };
                 const oldMaxActiveGoals = currentSettings.maxActiveGoals;
                 this.app.settingsService.updateSettings(newSettings);
-                
+
                 // Automatically re-activate goals if maxActiveGoals changed
                 if (newSettings.maxActiveGoals !== oldMaxActiveGoals) {
                     this.app.goalService.autoActivateGoalsByPriority(newSettings.maxActiveGoals);
                 }
-                
+
                 if (newSettings.language && newSettings.language !== previousLanguage) {
                     this.app.languageService.setLanguage(newSettings.language);
                 }
@@ -173,7 +178,7 @@ export class SettingsView extends BaseUIController {
                 statusDiv.hidden = false;
                 statusDiv.className = 'google-drive-status google-drive-status-authenticated';
                 statusDiv.textContent = this.translate('googleDrive.authenticated');
-                
+
                 // Update sync status asynchronously (debounced to avoid excessive API calls)
                 // Only check if we haven't checked recently
                 if (!this._lastStatusCheck || (Date.now() - this._lastStatusCheck) > 60000) {
@@ -196,33 +201,6 @@ export class SettingsView extends BaseUIController {
             syncBtn.hidden = true;
             statusDiv.hidden = true;
         }
-    }
-
-    syncSettingsForm() {
-        const settings = this.app.settingsService.getSettings();
-        const maxActiveGoals = getOptionalElement('maxActiveGoals');
-        const languageSelect = getOptionalElement('languageSelect');
-        const reviewIntervals = getOptionalElement('reviewIntervals');
-
-        if (maxActiveGoals) {
-            maxActiveGoals.value = settings.maxActiveGoals;
-        }
-        if (languageSelect) {
-            languageSelect.value = settings.language;
-        }
-        if (reviewIntervals) {
-            const intervals = Array.isArray(settings.reviewIntervals) ? settings.reviewIntervals : [];
-            reviewIntervals.value = intervals
-                .map((interval) => this.formatReviewIntervalInput(interval))
-                .filter(Boolean)
-                .join(', ');
-        }
-
-        // Update Google Drive UI
-        this.updateGoogleDriveUI();
-        
-        // Update developer mode visibility
-        this.updateDeveloperModeVisibility();
     }
 
     updateDeveloperModeVisibility() {
@@ -261,7 +239,7 @@ export class SettingsView extends BaseUIController {
             this.updateGoogleDriveUI();
             this.statusTimeout = null;
         }, isSuccess ? 10000 : 5000);
-        
+
         // Use unref() to prevent timer from keeping Node.js process alive (for testing)
         if (typeof this.statusTimeout.unref === 'function') {
             this.statusTimeout.unref();

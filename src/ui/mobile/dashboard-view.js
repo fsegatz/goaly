@@ -35,7 +35,7 @@ export class MobileDashboardView extends DashboardView {
 
         // Calculate total number of cards that will be created
         const totalCards = reviews.length + dashboardGoals.length;
-        
+
         // Preserve current index if cards still exist, otherwise reset to 0
         const previousIndex = this.currentIndex;
         if (totalCards === 0) {
@@ -47,7 +47,7 @@ export class MobileDashboardView extends DashboardView {
         // Otherwise keep the current index
 
         dashboardList.innerHTML = '';
-        
+
         // Remove existing indicators when re-rendering
         const existingIndicators = document.querySelector('.mobile-dashboard-indicators');
         if (existingIndicators) {
@@ -99,7 +99,7 @@ export class MobileDashboardView extends DashboardView {
         // Create wrapper for swipeable cards
         const swipeContainer = document.createElement('div');
         swipeContainer.className = 'mobile-dashboard-swipe-container';
-        
+
         const cardsWrapper = document.createElement('div');
         cardsWrapper.className = 'mobile-dashboard-cards-wrapper';
 
@@ -120,7 +120,7 @@ export class MobileDashboardView extends DashboardView {
                 cardElement = this.createGoalCard(cardItem.data, openCompletionModal, updateGoalInline);
             }
             cardElement.classList.add('mobile-dashboard-card');
-            
+
             // Set initial position for animation based on current index
             if (index === this.currentIndex) {
                 cardElement.style.transform = 'translateX(0%)';
@@ -134,11 +134,11 @@ export class MobileDashboardView extends DashboardView {
                 cardElement.style.position = 'absolute';
                 cardElement.classList.add('mobile-dashboard-card-hidden');
             }
-            
+
             cardsWrapper.appendChild(cardElement);
             this.cards.push(cardElement);
         });
-        
+
         // Reset drag state
         this.dragOffset = 0;
         this.isDragging = false;
@@ -170,7 +170,7 @@ export class MobileDashboardView extends DashboardView {
 
         // Setup swipe handlers
         this.setupSwipeHandlers(swipeContainer);
-        
+
         // Ensure cards are in correct position (preserving current index)
         // Small delay to ensure DOM is ready
         setTimeout(() => {
@@ -186,7 +186,6 @@ export class MobileDashboardView extends DashboardView {
         }
 
         let touchStartY = 0;
-        const containerWidth = cardsWrapper.offsetWidth || window.innerWidth;
 
         // Touch events for mobile
         cardsWrapper.addEventListener('touchstart', (e) => {
@@ -205,13 +204,13 @@ export class MobileDashboardView extends DashboardView {
             const touch = e.touches[0];
             const deltaX = Math.abs(touch.clientX - this.touchStartX);
             const deltaY = Math.abs(touch.clientY - touchStartY);
-            
+
             // Check if touch is on a scrollable element (steps list)
             const target = e.target;
-            const isScrollableElement = target.closest('.goal-steps-list') || 
-                                       target.closest('.goal-description') ||
-                                       target.closest('.review-card__fields');
-            
+            const isScrollableElement = target.closest('.goal-steps-list') ||
+                target.closest('.goal-description') ||
+                target.closest('.review-card__fields');
+
             // Only prevent default and handle swipe if:
             // 1. Horizontal movement is greater than vertical (swipe gesture)
             // 2. Not touching a scrollable element
@@ -305,24 +304,24 @@ export class MobileDashboardView extends DashboardView {
 
     updateCardPositions() {
         if (this.cards.length === 0) return;
-        
+
         const containerWidth = this.cards[0].closest('.mobile-dashboard-swipe-container')?.offsetWidth || window.innerWidth;
         const dragPercentage = this.dragOffset / containerWidth;
         const absDragPercentage = Math.abs(dragPercentage);
-        
+
         this.cards.forEach((card, index) => {
             const offset = index - this.currentIndex;
             const baseOffset = offset * 100;
             const dragOffset = dragPercentage * 100;
             const totalOffset = baseOffset + dragOffset;
-            
+
             // Determine which card should be visible
             const isCurrentCard = index === this.currentIndex;
             const isNextCard = dragPercentage < 0 && index === this.currentIndex + 1;
             const isPrevCard = dragPercentage > 0 && index === this.currentIndex - 1;
-            
+
             card.style.transform = `translateX(${totalOffset}%)`;
-            
+
             if (isCurrentCard) {
                 // Current card fades out as you drag
                 card.style.opacity = Math.max(0.3, 1 - absDragPercentage);
@@ -364,7 +363,7 @@ export class MobileDashboardView extends DashboardView {
         if (this.cards.length === 0) return;
         const currentCard = this.cards[this.currentIndex];
         if (!currentCard) return;
-        
+
         const wrapper = currentCard.closest('.mobile-dashboard-cards-wrapper');
         if (wrapper) {
             // Force a reflow to ensure card is measured correctly
@@ -380,7 +379,7 @@ export class MobileDashboardView extends DashboardView {
 
     handleSwipe() {
         const deltaX = this.touchStartX - this.touchEndX;
-        
+
         if (Math.abs(deltaX) > this.minSwipeDistance) {
             if (deltaX > 0) {
                 // Swipe left (next card)
@@ -411,10 +410,8 @@ export class MobileDashboardView extends DashboardView {
             return;
         }
 
-        const previousIndex = this.currentIndex;
-        const direction = index > previousIndex ? 1 : -1;
         this.currentIndex = index;
-        
+
         // Reset drag state
         this.dragOffset = 0;
         this.isDragging = false;
@@ -422,7 +419,7 @@ export class MobileDashboardView extends DashboardView {
         // Animate cards sliding
         this.cards.forEach((card, i) => {
             card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
-            
+
             if (i === index) {
                 card.style.transform = 'translateX(0%)';
                 card.style.opacity = '1';

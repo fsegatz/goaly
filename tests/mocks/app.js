@@ -6,7 +6,6 @@ const {
     createMockGoalService,
     createMockSettingsService,
     createMockReviewService,
-    createMockLanguageService,
     createMockSyncManager,
     createMockUIController
 } = require('./services');
@@ -18,7 +17,7 @@ function createMockApp(overrides = {}) {
     const goalService = overrides.goalService || createMockGoalService();
     const settingsService = overrides.settingsService || createMockSettingsService();
     const reviewService = overrides.reviewService || createMockReviewService();
-    
+
     // Use real LanguageService by default, but allow override
     let languageService;
     if (overrides.languageService) {

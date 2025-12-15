@@ -75,7 +75,7 @@ class ReviewService {
             const maxIntervalMs = maxInterval * DAY_IN_MS;
             // Add a small buffer (1 day) to account for reasonable future dates
             const maxReasonableDate = new Date(now.getTime() + maxIntervalMs + DAY_IN_MS);
-            
+
             // If nextReviewAt is way too far in the future, recalculate it
             // This ensures goals get updated when intervals change to shorter values
             if (existingNextReview > maxReasonableDate) {
@@ -158,13 +158,9 @@ class ReviewService {
 
         const now = new Date();
         const currentIndex = Number.isInteger(goal.reviewIntervalIndex) ? goal.reviewIntervalIndex : shortestIndex;
-        let nextIndex = currentIndex;
-
-        if (ratingsMatch) {
-            nextIndex = Math.min(currentIndex + 1, longestIndex);
-        } else {
-            nextIndex = shortestIndex;
-        }
+        const nextIndex = ratingsMatch
+            ? Math.min(currentIndex + 1, longestIndex)
+            : shortestIndex;
 
         goal.reviewIntervalIndex = nextIndex;
         goal.lastReviewAt = now;

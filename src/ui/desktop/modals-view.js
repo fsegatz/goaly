@@ -116,7 +116,6 @@ export class ModalsView extends BaseUIController {
         // Set up recurring fields
         const recurringCheckbox = this.getCompletionElement('completionRecurringCheckbox');
         const recurDateContainer = this.getCompletionElement('completionRecurDateContainer');
-        const recurDateDisplay = getOptionalElement('completionRecurDateDisplay');
 
         if (goal && goal.isRecurring) {
             // Pre-check checkbox for recurring goals

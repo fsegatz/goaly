@@ -211,7 +211,7 @@ export class GoalFormView extends BaseUIController {
 
         // Use mousedown instead of click to avoid closing the modal immediately
         window.addEventListener('mousedown', (e) => {
-            const modal = getElement('goalModal');
+            const modal = getOptionalElement('goalModal');
             if (modal) {
                 const isModalVisible = modal.classList.contains('is-visible');
 
@@ -275,9 +275,7 @@ export class GoalFormView extends BaseUIController {
                 // No need to handle recurrence date separately - it's in goalData
             } else {
                 // Create new goal
-                const newGoal = this.app.goalService.createGoal(goalData, this.app.settingsService.getSettings().maxActiveGoals);
-
-                // No need to handle recurrence date separately - it's in goalData
+                this.app.goalService.createGoal(goalData, this.app.settingsService.getSettings().maxActiveGoals);
             }
             this.closeGoalForm();
             renderViews();

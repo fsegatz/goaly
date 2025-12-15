@@ -4,8 +4,6 @@ import { BaseUIController } from './base-ui-controller.js';
 import { MAX_RATING_VALUE } from '../../domain/utils/constants.js';
 import { getElement, getOptionalElement } from '../utils/dom-utils.js';
 
-const DAY_IN_MS = 24 * 60 * 60 * 1000;
-
 export class AllGoalsView extends BaseUIController {
     constructor(app) {
         super(app);

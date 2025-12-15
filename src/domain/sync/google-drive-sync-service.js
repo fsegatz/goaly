@@ -1,7 +1,7 @@
 // src/domain/google-drive-sync-service.js
 
 import { prepareExportPayload } from '../migration/migration-service.js';
-import { GOAL_FILE_VERSION, isSameVersion, isOlderVersion, isNewerVersion } from '../utils/versioning.js';
+import { isOlderVersion } from '../utils/versioning.js';
 import { STORAGE_KEY_GDRIVE_TOKEN, STORAGE_KEY_GDRIVE_FILE_ID, STORAGE_KEY_GDRIVE_FOLDER_ID } from '../utils/constants.js';
 
 const GOOGLE_DRIVE_FOLDER_NAME = 'Goaly';
@@ -359,7 +359,7 @@ class GoogleDriveSyncService {
             throw new Error('Not authenticated. Please sign in first.');
         }
 
-        if (window.gapi?.client && this.accessToken) {
+        if (window.gapi?.client) {
             window.gapi.client.setToken({ access_token: this.accessToken });
         }
     }
@@ -400,7 +400,7 @@ class GoogleDriveSyncService {
                 }
 
                 // Handle 401 error - try to refresh and retry
-                if (response.status === 401 && attempt < maxRetries) {
+                if (attempt < maxRetries) {
                     console.warn(`Fetch request failed with 401, attempting token refresh (attempt ${attempt + 1}/${maxRetries + 1})`);
 
                     try {
