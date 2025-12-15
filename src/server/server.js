@@ -47,16 +47,27 @@ const server = http.createServer(async (req, res) => {
         }
 
         // SPA Fallback check: if file doesn't exist and it's not an asset, serve index.html
-        if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-            const ext = path.extname(filePath);
-            if (ext) {
-                res.writeHead(404);
-                res.end('Not Found');
+        try {
+            const stats = await fs.promises.stat(filePath);
+            if (stats.isDirectory()) {
+                filePath = path.join(ROOT_DIR, 'index.html');
+            }
+        } catch (err) {
+            if (err.code === 'ENOENT') {
+                // File not found - fallback logic for SPA routes
+                const ext = path.extname(filePath);
+                if (ext) {
+                    res.writeHead(404);
+                    res.end('Not Found');
+                    return;
+                }
+                filePath = path.join(ROOT_DIR, 'index.html');
+            } else {
+                // Other errors
+                res.writeHead(500);
+                res.end(`Server Error: ${err.code}`);
                 return;
             }
-
-            // Fallback to index.html
-            filePath = path.join(ROOT_DIR, 'index.html');
         }
 
         const extname = path.extname(filePath);
