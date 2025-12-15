@@ -323,6 +323,67 @@ describe('GoogleDriveSyncService', () => {
             expect(result.data).toEqual(testData);
             expect(result.fileId).toBe('file-id');
         });
+        test('should recover from 404 on upload by creating new file', async () => {
+            service.fileId = 'old-file-id';
+
+            // Mock upload fail with 404
+            global.fetch.mockImplementation((url) => {
+                if (url.includes('/upload/drive/v3/files/old-file-id')) {
+                    return Promise.resolve({ ok: false, status: 404 });
+                }
+                if (url.includes('/upload/drive/v3/files?uploadType=multipart')) {
+                    // Create new file
+                    return Promise.resolve({
+                        ok: true,
+                        json: async () => ({ id: 'new-file-id' })
+                    });
+                }
+                return Promise.resolve({ ok: true, json: async () => ({ files: [] }) });
+            });
+
+            // Mock findDataFile returning null (file really gone)
+            mockGapi.client.drive.files.list.mockResolvedValue({ result: { files: [] } });
+
+            await service.uploadData([], {});
+
+            expect(service.fileId).toBe('new-file-id');
+            expect(global.fetch).toHaveBeenCalledWith(
+                expect.stringContaining('/upload/drive/v3/files?uploadType=multipart'),
+                expect.objectContaining({ method: 'POST' })
+            );
+        });
+
+        test('should recover from 403 on upload by refreshing folder and file', async () => {
+            service.fileId = 'old-file-id';
+
+            // Mock upload fail with 403
+            global.fetch.mockImplementation((url) => {
+                if (url.includes('/upload/drive/v3/files/old-file-id')) {
+                    return Promise.resolve({ ok: false, status: 403 });
+                }
+                if (url.includes('/upload/drive/v3/files/found-file-id')) {
+                    // Update found file
+                    return Promise.resolve({
+                        ok: true,
+                        json: async () => ({ id: 'found-file-id' })
+                    });
+                }
+                return Promise.resolve({ ok: true, json: async () => ({ files: [] }) });
+            });
+
+            // Mock list calls:
+            // 0. Initial findOrCreateFolder (called at start of uploadData)
+            // 1. Find folder (called after 403 clears cache)
+            // 2. Find file in folder
+            mockGapi.client.drive.files.list
+                .mockResolvedValueOnce({ result: { files: [{ id: 'initial-folder-id' }] } })
+                .mockResolvedValueOnce({ result: { files: [{ id: 'new-folder-id' }] } })
+                .mockResolvedValueOnce({ result: { files: [{ id: 'found-file-id' }] } });
+
+            await service.uploadData([], {});
+
+            expect(service.fileId).toBe('found-file-id');
+        });
     });
 
     describe('conflict detection', () => {
