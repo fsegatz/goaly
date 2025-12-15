@@ -7,26 +7,28 @@
         }
     },
     meta: {
-        title: 'Goaly - MÃ¥luppfÃ¶ljning'
+        title: 'Goaly - Måluppföljning'
     },
     navigation: {
         dashboard: 'Dashboard',
-        allGoals: 'Alla mÃ¥l',
+        allGoals: 'Alla mål',
+        overview: 'Översikt',
         checkIn: 'Review',
-        settings: 'InstÃ¤llningar',
-        help: 'HjÃ¤lp',
-        goToDashboard: 'GÃ¥ till Dashboard'
+        settings: 'Inställningar',
+        help: 'Hjälp',
+        goToDashboard: 'Gå till Dashboard'
     },
     actions: {
         export: 'Exportera',
         import: 'Importera',
-        addGoal: '+ Nytt mÃ¥l'
+        addGoal: '+ Nytt mål'
     },
     sections: {
         dashboard: 'Dashboard',
-        allGoals: 'Alla mÃ¥l',
+        allGoals: 'Alla mål',
+        overview: 'Översikt',
         checkIn: 'Review',
-        settings: 'InstÃ¤llningar'
+        settings: 'Inställningar'
     },
     common: {
         save: 'Spara',
@@ -36,7 +38,7 @@
         statusLabel: 'Status',
         minPriorityLabel: 'Minsta prioritet',
         sortLabel: 'Sortering',
-        includeCompleted: 'Visa slutfÃ¶rda',
+        includeCompleted: 'Visa slutförda',
         includeAbandoned: 'Visa avbrutna',
         clearFilter: 'Rensa filter',
         statusOptions: {
@@ -44,58 +46,58 @@
             active: 'Aktiv',
             inactive: 'Inaktiv',
             paused: 'Pausad',
-            completed: 'SlutfÃ¶rd',
-            notCompleted: 'Inte slutförd'
+            completed: 'Slutförd',
+            notCompleted: 'Inte slutf�rd'
         },
         sortOptions: {
-            priorityDesc: 'Prioritet (hÃ¶g â†’ lÃ¥g)',
-            priorityAsc: 'Prioritet (lÃ¥g â†’ hÃ¶g)',
-            updatedDesc: 'Senaste Ã¤ndring (ny â†’ gammal)',
-            updatedAsc: 'Senaste Ã¤ndring (gammal â†’ ny)'
+            priorityDesc: 'Prioritet (hög → låg)',
+            priorityAsc: 'Prioritet (låg → hög)',
+            updatedDesc: 'Senaste ändring (ny → gammal)',
+            updatedAsc: 'Senaste ändring (gammal → ny)'
         }
     },
     dashboard: {
-        noActiveGoals: 'Inga aktiva mÃ¥l. Skapa ditt fÃ¶rsta mÃ¥l!'
+        noActiveGoals: 'Inga aktiva mål. Skapa ditt första mål!'
     },
     goalCard: {
         descriptionAria: 'Redigera beskrivning',
-        descriptionPlaceholder: 'LÃ¤gg till en beskrivning...',
+        descriptionPlaceholder: 'Lägg till en beskrivning...',
         priorityLabel: 'Prioritet',
-        deadlinePrefix: 'ðŸ“… {{deadline}}',
+        deadlinePrefix: '📅 {{deadline}}',
         noDeadline: 'Ingen deadline',
         actions: {
             edit: 'Redigera',
-            complete: 'SlutfÃ¶r',
+            complete: 'Slutför',
             pause: 'Pausa'
         },
         paused: {
-            untilToday: 'â¸ï¸ Pausad till idag',
-            untilTomorrow: 'â¸ï¸ Pausad till imorgon',
-            untilDate: 'â¸ï¸ Pausad till {{date}}',
-            untilGoal: 'â¸ï¸ Pausad tills "{{goalTitle}}" Ã¤r slutfÃ¶rt'
+            untilToday: '⏸️ Pausad till idag',
+            untilTomorrow: '⏸️ Pausad till imorgon',
+            untilDate: '⏸️ Pausad till {{date}}',
+            untilGoal: '⏸️ Pausad tills "{{goalTitle}}" är slutfört'
         },
         inline: {
             deadline: 'Deadline',
             motivation: 'Motivation',
-            urgency: 'BrÃ¥dska'
+            urgency: 'Brådska'
         }
     },
     settingsPanel: {
-        maxActiveGoals: 'Maximalt antal aktiva mÃ¥l:',
-        reviewIntervals: 'UtvÃ¤rderingsintervall (stÃ¶d fÃ¶r suffix d/h/m/s):',
+        maxActiveGoals: 'Maximalt antal aktiva mål:',
+        reviewIntervals: 'Utvärderingsintervall (stöd för suffix d/h/m/s):',
         reviewIntervalsHelp: 'Exempel: 30d, 14d, 12h, 45m, 30s.',
-        languageLabel: 'SprÃ¥k',
+        languageLabel: 'Språk',
         dataManagement: 'Datahantering',
-        dataManagementHelp: 'Exportera dina data fÃ¶r sÃ¤kerhetskopiering eller importera tidigare exporterade data.',
+        dataManagementHelp: 'Exportera dina data för säkerhetskopiering eller importera tidigare exporterade data.',
         googleDriveSync: 'Google Drive-synkronisering',
-        googleDriveSyncHelp: 'Synkronisera dina mÃ¥ldata med Google Drive fÃ¶r sÃ¤kerhetskopiering och flerenhetsÃ¥tkomst.',
+        googleDriveSyncHelp: 'Synkronisera dina måldata med Google Drive för säkerhetskopiering och flerenhetsåtkomst.',
         save: 'Spara'
     },
     goalModal: {
         titleLabel: 'Titel *',
         descriptionLabel: 'Beskrivning',
         motivationLabel: 'Motivation (1-5) *',
-        urgencyLabel: 'BrÃ¥dska (1-5) *',
+        urgencyLabel: 'Brådska (1-5) *',
         deadlineLabel: 'Deadline (valfritt)',
         actions: {
             save: 'Spara',
@@ -103,36 +105,36 @@
             delete: 'Ta bort'
         },
         stateManagement: {
-            title: 'MÃ¥lstatus',
-            complete: 'SlutfÃ¶r',
+            title: 'Målstatus',
+            complete: 'Slutför',
             abandon: 'Avbryt',
-            unpause: 'Ã…teruppta',
-            reactivate: 'Ã…teraktivera',
-            help: 'Hantera livscykeln fÃ¶r detta mÃ¥l.',
-            confirmComplete: 'Markera detta mÃ¥l som slutfÃ¶rt?',
-            confirmAbandon: 'Avbryt detta mÃ¥l? Denna Ã¥tgÃ¤rd kan inte Ã¥ngras.'
+            unpause: 'Återuppta',
+            reactivate: 'Återaktivera',
+            help: 'Hantera livscykeln för detta mål.',
+            confirmComplete: 'Markera detta mål som slutfört?',
+            confirmAbandon: 'Avbryt detta mål? Denna åtgärd kan inte ångras.'
         }
     },
     goalHistory: {
         title: 'Historik'
     },
     completionModal: {
-        title: 'SlutfÃ¶r mÃ¥l',
-        question: 'UppnÃ¥dde du mÃ¥let?',
-        success: 'MÃ¥l slutfÃ¶rt',
-        failure: 'Inte slutfÃ¶rt'
+        title: 'Slutför mål',
+        question: 'Uppnådde du målet?',
+        success: 'Mål slutfört',
+        failure: 'Inte slutfört'
     },
     pauseModal: {
-        title: 'Pausa mÃ¥l',
-        description: 'VÃ¤lj nÃ¤r detta mÃ¥l ska bli aktivt igen:',
+        title: 'Pausa mål',
+        description: 'Välj när detta mål ska bli aktivt igen:',
         untilDate: 'Till ett specifikt datum',
-        untilGoal: 'Tills ett annat mÃ¥l Ã¤r slutfÃ¶rt',
-        selectGoal: 'VÃ¤lj ett mÃ¥l...',
+        untilGoal: 'Tills ett annat mål är slutfört',
+        selectGoal: 'Välj ett mål...',
         confirm: 'Pausa',
         cancel: 'Avbryt'
     },
     deadline: {
-        overdue: 'FÃ¶rsenad ({{count}} dagar)',
+        overdue: 'Försenad ({{count}} dagar)',
         today: 'Idag',
         tomorrow: 'Imorgon',
         inDays: 'Om {{count}} dagar'
@@ -141,32 +143,32 @@
         active: 'Aktiv',
         inactive: 'Inaktiv',
         paused: 'Pausad',
-        completed: 'SlutfÃ¶rd',
-        notCompleted: 'Inte slutförd'
+        completed: 'Slutförd',
+        notCompleted: 'Inte slutf�rd'
     },
     reviews: {
-        prompt: 'Dags fÃ¶r ett review fÃ¶r "{{title}}". BekrÃ¤fta motivation och brÃ¥dska.',
-        emptyState: 'Alla mÃ¥l Ã¤r uppdaterade. Titta in igen senare.',
-        sequence: 'MÃ¥l {{current}} av {{total}}',
+        prompt: 'Dags för ett review för "{{title}}". Bekräfta motivation och brådska.',
+        emptyState: 'Alla mål är uppdaterade. Titta in igen senare.',
+        sequence: 'Mål {{current}} av {{total}}',
         fields: {
             motivation: 'Motivation',
-            urgency: 'BrÃ¥dska'
+            urgency: 'Brådska'
         },
         status: {
-            stable: 'Stabil bedÃ¶mning'
+            stable: 'Stabil bedömning'
         },
         due: {
             unknown: 'Granskning planerad',
-            today: 'FÃ¶rfaller idag',
-            overdue: 'FÃ¶rsenad med {{count}} dagar'
+            today: 'Förfaller idag',
+            overdue: 'Försenad med {{count}} dagar'
         },
         feedback: {
-            stable: 'BedÃ¶mningarna fÃ¶r "{{title}}" Ã¤r stabila. NÃ¤sta uppfÃ¶ljning om {{interval}}.',
-            updated: 'BedÃ¶mningarna fÃ¶r "{{title}}" har uppdaterats. NÃ¤sta uppfÃ¶ljning om {{interval}}.'
+            stable: 'Bedömningarna för "{{title}}" är stabila. Nästa uppföljning om {{interval}}.',
+            updated: 'Bedömningarna för "{{title}}" har uppdaterats. Nästa uppföljning om {{interval}}.'
         },
         actions: {
-            done: 'Review slutfÃ¶rt',
-            edit: 'Redigera mÃ¥l'
+            done: 'Review slutfört',
+            edit: 'Redigera mål'
         },
         interval: {
             unknown: 'snart',
@@ -177,14 +179,14 @@
         }
     },
     history: {
-        empty: 'Inga Ã¤ndringar registrerade Ã¤nnu.',
-        revertButton: 'Ã…terstÃ¤ll till den hÃ¤r versionen',
-        confirmRevert: 'Vill du verkligen Ã¥terstÃ¤lla mÃ¥let till den hÃ¤r versionen?',
+        empty: 'Inga ändringar registrerade ännu.',
+        revertButton: 'Återställ till den här versionen',
+        confirmRevert: 'Vill du verkligen återställa målet till den här versionen?',
         fields: {
             title: 'Titel',
             description: 'Beskrivning',
             motivation: 'Motivation',
-            urgency: 'BrÃ¥dska',
+            urgency: 'Brådska',
             deadline: 'Deadline',
             status: 'Status',
             priority: 'Prioritet'
@@ -192,31 +194,31 @@
         events: {
             created: 'Skapad',
             updated: 'Uppdaterad',
-            statusChanged: 'Status Ã¤ndrad',
-            rollback: 'Ã…terstÃ¤lld',
-            generic: 'Ã„ndring'
+            statusChanged: 'Status ändrad',
+            rollback: 'Återställd',
+            generic: 'Ändring'
         }
     },
     goalForm: {
-        editTitle: 'Redigera mÃ¥l',
-        createTitle: 'Nytt mÃ¥l',
-        confirmDelete: 'Vill du verkligen ta bort det hÃ¤r mÃ¥let?'
+        editTitle: 'Redigera mål',
+        createTitle: 'Nytt mål',
+        confirmDelete: 'Vill du verkligen ta bort det här målet?'
     },
     errors: {
         generic: 'Ett fel uppstod: {{message}}',
-        goalUpdateFailed: 'Uppdateringen av mÃ¥let misslyckades.',
-        goalSaveFailed: 'Det gick inte att spara mÃ¥let.',
-        revertNotPossible: 'GÃ¥r inte att Ã¥terstÃ¤lla.',
-        goalNotFound: 'MÃ¥let hittades inte.',
-        statusChangeFailed: 'StatusÃ¤ndringen misslyckades.',
-        titleRequired: 'Titeln fÃ¥r inte vara tom.'
+        goalUpdateFailed: 'Uppdateringen av målet misslyckades.',
+        goalSaveFailed: 'Det gick inte att spara målet.',
+        revertNotPossible: 'Går inte att återställa.',
+        goalNotFound: 'Målet hittades inte.',
+        statusChangeFailed: 'Statusändringen misslyckades.',
+        titleRequired: 'Titeln får inte vara tom.'
     },
     allGoals: {
-        openGoalAria: 'Ã–ppna mÃ¥l {{title}}',
+        openGoalAria: 'Öppna mål {{title}}',
         forceActivate: 'Tvinga aktivering',
-        forceActivateAria: 'Tvinga aktivering av mÃ¥l {{title}}',
+        forceActivateAria: 'Tvinga aktivering av mål {{title}}',
         forceActivated: 'Tvingad aktiverad',
-        forceActivatedAria: 'Detta mÃ¥l tvingades aktiveras'
+        forceActivatedAria: 'Detta mål tvingades aktiveras'
     },
     tables: {
         allGoals: {
@@ -225,40 +227,40 @@
                 status: 'Status',
                 priority: 'Prioritet',
                 motivation: 'Motivation',
-                urgency: 'BrÃ¥dska',
+                urgency: 'Brådska',
                 deadline: 'Deadline',
                 lastUpdated: 'Senast uppdaterad',
-                actions: 'Ã…tgÃ¤rder'
+                actions: 'Åtgärder'
             },
-            emptyState: 'Inga mÃ¥l matchar de aktuella filtren.'
+            emptyState: 'Inga mål matchar de aktuella filtren.'
         }
     },
     import: {
         success: 'Data importerades utan problem!',
         error: 'Importen misslyckades: {{message}}',
-        invalidJson: 'Importen misslyckades: Filen innehÃ¥ller inte giltig JSON.',
-        invalidStructure: 'Importen misslyckades: Filformatet Ã¤r inte kompatibelt.',
-        invalidVersionFormat: 'Importen misslyckades: OkÃ¤nd version "{{version}}".',
-        versionTooNew: 'Import blockeras: Filversion {{fileVersion}} Ã¤r nyare Ã¤n den stÃ¶dda versionen {{currentVersion}}.',
-        incompatible: 'Importen misslyckades: Filen Ã¤r inte kompatibel med denna version av Goaly.',
-        migrationCancelled: 'Importen avbrÃ¶ts. Filen migrerades inte.'
+        invalidJson: 'Importen misslyckades: Filen innehåller inte giltig JSON.',
+        invalidStructure: 'Importen misslyckades: Filformatet är inte kompatibelt.',
+        invalidVersionFormat: 'Importen misslyckades: Okänd version "{{version}}".',
+        versionTooNew: 'Import blockeras: Filversion {{fileVersion}} är nyare än den stödda versionen {{currentVersion}}.',
+        incompatible: 'Importen misslyckades: Filen är inte kompatibel med denna version av Goaly.',
+        migrationCancelled: 'Importen avbröts. Filen migrerades inte.'
     },
     migration: {
         prompt: {
-            title: 'Migration krÃ¤vs',
-            message: '"{{fileName}}" anvÃ¤nder version {{fromVersion}}. Vill du migrera den till {{toVersion}} innan import?',
+            title: 'Migration krävs',
+            message: '"{{fileName}}" använder version {{fromVersion}}. Vill du migrera den till {{toVersion}} innan import?',
             messageLegacy: '"{{fileName}}" saknar versionsinformation. Vill du migrera den till {{toVersion}} innan import?',
-            reviewCta: 'Granska Ã¤ndringar',
+            reviewCta: 'Granska ändringar',
             cancel: 'Avbryt',
-            unnamedFile: 'NamnlÃ¶s export',
-            legacyVersion: 'ett Ã¤ldre format'
+            unnamedFile: 'Namnlös export',
+            legacyVersion: 'ett äldre format'
         },
         diff: {
-            title: 'MigrationsÃ¶versikt fÃ¶r {{fileName}}',
-            subtitle: 'JÃ¤mfÃ¶r {{fromVersion}} â†’ {{toVersion}}',
+            title: 'Migrationsöversikt för {{fileName}}',
+            subtitle: 'Jämför {{fromVersion}} → {{toVersion}}',
             originalLabel: 'Original',
             updatedLabel: 'Migrerad version',
-            applyCta: 'AnvÃ¤nd migration',
+            applyCta: 'Använd migration',
             cancel: 'Avbryt'
         }
     },
@@ -269,44 +271,65 @@
         authenticated: 'Autentiserad med Google',
         lastSynced: 'Senast synkroniserad: {{time}}',
         syncing: 'Synkroniserar...',
-        syncSuccess: 'Synkronisering slutfÃ¶rd',
+        syncSuccess: 'Synkronisering slutförd',
         syncError: 'Synkronisering misslyckades: {{message}}',
         uploadSuccess: 'Data uppladdad till Google Drive',
-        downloadSuccess: 'Data nedladdad frÃ¥n Google Drive',
-        conflictDetected: 'Konflikt upptÃ¤ckt: {{message}}',
-        conflictNewerRemote: 'FjÃ¤rrdata Ã¤r nyare. Ladda ner fÃ¶r att skriva Ã¶ver lokal data?',
-        conflictOlderVersion: 'FjÃ¤rrdata anvÃ¤nder en Ã¤ldre version. Ladda upp fÃ¶r att skriva Ã¶ver fjÃ¤rrdata?',
-        conflictNewerVersion: 'FjÃ¤rrdata anvÃ¤nder en nyare version. Ladda ner fÃ¶r att uppdatera lokal data?',
-        notConfigured: 'Google Drive-synkronisering Ã¤r inte konfigurerad. VÃ¤nligen ange GOOGLE_API_KEY och GOOGLE_CLIENT_ID.',
+        downloadSuccess: 'Data nedladdad från Google Drive',
+        conflictDetected: 'Konflikt upptäckt: {{message}}',
+        conflictNewerRemote: 'Fjärrdata är nyare. Ladda ner för att skriva över lokal data?',
+        conflictOlderVersion: 'Fjärrdata använder en äldre version. Ladda upp för att skriva över fjärrdata?',
+        conflictNewerVersion: 'Fjärrdata använder en nyare version. Ladda ner för att uppdatera lokal data?',
+        notConfigured: 'Google Drive-synkronisering är inte konfigurerad. Vänligen ange GOOGLE_API_KEY och GOOGLE_CLIENT_ID.',
         authError: 'Autentisering misslyckades: {{message}}',
         uploadError: 'Uppladdning misslyckades: {{message}}',
         downloadError: 'Nedladdning misslyckades: {{message}}',
-        testerOnly: 'Google Drive-synkronisering Ã¤r fÃ¶r nÃ¤rvarande endast tillgÃ¤nglig fÃ¶r testare. Skicka ditt Google-e-postkonto till utvecklaren fÃ¶r att bevilja testÃ¥tkomst.',
-        noChanges: 'Inga Ã¤ndringar att synkronisera. Allt Ã¤r uppdaterat.',
+        testerOnly: 'Google Drive-synkronisering är för närvarande endast tillgänglig för testare. Skicka ditt Google-e-postkonto till utvecklaren för att bevilja teståtkomst.',
+        noChanges: 'Inga ändringar att synkronisera. Allt är uppdaterat.',
         status: {
-            buildingLocalPayload: 'FÃ¶rbereder lokal data fÃ¶r synkroniseringâ€¦',
-            checkingRemote: 'Kontrollerar fjÃ¤rrdataâ€¦',
-            remoteFound: 'FjÃ¤rrdata hittades och har laddats ner.',
-            noRemote: 'Ingen fjÃ¤rrdata hittades. En ny sÃ¤kerhetskopia skapas.',
-            merging: 'SlÃ¥r samman Ã¤ndringar (lokal/fjÃ¤rr/bas)â€¦',
-            applying: 'TillÃ¤mpa sammanslagen data lokaltâ€¦',
-            uploading: 'Laddar upp sammanslagen data till Google Driveâ€¦'
+            buildingLocalPayload: 'Förbereder lokal data för synkronisering…',
+            checkingRemote: 'Kontrollerar fjärrdata…',
+            remoteFound: 'Fjärrdata hittades och har laddats ner.',
+            noRemote: 'Ingen fjärrdata hittades. En ny säkerhetskopia skapas.',
+            merging: 'Slår samman ändringar (lokal/fjärr/bas)…',
+            applying: 'Tillämpa sammanslagen data lokalt…',
+            uploading: 'Laddar upp sammanslagen data till Google Drive…'
         }
     },
 
     help: {
-        title: 'HjÃ¤lp',
-        description: 'Har du hittat en bugg eller vill du begÃ¤ra en ny funktion? Vi skulle gÃ¤rna hÃ¶ra frÃ¥n dig!',
+        title: 'Hjälp',
+        description: 'Har du hittat en bugg eller vill du begära en ny funktion? Vi skulle gärna höra från dig!',
         reportBug: 'Rapportera en bugg',
-        reportBugHelp: 'Har du hittat nÃ¥got som inte fungerar? LÃ¥t oss veta!',
+        reportBugHelp: 'Har du hittat något som inte fungerar? Låt oss veta!',
         reportBugButton: 'Rapportera bugg',
-        requestFeature: 'BegÃ¤r en funktion',
-        requestFeatureHelp: 'Har du en idÃ© fÃ¶r en ny funktion? Vi skulle gÃ¤rna hÃ¶ra den!',
-        requestFeatureButton: 'BegÃ¤r funktion'
+        requestFeature: 'Begär en funktion',
+        requestFeatureHelp: 'Har du en idé för en ny funktion? Vi skulle gärna höra den!',
+        requestFeatureButton: 'Begär funktion'
+    },
+
+    overview: {
+        title: 'Översikt',
+        periodSelector: {
+            week: 'Vecka',
+            month: 'Månad',
+            year: 'År'
+        },
+        charts: {
+            goalsOverTime: 'Mål över tid',
+            statusDistribution: 'Statusfördelning',
+            created: 'Skapade',
+            completed: 'Avklarade',
+            notCompleted: 'Ej avklarade'
+        },
+        stats: {
+            totalGoals: 'Totalt antal mål',
+            completedGoals: 'Avklarade',
+            completionRate: 'Slutförandegrad',
+            avgPerPeriod: 'Snitt per {{period}}'
+        },
+        empty: 'Inga mål att analysera ännu. Skapa ditt första mål!'
     }
 };
 
 export default sv;
-
-
 

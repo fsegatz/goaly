@@ -128,7 +128,7 @@ export class OverviewView extends BaseUIController {
             const createdHeight = (data.created.length / maxValue) * (chartHeight - 15);
             const completedHeight = (data.completed.length / maxValue) * (chartHeight - 15);
             const x = 5 + index * (barWidth * 2 + gap);
-            const label = analyticsService.formatPeriodLabel(key, this.currentPeriod);
+            const label = this.formatPeriodLabel(key, this.currentPeriod);
 
             return `
                 <g class="bar-group">
@@ -233,6 +233,33 @@ export class OverviewView extends BaseUIController {
                 this.render();
             });
         });
+    }
+
+    /**
+     * Format a period key for display.
+     * @param {string} key - Period key
+     * @param {string} period - 'week', 'month', or 'year'
+     * @returns {string} Formatted period label
+     */
+    formatPeriodLabel(key, period) {
+        switch (period) {
+            case 'week': {
+                const parts = key.split('-W');
+                return `W${parts[1]}`;
+            }
+            case 'month': {
+                const [year, month] = key.split('-').map(Number);
+                const date = new Date(year, month - 1, 1);
+                // Use language service if available for localization
+                const locale = this.app?.languageService?.currentLanguage || 'en-US';
+                return date.toLocaleDateString(locale, { month: 'short' });
+            }
+            case 'year': {
+                return key;
+            }
+            default:
+                return key;
+        }
     }
 }
 
