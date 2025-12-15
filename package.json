@@ -32,7 +32,8 @@
     },
     "coverageReporters": [
       "json",
-      "text"
+      "text",
+      "lcov"
     ],
     "transform": {
       "^.+\\.js$": "babel-jest"
