@@ -1,28 +1,22 @@
-# Dockerfile for Goaly - Static Web App
-# Serves the app via nginx on Cloud Run
+# Dockerfile for Goaly - Node.js Server (handling Auth + Static Files)
+FROM node:20-alpine
 
-FROM nginx:alpine
+# Set working directory
+WORKDIR /app
 
-# Build arguments for Google API credentials
+# Build arguments for Google API credentials (kept for consistency, though server reads env vars)
 ARG GOOGLE_API_KEY=""
 ARG GOOGLE_CLIENT_ID=""
 
-# Copy nginx configuration
-COPY nginx/nginx.conf /etc/nginx/nginx.conf
+# Copy all files
+COPY . .
 
-# Copy static files
-COPY index.html /usr/share/nginx/html/
-COPY styles/ /usr/share/nginx/html/styles/
-COPY src/ /usr/share/nginx/html/src/
-COPY docs/ /usr/share/nginx/html/docs/
-
-# Create config.local.js with injected credentials
-RUN echo "window.GOOGLE_API_KEY = \"${GOOGLE_API_KEY}\";" > /usr/share/nginx/html/config.local.js && \
-    echo "window.GOOGLE_CLIENT_ID = \"${GOOGLE_CLIENT_ID}\";" >> /usr/share/nginx/html/config.local.js
-
-# Cloud Run uses PORT environment variable
+# Environment variables
 ENV PORT=8080
+ENV NODE_ENV=production
+
+# Expose port
 EXPOSE 8080
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start server
+CMD ["node", "src/server/index.js"]

@@ -30,7 +30,10 @@
         "lines": 80
       }
     },
-    "coverageReporters": ["json", "text"],
+    "coverageReporters": [
+      "json",
+      "text"
+    ],
     "transform": {
       "^.+\\.js$": "babel-jest"
     }
