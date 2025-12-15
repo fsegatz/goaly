@@ -2,9 +2,6 @@
 
 import { MOBILE_BREAKPOINT_PX } from './constants.js';
 
-// Viewport breakpoints
-const TABLET_BREAKPOINT_PX = 1024;
-
 /**
  * Check if the current device is a mobile device
  * Uses both viewport width and user agent detection

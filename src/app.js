@@ -81,20 +81,19 @@ class GoalyApp {
             pressTimer = setTimeout(() => {
                 // Press duration has passed
                 this.developerModeService.enable();
-                this.uiController.settingsView.updateDeveloperModeVisibility();
-                // Visual feedback
-                logo.style.transform = 'scale(1.1)';
-                logo.style.transition = 'transform 0.2s';
-                const visualFeedbackTimer = setTimeout(() => {
-                    logo.style.transform = 'scale(1)';
-                }, DEVELOPER_MODE_VISUAL_FEEDBACK_MS);
-                // Use unref() to prevent timer from keeping Node.js process alive (for testing)
-                if (typeof visualFeedbackTimer?.unref === 'function') {
-                    visualFeedbackTimer.unref();
-                }
-                // Show non-blocking notification
+                // Visual feedback and show non-blocking notification
                 const statusView = this.uiController.settingsView;
                 if (statusView) {
+                    statusView.updateDeveloperModeVisibility();
+                    logo.style.transform = 'scale(1.1)';
+                    logo.style.transition = 'transform 0.2s';
+                    const visualFeedbackTimer = setTimeout(() => {
+                        logo.style.transform = 'scale(1)';
+                    }, DEVELOPER_MODE_VISUAL_FEEDBACK_MS);
+                    // Use unref() to prevent timer from keeping Node.js process alive (for testing)
+                    if (typeof visualFeedbackTimer?.unref === 'function') {
+                        visualFeedbackTimer.unref();
+                    }
                     statusView.showGoogleDriveStatus('Developer mode enabled!', false);
                 }
                 pressTimer = null;
@@ -119,10 +118,8 @@ class GoalyApp {
         logo.addEventListener('mouseleave', cancelPress);
 
         // Touch events (for mobile)
-        let touchStartTime = null;
         let touchMoved = false;
-        logo.addEventListener('touchstart', (e) => {
-            touchStartTime = Date.now();
+        logo.addEventListener('touchstart', () => {
             touchMoved = false;
             // Don't preventDefault immediately - allow click for quick taps
             // Quick tap navigation is handled by the 'click' event in ui-controller.js
@@ -132,14 +129,12 @@ class GoalyApp {
             touchMoved = true;
             cancelPress();
         }, { passive: true });
-        logo.addEventListener('touchend', (e) => {
+        logo.addEventListener('touchend', () => {
             cancelPress();
-            touchStartTime = null;
             touchMoved = false;
         }, { passive: true });
         logo.addEventListener('touchcancel', () => {
             cancelPress();
-            touchStartTime = null;
             touchMoved = false;
         }, { passive: true });
 
@@ -243,9 +238,8 @@ class GoalyApp {
 }
 
 // Initialize App
-let app;
 document.addEventListener('DOMContentLoaded', () => {
-    app = new GoalyApp();
+    new GoalyApp();
 });
 
 export default GoalyApp;
