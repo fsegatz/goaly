@@ -11,6 +11,7 @@ import SyncManager from './domain/sync/sync-manager.js';
 import ImportExportService from './domain/utils/import-export-service.js';
 import MigrationManager from './domain/migration/migration-manager.js';
 import TimerService from './domain/services/timer-service.js';
+import AnalyticsService from './domain/services/analytics-service.js';
 import ErrorHandler from './domain/services/error-handler.js';
 import { GOAL_FILE_VERSION } from './domain/utils/versioning.js';
 import { DEVELOPER_MODE_PRESS_DURATION_MS, DEVELOPER_MODE_VISUAL_FEEDBACK_MS, GOAL_SAVE_INTERVAL_MS } from './domain/utils/constants.js';
@@ -24,16 +25,16 @@ class GoalyApp {
         this.goalService = new GoalService([], this.errorHandler);
         this.developerModeService = new DeveloperModeService();
         this.currentDataVersion = GOAL_FILE_VERSION;
-        
+
         this.reviews = [];
         this.reviewService = null;
-        
+
         // Initialize service managers
         this.syncManager = new SyncManager(this);
         this.importExportService = new ImportExportService(this);
         this.migrationManager = new MigrationManager(this);
         this.timerService = new TimerService(this);
-        
+
         this.init();
     }
 
@@ -49,12 +50,13 @@ class GoalyApp {
         // Migrate existing goals to automatic activation
         this.goalService.migrateGoalsToAutoActivation(this.settingsService.getSettings().maxActiveGoals);
         this.reviewService = new ReviewService(this.goalService, this.settingsService);
+        this.analyticsService = new AnalyticsService(this.goalService);
         this.syncManager.hookGoalSavesForBackgroundSync();
         this.syncManager.hookSettingsUpdatesForBackgroundSync();
-        
+
         // Initialize Google Drive sync service if credentials are available
         this.syncManager.initGoogleDriveSync();
-        
+
         this.uiController = new UIController(this);
         // Set UI controller in error handler after it's created
         this.errorHandler.setUIController(this.uiController);
@@ -97,7 +99,7 @@ class GoalyApp {
                 }
                 pressTimer = null;
             }, DEVELOPER_MODE_PRESS_DURATION_MS);
-            
+
             // Use unref() to prevent timer from keeping Node.js process alive (for testing)
             if (typeof pressTimer?.unref === 'function') {
                 pressTimer.unref();
@@ -148,7 +150,7 @@ class GoalyApp {
     startReviewTimer() {
         this.timerService.startReviewTimer();
     }
-    
+
     stopReviewTimer() {
         this.timerService.stopReviewTimer();
     }
@@ -158,7 +160,7 @@ class GoalyApp {
         // Save goals to persist any schedule updates
         const reviewsBefore = this.reviews?.length ?? 0;
         this.reviews = this.reviewService.getReviews();
-        
+
         // Save goals if schedules were updated (ensureGoalSchedule modifies goals in-place)
         // We save whenever reviews change or periodically to persist schedule updates
         if (this.goalService) {
@@ -170,7 +172,7 @@ class GoalyApp {
                 this._lastReviewSave = Date.now();
             }
         }
-        
+
         if (render && this.uiController) {
             this.uiController.renderViews();
         }

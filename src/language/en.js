@@ -12,6 +12,7 @@ const en = {
     navigation: {
         dashboard: 'Dashboard',
         allGoals: 'All goals',
+        overview: 'Overview',
         checkIn: 'Review',
         settings: 'Settings',
         help: 'Help',
@@ -344,6 +345,29 @@ const en = {
         requestFeature: 'Request a Feature',
         requestFeatureHelp: 'Have an idea for a new feature? We\'d love to hear it!',
         requestFeatureButton: 'Request Feature'
+    },
+
+    overview: {
+        title: 'Overview',
+        periodSelector: {
+            week: 'Week',
+            month: 'Month',
+            year: 'Year'
+        },
+        charts: {
+            goalsOverTime: 'Goals Over Time',
+            statusDistribution: 'Status Distribution',
+            created: 'Created',
+            completed: 'Completed',
+            notCompleted: 'Not Completed'
+        },
+        stats: {
+            totalGoals: 'Total Goals',
+            completedGoals: 'Completed',
+            completionRate: 'Completion Rate',
+            avgPerPeriod: 'Avg per {{period}}'
+        },
+        empty: 'No goals to analyze yet. Create your first goal!'
     }
 };
 

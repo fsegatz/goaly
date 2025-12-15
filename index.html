@@ -36,6 +36,7 @@
                 <button class="menu-btn active" data-view="dashboard"
                     data-i18n-key="navigation.dashboard">Dashboard</button>
                 <button class="menu-btn" data-view="all-goals" data-i18n-key="navigation.allGoals">All goals</button>
+                <button class="menu-btn" data-view="overview" data-i18n-key="navigation.overview">Overview</button>
                 <button class="menu-btn" data-view="settings" data-i18n-key="navigation.settings">Settings</button>
                 <button class="menu-btn" data-view="help" data-i18n-key="navigation.help">Help</button>
             </nav>
@@ -53,6 +54,7 @@
                         data-i18n-key="navigation.dashboard">Dashboard</button>
                     <button class="mobile-menu-btn" data-view="all-goals" data-i18n-key="navigation.allGoals">All
                         goals</button>
+                    <button class="mobile-menu-btn" data-view="overview" data-i18n-key="navigation.overview">Overview</button>
                     <button class="mobile-menu-btn" data-view="settings"
                         data-i18n-key="navigation.settings">Settings</button>
                     <button class="mobile-menu-btn" data-view="help" data-i18n-key="navigation.help">Help</button>
@@ -64,6 +66,13 @@
             <div id="dashboardView" class="view active">
                 <div id="dashboardFeedback" class="review-feedback" hidden></div>
                 <div id="goalsList" class="goals-list"></div>
+            </div>
+
+            <div id="overviewView" class="view">
+                <div class="settings-panel">
+                    <h2 data-i18n-key="navigation.overview">Overview</h2>
+                    <div id="overviewContainer"></div>
+                </div>
             </div>
 
             <div id="all-goalsView" class="view">
