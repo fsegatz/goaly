@@ -27,18 +27,12 @@ class AnalyticsService {
             grouped[key].created.push(goal);
 
             // Track completion status if goal ended
-            if (goal.status === 'completed') {
-                const completionKey = this._getPeriodKey(new Date(goal.lastUpdated), period);
-                if (!grouped[completionKey]) {
-                    grouped[completionKey] = { created: [], completed: [], notCompleted: [] };
+            if (goal.status === 'completed' || goal.status === 'notCompleted') {
+                const key = this._getPeriodKey(new Date(goal.lastUpdated), period);
+                if (!grouped[key]) {
+                    grouped[key] = { created: [], completed: [], notCompleted: [] };
                 }
-                grouped[completionKey].completed.push(goal);
-            } else if (goal.status === 'notCompleted') {
-                const notCompletedKey = this._getPeriodKey(new Date(goal.lastUpdated), period);
-                if (!grouped[notCompletedKey]) {
-                    grouped[notCompletedKey] = { created: [], completed: [], notCompleted: [] };
-                }
-                grouped[notCompletedKey].notCompleted.push(goal);
+                grouped[key][goal.status].push(goal);
             }
         });
 
@@ -137,7 +131,7 @@ class AnalyticsService {
                 return new Date(parseInt(key), 0, 1);
             }
             default:
-                return new Date();
+                throw new Error(`Unknown period type: ${period}`);
         }
     }
 
@@ -194,7 +188,8 @@ class AnalyticsService {
         const completed = goals.filter(g => g.status === 'completed').length;
         const notCompleted = goals.filter(g => g.status === 'notCompleted').length;
         const total = goals.length;
-        const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const totalFinished = completed + notCompleted;
+        const completionRate = totalFinished > 0 ? Math.round((completed / totalFinished) * 100) : 0;
 
         return {
             completed,
@@ -230,32 +225,6 @@ class AnalyticsService {
         };
     }
 
-    /**
-     * Format a period key for display.
-     * @param {string} key - Period key
-     * @param {string} period - 'week', 'month', or 'year'
-     * @returns {string} Formatted period label
-     */
-    formatPeriodLabel(key, period) {
-        switch (period) {
-            case 'week': {
-                // Format as "W12" or "Dec W2"
-                const parts = key.split('-W');
-                return `W${parts[1]}`;
-            }
-            case 'month': {
-                // Format as "Jan", "Feb", etc.
-                const [year, month] = key.split('-').map(Number);
-                const date = new Date(year, month - 1, 1);
-                return date.toLocaleDateString('en-US', { month: 'short' });
-            }
-            case 'year': {
-                return key;
-            }
-            default:
-                return key;
-        }
-    }
 }
 
 export default AnalyticsService;

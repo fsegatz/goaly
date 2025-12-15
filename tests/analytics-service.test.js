@@ -88,7 +88,8 @@ describe('AnalyticsService', () => {
             expect(stats.completed).toBe(2);
             expect(stats.notCompleted).toBe(1);
             expect(stats.total).toBe(4);
-            expect(stats.completionRate).toBe(50);
+            // completionRate = completed / (completed + notCompleted) = 2/3 = 67%
+            expect(stats.completionRate).toBe(67);
         });
 
         test('should return 100% completion rate when all goals are completed', () => {
@@ -133,7 +134,6 @@ describe('AnalyticsService', () => {
         });
 
         test('should calculate average per period', () => {
-            // Two goals in different months
             mockGoalService.goals = [
                 { id: '1', status: 'active', createdAt: new Date('2024-01-15'), lastUpdated: new Date('2024-01-15') },
                 { id: '2', status: 'active', createdAt: new Date('2024-02-20'), lastUpdated: new Date('2024-02-20') }
@@ -197,29 +197,11 @@ describe('AnalyticsService', () => {
 
             const result = analyticsService.getGoalsByPeriod('week');
 
-            // Should have entries for different weeks
             const keys = Object.keys(result);
             expect(keys.length).toBeGreaterThanOrEqual(1);
             keys.forEach(key => {
                 expect(key).toMatch(/^\d{4}-W\d{2}$/);
             });
-        });
-    });
-
-    describe('formatPeriodLabel', () => {
-        test('should format week labels', () => {
-            const label = analyticsService.formatPeriodLabel('2024-W05', 'week');
-            expect(label).toBe('W05');
-        });
-
-        test('should format month labels', () => {
-            const label = analyticsService.formatPeriodLabel('2024-01', 'month');
-            expect(label).toBe('Jan');
-        });
-
-        test('should format year labels', () => {
-            const label = analyticsService.formatPeriodLabel('2024', 'year');
-            expect(label).toBe('2024');
         });
     });
 
@@ -236,12 +218,23 @@ describe('AnalyticsService', () => {
         test('should parse month key', () => {
             const date = analyticsService._parsePeriodKey('2024-03', 'month');
             expect(date.getFullYear()).toBe(2024);
-            expect(date.getMonth()).toBe(2); // March is 2 (0-indexed)
+            expect(date.getMonth()).toBe(2);
         });
 
         test('should parse year key', () => {
             const date = analyticsService._parsePeriodKey('2024', 'year');
             expect(date.getFullYear()).toBe(2024);
+        });
+
+        test('should parse week key', () => {
+            const date = analyticsService._parsePeriodKey('2024-W02', 'week');
+            expect(date.getFullYear()).toBe(2024);
+        });
+
+        test('should throw error for unknown period', () => {
+            expect(() => {
+                analyticsService._parsePeriodKey('invalid', 'unknownPeriod');
+            }).toThrow('Unknown period type: unknownPeriod');
         });
     });
 
@@ -249,7 +242,7 @@ describe('AnalyticsService', () => {
         test('should increment month correctly', () => {
             const date = new Date('2024-01-15');
             const nextMonth = analyticsService._incrementPeriod(date, 'month');
-            expect(nextMonth.getMonth()).toBe(1); // February
+            expect(nextMonth.getMonth()).toBe(1);
         });
 
         test('should increment year correctly', () => {
@@ -285,7 +278,6 @@ describe('AnalyticsService', () => {
 
             const distribution = analyticsService.getStatusDistribution();
 
-            // Unknown status should not increment any counter
             expect(distribution.active).toBe(0);
             expect(distribution.completed).toBe(0);
         });
@@ -293,18 +285,7 @@ describe('AnalyticsService', () => {
         test('should return default for unknown period in _getPeriodKey', () => {
             const date = new Date('2024-01-15');
             const key = analyticsService._getPeriodKey(date, 'unknownPeriod');
-            // Should default to month format
             expect(key).toBe('2024-01');
-        });
-
-        test('should return current date for unknown period in _parsePeriodKey', () => {
-            const result = analyticsService._parsePeriodKey('invalid', 'unknownPeriod');
-            expect(result).toBeInstanceOf(Date);
-        });
-
-        test('_parsePeriodKey should handle week format', () => {
-            const date = analyticsService._parsePeriodKey('2024-W02', 'week');
-            expect(date.getFullYear()).toBe(2024);
         });
     });
 });
