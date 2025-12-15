@@ -12,6 +12,7 @@ const de = {
     navigation: {
         dashboard: 'Dashboard',
         allGoals: 'Alle Ziele',
+        overview: 'Übersicht',
         checkIn: 'Review',
         settings: 'Einstellungen',
         help: 'Hilfe',
@@ -302,6 +303,29 @@ const de = {
         requestFeature: 'Feature anfragen',
         requestFeatureHelp: 'Hast du eine Idee für ein neues Feature? Wir würden sie gerne hören!',
         requestFeatureButton: 'Feature anfragen'
+    },
+
+    overview: {
+        title: 'Übersicht',
+        periodSelector: {
+            week: 'Woche',
+            month: 'Monat',
+            year: 'Jahr'
+        },
+        charts: {
+            goalsOverTime: 'Ziele im Zeitverlauf',
+            statusDistribution: 'Statusverteilung',
+            created: 'Erstellt',
+            completed: 'Erreicht',
+            notCompleted: 'Nicht erreicht'
+        },
+        stats: {
+            totalGoals: 'Gesamtziele',
+            completedGoals: 'Erreicht',
+            completionRate: 'Erfolgsquote',
+            avgPerPeriod: 'Ø pro {{period}}'
+        },
+        empty: 'Noch keine Ziele zum Analysieren. Erstelle dein erstes Ziel!'
     }
 };
 

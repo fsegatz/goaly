@@ -165,6 +165,9 @@ beforeEach(() => {
             <div id="dashboardFeedback" class="check-in-feedback" hidden></div>
             <div id="goalsList" class="goals-list"></div>
         </div>
+        <div id="overviewView" class="view">
+            <div id="overviewContainer"></div>
+        </div>
         <div id="settingsView" class="view"></div>
     </body></html>`, { url: "http://localhost" });
     document = dom.window.document;
@@ -238,6 +241,31 @@ beforeEach(() => {
         goalService: mockGoalService,
         settingsService: mockSettingsService,
         reviewService: mockReviewService,
+        analyticsService: {
+            getGoalsByPeriod: jest.fn(() => ({})),
+            getStatusDistribution: jest.fn(() => ({
+                active: 0,
+                inactive: 0,
+                paused: 0,
+                completed: 0,
+                notCompleted: 0
+            })),
+            getCompletionStats: jest.fn(() => ({
+                completed: 0,
+                notCompleted: 0,
+                total: 0,
+                completionRate: 0
+            })),
+            getSummaryStats: jest.fn(() => ({
+                totalGoals: 0,
+                completed: 0,
+                notCompleted: 0,
+                completionRate: 0,
+                avgPerPeriod: 0,
+                period: 'month'
+            })),
+            formatPeriodLabel: jest.fn((key) => key)
+        },
         languageService,
         errorHandler: mockErrorHandler,
         reviews: [],
