@@ -1,4 +1,5 @@
 node_modules/
 .coverage/
+.agent/
 package-lock.json
 config.local.js
