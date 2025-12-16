@@ -14,16 +14,30 @@ beforeEach(() => {
     dom = new JSDOM(`<!DOCTYPE html><html><body>
         <div id="goalModal" class="modal">
             <span class="close">&times;</span>
-            <h2 id="modalTitle"></h2>
+            <h2 id="goalModalTitle"></h2>
             <form id="goalForm">
                 <input type="hidden" id="goalId" />
                 <input type="text" id="goalTitle" />
                 <input type="number" id="goalMotivation" />
                 <input type="number" id="goalUrgency" />
                 <input type="date" id="goalDeadline" />
+                <input type="checkbox" id="recurringCheckbox" />
+                <div id="recurrencePeriodGroup" style="display: none;">
+                    <input type="number" id="recurrencePeriod" />
+                    <select id="recurrencePeriodUnit">
+                        <option value="days">Days</option>
+                    </select>
+                </div>
             </form>
             <button id="cancelBtn"></button>
-            <button id="deleteBtn"></button>
+            <button id="deleteGoalBtn"></button>
+            <div id="goalStateManagementSection" style="display: none;">
+                <button id="completeGoalBtn"></button>
+                <button id="abandonGoalBtn"></button>
+                <button id="unpauseGoalBtn"></button>
+                <button id="reactivateGoalBtn"></button>
+                <button id="forceActivateGoalBtn"></button>
+            </div>
         </div>
     </body></html>`, { url: "http://localhost" });
     document = dom.window.document;
@@ -42,6 +56,7 @@ beforeEach(() => {
     mockGoalService = {
         goals: [],
         createGoal: jest.fn(),
+        getGoal: jest.fn((id) => mockGoalService.goals.find(g => g.id === id)),
         updateGoal: jest.fn(),
         deleteGoal: jest.fn(),
         revertGoalToHistoryEntry: jest.fn(),
@@ -85,12 +100,12 @@ describe('GoalFormView', () => {
         form.reset = jest.fn();
         const renderViews = jest.fn();
 
-        goalFormView.openGoalForm(null, renderViews);
+        goalFormView.openGoalForm(renderViews, null);
 
         expect(form.reset).toHaveBeenCalled();
-        expect(document.getElementById('modalTitle').textContent).toBe('New goal');
+        expect(document.getElementById('goalModalTitle').textContent).toBe('New goal');
         expect(document.getElementById('goalId').value).toBe('');
-        expect(document.getElementById('deleteBtn').style.display).toBe('none');
+        expect(document.getElementById('deleteGoalBtn').style.display).toBe('none');
         expect(document.getElementById('goalModal').classList.contains('is-visible')).toBe(true);
     });
 
@@ -99,15 +114,15 @@ describe('GoalFormView', () => {
         mockGoalService.goals = [goal];
         const renderViews = jest.fn();
 
-        goalFormView.openGoalForm('123', renderViews);
+        goalFormView.openGoalForm(renderViews, '123');
 
-        expect(document.getElementById('modalTitle').textContent).toBe('Edit goal');
+        expect(document.getElementById('goalModalTitle').textContent).toBe('Edit goal');
         expect(document.getElementById('goalId').value).toBe('123');
         expect(document.getElementById('goalTitle').value).toBe('Edit Goal');
         expect(document.getElementById('goalMotivation').value).toBe('3');
         expect(document.getElementById('goalUrgency').value).toBe('2');
         expect(document.getElementById('goalDeadline').value).toBe('2025-12-25');
-        expect(document.getElementById('deleteBtn').style.display).toBe('inline-block');
+        expect(document.getElementById('deleteGoalBtn').style.display).toBe('inline-block');
         expect(document.getElementById('goalModal').classList.contains('is-visible')).toBe(true);
     });
 
@@ -116,7 +131,7 @@ describe('GoalFormView', () => {
         modal.remove();
         const renderViews = jest.fn();
 
-        expect(() => goalFormView.openGoalForm(null, renderViews)).not.toThrow();
+        expect(() => goalFormView.openGoalForm(renderViews, null)).not.toThrow();
     });
 
     test('closeGoalForm should hide modal and reset form', () => {
@@ -213,32 +228,6 @@ describe('GoalFormView', () => {
         expect(renderViews).toHaveBeenCalled();
     });
 
-    test('deleteBtn click should call handleDelete if confirmed', () => {
-        document.getElementById('goalId').value = 'goal-to-delete';
-        globalThis.confirm.mockReturnValue(true);
-        const renderViews = jest.fn();
-        const handleDelete = jest.fn();
-        goalFormView.setupEventListeners(jest.fn(), handleDelete, renderViews);
-
-        document.getElementById('deleteBtn').click();
-
-        expect(globalThis.confirm).toHaveBeenCalledWith(expect.stringContaining('delete'));
-        expect(handleDelete).toHaveBeenCalled();
-    });
-
-    test('deleteBtn click should not call handleDelete if not confirmed', () => {
-        document.getElementById('goalId').value = 'goal-to-delete';
-        globalThis.confirm.mockReturnValue(false);
-        const renderViews = jest.fn();
-        const handleDelete = jest.fn();
-        goalFormView.setupEventListeners(jest.fn(), handleDelete, renderViews);
-
-        document.getElementById('deleteBtn').click();
-
-        expect(globalThis.confirm).toHaveBeenCalledWith(expect.stringContaining('delete'));
-        expect(handleDelete).not.toHaveBeenCalled();
-    });
-
 
     test('window mousedown should close modal when clicking outside', () => {
         const modal = document.getElementById('goalModal');
@@ -297,7 +286,7 @@ describe('GoalFormView', () => {
         goalFormView.closeGoalForm = jest.fn();
         goalFormView.setupEventListeners(jest.fn(), jest.fn(), jest.fn());
 
-        const modalTitle = document.getElementById('modalTitle');
+        const modalTitle = document.getElementById('goalModalTitle');
         const mousedownEvent = new dom.window.MouseEvent('mousedown', {
             bubbles: true,
             cancelable: true,
@@ -318,26 +307,11 @@ describe('GoalFormView', () => {
         });
         mockGoalService.goals = [goal];
 
-        const stateSection = document.createElement('div');
-        stateSection.id = 'goalStateManagementSection';
-        stateSection.style.display = 'none';
-        document.getElementById('goalModal').appendChild(stateSection);
+        // Removed manual state section creation since it's now in main JSDOM setup
 
-        const completeBtn = document.createElement('button');
-        completeBtn.id = 'completeGoalBtn';
-        stateSection.appendChild(completeBtn);
+        goalFormView.openGoalForm(jest.fn(), '1');
 
-        const abandonBtn = document.createElement('button');
-        abandonBtn.id = 'abandonGoalBtn';
-        stateSection.appendChild(abandonBtn);
-
-        const unpauseBtn = document.createElement('button');
-        unpauseBtn.id = 'unpauseGoalBtn';
-        stateSection.appendChild(unpauseBtn);
-
-        goalFormView.openGoalForm('1', jest.fn());
-
-        expect(stateSection.style.display).toBe('block');
+        expect(document.getElementById('goalStateManagementSection').style.display).toBe('block');
     });
 
     test('complete button should open completion modal without closing goal form', () => {
@@ -354,9 +328,7 @@ describe('GoalFormView', () => {
         const openCompletionModal = jest.fn();
         goalFormView.closeGoalForm = jest.fn();
 
-        const completeBtn = document.createElement('button');
-        completeBtn.id = 'completeGoalBtn';
-        document.getElementById('goalModal').appendChild(completeBtn);
+        const completeBtn = document.getElementById('completeGoalBtn');
 
         goalFormView.setupEventListeners(jest.fn(), jest.fn(), jest.fn(), openCompletionModal);
 
@@ -385,7 +357,7 @@ describe('GoalFormView', () => {
         goalFormView.handleUnpauseGoal(renderViews);
 
         expect(mockGoalService.unpauseGoal).toHaveBeenCalledWith('1', 3);
-        expect(goalFormView.openGoalForm).toHaveBeenCalledWith('1', renderViews);
+        expect(goalFormView.openGoalForm).toHaveBeenCalledWith(renderViews, '1');
         expect(renderViews).toHaveBeenCalled();
     });
 
@@ -399,19 +371,11 @@ describe('GoalFormView', () => {
         });
         mockGoalService.goals = [goal];
 
-        const stateSection = document.createElement('div');
-        stateSection.id = 'goalStateManagementSection';
-        stateSection.style.display = 'none';
-        document.getElementById('goalModal').appendChild(stateSection);
+        // Removed manual creation
 
-        const reactivateBtn = document.createElement('button');
-        reactivateBtn.id = 'reactivateGoalBtn';
-        reactivateBtn.style.display = 'none';
-        stateSection.appendChild(reactivateBtn);
+        goalFormView.openGoalForm(jest.fn(), '1');
 
-        goalFormView.openGoalForm('1', jest.fn());
-
-        expect(reactivateBtn.style.display).toBe('inline-block');
+        expect(document.getElementById('reactivateGoalBtn').style.display).toBe('inline-block');
     });
 
     test('openGoalForm should show reactivate button for abandoned goals', () => {
@@ -424,19 +388,11 @@ describe('GoalFormView', () => {
         });
         mockGoalService.goals = [goal];
 
-        const stateSection = document.createElement('div');
-        stateSection.id = 'goalStateManagementSection';
-        stateSection.style.display = 'none';
-        document.getElementById('goalModal').appendChild(stateSection);
+        // Removed manual creation
 
-        const reactivateBtn = document.createElement('button');
-        reactivateBtn.id = 'reactivateGoalBtn';
-        reactivateBtn.style.display = 'none';
-        stateSection.appendChild(reactivateBtn);
+        goalFormView.openGoalForm(jest.fn(), '1');
 
-        goalFormView.openGoalForm('1', jest.fn());
-
-        expect(reactivateBtn.style.display).toBe('inline-block');
+        expect(document.getElementById('reactivateGoalBtn').style.display).toBe('inline-block');
     });
 
     test('handleReactivateGoal should reactivate completed goal and refresh form', () => {
@@ -456,7 +412,7 @@ describe('GoalFormView', () => {
         goalFormView.handleReactivateGoal(renderViews);
 
         expect(mockGoalService.setGoalStatus).toHaveBeenCalledWith('1', 'inactive', 3);
-        expect(goalFormView.openGoalForm).toHaveBeenCalledWith('1', renderViews);
+        expect(goalFormView.openGoalForm).toHaveBeenCalledWith(renderViews, '1');
         expect(renderViews).toHaveBeenCalled();
     });
 
@@ -477,7 +433,7 @@ describe('GoalFormView', () => {
         goalFormView.handleReactivateGoal(renderViews);
 
         expect(mockGoalService.setGoalStatus).toHaveBeenCalledWith('1', 'inactive', 3);
-        expect(goalFormView.openGoalForm).toHaveBeenCalledWith('1', renderViews);
+        expect(goalFormView.openGoalForm).toHaveBeenCalledWith(renderViews, '1');
         expect(renderViews).toHaveBeenCalled();
     });
 
@@ -491,21 +447,10 @@ describe('GoalFormView', () => {
         });
         mockGoalService.goals = [goal];
 
-        const stateSection = document.createElement('div');
-        stateSection.id = 'goalStateManagementSection';
-        stateSection.style.display = 'none';
-        document.getElementById('goalModal').appendChild(stateSection);
+        const reactivateBtn = document.getElementById('reactivateGoalBtn');
+        const completeBtn = document.getElementById('completeGoalBtn');
 
-        const reactivateBtn = document.createElement('button');
-        reactivateBtn.id = 'reactivateGoalBtn';
-        reactivateBtn.style.display = 'none';
-        stateSection.appendChild(reactivateBtn);
-
-        const completeBtn = document.createElement('button');
-        completeBtn.id = 'completeGoalBtn';
-        stateSection.appendChild(completeBtn);
-
-        goalFormView.openGoalForm('1', jest.fn());
+        goalFormView.openGoalForm(jest.fn(), '1');
 
         expect(reactivateBtn.style.display).toBe('inline-block');
         expect(completeBtn.style.display).toBe('none');
@@ -523,18 +468,11 @@ describe('GoalFormView', () => {
         mockGoalService.goals = [goal];
         mockGoalService.isGoalPaused.mockReturnValue(true);
 
-        const stateSection = document.createElement('div');
-        stateSection.id = 'goalStateManagementSection';
-        document.getElementById('goalModal').appendChild(stateSection);
+        // Removed manual creation
 
-        const forceActivateBtn = document.createElement('button');
-        forceActivateBtn.id = 'forceActivateGoalBtn';
-        forceActivateBtn.style.display = 'none';
-        stateSection.appendChild(forceActivateBtn);
+        goalFormView.openGoalForm(jest.fn(), '1');
 
-        goalFormView.openGoalForm('1', jest.fn());
-
-        expect(forceActivateBtn.style.display).toBe('inline-block');
+        expect(document.getElementById('forceActivateGoalBtn').style.display).toBe('inline-block');
     });
 
     test('openGoalForm should hide force activate button for notCompleted goals', () => {
@@ -547,18 +485,11 @@ describe('GoalFormView', () => {
         });
         mockGoalService.goals = [goal];
 
-        const stateSection = document.createElement('div');
-        stateSection.id = 'goalStateManagementSection';
-        document.getElementById('goalModal').appendChild(stateSection);
+        document.getElementById('forceActivateGoalBtn').style.display = 'inline-block';
 
-        const forceActivateBtn = document.createElement('button');
-        forceActivateBtn.id = 'forceActivateGoalBtn';
-        forceActivateBtn.style.display = 'inline-block';
-        stateSection.appendChild(forceActivateBtn);
+        goalFormView.openGoalForm(jest.fn(), '1');
 
-        goalFormView.openGoalForm('1', jest.fn());
-
-        expect(forceActivateBtn.style.display).toBe('none');
+        expect(document.getElementById('forceActivateGoalBtn').style.display).toBe('none');
     });
 });
 

@@ -87,15 +87,30 @@ beforeEach(() => {
         <button id="addGoalBtnDesktop"></button>
         <form id="goalForm"></form>
         <button id="cancelBtn"></button>
-        <button id="deleteBtn"></button>
+        <button id="deleteGoalBtn"></button>
         <div id="goalModal" class="modal">
             <span class="close">&times;</span>
-            <h2 id="modalTitle"></h2>
+            <h2 id="goalModalTitle"></h2>
             <input type="hidden" id="goalId" />
             <input type="text" id="goalTitle" />
             <input type="number" id="goalMotivation" />
             <input type="number" id="goalUrgency" />
             <input type="date" id="goalDeadline" />
+            <input type="checkbox" id="recurringCheckbox" />
+            <div id="recurrencePeriodGroup" style="display: none;">
+                <input type="number" id="recurrencePeriod" />
+                <select id="recurrencePeriodUnit">
+                    <option value="days">Days</option>
+                </select>
+            </div>
+            <button id="deleteGoalBtn"></button>
+            <div id="goalStateManagementSection" style="display: none;">
+                <button id="completeGoalBtn"></button>
+                <button id="abandonGoalBtn"></button>
+                <button id="unpauseGoalBtn"></button>
+                <button id="reactivateGoalBtn"></button>
+                <button id="forceActivateGoalBtn"></button>
+            </div>
         </div>
         <div id="migrationPromptModal" class="modal">
             <div class="modal-content migration-modal">
@@ -439,14 +454,14 @@ describe('UIController', () => {
         uiController.goalFormView.openGoalForm = jest.fn();
         uiController.renderViews = jest.fn();
         document.getElementById('addGoalBtn').click();
-        expect(uiController.goalFormView.openGoalForm).toHaveBeenCalledWith(null, expect.any(Function));
+        expect(uiController.goalFormView.openGoalForm).toHaveBeenCalledWith(expect.any(Function), null);
     });
 
     test('addGoalBtnDesktop click should call openGoalForm', () => {
         uiController.goalFormView.openGoalForm = jest.fn();
         uiController.renderViews = jest.fn();
         document.getElementById('addGoalBtnDesktop').click();
-        expect(uiController.goalFormView.openGoalForm).toHaveBeenCalledWith(null, expect.any(Function));
+        expect(uiController.goalFormView.openGoalForm).toHaveBeenCalledWith(expect.any(Function), null);
     });
 
     test('handleCompletionChoice should call changeGoalStatus and close modal', () => {
@@ -748,7 +763,7 @@ describe('UIController', () => {
 
         uiController.openGoalForm('goal-1');
 
-        expect(uiController.goalFormView.openGoalForm).toHaveBeenCalledWith('goal-1', expect.any(Function));
+        expect(uiController.goalFormView.openGoalForm).toHaveBeenCalledWith(expect.any(Function), 'goal-1');
     });
 
     test('openCompletionModal should call modalsView.openCompletionModal', () => {

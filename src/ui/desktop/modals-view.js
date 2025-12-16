@@ -102,74 +102,77 @@ export class ModalsView extends BaseUIController {
     }
 
     openCompletionModal(goalId) {
-        if (!goalId) {
-            return;
-        }
-        const modal = this.getCompletionElement('completionModal');
-        if (!modal) {
-            return;
-        }
+        if (!goalId) return;
 
-        // Get the goal to check if it's recurring
+        const modal = this.getCompletionElement('completionModal');
+        if (!modal) return;
+
         const goal = this.app.goalService.goals.find(g => g.id === goalId);
 
-        // Set up recurring fields
-        const recurringCheckbox = this.getCompletionElement('completionRecurringCheckbox');
-        const recurDateContainer = this.getCompletionElement('completionRecurDateContainer');
-
         if (goal?.isRecurring) {
-            // Pre-check checkbox for recurring goals
-            if (recurringCheckbox) {
-                recurringCheckbox.checked = true;
-            }
-
-            // Calculate and display next recurrence date
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            let nextDate = new Date(today);
-
-            const period = goal.recurPeriod || 7;
-            const unit = goal.recurPeriodUnit || 'days';
-
-            if (unit === 'days') {
-                nextDate.setDate(nextDate.getDate() + period);
-            } else if (unit === 'weeks') {
-                nextDate.setDate(nextDate.getDate() + (period * 7));
-            } else if (unit === 'months') {
-                nextDate.setMonth(nextDate.getMonth() + period);
-            }
-
-            // Set the date input value
-            const recurDateInput = this.getCompletionElement('completionRecurDate');
-            if (recurDateInput) {
-                recurDateInput.value = nextDate.toISOString().split('T')[0];
-                // Set minimum date to today
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                recurDateInput.min = today.toISOString().split('T')[0];
-            }
-
-            // Show the date container
-            if (recurDateContainer) {
-                recurDateContainer.style.display = 'block';
-            }
+            this._setupRecurringFields(goal);
         } else {
-            // Reset for non-recurring goals
-            if (recurringCheckbox) {
-                recurringCheckbox.checked = false;
-            }
-            if (recurDateContainer) {
-                recurDateContainer.style.display = 'none';
-            }
-            const recurDateInput = this.getCompletionElement('completionRecurDate');
-            if (recurDateInput) {
-                recurDateInput.value = '';
-            }
+            this._resetRecurringFields();
         }
 
         this.pendingCompletionGoalId = goalId;
         modal.classList.add('is-visible');
         this.languageService.applyTranslations(modal);
+    }
+
+    /** @private */
+    _setupRecurringFields(goal) {
+        // Pre-check checkbox for recurring goals
+        const recurringCheckbox = this.getCompletionElement('completionRecurringCheckbox');
+        if (recurringCheckbox) recurringCheckbox.checked = true;
+
+        // Calculate and display next recurrence date
+        const nextDate = this._calculateNextRecurrenceDate(goal);
+
+        // Set the date input value
+        const recurDateInput = this.getCompletionElement('completionRecurDate');
+        if (recurDateInput) {
+            recurDateInput.value = nextDate.toISOString().split('T')[0];
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            recurDateInput.min = today.toISOString().split('T')[0];
+        }
+
+        // Show the date container
+        const recurDateContainer = this.getCompletionElement('completionRecurDateContainer');
+        if (recurDateContainer) recurDateContainer.style.display = 'block';
+    }
+
+    /** @private */
+    _calculateNextRecurrenceDate(goal) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let nextDate = new Date(today);
+
+        const period = goal.recurPeriod || 7;
+        const unit = goal.recurPeriodUnit || 'days';
+
+        if (unit === 'days') {
+            nextDate.setDate(nextDate.getDate() + period);
+        } else if (unit === 'weeks') {
+            nextDate.setDate(nextDate.getDate() + (period * 7));
+        } else if (unit === 'months') {
+            nextDate.setMonth(nextDate.getMonth() + period);
+        }
+        return nextDate;
+    }
+
+    /** @private */
+    _resetRecurringFields() {
+        const recurringCheckbox = this.getCompletionElement('completionRecurringCheckbox');
+        if (recurringCheckbox) recurringCheckbox.checked = false;
+
+        const recurDateContainer = this.getCompletionElement('completionRecurDateContainer');
+        if (recurDateContainer) recurDateContainer.style.display = 'none';
+
+        const recurDateInput = this.getCompletionElement('completionRecurDate');
+        if (recurDateInput) recurDateInput.value = '';
     }
 
     closeCompletionModal() {
@@ -545,17 +548,23 @@ export class ModalsView extends BaseUIController {
     }
 
     openPauseModal(goalId) {
-        if (!goalId) {
-            return;
-        }
+        if (!goalId) return;
+
         const modal = this.getPauseElement('pauseModal');
-        if (!modal) {
-            return;
-        }
+        if (!modal) return;
 
         this.pendingPauseGoalId = goalId;
 
-        // Set minimum date to today
+        this._setupPauseDateInput();
+        this._populatePauseGoalSelect(goalId);
+        this._resetPauseModalState();
+
+        modal.classList.add('is-visible');
+        this.languageService.applyTranslations(modal);
+    }
+
+    /** @private */
+    _setupPauseDateInput() {
         const dateInput = this.getPauseElement('pauseUntilDateInput');
         if (dateInput) {
             const today = new Date();
@@ -563,50 +572,54 @@ export class ModalsView extends BaseUIController {
             dateInput.min = today.toISOString().split('T')[0];
             dateInput.value = '';
         }
+    }
 
-        // Populate goal select with other goals (excluding the current goal)
-        // Include all goals except completed/abandoned ones, as user might want to pause until a paused goal becomes active
+    /** @private */
+    _populatePauseGoalSelect(currentGoalId) {
         const goalSelect = this.getPauseElement('pauseUntilGoalSelect');
-        if (goalSelect) {
-            goalSelect.innerHTML = '<option value="" data-i18n-key="pauseModal.selectGoal">Select a goal...</option>';
-            const goals = this.app.goalService.goals.filter(
-                g => g.id !== goalId && g.status !== 'completed' && g.status !== 'notCompleted'
-            );
-            if (goals.length === 0) {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = this.translate('pauseModal.noGoalsAvailable') || 'No other goals available';
-                option.disabled = true;
-                goalSelect.appendChild(option);
-            } else {
-                goals.forEach(goal => {
-                    const option = document.createElement('option');
-                    option.value = goal.id;
-                    option.textContent = goal.title;
-                    goalSelect.appendChild(option);
-                });
-            }
-            goalSelect.value = '';
-        }
+        if (!goalSelect) return;
 
+        goalSelect.innerHTML = '<option value="" data-i18n-key="pauseModal.selectGoal">Select a goal...</option>';
+
+        const goals = this.app.goalService.goals.filter(
+            g => g.id !== currentGoalId && g.status !== 'completed' && g.status !== 'notCompleted'
+        );
+
+        if (goals.length === 0) {
+            this._addNoGoalsOption(goalSelect);
+        } else {
+            goals.forEach(goal => {
+                const option = document.createElement('option');
+                option.value = goal.id;
+                option.textContent = goal.title;
+                goalSelect.appendChild(option);
+            });
+        }
+        goalSelect.value = '';
+    }
+
+    /** @private */
+    _addNoGoalsOption(selectElement) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = this.translate('pauseModal.noGoalsAvailable') || 'No other goals available';
+        option.disabled = true;
+        selectElement.appendChild(option);
+    }
+
+    /** @private */
+    _resetPauseModalState() {
         // Reset to date option
         const dateRadio = this.getPauseElement('pauseUntilDate');
         const goalRadio = this.getPauseElement('pauseUntilGoal');
-        if (dateRadio) {
-            dateRadio.checked = true;
-        }
-        if (goalRadio) {
-            goalRadio.checked = false;
-        }
-        if (dateInput) {
-            dateInput.disabled = false;
-        }
-        if (goalSelect) {
-            goalSelect.disabled = true;
-        }
+        const dateInput = this.getPauseElement('pauseUntilDateInput');
+        const goalSelect = this.getPauseElement('pauseUntilGoalSelect');
 
-        modal.classList.add('is-visible');
-        this.languageService.applyTranslations(modal);
+        if (dateRadio) dateRadio.checked = true;
+        if (goalRadio) goalRadio.checked = false;
+
+        if (dateInput) dateInput.disabled = false;
+        if (goalSelect) goalSelect.disabled = true;
     }
 
     closePauseModal() {

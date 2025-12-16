@@ -16,93 +16,108 @@ export class DashboardView extends BaseUIController {
     render(openCompletionModal, updateGoalInline, openGoalForm, handleReviewSubmit, renderViews, openPauseModal) {
         this.openPauseModal = openPauseModal;
         const settings = this.app.settingsService.getSettings();
-        // Get active goals (excluding manually paused ones)
         const activeGoals = this.app.goalService.getActiveGoals();
         const dashboardGoals = activeGoals.slice(0, settings.maxActiveGoals);
-        // Get reviews - these include ALL active and paused goals that need review
-        // (not limited by maxActiveGoals - all goals needing review should show review cards)
         const reviews = Array.isArray(this.app.reviews) ? this.app.reviews : [];
 
         const dashboardList = getElement('goalsList');
         const feedbackElement = getOptionalElement('dashboardFeedback');
 
-        // Clean up EventManager instances for existing cards before clearing the list
-        // This prevents memory leaks when cards are removed from the DOM
-        for (const card of dashboardList.querySelectorAll('.goal-card, .review-card')) {
+        this._cleanupExistingCards(dashboardList);
+        dashboardList.innerHTML = '';
+
+        this._updateFeedback(feedbackElement);
+
+        const allCards = this._prepareCardData(reviews, dashboardGoals);
+
+        if (allCards.length === 0) {
+            this._renderEmptyState(dashboardList);
+        } else {
+            this._renderCards(dashboardList, allCards, openGoalForm, handleReviewSubmit, renderViews, openCompletionModal, updateGoalInline);
+        }
+    }
+
+    /** @private */
+    _cleanupExistingCards(container) {
+        for (const card of container.querySelectorAll('.goal-card, .review-card')) {
             if (card._stepEventManager) {
                 card._stepEventManager.cleanup();
             }
         }
+    }
 
-        dashboardList.innerHTML = '';
+    /** @private */
+    _updateFeedback(feedbackElement) {
+        if (!feedbackElement) return;
 
-        // Display feedback if available
-        if (feedbackElement) {
-            if (this.latestReviewFeedback) {
-                const { messageKey, messageArgs, type } = this.latestReviewFeedback;
-                feedbackElement.hidden = false;
-                feedbackElement.textContent = this.translate(messageKey, messageArgs);
-                feedbackElement.dataset.state = type || 'info';
-            } else {
-                feedbackElement.hidden = true;
-                feedbackElement.textContent = '';
-                feedbackElement.dataset.state = '';
-            }
-        }
-
-        // Combine review cards and active goal cards, with review cards first
-        // Review cards show ALL active and paused goals that need review (not limited by maxActiveGoals)
-        // Active goal cards show up to maxActiveGoals goals (including those that also have review cards)
-        const allCards = [];
-
-        // Add review cards first - these include ALL active and paused goals that need review
-        // (not limited by maxActiveGoals - all goals needing review should show review cards)
-        reviews.forEach((review, index) => {
-            allCards.push({
-                type: 'review',
-                data: review,
-                position: index + 1,
-                total: reviews.length
-            });
-        });
-
-        // Add active goal cards - show all active goals up to maxActiveGoals
-        // (some of these may also have review cards above, which is fine)
-        dashboardGoals.forEach(goal => {
-            allCards.push({
-                type: 'goal',
-                data: goal
-            });
-        });
-
-        if (allCards.length === 0) {
-            const emptyState = document.createElement('p');
-            emptyState.style.textAlign = 'center';
-            emptyState.style.color = '#888';
-            emptyState.style.padding = '40px';
-            emptyState.textContent = this.translate('dashboard.noActiveGoals');
-            emptyState.setAttribute('data-i18n-key', 'dashboard.noActiveGoals');
-            dashboardList.appendChild(emptyState);
+        if (this.latestReviewFeedback) {
+            const { messageKey, messageArgs, type } = this.latestReviewFeedback;
+            feedbackElement.hidden = false;
+            feedbackElement.textContent = this.translate(messageKey, messageArgs);
+            feedbackElement.dataset.state = type || 'info';
         } else {
-            let hasReviewCards = false;
-            let firstGoalCard = true;
-
-            allCards.forEach(cardItem => {
-                if (cardItem.type === 'review') {
-                    hasReviewCards = true;
-                    dashboardList.appendChild(this.createReviewCard(cardItem.data, cardItem.position, cardItem.total, openGoalForm, handleReviewSubmit, renderViews));
-                } else {
-                    // Add separator before first goal card if there were review cards before
-                    if (hasReviewCards && firstGoalCard) {
-                        const separator = document.createElement('div');
-                        separator.className = 'dashboard-card-separator desktop-only';
-                        dashboardList.appendChild(separator);
-                        firstGoalCard = false;
-                    }
-                    dashboardList.appendChild(this.createGoalCard(cardItem.data, openCompletionModal, updateGoalInline));
-                }
-            });
+            feedbackElement.hidden = true;
+            feedbackElement.textContent = '';
+            feedbackElement.dataset.state = '';
         }
+    }
+
+    /** @private */
+    _prepareCardData(reviews, dashboardGoals) {
+        const reviewCards = reviews.map((review, index) => ({
+            type: 'review',
+            data: review,
+            position: index + 1,
+            total: reviews.length
+        }));
+
+        const goalCards = dashboardGoals.map(goal => ({
+            type: 'goal',
+            data: goal
+        }));
+
+        return [...reviewCards, ...goalCards];
+    }
+
+    /** @private */
+    _renderEmptyState(container) {
+        const emptyState = document.createElement('p');
+        emptyState.style.textAlign = 'center';
+        emptyState.style.color = '#888';
+        emptyState.style.padding = '40px';
+        emptyState.textContent = this.translate('dashboard.noActiveGoals');
+        emptyState.dataset.i18nKey = 'dashboard.noActiveGoals';
+        container.appendChild(emptyState);
+    }
+
+    /** @private */
+    _renderCards(container, allCards, openGoalForm, handleReviewSubmit, renderViews, openCompletionModal, updateGoalInline) {
+        let hasReviewCards = false;
+        let firstGoalCard = true;
+
+        allCards.forEach(cardItem => {
+            if (cardItem.type === 'review') {
+                hasReviewCards = true;
+                container.appendChild(
+                    this.createReviewCard(cardItem.data, cardItem.position, cardItem.total, openGoalForm, handleReviewSubmit, renderViews)
+                );
+            } else {
+                if (hasReviewCards && firstGoalCard) {
+                    this._addSeparator(container);
+                    firstGoalCard = false;
+                }
+                container.appendChild(
+                    this.createGoalCard(cardItem.data, openCompletionModal, updateGoalInline)
+                );
+            }
+        });
+    }
+
+    /** @private */
+    _addSeparator(container) {
+        const separator = document.createElement('div');
+        separator.className = 'dashboard-card-separator desktop-only';
+        container.appendChild(separator);
     }
 
     createReviewCard(review, position, total, openGoalForm, handleReviewSubmit, renderViews) {
@@ -151,14 +166,14 @@ export class DashboardView extends BaseUIController {
         const submitBtn = document.createElement('button');
         submitBtn.type = 'submit';
         submitBtn.className = 'btn btn-primary';
-        submitBtn.setAttribute('data-i18n-key', 'reviews.actions.done');
+        submitBtn.dataset.i18nKey = 'reviews.actions.done';
         submitBtn.textContent = this.translate('reviews.actions.done');
         actions.appendChild(submitBtn);
 
         const editBtn = document.createElement('button');
         editBtn.type = 'button';
         editBtn.className = 'btn btn-secondary';
-        editBtn.setAttribute('data-i18n-key', 'reviews.actions.edit');
+        editBtn.dataset.i18nKey = 'reviews.actions.edit';
         editBtn.textContent = this.translate('reviews.actions.edit');
         editBtn.addEventListener('click', (event) => {
             event.preventDefault();
@@ -191,7 +206,7 @@ export class DashboardView extends BaseUIController {
 
         const label = document.createElement('span');
         label.className = 'review-card__field-label';
-        label.setAttribute('data-i18n-key', labelKey);
+        label.dataset.i18nKey = labelKey;
         container.appendChild(label);
 
         const input = document.createElement('input');
@@ -202,8 +217,8 @@ export class DashboardView extends BaseUIController {
         input.step = '1';
         input.value = value;
         input.className = 'review-card__field-input';
-        input.setAttribute('data-i18n-key', labelKey);
-        input.setAttribute('data-i18n-attr', 'aria-label');
+        input.dataset.i18nKey = labelKey;
+        input.dataset.i18nAttr = 'aria-label';
         container.appendChild(input);
 
         return { container, input };
@@ -215,7 +230,7 @@ export class DashboardView extends BaseUIController {
 
         const label = document.createElement('span');
         label.className = 'review-card__field-label';
-        label.setAttribute('data-i18n-key', labelKey);
+        label.dataset.i18nKey = labelKey;
         label.textContent = this.translate(labelKey);
         container.appendChild(label);
 
@@ -279,67 +294,16 @@ export class DashboardView extends BaseUIController {
         const isManuallyPaused = this.app.goalService.isGoalPaused(goal);
         card.className = `goal-card ${goal.status}${isManuallyPaused ? ' manually-paused' : ''}`;
 
+        const indicators = this._getGoalIndicators(goal, isManuallyPaused);
         const deadlineText = goal.deadline
             ? this.formatDeadline(goal.deadline)
             : this.translate('goalCard.noDeadline');
-
-        const sortedSteps = this.sortStepsWithCompletedAtBottom(goal.steps || []);
-        const stepsHtml = sortedSteps.length > 0
-            ? sortedSteps.map(step => `
-                <li class="goal-step ${step.completed ? 'completed' : ''}" data-step-id="${step.id}">
-                    <input type="checkbox" class="step-checkbox" ${step.completed ? 'checked' : ''} aria-label="Toggle step completion">
-                    <span class="step-text" contenteditable="true">${this.escapeHtml(step.text)}</span>
-                    <button type="button" class="step-delete" aria-label="${this.translate('goalCard.steps.delete')}">×</button>
-                </li>
-            `).join('')
-            : `<li class="steps-empty">${this.translate('goalCard.steps.empty')}</li>`;
-
-        // Get pause indicator text
-        let pauseIndicator = '';
-        if (isManuallyPaused) {
-            if (goal.pauseUntil) {
-                const pauseDate = new Date(goal.pauseUntil);
-                pauseDate.setHours(0, 0, 0, 0);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const daysUntil = Math.ceil((pauseDate - today) / (1000 * 60 * 60 * 24));
-                if (daysUntil === 0) {
-                    pauseIndicator = `<span class="goal-pause-indicator" data-i18n-key="goalCard.paused.untilToday">⏸️ ${this.translate('goalCard.paused.untilToday')}</span>`;
-                } else if (daysUntil === 1) {
-                    pauseIndicator = `<span class="goal-pause-indicator" data-i18n-key="goalCard.paused.untilTomorrow">⏸️ ${this.translate('goalCard.paused.untilTomorrow')}</span>`;
-                } else {
-                    const formattedDate = this.formatDeadline(pauseDate);
-                    pauseIndicator = `<span class="goal-pause-indicator" data-i18n-key="goalCard.paused.untilDate">⏸️ ${this.translate('goalCard.paused.untilDate', { date: formattedDate })}</span>`;
-                }
-            } else if (goal.pauseUntilGoalId) {
-                const dependencyGoal = this.app.goalService.goals.find(g => g.id === goal.pauseUntilGoalId);
-                if (dependencyGoal) {
-                    pauseIndicator = `<span class="goal-pause-indicator" data-i18n-key="goalCard.paused.untilGoal">⏸️ ${this.translate('goalCard.paused.untilGoal', { goalTitle: this.escapeHtml(dependencyGoal.title) })}</span>`;
-                } else {
-                    pauseIndicator = `<span class="goal-pause-indicator">⏸️ ${this.translate('goalCard.paused.untilGoal', { goalTitle: '' })}</span>`;
-                }
-            }
-        }
-
-        // Get force activated indicator
-        let forceActivatedIndicator = '';
-        if (goal.status === 'active' && goal.forceActivated) {
-            forceActivatedIndicator = `<span class="goal-force-activated-indicator" data-i18n-key="allGoals.forceActivated">⚡ ${this.translate('allGoals.forceActivated')}</span>`;
-        }
-
-        // Get recurring badge
-        let recurringBadge = '';
-        if (goal.isRecurring) {
-            recurringBadge = `<span class="goal-recurring-badge" data-i18n-key="goalCard.recurring.badge">🔄 ${this.translate('goalCard.recurring.badge')}</span>`;
-        }
 
         card.innerHTML = `
             <div class="goal-header">
                 <div>
                     <div class="goal-title">${this.escapeHtml(goal.title)}</div>
-                    ${recurringBadge}
-                    ${forceActivatedIndicator}
-                    ${pauseIndicator}
+                    ${indicators}
                 </div>
             </div>
             <div class="goal-steps-section">
@@ -347,7 +311,7 @@ export class DashboardView extends BaseUIController {
                     <h4>${this.translate('goalCard.steps.title')}</h4>
                     <button type="button" class="btn btn-small add-step" aria-label="${this.translate('goalCard.steps.add')}">+</button>
                 </div>
-                <ul class="goal-steps-list">${stepsHtml}</ul>
+                <ul class="goal-steps-list"></ul>
             </div>
             <div class="goal-footer">
                 <div class="goal-deadline-wrapper">
@@ -359,70 +323,8 @@ export class DashboardView extends BaseUIController {
             </div>
         `;
 
-        const actionsContainer = card.querySelector('.goal-actions');
-        if (actionsContainer && goal.status !== 'completed' && goal.status !== 'notCompleted') {
-            // Add pause button for active goals
-            if (goal.status === 'active') {
-                const pauseButton = document.createElement('button');
-                pauseButton.type = 'button';
-                pauseButton.className = 'btn btn-secondary pause-goal';
-                pauseButton.textContent = this.translate('goalCard.actions.pause');
-                pauseButton.setAttribute('data-i18n-key', 'goalCard.actions.pause');
-                pauseButton.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    // Pass openPauseModal callback - will be set up in render method
-                    if (this.openPauseModal) {
-                        this.openPauseModal(goal.id);
-                    }
-                });
-                actionsContainer.appendChild(pauseButton);
-            }
-
-            const completeButton = document.createElement('button');
-            completeButton.type = 'button';
-            completeButton.className = 'btn btn-secondary complete-goal';
-            completeButton.textContent = this.translate('goalCard.actions.complete');
-            completeButton.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                openCompletionModal(goal.id);
-            });
-            actionsContainer.appendChild(completeButton);
-        }
-
-        // Make deadline editable directly via date input
-        const deadlineLabel = card.querySelector('.goal-deadline-label');
-        const deadlineInput = card.querySelector('.goal-deadline-input');
-
-        if (deadlineLabel && deadlineInput) {
-            // The date input is now positioned over the label and directly clickable
-            // No need for showPicker() - iOS Safari will open the native picker when tapping the input
-
-            // Update deadline when date input changes
-            deadlineInput.addEventListener('change', (event) => {
-                const deadlineValue = deadlineInput.value || null;
-                const updates = {
-                    deadline: deadlineValue || null
-                };
-                updateGoalInline(goal.id, updates);
-            });
-
-            // Update the label when deadline changes (for immediate visual feedback)
-            deadlineInput.addEventListener('input', () => {
-                if (deadlineInput.value) {
-                    // Parse date in local timezone to avoid off-by-one-day errors
-                    // for users in timezones west of UTC
-                    const newDate = new Date(deadlineInput.value + 'T00:00:00');
-                    const newDeadlineText = this.formatDeadline(newDate);
-                    deadlineLabel.textContent = this.translate('goalCard.deadlinePrefix', { deadline: newDeadlineText });
-                    deadlineLabel.classList.toggle('urgent', this.isDeadlineUrgent(newDate));
-                } else {
-                    deadlineLabel.textContent = this.translate('goalCard.deadlinePrefix', { deadline: this.translate('goalCard.noDeadline') });
-                    deadlineLabel.classList.remove('urgent');
-                }
-            });
-        }
+        this._setupCardActions(card, goal, openCompletionModal);
+        this._setupDeadlineInteract(card, goal, updateGoalInline);
 
         // Setup steps functionality
         this.setupSteps(card, goal, updateGoalInline);
@@ -431,6 +333,107 @@ export class DashboardView extends BaseUIController {
         this.setupTitleEditing(card, goal, updateGoalInline);
 
         return card;
+    }
+
+    /** @private */
+    _getGoalIndicators(goal, isManuallyPaused) {
+        const indicators = [];
+
+        if (goal.isRecurring) {
+            indicators.push(`<span class="goal-recurring-badge" data-i18n-key="goalCard.recurring.badge">🔄 ${this.translate('goalCard.recurring.badge')}</span>`);
+        }
+
+        if (goal.status === 'active' && goal.forceActivated) {
+            indicators.push(`<span class="goal-force-activated-indicator" data-i18n-key="allGoals.forceActivated">⚡ ${this.translate('allGoals.forceActivated')}</span>`);
+        }
+
+        if (isManuallyPaused) {
+            indicators.push(this._getPauseIndicator(goal));
+        }
+
+        return indicators.join('');
+    }
+
+    /** @private */
+    _getPauseIndicator(goal) {
+        if (goal.pauseUntil) {
+            const pauseDate = new Date(goal.pauseUntil);
+            pauseDate.setHours(0, 0, 0, 0);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const daysUntil = Math.ceil((pauseDate - today) / (1000 * 60 * 60 * 24));
+
+            if (daysUntil === 0) {
+                return `<span class="goal-pause-indicator" data-i18n-key="goalCard.paused.untilToday">⏸️ ${this.translate('goalCard.paused.untilToday')}</span>`;
+            } else if (daysUntil === 1) {
+                return `<span class="goal-pause-indicator" data-i18n-key="goalCard.paused.untilTomorrow">⏸️ ${this.translate('goalCard.paused.untilTomorrow')}</span>`;
+            } else {
+                const formattedDate = this.formatDeadline(pauseDate);
+                return `<span class="goal-pause-indicator" data-i18n-key="goalCard.paused.untilDate">⏸️ ${this.translate('goalCard.paused.untilDate', { date: formattedDate })}</span>`;
+            }
+        } else if (goal.pauseUntilGoalId) {
+            const dependencyGoal = this.app.goalService.goals.find(g => g.id === goal.pauseUntilGoalId);
+            const title = dependencyGoal ? this.escapeHtml(dependencyGoal.title) : '';
+            return `<span class="goal-pause-indicator" data-i18n-key="goalCard.paused.untilGoal">⏸️ ${this.translate('goalCard.paused.untilGoal', { goalTitle: title })}</span>`;
+        } else {
+            return `<span class="goal-pause-indicator">⏸️</span>`;
+        }
+    }
+
+    /** @private */
+    _setupCardActions(card, goal, openCompletionModal) {
+        const actionsContainer = card.querySelector('.goal-actions');
+        if (!actionsContainer || goal.status === 'completed' || goal.status === 'notCompleted') return;
+
+        if (goal.status === 'active') {
+            const pauseButton = document.createElement('button');
+            pauseButton.type = 'button';
+            pauseButton.className = 'btn btn-secondary pause-goal';
+            pauseButton.textContent = this.translate('goalCard.actions.pause');
+            pauseButton.dataset.i18nKey = 'goalCard.actions.pause';
+            pauseButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                if (this.openPauseModal) this.openPauseModal(goal.id);
+            });
+            actionsContainer.appendChild(pauseButton);
+        }
+
+        const completeButton = document.createElement('button');
+        completeButton.type = 'button';
+        completeButton.className = 'btn btn-secondary complete-goal';
+        completeButton.textContent = this.translate('goalCard.actions.complete');
+        completeButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            openCompletionModal(goal.id);
+        });
+        actionsContainer.appendChild(completeButton);
+    }
+
+    /** @private */
+    _setupDeadlineInteract(card, goal, updateGoalInline) {
+        const deadlineLabel = card.querySelector('.goal-deadline-label');
+        const deadlineInput = card.querySelector('.goal-deadline-input');
+
+        if (!deadlineLabel || !deadlineInput) return;
+
+        deadlineInput.addEventListener('change', () => {
+            const updates = { deadline: deadlineInput.value || null };
+            updateGoalInline(goal.id, updates);
+        });
+
+        deadlineInput.addEventListener('input', () => {
+            if (deadlineInput.value) {
+                const newDate = new Date(deadlineInput.value + 'T00:00:00');
+                const newDeadlineText = this.formatDeadline(newDate);
+                deadlineLabel.textContent = this.translate('goalCard.deadlinePrefix', { deadline: newDeadlineText });
+                deadlineLabel.classList.toggle('urgent', this.isDeadlineUrgent(newDate));
+            } else {
+                deadlineLabel.textContent = this.translate('goalCard.deadlinePrefix', { deadline: this.translate('goalCard.noDeadline') });
+                deadlineLabel.classList.remove('urgent');
+            }
+        });
     }
 
     setupTitleEditing(card, goal, updateGoalInline) {
@@ -508,7 +511,7 @@ export class DashboardView extends BaseUIController {
                     return;
                 }
                 isEditing = false;
-                if (input && input.parentNode) {
+                if (input?.parentNode) {
                     input.remove();
                 }
                 input = null;
@@ -516,7 +519,14 @@ export class DashboardView extends BaseUIController {
                 titleElement.style.display = '';
             };
 
-            this.attachInputEventListeners(input, titleElement, goal, updateGoalInline, () => isEditing, originalTitle, showError, clearError, cancelEditing);
+            this.attachInputEventListeners(input, titleElement, goal, {
+                updateGoalInline,
+                isEditingCheck: () => isEditing,
+                originalTitle,
+                showError,
+                clearError,
+                cancelEditing
+            });
         };
 
         const handleTitleClick = (event) => {
@@ -537,7 +547,8 @@ export class DashboardView extends BaseUIController {
         titleElement.addEventListener('keydown', handleTitleKeydown);
     }
 
-    attachInputEventListeners(input, titleElement, goal, updateGoalInline, isEditingCheck, originalTitle, showError, clearError, cancelEditing) {
+    attachInputEventListeners(input, titleElement, goal, context) {
+        const { updateGoalInline, isEditingCheck, originalTitle, showError, clearError, cancelEditing } = context;
         const saveTitle = () => {
             const newTitle = input.value.trim();
             clearError();
@@ -576,7 +587,7 @@ export class DashboardView extends BaseUIController {
         input.addEventListener('blur', () => {
             setTimeout(() => {
                 // Check if input still exists in DOM and editing is still active
-                if (input && input.parentNode && isEditingCheck()) {
+                if (input?.parentNode && isEditingCheck()) {
                     saveTitle();
                 }
             }, BLUR_SAVE_DELAY_MS);
@@ -640,7 +651,7 @@ export class DashboardView extends BaseUIController {
             // We iterate through EventManager's tracked listeners and remove any
             // that are descendants of the stepsList, preventing duplicate listeners
             // when steps are re-rendered.
-            for (const element of [...eventManager.listeners.keys()]) {
+            for (const element of eventManager.listeners.keys()) {
                 if (stepsList.contains(element)) {
                     eventManager.off(element);
                 }
@@ -682,7 +693,7 @@ export class DashboardView extends BaseUIController {
                 textEl.focus();
                 const range = document.createRange();
                 range.selectNodeContents(textEl);
-                const sel = window.getSelection();
+                const sel = globalThis.getSelection();
                 sel.removeAllRanges();
                 sel.addRange(range);
             }
@@ -734,7 +745,7 @@ export class DashboardView extends BaseUIController {
             };
 
             const handleTextBlur = () => {
-                if (!textEl.textContent.trim()) {
+                if (textEl.textContent.trim().length === 0) {
                     const stepId = stepEl.dataset.stepId;
                     if (goal.steps) {
                         goal.steps = goal.steps.filter(s => s.id !== stepId);

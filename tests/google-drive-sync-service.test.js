@@ -2,6 +2,8 @@
 
 const GoogleDriveSyncService = require('../src/domain/sync/google-drive-sync-service').default;
 
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 describe('GoogleDriveSyncService', () => {
     let service;
     let mockGapi;
@@ -14,7 +16,7 @@ describe('GoogleDriveSyncService', () => {
         jest.spyOn(console, 'error').mockImplementation(() => { });
 
         // Mock localStorage
-        global.localStorage = {
+        globalThis.localStorage = {
             getItem: jest.fn(),
             setItem: jest.fn(),
             removeItem: jest.fn(),
@@ -57,7 +59,7 @@ describe('GoogleDriveSyncService', () => {
             }
         };
 
-        global.window = {
+        globalThis.window = {
             gapi: mockGapi,
             google: {
                 accounts: mockGoogleAccounts
@@ -78,7 +80,7 @@ describe('GoogleDriveSyncService', () => {
         globalThis.gapi = mockGapi;
         globalThis.google = { accounts: mockGoogleAccounts };
 
-        global.fetch = jest.fn();
+        globalThis.fetch = jest.fn();
 
         service = new GoogleDriveSyncService();
     });
@@ -99,14 +101,14 @@ describe('GoogleDriveSyncService', () => {
                 onload: null,
                 onerror: null
             };
-            window.document.createElement.mockReturnValue(mockScript);
+            globalThis.window.document.createElement.mockReturnValue(mockScript);
 
             // Mock gapi and gis already loaded
-            window.gapi = mockGapi;
-            window.google = { accounts: mockGoogleAccounts };
+            globalThis.gapi = mockGapi;
+            globalThis.google = { accounts: mockGoogleAccounts };
 
             // Mock refresh call failure on init (no existing session)
-            global.fetch.mockImplementation((url) => {
+            globalThis.fetch.mockImplementation((url) => {
                 if (url === '/api/auth/refresh') {
                     return Promise.resolve({ ok: false });
                 }
@@ -158,20 +160,22 @@ describe('GoogleDriveSyncService', () => {
             });
 
             // Mock exchange endpoint
-            global.fetch.mockImplementation((url) => {
+            const successResponse = {
+                ok: true,
+                json: () => Promise.resolve({
+                    access_token: 'test-token',
+                    expires_in: 3600
+                })
+            };
+
+            globalThis.fetch.mockImplementation((url) => {
                 if (url === '/api/auth/exchange') {
-                    return Promise.resolve({
-                        ok: true,
-                        json: () => Promise.resolve({
-                            access_token: 'test-token',
-                            expires_in: 3600
-                        })
-                    });
+                    return Promise.resolve(successResponse);
                 }
                 return Promise.reject(new Error('Unknown URL'));
             });
 
-            const token = await service.authenticate();
+            await service.authenticate();
 
             expect(mockCodeClient.requestCode).toHaveBeenCalled();
             // authenticate method returns Promise<void> in current impl or access token? 
@@ -184,22 +188,22 @@ describe('GoogleDriveSyncService', () => {
             service.fileId = 'test-file-id';
             localStorage.setItem('goaly_gdrive_file_id', 'test-file-id');
 
-            window.google.accounts.oauth2.revoke = jest.fn();
-            global.fetch.mockResolvedValue({ ok: true });
+            globalThis.google.accounts.oauth2.revoke = jest.fn();
+            globalThis.fetch.mockResolvedValue({ ok: true });
 
             await service.signOut();
 
             expect(service.accessToken).toBeNull();
             expect(localStorage.removeItem).toHaveBeenCalledWith('goaly_gdrive_file_id');
             // Check revoke and logout endpoint
-            expect(window.google.accounts.oauth2.revoke).toHaveBeenCalledWith('test-token', expect.any(Function));
-            expect(global.fetch).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' });
+            expect(globalThis.google.accounts.oauth2.revoke).toHaveBeenCalledWith('test-token', expect.any(Function));
+            expect(globalThis.fetch).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' });
         });
 
         test('should handle sign out when not authenticated', async () => {
             service.accessToken = null;
             service.fileId = null;
-            global.fetch.mockResolvedValue({ ok: true });
+            globalThis.fetch.mockResolvedValue({ ok: true });
 
             await expect(service.signOut()).resolves.not.toThrow();
         });
@@ -216,15 +220,17 @@ describe('GoogleDriveSyncService', () => {
 
         test('should refresh token if needed', async () => {
             // Mock refresh endpoint
-            global.fetch.mockImplementation((url) => {
+            const refreshResponse = {
+                ok: true,
+                json: () => Promise.resolve({
+                    access_token: 'new-token',
+                    expires_in: 3600
+                })
+            };
+
+            globalThis.fetch.mockImplementation((url) => {
                 if (url === '/api/auth/refresh') {
-                    return Promise.resolve({
-                        ok: true,
-                        json: () => Promise.resolve({
-                            access_token: 'new-token',
-                            expires_in: 3600
-                        })
-                    });
+                    return Promise.resolve(refreshResponse);
                 }
                 return Promise.reject(new Error('Unknown URL: ' + url));
             });
@@ -236,7 +242,7 @@ describe('GoogleDriveSyncService', () => {
         });
 
         test('should handle refresh failure', async () => {
-            global.fetch.mockImplementation((url) => {
+            globalThis.fetch.mockImplementation((url) => {
                 if (url === '/api/auth/refresh') {
                     // Return 401 or ok: false to simulate failure
                     return Promise.resolve({ ok: false, status: 401 });
@@ -257,7 +263,7 @@ describe('GoogleDriveSyncService', () => {
             service.gapiLoaded = true;
             service.gisLoaded = true;
             service.initialized = true;
-            window.gapi.client.setToken = jest.fn();
+            globalThis.gapi.client.setToken = jest.fn();
             // Reset fileId
             service.fileId = null;
             localStorage.getItem.mockReturnValue(null);
@@ -299,7 +305,7 @@ describe('GoogleDriveSyncService', () => {
         test('should handle ensureAuthenticated when not authenticated', async () => {
             service.accessToken = null;
             // Mock refresh failing
-            global.fetch.mockResolvedValue({ ok: false });
+            globalThis.fetch.mockResolvedValue({ ok: false });
 
             await expect(service.ensureAuthenticated()).rejects.toThrow('Not authenticated. Please sign in first.');
         });
@@ -317,7 +323,7 @@ describe('GoogleDriveSyncService', () => {
 
             // Mock fetch for download - Wait, downloadData uses gapi or fetch? 
             // Looking at the service code: it gets fileId then uses fetch to download alt=media
-            global.fetch.mockResolvedValue({
+            globalThis.fetch.mockResolvedValue({
                 ok: true,
                 status: 200,
                 text: async () => JSON.stringify(testData)
@@ -332,18 +338,14 @@ describe('GoogleDriveSyncService', () => {
             service.fileId = 'old-file-id';
 
             // Mock upload fail with 404
-            global.fetch.mockImplementation((url) => {
-                if (url.includes('/upload/drive/v3/files/old-file-id')) {
-                    return Promise.resolve({ ok: false, status: 404 });
-                }
-                if (url.includes('/upload/drive/v3/files?uploadType=multipart')) {
-                    // Create new file
-                    return Promise.resolve({
-                        ok: true,
-                        json: async () => ({ id: 'new-file-id' })
-                    });
-                }
-                return Promise.resolve({ ok: true, json: async () => ({ files: [] }) });
+            const notFoundResponse = { ok: false, status: 404 };
+            const newFileResponse = { ok: true, json: async () => ({ id: 'new-file-id' }) };
+            const emptyFilesResponse = { ok: true, json: async () => ({ files: [] }) };
+
+            globalThis.fetch.mockImplementation((url) => {
+                if (url.includes('/upload/drive/v3/files/old-file-id')) return Promise.resolve(notFoundResponse);
+                if (url.includes('/upload/drive/v3/files?uploadType=multipart')) return Promise.resolve(newFileResponse);
+                return Promise.resolve(emptyFilesResponse);
             });
 
             // Mock findDataFile returning null (file really gone)
@@ -352,7 +354,7 @@ describe('GoogleDriveSyncService', () => {
             await service.uploadData([], {});
 
             expect(service.fileId).toBe('new-file-id');
-            expect(global.fetch).toHaveBeenCalledWith(
+            expect(globalThis.fetch).toHaveBeenCalledWith(
                 expect.stringContaining('/upload/drive/v3/files?uploadType=multipart'),
                 expect.objectContaining({ method: 'POST' })
             );
@@ -362,18 +364,14 @@ describe('GoogleDriveSyncService', () => {
             service.fileId = 'old-file-id';
 
             // Mock upload fail with 403
-            global.fetch.mockImplementation((url) => {
-                if (url.includes('/upload/drive/v3/files/old-file-id')) {
-                    return Promise.resolve({ ok: false, status: 403 });
-                }
-                if (url.includes('/upload/drive/v3/files/found-file-id')) {
-                    // Update found file
-                    return Promise.resolve({
-                        ok: true,
-                        json: async () => ({ id: 'found-file-id' })
-                    });
-                }
-                return Promise.resolve({ ok: true, json: async () => ({ files: [] }) });
+            const forbiddenResponse = { ok: false, status: 403 };
+            const foundFileResponse = { ok: true, json: async () => ({ id: 'found-file-id' }) };
+            const emptyResponse = { ok: true, json: async () => ({ files: [] }) };
+
+            globalThis.fetch.mockImplementation((url) => {
+                if (url.includes('/upload/drive/v3/files/old-file-id')) return Promise.resolve(forbiddenResponse);
+                if (url.includes('/upload/drive/v3/files/found-file-id')) return Promise.resolve(foundFileResponse);
+                return Promise.resolve(emptyResponse);
             });
 
             // Mock list calls:
@@ -399,7 +397,7 @@ describe('GoogleDriveSyncService', () => {
             service.gapiLoaded = true;
             service.gisLoaded = true;
             service.initialized = true;
-            window.gapi.client.setToken = jest.fn();
+            globalThis.gapi.client.setToken = jest.fn();
             service.tokenExpiresAt = Date.now() + 3600000;
         });
 
@@ -422,7 +420,7 @@ describe('GoogleDriveSyncService', () => {
                     }
                 });
 
-            global.fetch.mockResolvedValue({
+            globalThis.fetch.mockResolvedValue({
                 ok: true,
                 text: async () => JSON.stringify(remoteData)
             });
@@ -453,7 +451,7 @@ describe('GoogleDriveSyncService', () => {
                     }
                 });
 
-            global.fetch.mockResolvedValue({
+            globalThis.fetch.mockResolvedValue({
                 ok: true,
                 text: async () => JSON.stringify(remoteData)
             });
@@ -533,7 +531,7 @@ describe('GoogleDriveSyncService', () => {
             service._getCurrentAccessToken = jest.fn().mockReturnValue('token');
             service.refreshTokenIfNeeded = jest.fn().mockResolvedValue(true);
 
-            global.fetch
+            globalThis.fetch
                 .mockResolvedValueOnce({ ok: false, status: 401 })
                 .mockResolvedValueOnce({ ok: true, status: 200 });
 
@@ -550,7 +548,7 @@ describe('GoogleDriveSyncService', () => {
             service.folderId = 'folder';
             service._cachedStatus = {};
 
-            global.window.google = {
+            globalThis.window.google = {
                 accounts: {
                     oauth2: {
                         revoke: jest.fn((token, cb) => cb())
@@ -558,7 +556,7 @@ describe('GoogleDriveSyncService', () => {
                 }
             };
 
-            global.fetch.mockResolvedValue({ ok: true });
+            globalThis.fetch.mockResolvedValue({ ok: true });
 
             await service.signOut();
 
@@ -567,7 +565,7 @@ describe('GoogleDriveSyncService', () => {
             expect(service.folderId).toBeNull();
             expect(service._cachedStatus).toBeNull();
             expect(localStorage.removeItem).toHaveBeenCalledTimes(3);
-            expect(global.fetch).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' });
+            expect(globalThis.fetch).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' });
         });
     });
 
@@ -665,7 +663,7 @@ describe('GoogleDriveSyncService', () => {
             service.refreshReject = rejectMock;
 
             // Mock fetch failure
-            global.fetch.mockResolvedValue({ ok: false, json: async () => ({ error: 'Bad code' }) });
+            globalThis.fetch.mockResolvedValue({ ok: false, json: async () => ({ error: 'Bad code' }) });
 
             await service._handleCodeResponse({ code: 'c' });
             expect(rejectMock).toHaveBeenCalledWith(expect.any(Error));
@@ -879,7 +877,7 @@ describe('GoogleDriveSyncService', () => {
 
             const result = await service.refreshTokenIfNeeded(false);
             expect(result).toBe(false);
-            expect(global.fetch).not.toHaveBeenCalled();
+            expect(globalThis.fetch).not.toHaveBeenCalled();
         });
 
         // refreshTokenIfNeeded - should coalesce multiple parallel refresh calls
@@ -887,14 +885,15 @@ describe('GoogleDriveSyncService', () => {
             service.accessToken = null;
             service.tokenExpiresAt = null;
 
-            global.fetch.mockImplementation((url) => {
-                if (url === '/api/auth/refresh') {
-                    return new Promise(resolve => setTimeout(() => resolve({
-                        ok: true,
-                        json: () => Promise.resolve({ access_token: 'new-token', expires_in: 3600 })
-                    }), 50));
-                }
-                return Promise.reject(new Error('Unknown URL'));
+            const delayedResponse = {
+                ok: true,
+                json: () => Promise.resolve({ access_token: 'new-token', expires_in: 3600 })
+            };
+
+            globalThis.fetch.mockImplementation(async (url) => {
+                if (url !== '/api/auth/refresh') throw new Error('Unknown URL');
+                await wait(50);
+                return delayedResponse;
             });
 
             // Start two parallel refresh calls
@@ -906,7 +905,7 @@ describe('GoogleDriveSyncService', () => {
             expect(result1).toBe(true);
             expect(result2).toBe(true);
             // fetch should only be called once due to coalescence
-            expect(global.fetch).toHaveBeenCalledTimes(1);
+            expect(globalThis.fetch).toHaveBeenCalledTimes(1);
         });
 
         // downloadData - invalid JSON
@@ -925,13 +924,13 @@ describe('GoogleDriveSyncService', () => {
         // signOut - logout API error should be caught
         test('signOut should handle logout API error gracefully', async () => {
             service.accessToken = 'token';
-            global.window.google = {
+            globalThis.window.google = {
                 accounts: {
                     oauth2: { revoke: jest.fn() }
                 }
             };
 
-            global.fetch.mockRejectedValue(new Error('Network error'));
+            globalThis.fetch.mockRejectedValue(new Error('Network error'));
 
             // Should not throw
             await expect(service.signOut()).resolves.not.toThrow();
@@ -961,7 +960,7 @@ describe('GoogleDriveSyncService', () => {
                 return mockCodeClient;
             });
 
-            global.fetch.mockResolvedValue({
+            globalThis.fetch.mockResolvedValue({
                 ok: true,
                 json: async () => ({ access_token: 'token', expires_in: 3600 })
             });
@@ -996,7 +995,7 @@ describe('GoogleDriveSyncService', () => {
             service._getCurrentAccessToken = jest.fn().mockReturnValue('token');
             service.refreshTokenIfNeeded = jest.fn().mockRejectedValue(new Error('Refresh failed'));
 
-            global.fetch.mockResolvedValue({ ok: false, status: 401 });
+            globalThis.fetch.mockResolvedValue({ ok: false, status: 401 });
 
             // With maxRetries=0, when 401 is encountered, it won't retry (attempt=0 is not < maxRetries=0)
             // So we need maxRetries >= 1 to trigger the refresh path
@@ -1010,7 +1009,7 @@ describe('GoogleDriveSyncService', () => {
             // Fail refresh on first attempt, then on second attempt return no token
             service.refreshTokenIfNeeded = jest.fn().mockRejectedValue(new Error('Refresh failed'));
 
-            global.fetch.mockResolvedValue({ ok: false, status: 401 });
+            globalThis.fetch.mockResolvedValue({ ok: false, status: 401 });
 
             // The function will:
             // attempt 0: fetch 401, refresh fails, throws 'Auth failed', caught, continues
@@ -1102,14 +1101,14 @@ describe('GoogleDriveSyncService', () => {
             service.ensureAuthenticated = jest.fn().mockResolvedValue();
             service.findOrCreateFolder = jest.fn().mockResolvedValue('folder-id');
 
-            global.fetch.mockResolvedValue({
+            globalThis.fetch.mockResolvedValue({
                 ok: true,
                 json: async () => ({ id: 'existing-file' })
             });
 
             const result = await service.uploadData([], {});
             expect(result.fileId).toBe('existing-file');
-            expect(global.fetch).toHaveBeenCalledWith(
+            expect(globalThis.fetch).toHaveBeenCalledWith(
                 expect.stringContaining('/upload/drive/v3/files/existing-file'),
                 expect.objectContaining({ method: 'PATCH' })
             );
@@ -1122,7 +1121,7 @@ describe('GoogleDriveSyncService', () => {
             service.findOrCreateFolder = jest.fn().mockResolvedValue('folder-id');
             service.findDataFile = jest.fn().mockResolvedValue(null);
 
-            global.fetch.mockResolvedValue({
+            globalThis.fetch.mockResolvedValue({
                 ok: false,
                 status: 500,
                 json: async () => ({ error: { message: 'Server error' } })
@@ -1133,7 +1132,7 @@ describe('GoogleDriveSyncService', () => {
 
         // _updateAccessToken - update gapi client token
         test('_updateAccessToken should update gapi client', () => {
-            window.gapi = mockGapi;
+            globalThis.gapi = mockGapi;
             service._updateAccessToken('new-token', 3600);
             expect(service.accessToken).toBe('new-token');
             expect(mockGapi.client.setToken).toHaveBeenCalledWith({ access_token: 'new-token' });
@@ -1143,7 +1142,7 @@ describe('GoogleDriveSyncService', () => {
         test('ensureAuthenticated should set gapi token', async () => {
             service.accessToken = 'test-token';
             service.tokenExpiresAt = Date.now() + 10 * 60 * 1000;
-            window.gapi = mockGapi;
+            globalThis.gapi = mockGapi;
 
             await service.ensureAuthenticated();
             expect(mockGapi.client.setToken).toHaveBeenCalledWith({ access_token: 'test-token' });
