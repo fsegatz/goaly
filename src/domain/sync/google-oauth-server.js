@@ -7,7 +7,6 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 // Encryption key for refresh token (in memory, generates new one on restart currently)
 const ENCRYPTION_KEY = crypto.randomBytes(32);
 const IV_LENGTH = 12; // GCM recommended IV length is 12 bytes
-const AUTH_TAG_LENGTH = 16; // GCM auth tag length
 
 function encrypt(text) {
     const iv = crypto.randomBytes(IV_LENGTH);
@@ -31,7 +30,8 @@ function decrypt(text) {
         let decrypted = decipher.update(encryptedText);
         decrypted = Buffer.concat([decrypted, decipher.final()]);
         return decrypted.toString();
-    } catch (e) { // eslint-disable-line no-unused-vars
+    } catch (e) {
+        console.debug('Decryption failed:', e.message);
         return null;
     }
 }
