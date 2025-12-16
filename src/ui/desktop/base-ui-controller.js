@@ -136,5 +136,24 @@ export class BaseUIController {
         }
         return this.translate('reviews.interval.seconds', { count: formatter.format(totalSeconds) });
     }
+
+    /**
+     * Get a cached DOM element by ID, re-querying if not connected.
+     * @param {Object} cache - The cache object to use
+     * @param {string} id - The element ID
+     * @param {Function} [queryFn] - Optional query function (defaults to getOptionalElement)
+     * @returns {HTMLElement|null}
+     */
+    getCachedElement(cache, id, queryFn) {
+        const cached = cache[id];
+        if (cached?.isConnected) {
+            return cached;
+        }
+        // Import dynamically to avoid circular deps in subclasses
+        const query = queryFn || ((elementId) => document.getElementById(elementId));
+        const element = query(id);
+        cache[id] = element || null;
+        return element || null;
+    }
 }
 
