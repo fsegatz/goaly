@@ -502,10 +502,7 @@ export class MobileDashboardView extends DashboardView {
     }
 
     destroy() {
-        const existingIndicators = document.querySelector('.mobile-dashboard-indicators');
-        if (existingIndicators) {
-            existingIndicators.remove();
-        }
+        this._removeIndicators();
     }
 }
 
