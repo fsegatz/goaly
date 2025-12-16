@@ -173,17 +173,17 @@ beforeEach(() => {
     document = dom.window.document;
     window = dom.window;
 
-    global.document = document;
-    global.window = window;
-    global.navigator = window.navigator || { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
-    global.confirm = jest.fn();
-    global.alert = jest.fn();
-    window.confirm = global.confirm;
-    window.alert = global.alert;
+    globalThis.document = document;
+    globalThis.window = window;
+    globalThis.navigator = window.navigator || { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
+    globalThis.confirm = jest.fn();
+    globalThis.alert = jest.fn();
+    window.confirm = globalThis.confirm;
+    window.alert = globalThis.alert;
 
     // Ensure navigator is available on window
     if (!window.navigator) {
-        window.navigator = global.navigator;
+        window.navigator = globalThis.navigator;
     }
 
     jest.useFakeTimers();
@@ -285,14 +285,14 @@ afterEach(() => {
     jest.useRealTimers();
 
     // Clean up mobile dashboard indicators
-    if (global.document) {
-        const indicators = global.document.querySelectorAll('.mobile-dashboard-indicators');
+    if (globalThis.document) {
+        const indicators = globalThis.document.querySelectorAll('.mobile-dashboard-indicators');
         indicators.forEach(indicator => indicator.remove());
     }
 
     // Clean up event listeners by closing the JSDOM window BEFORE deleting globals
     // This ensures all event listeners are removed and the worker can exit gracefully
-    if (dom && dom.window) {
+    if (dom?.window) {
         try {
             // Remove all event listeners by closing the window
             if (!dom.window.closed) {
@@ -300,19 +300,20 @@ afterEach(() => {
             }
         } catch (e) {
             // Window might already be closed, ignore
+            console.debug('Window cleanup error:', e);
         }
     }
 
     // Clear all references to allow garbage collection
-    delete global.document;
-    delete global.window;
-    delete global.navigator;
-    delete global.confirm;
-    delete global.alert;
+    delete globalThis.document;
+    delete globalThis.window;
+    delete globalThis.navigator;
+    delete globalThis.confirm;
+    delete globalThis.alert;
 
     // Force garbage collection hint (if available)
-    if (global.gc) {
-        global.gc();
+    if (globalThis.gc) {
+        globalThis.gc();
     }
 });
 
@@ -485,12 +486,12 @@ describe('UIController', () => {
     test('updateGoalInline should show an alert when update throws an error', () => {
         mockApp.errorHandler.error.mockClear();
         mockGoalService.updateGoal.mockImplementationOnce(() => {
-            throw { message: '' };
+            throw new Error('Test error');
         });
         uiController.updateGoalInline('goal-error', {});
         expect(mockApp.errorHandler.error).toHaveBeenCalledWith(
             'errors.goalUpdateFailed',
-            { message: '' },
+            { message: 'Test error' },
             expect.any(Object)
         );
     });
@@ -540,7 +541,8 @@ describe('UIController', () => {
         document.querySelectorAll('.menu-btn').forEach(btn => btn.remove());
 
         expect(() => {
-            const newController = new UIController(mockApp);
+            const _ = new UIController(mockApp);
+            expect(_).toBeDefined();
         }).not.toThrow();
     });
 
@@ -837,7 +839,7 @@ describe('UIController', () => {
         expect(mobileMenuToggle.getAttribute('aria-expanded')).toBe('false');
         expect(mobileMenuDropdown.getAttribute('aria-hidden')).toBe('true');
 
-        document.body.removeChild(outsideElement);
+        outsideElement.remove();
     });
 
     test('mobile menu dropdown should update position on window resize', () => {
@@ -846,8 +848,6 @@ describe('UIController', () => {
 
         mobileMenuToggle.click();
         expect(mobileMenuDropdown.getAttribute('aria-hidden')).toBe('false');
-
-        const initialTop = mobileMenuDropdown.style.top;
 
         // Simulate window resize
         window.dispatchEvent(new window.Event('resize'));
@@ -863,8 +863,6 @@ describe('UIController', () => {
         mobileMenuToggle.click();
         mobileMenuDropdown.setAttribute('aria-hidden', 'false');
 
-        const initialTop = mobileMenuDropdown.style.top;
-
         // Simulate scroll
         window.dispatchEvent(new window.Event('scroll'));
 
@@ -873,7 +871,6 @@ describe('UIController', () => {
     });
 
     test('mobile menu dropdown should not update position on scroll when hidden', () => {
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
         const mobileMenuDropdown = document.getElementById('mobileMenuDropdown');
 
         mobileMenuDropdown.setAttribute('aria-hidden', 'true');
@@ -970,7 +967,8 @@ describe('UIController', () => {
 
         // Creating a new controller should not throw
         expect(() => {
-            const newController = new UIController(mockApp);
+            const _ = new UIController(mockApp);
+            expect(_).toBeDefined();
         }).not.toThrow();
     });
 

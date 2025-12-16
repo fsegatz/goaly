@@ -33,7 +33,7 @@ export class AllGoalsView extends BaseUIController {
         const priorityFilter = this.getControlElement('allGoalsPriorityFilter');
         if (priorityFilter) {
             priorityFilter.addEventListener('input', () => {
-                const parsed = parseInt(priorityFilter.value, 10);
+                const parsed = Number.parseInt(priorityFilter.value, 10);
                 this.allGoalsState.minPriority = Number.isNaN(parsed) ? 0 : parsed;
                 this.render(openGoalForm);
             });
@@ -127,7 +127,7 @@ export class AllGoalsView extends BaseUIController {
         } else {
             // If a specific status is changed, uncheck "all" if it was checked
             const allCheckbox = Array.from(allCheckboxes).find(cb => cb.value === 'all');
-            if (allCheckbox && allCheckbox.checked) {
+            if (allCheckbox?.checked) {
                 allCheckbox.checked = false;
             }
 
@@ -238,7 +238,12 @@ export class AllGoalsView extends BaseUIController {
                     return a.priority - b.priority;
                 case 'updated-desc':
                 case 'updated-asc': {
-                    const getTimestamp = (value) => value instanceof Date ? value.getTime() : (value ? new Date(value).getTime() : 0);
+                    const getTimestamp = (value) => {
+                        if (value instanceof Date) {
+                            return value.getTime();
+                        }
+                        return value ? new Date(value).getTime() : 0;
+                    };
                     const dateA = getTimestamp(a.goal.lastUpdated);
                     const dateB = getTimestamp(b.goal.lastUpdated);
                     return sortValue === 'updated-desc' ? dateB - dateA : dateA - dateB;
@@ -340,7 +345,7 @@ export class AllGoalsView extends BaseUIController {
             this.allGoalsControlRefs = {};
         }
         const cached = this.allGoalsControlRefs[id];
-        if (cached && cached.isConnected) {
+        if (cached?.isConnected) {
             return cached;
         }
         const element = getOptionalElement(id);

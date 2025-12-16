@@ -63,10 +63,7 @@ class ReviewService {
         const fallbackBase = goal.lastReviewAt ?? new Date();
 
         const existingNextReview = normalizeDate(goal.nextReviewAt);
-        if (!existingNextReview) {
-            // No review scheduled yet - set it based on lastReviewAt (or creation date)
-            goal.nextReviewAt = this.calculateNextReviewDate(fallbackBase, intervalDays);
-        } else {
+        if (existingNextReview) {
             // If nextReviewAt exists, check if it's unreasonably far in the future
             // This can happen if intervals were changed and goal had a schedule based on old intervals
             const now = new Date();
@@ -83,6 +80,9 @@ class ReviewService {
             } else {
                 goal.nextReviewAt = existingNextReview;
             }
+        } else {
+            // No review scheduled yet - set it based on lastReviewAt (or creation date)
+            goal.nextReviewAt = this.calculateNextReviewDate(fallbackBase, intervalDays);
         }
 
         return goal;
@@ -110,7 +110,7 @@ class ReviewService {
         return goals
             .filter((goal) => goal.status === 'active' || goal.status === 'inactive' || goal.status === 'paused')
             .map((goal) => this.ensureGoalSchedule(goal))
-            .filter((goal) => goal && goal.nextReviewAt && goal.nextReviewAt <= now)
+            .filter((goal) => goal?.nextReviewAt && goal.nextReviewAt <= now)
             .sort((a, b) => (a.nextReviewAt || 0) - (b.nextReviewAt || 0))
             .map((goal) => ({
                 goal,

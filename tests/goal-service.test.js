@@ -7,7 +7,7 @@ describe('Goal Service', () => {
 
     beforeEach(() => {
         // Mock localStorage
-        global.localStorage = {
+        globalThis.localStorage = {
             getItem: jest.fn(),
             setItem: jest.fn(),
             clear: jest.fn()
@@ -19,7 +19,7 @@ describe('Goal Service', () => {
         const savedGoals = [
             { id: '1', title: 'Goal 1', motivation: 3, urgency: 4, status: 'active', createdAt: '2025-01-01T00:00:00.000Z', lastUpdated: '2025-01-01T00:00:00.000Z' }
         ];
-        global.localStorage.getItem.mockReturnValue(JSON.stringify(savedGoals));
+        globalThis.localStorage.getItem.mockReturnValue(JSON.stringify(savedGoals));
 
         goalService.loadGoals();
 
@@ -28,7 +28,7 @@ describe('Goal Service', () => {
     });
 
     it('should handle empty localStorage when loading goals', () => {
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         goalService.loadGoals();
 
@@ -49,8 +49,8 @@ describe('Goal Service', () => {
 
     it('should automatically activate goals by priority when creating', () => {
         // Create goals with different priorities
-        const goal1 = goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 2);
-        const goal2 = goalService.createGoal({ title: 'Medium Priority', motivation: 3, urgency: 3 }, 2);
+        goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 2);
+        goalService.createGoal({ title: 'Medium Priority', motivation: 3, urgency: 3 }, 2);
         const goal3 = goalService.createGoal({ title: 'Low Priority', motivation: 1, urgency: 1 }, 2);
 
         // The two highest priority goals should be active
@@ -187,8 +187,8 @@ describe('Goal Service', () => {
     it('should auto activate goals by priority', () => {
         // Create multiple goals with different priorities
         const goal1 = goalService.createGoal({ title: 'Low Priority', motivation: 1, urgency: 1 }, 2);
-        const goal2 = goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 2);
-        const goal3 = goalService.createGoal({ title: 'Medium Priority', motivation: 3, urgency: 3 }, 2);
+        goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 2);
+        goalService.createGoal({ title: 'Medium Priority', motivation: 3, urgency: 3 }, 2);
 
         // Manually call autoActivateGoalsByPriority
         goalService.autoActivateGoalsByPriority(2);
@@ -298,13 +298,13 @@ describe('Goal Service', () => {
             title: 'Goal 1',
             motivation: 3,
             urgency: 3,
-            createdAt: new Date(today.getTime() - 1000) // Older
+            createdAt: new Date(today - 1000) // Older
         }, 1);
         const goal2 = goalService.createGoal({
             title: 'Goal 2',
             motivation: 3,
             urgency: 3,
-            createdAt: new Date(today.getTime()) // Newer
+            createdAt: new Date(today) // Newer
         }, 1);
 
         // Both have same priority, older should be preferred
@@ -466,10 +466,10 @@ describe('Goal Service', () => {
 
     it('setGoalStatus should use goals.length when maxActiveGoals is invalid', () => {
         const goal1 = goalService.createGoal({ title: 'Goal 1', motivation: 5, urgency: 5 }, 1);
-        const goal2 = goalService.createGoal({ title: 'Goal 2', motivation: 3, urgency: 3 }, 1);
+        goalService.createGoal({ title: 'Goal 2', motivation: 3, urgency: 3 }, 1);
         const autoSpy = jest.spyOn(goalService, 'autoActivateGoalsByPriority');
 
-        goalService.setGoalStatus(goal1.id, 'paused', NaN);
+        goalService.setGoalStatus(goal1.id, 'paused', Number.NaN);
         expect(autoSpy).toHaveBeenCalledWith(2); // Should use goals.length
 
         goalService.setGoalStatus(goal1.id, 'active', 0);
@@ -609,7 +609,7 @@ describe('Goal Service', () => {
         });
 
         it('should clear pause metadata when force-activating', () => {
-            const goal1 = goalService.createGoal({ title: 'Goal 1', motivation: 5, urgency: 5 }, 2);
+            goalService.createGoal({ title: 'Goal 1', motivation: 5, urgency: 5 }, 2);
             const goal2 = goalService.createGoal({ title: 'Goal 2', motivation: 1, urgency: 1 }, 2);
 
             // Pause goal2
@@ -666,7 +666,7 @@ describe('Goal Service', () => {
         });
 
         it('should preserve force-activated goals during auto-activation', () => {
-            const goal1 = goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 2);
+            goalService.createGoal({ title: 'High Priority', motivation: 5, urgency: 5 }, 2);
             const goal2 = goalService.createGoal({ title: 'Medium Priority', motivation: 3, urgency: 3 }, 2);
             const goal3 = goalService.createGoal({ title: 'Low Priority', motivation: 1, urgency: 1 }, 2);
 

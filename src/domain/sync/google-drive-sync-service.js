@@ -54,8 +54,8 @@ class GoogleDriveSyncService {
         await this.loadGoogleAPIs();
 
         // Initialize code client for authorization code flow
-        if (this.gisLoaded && window.google?.accounts?.oauth2) {
-            this.tokenClient = window.google.accounts.oauth2.initCodeClient({
+        if (this.gisLoaded && globalThis.google?.accounts?.oauth2) {
+            this.tokenClient = globalThis.google.accounts.oauth2.initCodeClient({
                 client_id: this.clientId,
                 scope: SCOPES,
                 ux_mode: 'popup',
@@ -95,7 +95,7 @@ class GoogleDriveSyncService {
 
             // Load gapi (Google API client)
             if (!this.gapiLoaded) {
-                if (window.gapi) {
+                if (globalThis.gapi) {
                     this.gapiLoaded = true;
                     gapiResolved = true;
                     checkResolved();
@@ -103,9 +103,9 @@ class GoogleDriveSyncService {
                     const gapiScript = document.createElement('script');
                     gapiScript.src = 'https://apis.google.com/js/api.js';
                     gapiScript.onload = () => {
-                        window.gapi.load('client', async () => {
+                        globalThis.gapi.load('client', async () => {
                             try {
-                                await window.gapi.client.init({
+                                await globalThis.gapi.client.init({
                                     apiKey: this.apiKey,
                                     discoveryDocs: DISCOVERY_DOCS
                                 });
@@ -127,7 +127,7 @@ class GoogleDriveSyncService {
 
             // Load gis (Google Identity Services)
             if (!this.gisLoaded) {
-                if (window.google?.accounts) {
+                if (globalThis.google?.accounts) {
                     this.gisLoaded = true;
                     gisResolved = true;
                     checkResolved();
@@ -209,8 +209,8 @@ class GoogleDriveSyncService {
         this.tokenExpiresAt = Date.now() + (expiresInSeconds * 1000);
 
         // Update gapi
-        if (window.gapi && window.gapi.client) {
-            window.gapi.client.setToken({ access_token: this.accessToken });
+        if (globalThis.gapi?.client) {
+            globalThis.gapi.client.setToken({ access_token: this.accessToken });
         }
     }
 
@@ -239,7 +239,7 @@ class GoogleDriveSyncService {
 
             try {
                 if (!this.tokenClient) {
-                    this.tokenClient = window.google.accounts.oauth2.initCodeClient({
+                    this.tokenClient = globalThis.google.accounts.oauth2.initCodeClient({
                         client_id: this.clientId,
                         scope: SCOPES,
                         ux_mode: 'popup',
@@ -258,8 +258,8 @@ class GoogleDriveSyncService {
      * Sign out and clear stored tokens
      */
     async signOut() {
-        if (this.accessToken && window.google?.accounts) {
-            window.google.accounts.oauth2.revoke(this.accessToken, () => { });
+        if (this.accessToken && globalThis.google?.accounts) {
+            globalThis.google.accounts.oauth2.revoke(this.accessToken, () => { });
         }
 
         // Call backend to clear cookie
@@ -278,8 +278,8 @@ class GoogleDriveSyncService {
         // Clean up old token storage if exists
         localStorage.removeItem(STORAGE_KEY_GDRIVE_TOKEN);
 
-        if (window.gapi?.client) {
-            window.gapi.client.setToken(null);
+        if (globalThis.gapi?.client) {
+            globalThis.gapi.client.setToken(null);
         }
     }
 
@@ -359,8 +359,8 @@ class GoogleDriveSyncService {
             throw new Error('Not authenticated. Please sign in first.');
         }
 
-        if (window.gapi?.client) {
-            window.gapi.client.setToken({ access_token: this.accessToken });
+        if (globalThis.gapi?.client) {
+            globalThis.gapi.client.setToken({ access_token: this.accessToken });
         }
     }
 
@@ -472,8 +472,8 @@ class GoogleDriveSyncService {
                         const refreshedToken = this._getCurrentAccessToken();
                         if (refreshedToken) {
                             this.accessToken = refreshedToken;
-                            if (window.gapi?.client) {
-                                window.gapi.client.setToken({ access_token: this.accessToken });
+                            if (globalThis.gapi?.client) {
+                                globalThis.gapi.client.setToken({ access_token: this.accessToken });
                             }
                         }
 
@@ -516,7 +516,7 @@ class GoogleDriveSyncService {
 
         // Search for existing folder with automatic retry on auth errors
         const response = await this.executeWithTokenRefresh(async () => {
-            return await window.gapi.client.drive.files.list({
+            return await globalThis.gapi.client.drive.files.list({
                 q: `name='${GOOGLE_DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
                 fields: 'files(id, name)',
                 spaces: 'drive'
@@ -531,7 +531,7 @@ class GoogleDriveSyncService {
 
         // Create folder if it doesn't exist
         const folderResponse = await this.executeWithTokenRefresh(async () => {
-            return await window.gapi.client.drive.files.create({
+            return await globalThis.gapi.client.drive.files.create({
                 resource: {
                     name: GOOGLE_DRIVE_FOLDER_NAME,
                     mimeType: 'application/vnd.google-apps.folder'
@@ -552,7 +552,7 @@ class GoogleDriveSyncService {
         await this.ensureAuthenticated();
 
         const response = await this.executeWithTokenRefresh(async () => {
-            return await window.gapi.client.drive.files.list({
+            return await globalThis.gapi.client.drive.files.list({
                 q: `name='${GOOGLE_DRIVE_FILE_NAME}' and '${folderId}' in parents and trashed=false`,
                 fields: 'files(id, name, modifiedTime)',
                 spaces: 'drive'
@@ -904,13 +904,13 @@ class GoogleDriveSyncService {
             if (!folderId) {
                 // Only search for folder if we don't have it cached
                 const folderList = await this.executeWithTokenRefresh(async () => {
-                    return await window.gapi.client.drive.files.list({
+                    return await globalThis.gapi.client.drive.files.list({
                         q: `name='${GOOGLE_DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
                         fields: 'files(id, name)',
                         spaces: 'drive'
                     });
                 });
-                folderId = (folderList.result.files && folderList.result.files[0]?.id) || null;
+                folderId = folderList.result.files?.[0]?.id ?? null;
                 if (folderId) {
                     this.folderId = folderId;
                     localStorage.setItem(STORAGE_KEY_GDRIVE_FOLDER_ID, folderId);
@@ -926,7 +926,7 @@ class GoogleDriveSyncService {
                     // Try to get file metadata directly using cached ID (more efficient)
                     try {
                         const fileResponse = await this.executeWithTokenRefresh(async () => {
-                            return await window.gapi.client.drive.files.get({
+                            return await globalThis.gapi.client.drive.files.get({
                                 fileId: cachedFileId,
                                 fields: 'id, name, modifiedTime, trashed'
                             });
@@ -948,13 +948,13 @@ class GoogleDriveSyncService {
                 // If we don't have file info yet, search for it
                 if (!file) {
                     const fileList = await this.executeWithTokenRefresh(async () => {
-                        return await window.gapi.client.drive.files.list({
+                        return await globalThis.gapi.client.drive.files.list({
                             q: `name='${GOOGLE_DRIVE_FILE_NAME}' and '${folderId}' in parents and trashed=false`,
                             fields: 'files(id, name, modifiedTime)',
                             spaces: 'drive'
                         });
                     });
-                    file = (fileList.result.files && fileList.result.files[0]) || null;
+                    file = fileList.result.files?.[0] ?? null;
                     if (file) {
                         this.fileId = file.id;
                         localStorage.setItem(STORAGE_KEY_GDRIVE_FILE_ID, file.id);

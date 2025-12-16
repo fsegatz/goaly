@@ -162,17 +162,17 @@ function setupTestEnvironment() {
     window = dom.window;
 
     // Make document and window available globally for the UIController
-    global.document = document;
-    global.window = window;
-    global.navigator = window.navigator || { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
-    global.confirm = jest.fn(); // Mock global confirm
-    global.alert = jest.fn(); // Mock global alert
-    window.confirm = global.confirm;
-    window.alert = global.alert;
-    
+    globalThis.document = document;
+    globalThis.window = window;
+    globalThis.navigator = window.navigator || { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
+    globalThis.confirm = jest.fn(); // Mock global confirm
+    globalThis.alert = jest.fn(); // Mock global alert
+    window.confirm = globalThis.confirm;
+    window.alert = globalThis.alert;
+
     // Ensure navigator is available on window
     if (!window.navigator) {
-        window.navigator = global.navigator;
+        window.navigator = globalThis.navigator;
     }
 
     jest.useFakeTimers();
@@ -242,11 +242,11 @@ function cleanupTestEnvironment() {
     jest.clearAllTimers();
     jest.useRealTimers();
     // Clean up global DOM elements
-    delete global.document;
-    delete global.window;
-    delete global.navigator;
-    delete global.confirm;
-    delete global.alert;
+    delete globalThis.document;
+    delete globalThis.window;
+    delete globalThis.navigator;
+    delete globalThis.confirm;
+    delete globalThis.alert;
 }
 
 module.exports = { setupTestEnvironment, cleanupTestEnvironment };

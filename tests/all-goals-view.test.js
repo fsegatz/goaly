@@ -86,8 +86,8 @@ beforeEach(() => {
     document = dom.window.document;
     window = dom.window;
 
-    global.document = document;
-    global.window = window;
+    globalThis.document = document;
+    globalThis.window = window;
 
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2025-11-09T12:00:00.000Z'));
@@ -128,8 +128,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-    delete global.document;
-    delete global.window;
+    delete globalThis.document;
+    delete globalThis.window;
     jest.useRealTimers();
     jest.restoreAllMocks();
 });
@@ -231,8 +231,6 @@ describe('AllGoalsView', () => {
 
         test('should filter by multiple status selections', () => {
             const dropdown = document.getElementById('allGoalsStatusFilter');
-            const activeCheckbox = dropdown.querySelector('input[value="active"]');
-            const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
             const completedCheckbox = dropdown.querySelector('input[value="completed"]');
             const allCheckbox = dropdown.querySelector('input[value="all"]');
 
@@ -328,7 +326,7 @@ describe('AllGoalsView', () => {
         allGoalsView.allGoalsControlRefs.tempElement = { isConnected: false };
         expect(allGoalsView.getControlElement('tempElement')).toBe(tempElement);
 
-        document.body.removeChild(tempElement);
+        tempElement.remove();
     });
 
     test('render should return early when table body is absent', () => {

@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 const { handleAuthRequest } = require('../src/domain/sync/google-oauth-server');
-const { EventEmitter } = require('events');
+const { EventEmitter } = require('node:events');
 
 describe('Google OAuth Server', () => {
     let req;
@@ -22,7 +22,7 @@ describe('Google OAuth Server', () => {
         jest.spyOn(console, 'error').mockImplementation(() => { });
         jest.spyOn(console, 'warn').mockImplementation(() => { });
 
-        global.fetch = jest.fn();
+        globalThis.fetch = jest.fn();
     });
 
     afterEach(async () => {
@@ -44,7 +44,7 @@ describe('Google OAuth Server', () => {
     };
 
     const getResponseCookie = () => {
-        if (!res.headers || !res.headers['Set-Cookie']) {
+        if (!res.headers?.['Set-Cookie']) {
             if (console.error.mock && console.error.mock.calls.length > 0) {
                 const errors = console.error.mock.calls.map(c => JSON.stringify(c)).join('; ');
                 throw new Error(`Set-Cookie missing. Suppressed errors: ${errors}`);
@@ -55,7 +55,7 @@ describe('Google OAuth Server', () => {
     };
 
     test('POST /api/auth/exchange should exchange code for tokens', async () => {
-        global.fetch.mockResolvedValue({
+        globalThis.fetch.mockResolvedValue({
             json: async () => ({
                 access_token: 'access-123',
                 refresh_token: 'refresh-456',
@@ -93,7 +93,7 @@ describe('Google OAuth Server', () => {
     });
 
     test('POST /api/auth/exchange should handle upstream error', async () => {
-        global.fetch.mockResolvedValue({
+        globalThis.fetch.mockResolvedValue({
             json: async () => ({ error: 'invalid_grant', error_description: 'Bad code' })
         });
 
@@ -106,7 +106,7 @@ describe('Google OAuth Server', () => {
     });
 
     test('POST /api/auth/exchange should handle fetch exception', async () => {
-        global.fetch.mockRejectedValue(new Error('Network error'));
+        globalThis.fetch.mockRejectedValue(new Error('Network error'));
 
         simulatePost('/api/auth/exchange', { code: 'code' });
         await handleAuthRequest(req, res);
@@ -135,7 +135,7 @@ describe('Google OAuth Server', () => {
 
     test('POST /api/auth/refresh should succeed with valid cookie', async () => {
         // 1. First exchange to generate a valid encrypted cookie
-        global.fetch.mockResolvedValueOnce({
+        globalThis.fetch.mockResolvedValueOnce({
             json: async () => ({ access_token: 'a1', refresh_token: 'r1', expires_in: 3600 })
         });
 
@@ -154,7 +154,7 @@ describe('Google OAuth Server', () => {
         req.headers = { cookie: cookieStr };
 
         // 2. Mock refresh upstream response
-        global.fetch.mockResolvedValueOnce({
+        globalThis.fetch.mockResolvedValueOnce({
             json: async () => ({ access_token: 'new-access', expires_in: 3600 })
         });
 
@@ -168,7 +168,7 @@ describe('Google OAuth Server', () => {
 
     test('POST /api/auth/refresh should clear cookie if upstream returns error (revoked)', async () => {
         // 1. Generate valid cookie
-        global.fetch.mockResolvedValueOnce({
+        globalThis.fetch.mockResolvedValueOnce({
             json: async () => ({ access_token: 'a1', refresh_token: 'r1', expires_in: 3600 })
         });
         simulatePost('/api/auth/exchange', { code: 'c1' });
@@ -183,7 +183,7 @@ describe('Google OAuth Server', () => {
         req = new EventEmitter();
         req.headers = { cookie: cookieStr };
 
-        global.fetch.mockResolvedValueOnce({
+        globalThis.fetch.mockResolvedValueOnce({
             json: async () => ({ error: 'invalid_grant' })
         });
 
@@ -197,7 +197,7 @@ describe('Google OAuth Server', () => {
 
     test('POST /api/auth/refresh should handle fetch exception', async () => {
         // 1. Generate valid cookie
-        global.fetch.mockResolvedValueOnce({
+        globalThis.fetch.mockResolvedValueOnce({
             json: async () => ({ access_token: 'a1', refresh_token: 'r1', expires_in: 3600 })
         });
         simulatePost('/api/auth/exchange', { code: 'c1' });
@@ -212,7 +212,7 @@ describe('Google OAuth Server', () => {
         req = new EventEmitter();
         req.headers = { cookie: cookieStr };
 
-        global.fetch.mockRejectedValue(new Error('Net err'));
+        globalThis.fetch.mockRejectedValue(new Error('Net err'));
 
         simulatePost('/api/auth/refresh', {});
         await handleAuthRequest(req, res);
