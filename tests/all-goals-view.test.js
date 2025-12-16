@@ -1,13 +1,63 @@
 const { JSDOM } = require('jsdom');
 const { AllGoalsView } = require('../src/ui/desktop/all-goals-view.js');
 const Goal = require('../src/domain/models/goal').default;
-const {
-    STATUS_FILTER_HTML,
-    createMockGoalService,
-    createMockApp,
-    createTestGoals,
-    runBaseAllGoalsViewTests
-} = require('./shared/all-goals-view-test-utils.js');
+const LanguageService = require('../src/domain/services/language-service').default;
+
+/**
+ * Common HTML structure for status filter dropdown.
+ */
+const STATUS_FILTER_HTML = `
+    <div class="all-goals-controls">
+        <label for="allGoalsStatusFilter">
+            <span>Status</span>
+            <div class="status-filter-dropdown" id="allGoalsStatusFilter">
+                <button type="button" class="status-filter-button" id="allGoalsStatusFilterButton" aria-haspopup="true" aria-expanded="false">
+                    <span class="status-filter-button-text">All statuses</span>
+                    <span class="status-filter-button-arrow">▼</span>
+                </button>
+                <div class="status-filter-dropdown-menu" id="allGoalsStatusFilterMenu" role="menu" aria-hidden="true">
+                    <label class="status-filter-option" role="menuitem">
+                        <input type="checkbox" value="all" class="status-filter-checkbox" checked>
+                        <span>All statuses</span>
+                    </label>
+                    <label class="status-filter-option" role="menuitem">
+                        <input type="checkbox" value="active" class="status-filter-checkbox">
+                        <span>Active</span>
+                    </label>
+                    <label class="status-filter-option" role="menuitem">
+                        <input type="checkbox" value="inactive" class="status-filter-checkbox">
+                        <span>Inactive</span>
+                    </label>
+                    <label class="status-filter-option" role="menuitem">
+                        <input type="checkbox" value="paused" class="status-filter-checkbox">
+                        <span>Paused</span>
+                    </label>
+                    <label class="status-filter-option" role="menuitem">
+                        <input type="checkbox" value="completed" class="status-filter-checkbox">
+                        <span>Completed</span>
+                    </label>
+                    <label class="status-filter-option" role="menuitem">
+                        <input type="checkbox" value="notCompleted" class="status-filter-checkbox">
+                        <span>Not Completed</span>
+                    </label>
+                    <button type="button" class="status-filter-clear" id="allGoalsStatusFilterClear">Clear filter</button>
+                </div>
+            </div>
+        </label>
+        <label for="allGoalsPriorityFilter">
+            <span>Minimum priority</span>
+            <input type="number" id="allGoalsPriorityFilter" value="0" />
+        </label>
+        <label for="allGoalsSort">
+            <span>Sorting</span>
+            <select id="allGoalsSort">
+                <option value="priority-desc">Priority (high → low)</option>
+                <option value="priority-asc">Priority (low → high)</option>
+                <option value="updated-desc">Last update (new → old)</option>
+                <option value="updated-asc">Last update (old → new)</option>
+            </select>
+        </label>
+    </div>`;
 
 /**
  * Desktop-specific HTML for AllGoalsView tests.
@@ -30,6 +80,84 @@ const DESKTOP_TABLE_HTML = `
         </table>
         <div id="allGoalsEmptyState" hidden>No goals match the current filters.</div>
     </div>`;
+
+/**
+ * Creates a mock goal service with common defaults.
+ */
+function createMockGoalService() {
+    const mockGoalService = {
+        goals: [],
+        calculatePriority: jest.fn((goal) => goal.motivation + goal.urgency),
+        priorityCache: {
+            getPriority: jest.fn((goalId) => {
+                const goal = mockGoalService.goals.find(g => g.id === goalId);
+                return goal ? mockGoalService.calculatePriority(goal) : 0;
+            }),
+            getAllPriorities: jest.fn(() => {
+                const priorities = new Map();
+                mockGoalService.goals.forEach(goal => {
+                    priorities.set(goal.id, mockGoalService.calculatePriority(goal));
+                });
+                return priorities;
+            }),
+            invalidate: jest.fn(),
+            refreshIfNeeded: jest.fn(),
+            clear: jest.fn()
+        }
+    };
+    return mockGoalService;
+}
+
+/**
+ * Creates a mock app object with all required services.
+ */
+function createMockApp(mockGoalService) {
+    const languageService = new LanguageService();
+    languageService.init('en');
+
+    return {
+        goalService: mockGoalService,
+        languageService,
+        settingsService: {
+            getSettings: jest.fn(() => ({ maxActiveGoals: 3 }))
+        }
+    };
+}
+
+/**
+ * Creates standard test goals for filtering and sorting tests.
+ */
+function createTestGoals() {
+    return {
+        activeGoal: new Goal({
+            id: 'a',
+            title: 'Active',
+            motivation: 5,
+            urgency: 4,
+            status: 'active',
+            deadline: null,
+            lastUpdated: new Date('2025-11-10T10:00:00.000Z')
+        }),
+        pausedGoal: new Goal({
+            id: 'p',
+            title: 'Paused',
+            motivation: 3,
+            urgency: 2,
+            status: 'paused',
+            deadline: null,
+            lastUpdated: new Date('2025-11-08T10:00:00.000Z')
+        }),
+        completedGoal: new Goal({
+            id: 'c',
+            title: 'Completed',
+            motivation: 4,
+            urgency: 1,
+            status: 'completed',
+            deadline: null,
+            lastUpdated: new Date('2025-11-12T10:00:00.000Z')
+        })
+    };
+}
 
 let dom;
 let document;
@@ -67,14 +195,363 @@ afterEach(() => {
 });
 
 describe('AllGoalsView', () => {
-    // Run shared tests from base class
-    runBaseAllGoalsViewTests({
-        createView: (app) => new AllGoalsView(app),
-        getRenderedItems: () => document.querySelectorAll('#allGoalsTableBody tr'),
-        getItemId: (row) => row.dataset.goalId
+    describe('Status filter dropdown', () => {
+        test('should toggle dropdown on button click', () => {
+            const openGoalForm = jest.fn();
+            allGoalsView.setupControls(openGoalForm);
+
+            const button = document.getElementById('allGoalsStatusFilterButton');
+            const menu = document.getElementById('allGoalsStatusFilterMenu');
+
+            expect(button.getAttribute('aria-expanded')).toBe('false');
+            expect(menu.getAttribute('aria-hidden')).toBe('true');
+
+            button.click();
+
+            expect(button.getAttribute('aria-expanded')).toBe('true');
+            expect(menu.getAttribute('aria-hidden')).toBe('false');
+
+            button.click();
+
+            expect(button.getAttribute('aria-expanded')).toBe('false');
+            expect(menu.getAttribute('aria-hidden')).toBe('true');
+        });
+
+        test('should close dropdown when clicking outside', () => {
+            const openGoalForm = jest.fn();
+            allGoalsView.setupControls(openGoalForm);
+
+            const button = document.getElementById('allGoalsStatusFilterButton');
+            const menu = document.getElementById('allGoalsStatusFilterMenu');
+            const outsideElement = document.createElement('div');
+            document.body.appendChild(outsideElement);
+
+            button.click();
+            expect(button.getAttribute('aria-expanded')).toBe('true');
+
+            outsideElement.click();
+
+            expect(button.getAttribute('aria-expanded')).toBe('false');
+            expect(menu.getAttribute('aria-hidden')).toBe('true');
+
+            outsideElement.remove();
+        });
+
+        test('should clear filter when clear button is clicked', () => {
+            const openGoalForm = jest.fn();
+            allGoalsView.render = jest.fn();
+            allGoalsView.setupControls(openGoalForm);
+
+            const dropdown = document.getElementById('allGoalsStatusFilter');
+            const clearButton = document.getElementById('allGoalsStatusFilterClear');
+            const allCheckbox = dropdown.querySelector('input[value="all"]');
+            const activeCheckbox = dropdown.querySelector('input[value="active"]');
+
+            allCheckbox.checked = false;
+            activeCheckbox.checked = true;
+            allGoalsView.allGoalsState.statusFilter = ['active'];
+
+            clearButton.click();
+
+            expect(allGoalsView.allGoalsState.statusFilter).toEqual(['all']);
+            expect(allCheckbox.checked).toBe(true);
+            expect(activeCheckbox.checked).toBe(false);
+        });
+
+        test('should update button text to "All statuses" when all individual statuses are selected', () => {
+            const openGoalForm = jest.fn();
+            allGoalsView.setupControls(openGoalForm);
+
+            const dropdown = document.getElementById('allGoalsStatusFilter');
+            const checkboxes = dropdown.querySelectorAll('.status-filter-checkbox:not([value="all"])');
+            const allCheckbox = dropdown.querySelector('input[value="all"]');
+
+            allCheckbox.checked = false;
+            allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                cb.dispatchEvent(new window.Event('change', { bubbles: true }));
+            });
+
+            const button = document.getElementById('allGoalsStatusFilterButton');
+            const buttonText = button.querySelector('.status-filter-button-text');
+            expect(buttonText.textContent).toMatch(/All statuses|filters.statusOptions.all/);
+        });
+
+        test('should handle missing dropdown elements', () => {
+            const openGoalForm = jest.fn();
+            document.getElementById('allGoalsStatusFilter').remove();
+
+            expect(() => allGoalsView.setupStatusFilterDropdown(openGoalForm)).not.toThrow();
+        });
     });
 
-    // Desktop-specific tests
+    describe('handleStatusFilterChange', () => {
+        test('should set filter to all when "all" is checked', () => {
+            const openGoalForm = jest.fn();
+            allGoalsView.setupControls(openGoalForm);
+
+            const dropdown = document.getElementById('allGoalsStatusFilter');
+            const allCheckbox = dropdown.querySelector('input[value="all"]');
+
+            allCheckbox.checked = false;
+            allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            allCheckbox.checked = true;
+            allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            expect(allGoalsView.allGoalsState.statusFilter).toEqual(['all']);
+        });
+
+        test('should select "all" when nothing is selected', () => {
+            const openGoalForm = jest.fn();
+            allGoalsView.setupControls(openGoalForm);
+
+            const dropdown = document.getElementById('allGoalsStatusFilter');
+            const allCheckbox = dropdown.querySelector('input[value="all"]');
+            const checkboxes = dropdown.querySelectorAll('.status-filter-checkbox:not([value="all"])');
+
+            allCheckbox.checked = false;
+            allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+                cb.dispatchEvent(new window.Event('change', { bubbles: true }));
+            });
+
+            expect(allCheckbox.checked).toBe(true);
+            expect(allGoalsView.allGoalsState.statusFilter).toEqual(['all']);
+        });
+    });
+
+    describe('setupControls', () => {
+        test('should update state on priority filter change', () => {
+            const openGoalForm = jest.fn();
+            allGoalsView.render = jest.fn();
+            allGoalsView.setupControls(openGoalForm);
+
+            const priorityFilter = document.getElementById('allGoalsPriorityFilter');
+            priorityFilter.value = '42';
+            priorityFilter.dispatchEvent(new window.Event('input', { bubbles: true }));
+
+            expect(allGoalsView.allGoalsState.minPriority).toBe(42);
+        });
+
+        test('should handle invalid priority filter value', () => {
+            const openGoalForm = jest.fn();
+            allGoalsView.render = jest.fn();
+            allGoalsView.setupControls(openGoalForm);
+
+            const priorityFilter = document.getElementById('allGoalsPriorityFilter');
+            priorityFilter.value = 'invalid';
+            priorityFilter.dispatchEvent(new window.Event('input', { bubbles: true }));
+
+            expect(allGoalsView.allGoalsState.minPriority).toBe(0);
+        });
+
+        test('should update sort on change', () => {
+            const openGoalForm = jest.fn();
+            allGoalsView.render = jest.fn();
+            allGoalsView.setupControls(openGoalForm);
+
+            const sortSelect = document.getElementById('allGoalsSort');
+            sortSelect.value = 'updated-asc';
+            sortSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            expect(allGoalsView.allGoalsState.sort).toBe('updated-asc');
+        });
+
+        test('should handle missing control elements', () => {
+            document.getElementById('allGoalsStatusFilter')?.remove();
+            document.getElementById('allGoalsPriorityFilter')?.remove();
+            document.getElementById('allGoalsSort')?.remove();
+
+            const openGoalForm = jest.fn();
+            expect(() => allGoalsView.setupControls(openGoalForm)).not.toThrow();
+        });
+    });
+
+    describe('updateStatusFilterButtonText', () => {
+        test('should handle missing button text element', () => {
+            const button = document.createElement('button');
+            expect(() => allGoalsView.updateStatusFilterButtonText(button)).not.toThrow();
+        });
+
+        test('should show count when multiple statuses selected', () => {
+            const openGoalForm = jest.fn();
+            allGoalsView.setupControls(openGoalForm);
+
+            const button = document.getElementById('allGoalsStatusFilterButton');
+            const buttonText = button.querySelector('.status-filter-button-text');
+
+            allGoalsView.allGoalsState.statusFilter = ['active', 'paused'];
+            allGoalsView.updateStatusFilterButtonText(button);
+
+            expect(buttonText.textContent).toContain('2');
+            expect(buttonText.textContent.toLowerCase()).toContain('status');
+        });
+
+        test('should show single status name when one status selected', () => {
+            const openGoalForm = jest.fn();
+            allGoalsView.setupControls(openGoalForm);
+
+            const button = document.getElementById('allGoalsStatusFilterButton');
+            const buttonText = button.querySelector('.status-filter-button-text');
+
+            allGoalsView.allGoalsState.statusFilter = ['active'];
+            allGoalsView.updateStatusFilterButtonText(button);
+
+            expect(buttonText.textContent).not.toMatch(/All statuses|filters.statusOptions.all/);
+        });
+    });
+
+    describe('syncFilterControls', () => {
+        test('should sync checkboxes when status filter is not "all"', () => {
+            const openGoalForm = jest.fn();
+            allGoalsView.setupControls(openGoalForm);
+
+            const dropdown = document.getElementById('allGoalsStatusFilter');
+            const activeCheckbox = dropdown.querySelector('input[value="active"]');
+            const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
+            const allCheckbox = dropdown.querySelector('input[value="all"]');
+
+            allGoalsView.allGoalsState.statusFilter = ['active', 'paused'];
+            allGoalsView.syncFilterControls();
+
+            expect(activeCheckbox.checked).toBe(true);
+            expect(pausedCheckbox.checked).toBe(true);
+            expect(allCheckbox.checked).toBe(false);
+        });
+    });
+
+    describe('Filtering', () => {
+        let testGoals;
+
+        beforeEach(() => {
+            testGoals = createTestGoals();
+            mockGoalService.goals = [testGoals.activeGoal, testGoals.pausedGoal, testGoals.completedGoal];
+            mockGoalService.calculatePriority.mockImplementation(goal => goal.motivation + goal.urgency * 10);
+        });
+
+        test('should filter out completed goals when includeCompleted is false', () => {
+            allGoalsView.allGoalsState.includeCompleted = false;
+            const openGoalForm = jest.fn();
+            allGoalsView.render(openGoalForm);
+
+            const items = document.querySelectorAll('#allGoalsTableBody tr');
+            const ids = Array.from(items).map(row => row.dataset.goalId);
+            expect(ids).not.toContain('c');
+        });
+
+        test('should filter out notCompleted goals when includeNotCompleted is false', () => {
+            const notCompletedGoal = new Goal({
+                id: 'nc',
+                title: 'Not Completed',
+                motivation: 3,
+                urgency: 2,
+                status: 'notCompleted'
+            });
+            mockGoalService.goals.push(notCompletedGoal);
+            allGoalsView.allGoalsState.includeNotCompleted = false;
+
+            const openGoalForm = jest.fn();
+            allGoalsView.render(openGoalForm);
+
+            const items = document.querySelectorAll('#allGoalsTableBody tr');
+            const ids = Array.from(items).map(row => row.dataset.goalId);
+            expect(ids).not.toContain('nc');
+        });
+
+        test('should filter by minimum priority', () => {
+            allGoalsView.allGoalsState.minPriority = 40;
+            const openGoalForm = jest.fn();
+            allGoalsView.render(openGoalForm);
+
+            const items = document.querySelectorAll('#allGoalsTableBody tr');
+            expect(items.length).toBe(1);
+            expect(items[0].dataset.goalId).toBe('a');
+        });
+
+        test('should filter by specific status when not "all"', () => {
+            allGoalsView.allGoalsState.statusFilter = ['active'];
+            const openGoalForm = jest.fn();
+            allGoalsView.render(openGoalForm);
+
+            const items = document.querySelectorAll('#allGoalsTableBody tr');
+            const ids = Array.from(items).map(row => row.dataset.goalId);
+            expect(ids).toContain('a');
+            expect(ids).not.toContain('p');
+            expect(ids).not.toContain('c');
+        });
+
+        test('should handle status filter change when allCheckbox exists but is not checked', () => {
+            const openGoalForm = jest.fn();
+            allGoalsView.setupControls(openGoalForm);
+
+            const dropdown = document.getElementById('allGoalsStatusFilter');
+            const allCheckbox = dropdown.querySelector('input[value="all"]');
+            const activeCheckbox = dropdown.querySelector('input[value="active"]');
+
+            allCheckbox.checked = false;
+            allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            activeCheckbox.checked = true;
+            activeCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+            expect(allGoalsView.allGoalsState.statusFilter).toContain('active');
+        });
+    });
+
+    describe('Sorting', () => {
+        let testGoals;
+
+        beforeEach(() => {
+            testGoals = createTestGoals();
+            mockGoalService.goals = [testGoals.activeGoal, testGoals.pausedGoal, testGoals.completedGoal];
+            mockGoalService.calculatePriority.mockImplementation(goal => goal.motivation + goal.urgency * 10);
+        });
+
+        test('should sort by priority ascending', () => {
+            allGoalsView.allGoalsState.sort = 'priority-asc';
+            const openGoalForm = jest.fn();
+            allGoalsView.render(openGoalForm);
+
+            const items = document.querySelectorAll('#allGoalsTableBody tr');
+            const ids = Array.from(items).map(row => row.dataset.goalId);
+            expect(ids[0]).toBe('c');
+        });
+
+        test('should sort by updated descending', () => {
+            allGoalsView.allGoalsState.sort = 'updated-desc';
+            const openGoalForm = jest.fn();
+            allGoalsView.render(openGoalForm);
+
+            const items = document.querySelectorAll('#allGoalsTableBody tr');
+            const ids = Array.from(items).map(row => row.dataset.goalId);
+            expect(ids[0]).toBe('c');
+        });
+
+        test('should sort by updated ascending', () => {
+            allGoalsView.allGoalsState.sort = 'updated-asc';
+            const openGoalForm = jest.fn();
+            allGoalsView.render(openGoalForm);
+
+            const items = document.querySelectorAll('#allGoalsTableBody tr');
+            const ids = Array.from(items).map(row => row.dataset.goalId);
+            expect(ids[0]).toBe('p');
+        });
+
+        test('should handle default/unknown sort value', () => {
+            allGoalsView.allGoalsState.sort = 'unknown-sort';
+            const openGoalForm = jest.fn();
+            allGoalsView.render(openGoalForm);
+
+            const items = document.querySelectorAll('#allGoalsTableBody tr');
+            expect(items.length).toBe(3);
+        });
+    });
+
     describe('Desktop-specific rendering', () => {
         test('render should display empty state when no goals', () => {
             mockGoalService.goals = [];
@@ -103,7 +580,6 @@ describe('AllGoalsView', () => {
             expect(tableRows.length).toBe(3);
             expect(Array.from(tableRows).map(row => row.dataset.goalId)).toEqual(['1', '2', '3']);
 
-            // Verify empty state is hidden when there are goals
             const emptyState = document.getElementById('allGoalsEmptyState');
             expect(emptyState.hidden).toBe(true);
         });

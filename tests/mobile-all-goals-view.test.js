@@ -1,18 +1,55 @@
 const { JSDOM } = require('jsdom');
 const { MobileAllGoalsView } = require('../src/ui/mobile/all-goals-view.js');
 const Goal = require('../src/domain/models/goal').default;
-const {
-    STATUS_FILTER_HTML,
-    createMockGoalService,
-    createMockApp,
-    createTestGoals,
-    runBaseAllGoalsViewTests
-} = require('./shared/all-goals-view-test-utils.js');
+const LanguageService = require('../src/domain/services/language-service').default;
 
 /**
  * Mobile-specific HTML for MobileAllGoalsView tests.
  */
 const MOBILE_CONTAINER_HTML = `<div id="allGoalsMobileContainer"></div>`;
+
+/**
+ * Creates a mock goal service with common defaults.
+ */
+function createMockGoalService() {
+    const mockGoalService = {
+        goals: [],
+        calculatePriority: jest.fn((goal) => goal.motivation + goal.urgency),
+        priorityCache: {
+            getPriority: jest.fn((goalId) => {
+                const goal = mockGoalService.goals.find(g => g.id === goalId);
+                return goal ? mockGoalService.calculatePriority(goal) : 0;
+            }),
+            getAllPriorities: jest.fn(() => {
+                const priorities = new Map();
+                mockGoalService.goals.forEach(goal => {
+                    priorities.set(goal.id, mockGoalService.calculatePriority(goal));
+                });
+                return priorities;
+            }),
+            invalidate: jest.fn(),
+            refreshIfNeeded: jest.fn(),
+            clear: jest.fn()
+        }
+    };
+    return mockGoalService;
+}
+
+/**
+ * Creates a mock app object with all required services.
+ */
+function createMockApp(mockGoalService) {
+    const languageService = new LanguageService();
+    languageService.init('en');
+
+    return {
+        goalService: mockGoalService,
+        languageService,
+        settingsService: {
+            getSettings: jest.fn(() => ({ maxActiveGoals: 3 }))
+        }
+    };
+}
 
 let dom;
 let document;
@@ -24,7 +61,6 @@ let mobileAllGoalsView;
 beforeEach(() => {
     dom = new JSDOM(`<!DOCTYPE html><html><body>
         ${MOBILE_CONTAINER_HTML}
-        ${STATUS_FILTER_HTML}
     </body></html>`, { url: "http://localhost" });
     document = dom.window.document;
     window = dom.window;
@@ -48,26 +84,6 @@ afterEach(() => {
 });
 
 describe('MobileAllGoalsView', () => {
-    // Run shared tests from base class
-    runBaseAllGoalsViewTests({
-        createView: (app) => new MobileAllGoalsView(app),
-        getRenderedItems: () => document.querySelectorAll('.mobile-goal-card'),
-        getItemId: (card) => {
-            // Extract goal ID from card's click handler by checking aria-label
-            const ariaLabel = card.getAttribute('aria-label') || '';
-            // Find goal by title match from test data
-            const title = card.querySelector('.mobile-goal-card__title')?.textContent;
-            const testGoals = createTestGoals();
-            for (const [, goal] of Object.entries(testGoals)) {
-                if (goal.title === title) {
-                    return goal.id;
-                }
-            }
-            return null;
-        }
-    });
-
-    // Mobile-specific tests
     describe('Mobile-specific rendering', () => {
         test('render should display empty state when no goals', () => {
             mockGoalService.goals = [];
