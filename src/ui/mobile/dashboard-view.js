@@ -26,157 +26,199 @@ export class MobileDashboardView extends DashboardView {
         const dashboardList = getElement('goalsList');
         const feedbackElement = getOptionalElement('dashboardFeedback');
 
-        // Clean up EventManager instances for existing cards
-        for (const card of dashboardList.querySelectorAll('.goal-card, .review-card')) {
+        this._cleanupExistingCards(dashboardList);
+        this._updateFeedback(feedbackElement);
+
+        const allCards = this._prepareCardData(reviews, dashboardGoals);
+
+        // Handle empty state
+        if (allCards.length === 0) {
+            this._renderEmptyState(dashboardList);
+            return;
+        }
+
+        // Manage index consistency
+        this._updateCurrentIndex(allCards.length);
+
+        // Clear list and remove old indicators
+        dashboardList.innerHTML = '';
+        this._removeIndicators();
+
+        // Create and append cards
+        const { swipeContainer, cardsWrapper } = this._createSwipeContainer();
+        this.cards = [];
+
+        allCards.forEach((cardItem, index) => {
+            const cardElement = this._createCardElement(
+                cardItem,
+                openCompletionModal,
+                updateGoalInline,
+                openGoalForm,
+                handleReviewSubmit,
+                renderViews
+            );
+
+            this._applyInitialCardStyle(cardElement, index);
+            cardsWrapper.appendChild(cardElement);
+            this.cards.push(cardElement);
+        });
+
+        // Finalize DOM
+        this.dragOffset = 0;
+        this.isDragging = false;
+        swipeContainer.appendChild(cardsWrapper);
+        dashboardList.appendChild(swipeContainer);
+
+        this._setupIndicators();
+        this.setupSwipeHandlers(swipeContainer);
+
+        // Ensure layout consistency
+        setTimeout(() => {
+            this.resetCardPositions();
+            this.updateWrapperHeight();
+        }, 0);
+    }
+
+    /** @private */
+    _cleanupExistingCards(container) {
+        for (const card of container.querySelectorAll('.goal-card, .review-card')) {
             if (card._stepEventManager) {
                 card._stepEventManager.cleanup();
             }
         }
+    }
 
-        // Calculate total number of cards that will be created
-        const totalCards = reviews.length + dashboardGoals.length;
+    /** @private */
+    _updateFeedback(feedbackElement) {
+        if (!feedbackElement) return;
 
-        // Preserve current index if cards still exist, otherwise reset to 0
-        const previousIndex = this.currentIndex;
-        if (totalCards === 0) {
-            this.currentIndex = 0;
-        } else if (previousIndex >= totalCards) {
-            // If we had more cards before and now have fewer, adjust index
-            this.currentIndex = Math.max(0, totalCards - 1);
+        if (this.latestReviewFeedback) {
+            const { messageKey, messageArgs, type } = this.latestReviewFeedback;
+            feedbackElement.hidden = false;
+            feedbackElement.textContent = this.translate(messageKey, messageArgs);
+            feedbackElement.dataset.state = type || 'info';
+        } else {
+            feedbackElement.hidden = true;
+            feedbackElement.textContent = '';
+            feedbackElement.dataset.state = '';
         }
-        // Otherwise keep the current index
+    }
 
-        dashboardList.innerHTML = '';
-
-        // Remove existing indicators when re-rendering
-        const existingIndicators = document.querySelector('.mobile-dashboard-indicators');
-        if (existingIndicators) {
-            existingIndicators.remove();
-        }
-
-        // Display feedback if available
-        if (feedbackElement) {
-            if (this.latestReviewFeedback) {
-                const { messageKey, messageArgs, type } = this.latestReviewFeedback;
-                feedbackElement.hidden = false;
-                feedbackElement.textContent = this.translate(messageKey, messageArgs);
-                feedbackElement.dataset.state = type || 'info';
-            } else {
-                feedbackElement.hidden = true;
-                feedbackElement.textContent = '';
-                feedbackElement.dataset.state = '';
-            }
-        }
-
-        // Combine review cards and active goal cards, with review cards first
-        const reviewCardData = reviews.map((review, index) => ({
+    /** @private */
+    _prepareCardData(reviews, dashboardGoals) {
+        const reviewCards = reviews.map((review, index) => ({
             type: 'review',
             data: review,
             position: index + 1,
             total: reviews.length
         }));
 
-        const goalCardData = dashboardGoals.map(goal => ({
+        const goalCards = dashboardGoals.map(goal => ({
             type: 'goal',
             data: goal
         }));
 
-        const allCards = [...reviewCardData, ...goalCardData];
+        return [...reviewCards, ...goalCards];
+    }
 
-        if (allCards.length === 0) {
-            const emptyState = document.createElement('p');
-            emptyState.style.textAlign = 'center';
-            emptyState.style.color = '#888';
-            emptyState.style.padding = '40px';
-            emptyState.textContent = this.translate('dashboard.noActiveGoals');
-            emptyState.dataset.i18nKey = 'dashboard.noActiveGoals';
-            dashboardList.appendChild(emptyState);
-            this.cards = [];
+    /** @private */
+    _renderEmptyState(container) {
+        container.innerHTML = '';
+        const emptyState = document.createElement('p');
+        emptyState.style.textAlign = 'center';
+        emptyState.style.color = '#888';
+        emptyState.style.padding = '40px';
+        emptyState.textContent = this.translate('dashboard.noActiveGoals');
+        emptyState.dataset.i18nKey = 'dashboard.noActiveGoals';
+        container.appendChild(emptyState);
+        this.cards = [];
+        this.currentIndex = 0;
+    }
+
+    /** @private */
+    _updateCurrentIndex(totalCards) {
+        const previousIndex = this.currentIndex;
+        if (totalCards === 0) {
             this.currentIndex = 0;
-            return;
+        } else if (previousIndex >= totalCards) {
+            this.currentIndex = Math.max(0, totalCards - 1);
         }
+    }
 
-        // Create wrapper for swipeable cards
+    /** @private */
+    _removeIndicators() {
+        const existingIndicators = document.querySelector('.mobile-dashboard-indicators');
+        if (existingIndicators) {
+            existingIndicators.remove();
+        }
+    }
+
+    /** @private */
+    _createSwipeContainer() {
         const swipeContainer = document.createElement('div');
         swipeContainer.className = 'mobile-dashboard-swipe-container';
 
         const cardsWrapper = document.createElement('div');
         cardsWrapper.className = 'mobile-dashboard-cards-wrapper';
 
-        // Create all cards but only show the current one
-        this.cards = [];
-        allCards.forEach((cardItem, index) => {
-            let cardElement;
-            if (cardItem.type === 'review') {
-                cardElement = this.createReviewCard(
-                    cardItem.data,
-                    cardItem.position,
-                    cardItem.total,
-                    openGoalForm,
-                    handleReviewSubmit,
-                    renderViews
-                );
-            } else {
-                cardElement = this.createGoalCard(cardItem.data, openCompletionModal, updateGoalInline);
-            }
-            cardElement.classList.add('mobile-dashboard-card');
+        return { swipeContainer, cardsWrapper };
+    }
 
-            // Set initial position for animation based on current index
-            if (index === this.currentIndex) {
-                cardElement.style.transform = 'translateX(0%)';
-                cardElement.style.opacity = '1';
-                cardElement.style.position = 'relative';
-                cardElement.classList.add('mobile-dashboard-card-visible');
-            } else {
-                const offset = index < this.currentIndex ? -100 : 100;
-                cardElement.style.transform = `translateX(${offset}%)`;
-                cardElement.style.opacity = '0';
-                cardElement.style.position = 'absolute';
-                cardElement.classList.add('mobile-dashboard-card-hidden');
-            }
-
-            cardsWrapper.appendChild(cardElement);
-            this.cards.push(cardElement);
-        });
-
-        // Reset drag state
-        this.dragOffset = 0;
-        this.isDragging = false;
-
-        swipeContainer.appendChild(cardsWrapper);
-
-        dashboardList.appendChild(swipeContainer);
-
-        // Add navigation indicators (outside swipe container, fixed at bottom)
-        if (this.cards.length > 1) {
-            // Navigation indicators (clickable)
-            const indicators = document.createElement('div');
-            indicators.className = 'mobile-dashboard-indicators';
-            for (let i = 0; i < this.cards.length; i++) {
-                const indicator = document.createElement('button');
-                indicator.className = 'mobile-dashboard-indicator';
-                indicator.setAttribute('aria-label', `Go to card ${i + 1}`);
-                if (i === this.currentIndex) {
-                    indicator.classList.add('active');
-                }
-                indicator.addEventListener('click', () => {
-                    this.goToCard(i);
-                });
-                indicators.appendChild(indicator);
-            }
-            // Append to body so it's fixed at bottom of window
-            document.body.appendChild(indicators);
+    /** @private */
+    _createCardElement(cardItem, openCompletionModal, updateGoalInline, openGoalForm, handleReviewSubmit, renderViews) {
+        let cardElement;
+        if (cardItem.type === 'review') {
+            cardElement = this.createReviewCard(
+                cardItem.data,
+                cardItem.position,
+                cardItem.total,
+                openGoalForm,
+                handleReviewSubmit,
+                renderViews
+            );
+        } else {
+            cardElement = this.createGoalCard(cardItem.data, openCompletionModal, updateGoalInline);
         }
+        cardElement.classList.add('mobile-dashboard-card');
+        return cardElement;
+    }
 
-        // Setup swipe handlers
-        this.setupSwipeHandlers(swipeContainer);
+    /** @private */
+    _applyInitialCardStyle(cardElement, index) {
+        if (index === this.currentIndex) {
+            cardElement.style.transform = 'translateX(0%)';
+            cardElement.style.opacity = '1';
+            cardElement.style.position = 'relative';
+            cardElement.classList.add('mobile-dashboard-card-visible');
+        } else {
+            const offset = index < this.currentIndex ? -100 : 100;
+            cardElement.style.transform = `translateX(${offset}%)`;
+            cardElement.style.opacity = '0';
+            cardElement.style.position = 'absolute';
+            cardElement.classList.add('mobile-dashboard-card-hidden');
+        }
+    }
 
-        // Ensure cards are in correct position (preserving current index)
-        // Small delay to ensure DOM is ready
-        setTimeout(() => {
-            this.resetCardPositions();
-            this.updateWrapperHeight();
-        }, 0);
+    /** @private */
+    _setupIndicators() {
+        if (this.cards.length <= 1) return;
+
+        const indicators = document.createElement('div');
+        indicators.className = 'mobile-dashboard-indicators';
+
+        for (let i = 0; i < this.cards.length; i++) {
+            const indicator = document.createElement('button');
+            indicator.className = 'mobile-dashboard-indicator';
+            indicator.setAttribute('aria-label', `Go to card ${i + 1}`);
+            if (i === this.currentIndex) {
+                indicator.classList.add('active');
+            }
+            indicator.addEventListener('click', () => {
+                this.goToCard(i);
+            });
+            indicators.appendChild(indicator);
+        }
+        document.body.appendChild(indicators);
     }
 
     setupSwipeHandlers(container) {

@@ -17,21 +17,21 @@ export class GoogleDriveFileNotFoundError extends Error {
 }
 
 class GoogleDriveSyncService {
-    constructor() {
-        this.tokenClient = null;
-        this.gapiLoaded = false;
-        this.gisLoaded = false;
-        this.accessToken = null;
-        this.fileId = null;
-        this.folderId = null;
-        this.initialized = false;
-        this.pendingRefreshPromise = null;
-        this.refreshResolve = null;
-        this.refreshReject = null;
-        this._lastStatusCheck = 0;
-        this._cachedStatus = null;
-        this._statusCacheTimeout = 60000; // Cache status for 1 minute
-    }
+    tokenClient = null;
+    gapiLoaded = false;
+    gisLoaded = false;
+    accessToken = null;
+    fileId = null;
+    folderId = null;
+    initialized = false;
+    pendingRefreshPromise = null;
+    refreshResolve = null;
+    refreshReject = null;
+    _lastStatusCheck = 0;
+    _cachedStatus = null;
+    _statusCacheTimeout = 60000; // Cache status for 1 minute
+
+
 
     /**
      * Initialize Google APIs - must be called before using the service
@@ -67,8 +67,9 @@ class GoogleDriveSyncService {
         try {
             await this.refreshTokenIfNeeded(true);
         } catch (e) {
-            console.log('No active session, user needs to login');
+            console.log('No active session, user needs to login', e);
             this.accessToken = null;
+            // Expected error when not logged in, maintain cleaner state
         }
 
         this.initialized = true;
@@ -94,57 +95,53 @@ class GoogleDriveSyncService {
             };
 
             // Load gapi (Google API client)
-            if (!this.gapiLoaded) {
-                if (globalThis.gapi) {
-                    this.gapiLoaded = true;
-                    gapiResolved = true;
-                    checkResolved();
-                } else {
-                    const gapiScript = document.createElement('script');
-                    gapiScript.src = 'https://apis.google.com/js/api.js';
-                    gapiScript.onload = () => {
-                        globalThis.gapi.load('client', async () => {
-                            try {
-                                await globalThis.gapi.client.init({
-                                    apiKey: this.apiKey,
-                                    discoveryDocs: DISCOVERY_DOCS
-                                });
-                                this.gapiLoaded = true;
-                                gapiResolved = true;
-                                checkResolved();
-                            } catch (error) {
-                                reject(error);
-                            }
-                        });
-                    };
-                    gapiScript.onerror = () => reject(new Error('Failed to load Google API'));
-                    document.head.appendChild(gapiScript);
-                }
-            } else {
+            if (this.gapiLoaded) {
                 gapiResolved = true;
                 checkResolved();
+            } else if (globalThis.gapi) {
+                this.gapiLoaded = true;
+                gapiResolved = true;
+                checkResolved();
+            } else {
+                const gapiScript = document.createElement('script');
+                gapiScript.src = 'https://apis.google.com/js/api.js';
+                gapiScript.onload = () => {
+                    globalThis.gapi.load('client', async () => {
+                        try {
+                            await globalThis.gapi.client.init({
+                                apiKey: this.apiKey,
+                                discoveryDocs: DISCOVERY_DOCS
+                            });
+                            this.gapiLoaded = true;
+                            gapiResolved = true;
+                            checkResolved();
+                        } catch (error) {
+                            reject(error);
+                        }
+                    });
+                };
+                gapiScript.onerror = () => reject(new Error('Failed to load Google API'));
+                document.head.appendChild(gapiScript);
             }
 
             // Load gis (Google Identity Services)
-            if (!this.gisLoaded) {
-                if (globalThis.google?.accounts) {
+            if (this.gisLoaded) {
+                gisResolved = true;
+                checkResolved();
+            } else if (globalThis.google?.accounts) {
+                this.gisLoaded = true;
+                gisResolved = true;
+                checkResolved();
+            } else {
+                const gisScript = document.createElement('script');
+                gisScript.src = 'https://accounts.google.com/gsi/client';
+                gisScript.onload = () => {
                     this.gisLoaded = true;
                     gisResolved = true;
                     checkResolved();
-                } else {
-                    const gisScript = document.createElement('script');
-                    gisScript.src = 'https://accounts.google.com/gsi/client';
-                    gisScript.onload = () => {
-                        this.gisLoaded = true;
-                        gisResolved = true;
-                        checkResolved();
-                    };
-                    gisScript.onerror = () => reject(new Error('Failed to load Google Identity Services'));
-                    document.head.appendChild(gisScript);
-                }
-            } else {
-                gisResolved = true;
-                checkResolved();
+                };
+                gisScript.onerror = () => reject(new Error('Failed to load Google Identity Services'));
+                document.head.appendChild(gisScript);
             }
         });
     }
@@ -350,9 +347,12 @@ class GoogleDriveSyncService {
         try {
             await this.refreshTokenIfNeeded();
         } catch (e) {
+            // If refresh fails, we'll check accessToken below
+            // Log for debugging but don't throw if we have a backup
             if (!this.accessToken) {
                 throw new Error('Not authenticated. Please sign in first.');
             }
+            console.warn('Silent refresh failed, but using existing access token.', e);
         }
 
         if (!this.accessToken) {
@@ -376,56 +376,30 @@ class GoogleDriveSyncService {
 
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
             try {
-                // Ensure token is fresh before each attempt
                 await this.ensureAuthenticated();
                 const currentToken = this._getCurrentAccessToken();
+                if (!currentToken) throw new Error('No access token available');
 
-                if (!currentToken) {
-                    throw new Error('No access token available');
-                }
-
-                // Add/update Authorization header
                 const headers = new Headers(options.headers || {});
                 headers.set('Authorization', `Bearer ${currentToken}`);
 
-                // Execute the fetch request
-                const response = await fetch(url, {
-                    ...options,
-                    headers
-                });
+                const response = await fetch(url, { ...options, headers });
 
-                // If fetch succeeds, return the response
                 if (response.ok || response.status !== 401) {
                     return response;
                 }
 
-                // Handle 401 error - try to refresh and retry
                 if (attempt < maxRetries) {
-                    console.warn(`Fetch request failed with 401, attempting token refresh (attempt ${attempt + 1}/${maxRetries + 1})`);
-
-                    try {
-                        // Force token refresh
-                        await this.refreshTokenIfNeeded(true);
-                        // Wait a bit before retrying
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                        continue;
-                    } catch (refreshError) {
-                        console.error('Token refresh failed during fetch retry:', refreshError);
-                        throw new Error('Authentication failed. Please sign in again.');
-                    }
-                }
-
-                // If not 401 or no retries left, return the response (even if error)
-                return response;
-            } catch (error) {
-                lastError = error;
-
-                // If it's an auth error and we have retries left, continue
-                if (error.message?.includes('Authentication failed') && attempt < maxRetries) {
+                    await this._handleAuthRetry(attempt, maxRetries, 'Fetch request failed with 401');
                     continue;
                 }
 
-                // Otherwise, throw the error
+                return response;
+            } catch (error) {
+                lastError = error;
+                if (this._isAuthLevelError(error) && attempt < maxRetries) {
+                    continue;
+                }
                 throw error;
             }
         }
@@ -444,54 +418,55 @@ class GoogleDriveSyncService {
 
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
             try {
-                // Ensure token is fresh before each attempt
                 await this.ensureAuthenticated();
-
-                // Execute the API call
-                const result = await apiCall();
-                return result;
+                return await apiCall();
             } catch (error) {
                 lastError = error;
-
-                // Check if it's an authentication error
-                const isAuthError = error.status === 401 ||
-                    error.status === 403 ||
-                    (error.result && (error.result.error?.code === 401 || error.result.error?.code === 403)) ||
-                    error.message?.includes('Invalid Credentials') ||
-                    error.message?.includes('unauthorized');
-
-                if (isAuthError && attempt < maxRetries) {
-                    console.warn(`API call failed with auth error, attempting token refresh (attempt ${attempt + 1}/${maxRetries + 1}):`, error);
-
-                    // Try to refresh token
-                    try {
-                        // Force token refresh
-                        await this.refreshTokenIfNeeded(true);
-
-                        // Update gapi token
-                        const refreshedToken = this._getCurrentAccessToken();
-                        if (refreshedToken) {
-                            this.accessToken = refreshedToken;
-                            if (globalThis.gapi?.client) {
-                                globalThis.gapi.client.setToken({ access_token: this.accessToken });
-                            }
-                        }
-
-                        // Wait a bit before retrying
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                        continue;
-                    } catch (refreshError) {
-                        console.error('Token refresh failed during API retry:', refreshError);
-                        throw new Error('Authentication failed. Please sign in again.');
-                    }
-                } else {
-                    // Not an auth error or no retries left
-                    throw error;
+                if (this._isGapiAuthError(error) && attempt < maxRetries) {
+                    await this._handleAuthRetry(attempt, maxRetries, 'API call failed with auth error', error);
+                    continue;
                 }
+                throw error;
             }
         }
 
         throw lastError;
+    }
+
+    /**
+     * Check if error is an auth error for fetch
+     * @private
+     */
+    _isAuthLevelError(error) {
+        return error.message?.includes('Authentication failed');
+    }
+
+    /**
+     * Check if error is an auth error for gapi
+     * @private
+     */
+    _isGapiAuthError(error) {
+        return error.status === 401 ||
+            error.status === 403 ||
+            (error.result && (error.result.error?.code === 401 || error.result.error?.code === 403)) ||
+            error.message?.includes('Invalid Credentials') ||
+            error.message?.includes('unauthorized');
+    }
+
+    /**
+     * Handle auth retry logic
+     * @private
+     */
+    async _handleAuthRetry(attempt, maxRetries, message, error = null) {
+        console.warn(`${message}, attempting token refresh (attempt ${attempt + 1}/${maxRetries + 1})`, error || '');
+        try {
+            await this.refreshTokenIfNeeded(true);
+            // Wait a bit before retrying
+            await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (refreshError) {
+            console.error('Token refresh failed during retry:', refreshError);
+            throw new Error('Authentication failed. Please sign in again.');
+        }
     }
 
     /**
@@ -572,113 +547,51 @@ class GoogleDriveSyncService {
     async uploadData(goals, settings) {
         await this.ensureAuthenticated();
 
+        // Prepare data
         let folderId = await this.findOrCreateFolder();
         const payload = prepareExportPayload(goals, settings);
         const fileContent = JSON.stringify(payload, null, 2);
         const blob = new Blob([fileContent], { type: 'application/json' });
+        const metadata = { name: GOOGLE_DRIVE_FILE_NAME };
 
-        // First, try to use stored fileId
-        let fileId = this.fileId || localStorage.getItem(STORAGE_KEY_GDRIVE_FILE_ID);
-
-        // If no stored fileId, search for existing file
-        if (!fileId) {
-            const existingFile = await this.findDataFile(folderId);
-            fileId = existingFile ? existingFile.id : null;
-            if (fileId) {
-                this.fileId = fileId;
-                localStorage.setItem(STORAGE_KEY_GDRIVE_FILE_ID, fileId);
-            }
-        }
-
-        const metadata = {
-            name: GOOGLE_DRIVE_FILE_NAME
-        };
+        // Determine file ID
+        let fileId = await this._resolveFileId(folderId);
 
         let response;
         if (fileId) {
-            // Update existing file - this creates a new revision in Google Drive
-            // Use resumable upload for better reliability with file updates
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            form.append('file', blob);
+            response = await this._updateFile(fileId, metadata, blob);
 
-            // Use executeFetchWithTokenRefresh for automatic token refresh on 401 errors
-            response = await this.executeFetchWithTokenRefresh(
-                `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
-                {
-                    method: 'PATCH',
-                    body: form
-                }
-            );
-
-            // If update fails, try to find the file again (might have been moved/deleted)
+            // Handle specific update failures (403/404)
             if (!response.ok && (response.status === 403 || response.status === 404)) {
-                // Clear folder cache if folder might be invalid
+                // If 403, folder might be invalid/lost access
                 if (response.status === 403) {
                     this.folderId = null;
                     localStorage.removeItem(STORAGE_KEY_GDRIVE_FOLDER_ID);
-                    // Re-fetch folder ID
                     folderId = await this.findOrCreateFolder();
                 }
-                // Search for the file again
+
+                // Try to recover by searching again
                 const existingFile = await this.findDataFile(folderId);
                 if (existingFile && existingFile.id !== fileId) {
-                    // Found a different file with the same name - use it
                     fileId = existingFile.id;
                     this.fileId = fileId;
                     localStorage.setItem(STORAGE_KEY_GDRIVE_FILE_ID, fileId);
-
-                    // Try updating the found file
-                    const retryForm = new FormData();
-                    retryForm.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                    retryForm.append('file', blob);
-
-                    response = await this.executeFetchWithTokenRefresh(
-                        `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
-                        {
-                            method: 'PATCH',
-                            body: retryForm
-                        }
-                    );
-                }
-
-                // If still failing, create new file only as last resort
-                if (!response.ok) {
+                    response = await this._updateFile(fileId, metadata, blob);
+                } else {
+                    // Fallback to create new
                     metadata.parents = [folderId];
-                    const newForm = new FormData();
-                    newForm.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                    newForm.append('file', blob);
-
-                    response = await this.executeFetchWithTokenRefresh(
-                        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-                        {
-                            method: 'POST',
-                            body: newForm
-                        }
-                    );
+                    response = await this._createFile(metadata, blob);
                 }
             }
         } else {
             // No existing file - create new one
             metadata.parents = [folderId];
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            form.append('file', blob);
-
-            // Use executeFetchWithTokenRefresh for automatic token refresh on 401 errors
-            response = await this.executeFetchWithTokenRefresh(
-                'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-                {
-                    method: 'POST',
-                    body: form
-                }
-            );
+            response = await this._createFile(metadata, blob);
         }
 
         if (!response.ok) {
             const error = await response.json().catch(() => ({ error: 'Upload failed' }));
-            const errorMessage = error.error?.message || `Failed to upload to Google Drive (${response.status})`;
-            throw new Error(errorMessage);
+            throw new Error(error.error?.message || `Failed to upload to Google Drive (${response.status})`);
         }
 
         const result = await response.json();
@@ -694,6 +607,44 @@ class GoogleDriveSyncService {
             version: payload.version,
             exportDate: payload.exportDate
         };
+    }
+
+    /** @private */
+    async _resolveFileId(folderId) {
+        let fileId = this.fileId || localStorage.getItem(STORAGE_KEY_GDRIVE_FILE_ID);
+        if (!fileId) {
+            const existingFile = await this.findDataFile(folderId);
+            fileId = existingFile ? existingFile.id : null;
+            if (fileId) {
+                this.fileId = fileId;
+                localStorage.setItem(STORAGE_KEY_GDRIVE_FILE_ID, fileId);
+            }
+        }
+        return fileId;
+    }
+
+    /** @private */
+    async _updateFile(fileId, metadata, blob) {
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', blob);
+
+        return this.executeFetchWithTokenRefresh(
+            `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
+            { method: 'PATCH', body: form }
+        );
+    }
+
+    /** @private */
+    async _createFile(metadata, blob) {
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', blob);
+
+        return this.executeFetchWithTokenRefresh(
+            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+            { method: 'POST', body: form }
+        );
     }
 
     /**
@@ -730,7 +681,7 @@ class GoogleDriveSyncService {
         try {
             data = JSON.parse(fileContent);
         } catch (error) {
-            throw new Error('Invalid JSON in Google Drive file');
+            throw new Error('Invalid JSON in Google Drive file', { cause: error });
         }
 
         return {
@@ -747,121 +698,24 @@ class GoogleDriveSyncService {
      * @param {string} localExportDate - Local export date
      * @param {boolean} localHasData - Whether local has any goals (not empty)
      */
+    /**
+     * Compare local and remote versions to determine sync direction
+     * Returns which state is older and should be the target
+     * @param {string} localVersion - Local version
+     * @param {string} localExportDate - Local export date
+     * @param {boolean} localHasData - Whether local has any goals (not empty)
+     */
     async checkSyncDirection(localVersion, localExportDate, localHasData = true) {
         try {
             // downloadData already handles token refresh, so we can call it directly
             const remote = await this.downloadData();
-            const remoteVersion = remote.data?.version || null;
-            const remoteExportDate = remote.data?.exportDate || null;
-            const remoteGoals = remote.data?.goals || [];
-            const remoteHasData = Array.isArray(remoteGoals) && remoteGoals.length > 0;
 
-            // Priority 1: If local is empty and remote has data, always download
-            if (!localHasData && remoteHasData) {
-                return {
-                    shouldUpload: false,
-                    reason: 'local_empty_remote_has_data',
-                    localVersion,
-                    remoteVersion,
-                    localExportDate,
-                    remoteExportDate
-                };
-            }
-
-            // Priority 2: If local has data and remote is empty, always upload
-            if (localHasData && !remoteHasData) {
-                return {
-                    shouldUpload: true,
-                    reason: 'local_has_data_remote_empty',
-                    localVersion,
-                    remoteVersion,
-                    localExportDate,
-                    remoteExportDate
-                };
-            }
-
-            // Priority 3: If no remote export date, treat as older and upload local
-            if (!remoteExportDate) {
-                return {
-                    shouldUpload: true,
-                    reason: 'remote_no_date',
-                    localVersion,
-                    remoteVersion,
-                    localExportDate,
-                    remoteExportDate
-                };
-            }
-
-            // Priority 4: If no local export date, treat as older and download remote
-            if (!localExportDate) {
-                return {
-                    shouldUpload: false,
-                    reason: 'local_no_date',
-                    localVersion,
-                    remoteVersion,
-                    localExportDate,
-                    remoteExportDate
-                };
-            }
-
-            const localDate = new Date(localExportDate);
-            const remoteDate = new Date(remoteExportDate);
-
-            // Priority 5: Always sync toward older state (compare dates)
-            if (remoteDate < localDate) {
-                // Remote is older - upload local to update remote
-                return {
-                    shouldUpload: true,
-                    reason: 'remote_older',
-                    localVersion,
-                    remoteVersion,
-                    localExportDate,
-                    remoteExportDate
-                };
-            } else if (localDate < remoteDate) {
-                // Local is older - download remote to update local
-                return {
-                    shouldUpload: false,
-                    reason: 'local_older',
-                    localVersion,
-                    remoteVersion,
-                    localExportDate,
-                    remoteExportDate
-                };
-            } else {
-                // Same date - check versions
-                if (isOlderVersion(remoteVersion, localVersion)) {
-                    // Remote version is older - upload local
-                    return {
-                        shouldUpload: true,
-                        reason: 'remote_version_older',
-                        localVersion,
-                        remoteVersion,
-                        localExportDate,
-                        remoteExportDate
-                    };
-                } else if (isOlderVersion(localVersion, remoteVersion)) {
-                    // Local version is older - download remote
-                    return {
-                        shouldUpload: false,
-                        reason: 'local_version_older',
-                        localVersion,
-                        remoteVersion,
-                        localExportDate,
-                        remoteExportDate
-                    };
-                } else {
-                    // Same version and date - no sync needed, but default to upload
-                    return {
-                        shouldUpload: true,
-                        reason: 'same_state',
-                        localVersion,
-                        remoteVersion,
-                        localExportDate,
-                        remoteExportDate
-                    };
-                }
-            }
+            return this._determineSyncAction(
+                localVersion,
+                localExportDate,
+                localHasData,
+                remote
+            );
         } catch (error) {
             // If file doesn't exist, upload local (unless local is empty)
             if (error instanceof GoogleDriveFileNotFoundError) {
@@ -878,6 +732,84 @@ class GoogleDriveSyncService {
         }
     }
 
+    /**
+     * Helper to determine sync action based on local and remote state
+     * @private
+     */
+    _determineSyncAction(localVersion, localExportDate, localHasData, remote) {
+        const remoteVersion = remote.data?.version || null;
+        const remoteExportDate = remote.data?.exportDate || null;
+        const remoteGoals = remote.data?.goals || [];
+        const remoteHasData = Array.isArray(remoteGoals) && remoteGoals.length > 0;
+
+        // 1. Handle empty states
+        if (!localHasData && remoteHasData) {
+            return this._createSyncResult(false, 'local_empty_remote_has_data', localVersion, localExportDate, remoteVersion, remoteExportDate);
+        }
+        if (localHasData && !remoteHasData) {
+            return this._createSyncResult(true, 'local_has_data_remote_empty', localVersion, localExportDate, remoteVersion, remoteExportDate);
+        }
+
+        // 2. Handle missing dates
+        if (!remoteExportDate) {
+            return this._createSyncResult(true, 'remote_no_date', localVersion, localExportDate, remoteVersion, remoteExportDate);
+        }
+        if (!localExportDate) {
+            return this._createSyncResult(false, 'local_no_date', localVersion, localExportDate, remoteVersion, remoteExportDate);
+        }
+
+        // 3. Compare dates and versions
+        return this._compareStates(
+            { version: localVersion, date: localExportDate },
+            { version: remoteVersion, date: remoteExportDate }
+        );
+    }
+
+    /**
+     * Helper to compare two states (local and remote)
+     * @private
+     */
+    _compareStates(local, remote) {
+        const localDate = new Date(local.date);
+        const remoteDate = new Date(remote.date);
+
+        // Priority 5: Always sync toward older state (compare dates)
+        if (remoteDate < localDate) {
+            return this._createSyncResult(true, 'remote_older', local.version, local.date, remote.version, remote.date);
+        }
+
+        if (localDate < remoteDate) {
+            return this._createSyncResult(false, 'local_older', local.version, local.date, remote.version, remote.date);
+        }
+
+        // Same date - check versions
+        if (isOlderVersion(remote.version, local.version)) {
+            return this._createSyncResult(true, 'remote_version_older', local.version, local.date, remote.version, remote.date);
+        }
+
+        if (isOlderVersion(local.version, remote.version)) {
+            return this._createSyncResult(false, 'local_version_older', local.version, local.date, remote.version, remote.date);
+        }
+
+        // Same version and date
+        return this._createSyncResult(true, 'same_state', local.version, local.date, remote.version, remote.date);
+    }
+
+    /**
+     * Create a standardized sync result object
+     * @private
+     */
+    _createSyncResult(shouldUpload, reason, localVersion, localExportDate, remoteVersion, remoteExportDate) {
+        return {
+            shouldUpload,
+            reason,
+            localVersion,
+            remoteVersion,
+            localExportDate,
+            remoteExportDate
+        };
+    }
+
 
     /**
      * Get sync status information
@@ -885,81 +817,20 @@ class GoogleDriveSyncService {
      */
     async getSyncStatus() {
         if (!this.isAuthenticated()) {
-            return {
-                authenticated: false,
-                synced: false
-            };
+            return { authenticated: false, synced: false };
         }
 
-        // Return cached status if still valid (within 1 minute)
         const now = Date.now();
         if (this._cachedStatus && (now - this._lastStatusCheck) < this._statusCacheTimeout) {
             return this._cachedStatus;
         }
 
         try {
-            // Use cached folder ID if available, otherwise search for it
-            let folderId = this.folderId || localStorage.getItem(STORAGE_KEY_GDRIVE_FOLDER_ID);
-
-            if (!folderId) {
-                // Only search for folder if we don't have it cached
-                const folderList = await this.executeWithTokenRefresh(async () => {
-                    return await globalThis.gapi.client.drive.files.list({
-                        q: `name='${GOOGLE_DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-                        fields: 'files(id, name)',
-                        spaces: 'drive'
-                    });
-                });
-                folderId = folderList.result.files?.[0]?.id ?? null;
-                if (folderId) {
-                    this.folderId = folderId;
-                    localStorage.setItem(STORAGE_KEY_GDRIVE_FOLDER_ID, folderId);
-                }
-            }
-
+            const folderId = await this._findFolderForStatus();
             let file = null;
+
             if (folderId) {
-                // Use cached file ID if available, otherwise search for it
-                const cachedFileId = this.fileId || localStorage.getItem(STORAGE_KEY_GDRIVE_FILE_ID);
-
-                if (cachedFileId) {
-                    // Try to get file metadata directly using cached ID (more efficient)
-                    try {
-                        const fileResponse = await this.executeWithTokenRefresh(async () => {
-                            return await globalThis.gapi.client.drive.files.get({
-                                fileId: cachedFileId,
-                                fields: 'id, name, modifiedTime, trashed'
-                            });
-                        });
-
-                        // Verify it's not trashed and is the correct file
-                        if (fileResponse.result && !fileResponse.result.trashed && fileResponse.result.name === GOOGLE_DRIVE_FILE_NAME) {
-                            file = {
-                                id: fileResponse.result.id,
-                                modifiedTime: fileResponse.result.modifiedTime
-                            };
-                        }
-                    } catch (error) {
-                        // File might have been deleted or moved, fall back to listing
-                        console.warn('Cached file ID invalid, falling back to list:', error);
-                    }
-                }
-
-                // If we don't have file info yet, search for it
-                if (!file) {
-                    const fileList = await this.executeWithTokenRefresh(async () => {
-                        return await globalThis.gapi.client.drive.files.list({
-                            q: `name='${GOOGLE_DRIVE_FILE_NAME}' and '${folderId}' in parents and trashed=false`,
-                            fields: 'files(id, name, modifiedTime)',
-                            spaces: 'drive'
-                        });
-                    });
-                    file = fileList.result.files?.[0] ?? null;
-                    if (file) {
-                        this.fileId = file.id;
-                        localStorage.setItem(STORAGE_KEY_GDRIVE_FILE_ID, file.id);
-                    }
-                }
+                file = await this._findFileForStatus(folderId);
             }
 
             const status = {
@@ -969,7 +840,6 @@ class GoogleDriveSyncService {
                 fileId: file ? file.id : null
             };
 
-            // Cache the status
             this._cachedStatus = status;
             this._lastStatusCheck = now;
 
@@ -981,6 +851,68 @@ class GoogleDriveSyncService {
                 error: error.message
             };
         }
+    }
+
+    /** @private */
+    async _findFolderForStatus() {
+        let folderId = this.folderId || localStorage.getItem(STORAGE_KEY_GDRIVE_FOLDER_ID);
+        if (folderId) return folderId;
+
+        const folderList = await this.executeWithTokenRefresh(async () => {
+            return await globalThis.gapi.client.drive.files.list({
+                q: `name='${GOOGLE_DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+                fields: 'files(id, name)',
+                spaces: 'drive'
+            });
+        });
+
+        folderId = folderList.result.files?.[0]?.id ?? null;
+        if (folderId) {
+            this.folderId = folderId;
+            localStorage.setItem(STORAGE_KEY_GDRIVE_FOLDER_ID, folderId);
+        }
+        return folderId;
+    }
+
+    /** @private */
+    async _findFileForStatus(folderId) {
+        // Try cached ID first
+        const cachedFileId = this.fileId || localStorage.getItem(STORAGE_KEY_GDRIVE_FILE_ID);
+        if (cachedFileId) {
+            try {
+                const fileResponse = await this.executeWithTokenRefresh(async () => {
+                    return await globalThis.gapi.client.drive.files.get({
+                        fileId: cachedFileId,
+                        fields: 'id, name, modifiedTime, trashed'
+                    });
+                });
+
+                if (fileResponse.result && !fileResponse.result.trashed && fileResponse.result.name === GOOGLE_DRIVE_FILE_NAME) {
+                    return {
+                        id: fileResponse.result.id,
+                        modifiedTime: fileResponse.result.modifiedTime
+                    };
+                }
+            } catch (error) {
+                console.warn('Cached file ID invalid, falling back to list:', error);
+            }
+        }
+
+        // Fallback to list search
+        const fileList = await this.executeWithTokenRefresh(async () => {
+            return await globalThis.gapi.client.drive.files.list({
+                q: `name='${GOOGLE_DRIVE_FILE_NAME}' and '${folderId}' in parents and trashed=false`,
+                fields: 'files(id, name, modifiedTime)',
+                spaces: 'drive'
+            });
+        });
+
+        const file = fileList.result.files?.[0] ?? null;
+        if (file) {
+            this.fileId = file.id;
+            localStorage.setItem(STORAGE_KEY_GDRIVE_FILE_ID, file.id);
+        }
+        return file;
     }
 }
 

@@ -56,7 +56,7 @@ class UIController {
                 if (oldState) {
                     this.allGoalsView.allGoalsState = oldState;
                 }
-                this.allGoalsView.setupControls((goalId) => this.goalFormView.openGoalForm(goalId, () => this.renderViews()));
+                this.allGoalsView.setupControls((goalId) => this.goalFormView.openGoalForm(() => this.renderViews(), goalId));
                 this.renderViews();
             }
         });
@@ -73,12 +73,12 @@ class UIController {
         this.dashboardView.render(
             (goalId) => this.modalsView.openCompletionModal(goalId),
             (goalId, updates) => this.updateGoalInline(goalId, updates),
-            (goalId) => this.goalFormView.openGoalForm(goalId, () => this.renderViews()),
+            (goalId) => this.goalFormView.openGoalForm(() => this.renderViews(), goalId),
             (goalId, ratings, renderViews) => this.handleReviewSubmit(goalId, ratings, renderViews),
             () => this.renderViews(),
             (goalId) => this.modalsView.openPauseModal(goalId)
         );
-        this.allGoalsView.render((goalId) => this.goalFormView.openGoalForm(goalId, () => this.renderViews()));
+        this.allGoalsView.render((goalId) => this.goalFormView.openGoalForm(() => this.renderViews(), goalId));
         this.overviewView.render();
         this.settingsView.syncSettingsForm();
         this.helpView.render();
@@ -89,7 +89,7 @@ class UIController {
         const addGoalBtnDesktop = getOptionalElement('addGoalBtnDesktop');
         const handleAddGoal = (e) => {
             e.stopPropagation();
-            this.goalFormView.openGoalForm(null, () => this.renderViews());
+            this.goalFormView.openGoalForm(() => this.renderViews(), null);
         };
         if (addGoalBtn) {
             addGoalBtn.addEventListener('click', handleAddGoal);
@@ -118,7 +118,7 @@ class UIController {
             () => this.app.completeMigration()
         );
 
-        this.allGoalsView.setupControls((goalId) => this.goalFormView.openGoalForm(goalId, () => this.renderViews()));
+        this.allGoalsView.setupControls((goalId) => this.goalFormView.openGoalForm(() => this.renderViews(), goalId));
 
         // Logo click handler - navigate to dashboard
         const goalyLogo = getOptionalElement('goalyLogo');
@@ -231,7 +231,7 @@ class UIController {
             goalIdInput && goalIdInput.value === goalId;
 
         // Handle recurring goals
-        if (recurrenceData && recurrenceData.isRecurring && recurrenceData.recurrenceDate) {
+        if (recurrenceData?.isRecurring && recurrenceData.recurrenceDate) {
             this.handleRecurringGoalCompletion(goalId, status, recurrenceData.recurrenceDate);
         } else {
             // Normal completion flow
@@ -242,7 +242,7 @@ class UIController {
 
         // If the goal form was open, refresh it to show the updated status
         if (isGoalModalOpen) {
-            this.goalFormView.openGoalForm(goalId, () => this.renderViews());
+            this.goalFormView.openGoalForm(() => this.renderViews(), goalId);
         }
     }
 
@@ -360,7 +360,7 @@ class UIController {
     }
 
     openGoalForm(goalId = null) {
-        this.goalFormView.openGoalForm(goalId, () => this.renderViews());
+        this.goalFormView.openGoalForm(() => this.renderViews(), goalId);
     }
 
     openCompletionModal(goalId) {

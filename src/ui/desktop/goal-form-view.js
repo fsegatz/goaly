@@ -6,110 +6,185 @@ import { getElement, getOptionalElement } from '../utils/dom-utils.js';
 export class GoalFormView extends BaseUIController {
     constructor(app) {
         super(app);
+        this.renderViews = null;
+        this.currentGoalId = null;
     }
 
-    openGoalForm(goalId = null, renderViews) {
-        const modal = getOptionalElement('goalModal');
-        const form = getOptionalElement('goalForm');
-        const deleteBtn = getOptionalElement('deleteBtn');
-        const modalTitle = getOptionalElement('modalTitle');
-        const stateManagementSection = getOptionalElement('goalStateManagementSection');
-        const completeBtn = getOptionalElement('completeGoalBtn');
-        const unpauseBtn = getOptionalElement('unpauseGoalBtn');
-        const reactivateBtn = getOptionalElement('reactivateGoalBtn');
-        const forceActivateBtn = getOptionalElement('forceActivateGoalBtn');
+    /**
+     * Opens the goal form modal.
+     * @param {Function} renderViews - Callback to render views after changes
+     * @param {string|null} goalId - ID of the goal to edit, or null to create new
+     */
+    openGoalForm(renderViews, goalId = null) {
+        this.renderViews = renderViews;
+        this.currentGoalId = goalId;
 
-        if (!modal || !form || !deleteBtn || !modalTitle) {
-            return;
-        }
+        const modal = getElement('goalModal');
+        const form = getElement('goalForm');
 
-        let goal = null;
+        if (!modal || !form) return;
+
+        // Reset form state first
+        this._resetFormState();
+
         if (goalId) {
-            goal = this.app.goalService.goals.find(g => g.id === goalId) || null;
-            if (goal) {
-                modalTitle.textContent = this.translate('goalForm.editTitle');
-                getElement('goalId').value = goal.id;
-                getElement('goalTitle').value = goal.title;
-                getElement('goalMotivation').value = goal.motivation;
-                getElement('goalUrgency').value = goal.urgency;
-                getElement('goalDeadline').value = goal.deadline
-                    ? goal.deadline.toISOString().split('T')[0]
-                    : '';
-
-                // Set recurring checkbox and period
-                const recurringCheckbox = getOptionalElement('goalIsRecurring');
-                const recurringPeriodContainer = getOptionalElement('recurringPeriodContainer');
-                const recurPeriodInput = getOptionalElement('goalRecurPeriod');
-                const recurPeriodUnitSelect = getOptionalElement('goalRecurPeriodUnit');
-
-                if (recurringCheckbox) {
-                    recurringCheckbox.checked = Boolean(goal.isRecurring);
-
-                    // Show/hide recurrence period container
-                    if (recurringPeriodContainer) {
-                        recurringPeriodContainer.style.display = goal.isRecurring ? 'block' : 'none';
-                    }
-                }
-
-                // Set recurrence period if available
-                if (recurPeriodInput && goal.isRecurring) {
-                    recurPeriodInput.value = goal.recurPeriod || 7;
-                } else if (recurPeriodInput) {
-                    recurPeriodInput.value = 7;
-                }
-
-                // Set recurrence period unit if available
-                if (recurPeriodUnitSelect && goal.isRecurring) {
-                    recurPeriodUnitSelect.value = goal.recurPeriodUnit || 'days';
-                } else if (recurPeriodUnitSelect) {
-                    recurPeriodUnitSelect.value = 'days';
-                }
-
-                deleteBtn.style.display = 'inline-block';
-
-                // Show state management section for existing goals
-                if (stateManagementSection) {
-                    stateManagementSection.style.display = 'block';
-                }
-
-                // Show/hide state management buttons based on current status
-                if (completeBtn) {
-                    completeBtn.style.display = goal.status !== 'completed' && goal.status !== 'notCompleted'
-                        ? 'inline-block'
-                        : 'none';
-                }
-                if (unpauseBtn) {
-                    const isPaused = goal.status === 'paused' || this.app.goalService.isGoalPaused(goal);
-                    unpauseBtn.style.display = isPaused ? 'inline-block' : 'none';
-                }
-                if (reactivateBtn) {
-                    reactivateBtn.style.display = goal.status === 'completed' || goal.status === 'notCompleted'
-                        ? 'inline-block'
-                        : 'none';
-                }
-                if (forceActivateBtn) {
-                    const canForceActivate = goal.status !== 'active' &&
-                        goal.status !== 'completed' &&
-                        goal.status !== 'notCompleted' &&
-                        goal.status !== 'notCompleted';
-                    forceActivateBtn.style.display = canForceActivate ? 'inline-block' : 'none';
-                }
-            }
+            this._setupEditMode(goalId, form);
         } else {
-            modalTitle.textContent = this.translate('goalForm.createTitle');
-            form.reset();
-            getElement('goalId').value = '';
-            deleteBtn.style.display = 'none';
-
-            // Hide state management section for new goals
-            if (stateManagementSection) {
-                stateManagementSection.style.display = 'none';
-            }
+            this._setupCreateMode(form);
         }
 
-
-        // Show modal by toggling CSS class
         modal.classList.add('is-visible');
+
+        // Focus title input
+        const titleInput = getElement('goalTitle');
+        if (titleInput) {
+            setTimeout(() => titleInput.focus(), 50);
+        }
+    }
+
+    /** @private */
+    _resetFormState() {
+        const goalIdInput = getElement('goalId');
+        if (goalIdInput) goalIdInput.value = '';
+
+        const deleteBtn = getElement('deleteGoalBtn');
+        if (deleteBtn) deleteBtn.style.display = 'none';
+
+        // Reset recurrence section
+        const recurringCheckbox = getElement('recurringCheckbox');
+        const periodGroup = getElement('recurrencePeriodGroup');
+        if (recurringCheckbox) recurringCheckbox.checked = false;
+        if (periodGroup) periodGroup.style.display = 'none';
+
+        // Hide state management section by default
+        const stateManagementSection = getOptionalElement('goalStateManagementSection');
+        if (stateManagementSection) {
+            stateManagementSection.style.display = 'none';
+        }
+    }
+
+    /** @private */
+    _setupEditMode(goalId, form) {
+        const goal = this.app.goalService.getGoal(goalId);
+        if (!goal) return;
+
+        const uiElements = this._getFormUIElements();
+
+        // Update Title
+        if (uiElements.modalTitle) {
+            uiElements.modalTitle.textContent = this.translate('goalForm.editTitle');
+        }
+
+        // Populate Fields
+        this._populateFormFields(goal, uiElements);
+
+        // Update Delete Button
+        if (uiElements.deleteBtn) {
+            uiElements.deleteBtn.style.display = 'inline-block';
+            uiElements.deleteBtn.onclick = () => {
+                if (confirm(this.translate('goalForm.confirmDelete'))) {
+                    this.handleDelete(this.renderViews);
+                }
+            };
+        }
+
+        // Show Status Buttons
+        this._updateStatusButtons(goal);
+    }
+
+    /** @private */
+    _setupCreateMode(form) {
+        form.reset();
+
+        const modalTitle = getElement('goalModalTitle');
+        if (modalTitle) {
+            modalTitle.textContent = this.translate('goalForm.createTitle');
+        }
+
+        // Hide state management section for new goals
+        const stateManagementSection = getOptionalElement('goalStateManagementSection');
+        if (stateManagementSection) {
+            stateManagementSection.style.display = 'none';
+        }
+    }
+
+    /** @private */
+    _getFormUIElements() {
+        return {
+            modalTitle: getElement('goalModalTitle'),
+            goalIdInput: getElement('goalId'),
+            titleInput: getElement('goalTitle'),
+            motivationInput: getElement('goalMotivation'),
+            urgencyInput: getElement('goalUrgency'),
+            deadlineInput: getElement('goalDeadline'),
+            recurringCheckbox: getElement('recurringCheckbox'),
+            periodInput: getElement('recurrencePeriod'),
+            periodUnitSelect: getElement('recurrencePeriodUnit'),
+            periodGroup: getElement('recurrencePeriodGroup'),
+            deleteBtn: getElement('deleteGoalBtn'),
+            completeBtn: getElement('completeGoalBtn'),
+            unpauseBtn: getElement('unpauseGoalBtn'),
+            reactivateBtn: getElement('reactivateGoalBtn'),
+            forceActivateBtn: getElement('forceActivateGoalBtn'),
+            stateManagementSection: getElement('goalStateManagementSection')
+        };
+    }
+
+    /** @private */
+    _populateFormFields(goal, ui) {
+        if (ui.goalIdInput) ui.goalIdInput.value = goal.id;
+        if (ui.titleInput) ui.titleInput.value = goal.title || '';
+        if (ui.motivationInput) ui.motivationInput.value = goal.motivation || 1;
+        if (ui.urgencyInput) ui.urgencyInput.value = goal.urgency || 1;
+
+        if (ui.deadlineInput) {
+            ui.deadlineInput.value = goal.deadline ? new Date(goal.deadline).toISOString().split('T')[0] : '';
+        }
+
+        if (ui.recurringCheckbox) {
+            ui.recurringCheckbox.checked = goal.isRecurring || false;
+        }
+
+        if (ui.periodGroup) {
+            ui.periodGroup.style.display = goal.isRecurring ? 'block' : 'none';
+        }
+
+        if (ui.periodInput) {
+            ui.periodInput.value = goal.recurPeriod || 7;
+        }
+        if (ui.periodUnitSelect) {
+            ui.periodUnitSelect.value = goal.recurPeriodUnit || 'days';
+        }
+    }
+
+    /** @private */
+    _updateStatusButtons(goal) {
+        const ui = this._getFormUIElements();
+        if (!ui.stateManagementSection) return;
+
+        ui.stateManagementSection.style.display = 'block';
+
+        // Show/hide state management buttons based on current status
+        if (ui.completeBtn) {
+            ui.completeBtn.style.display = goal.status !== 'completed' && goal.status !== 'notCompleted'
+                ? 'inline-block'
+                : 'none';
+        }
+        if (ui.unpauseBtn) {
+            const isPaused = goal.status === 'paused' || this.app.goalService.isGoalPaused(goal);
+            ui.unpauseBtn.style.display = isPaused ? 'inline-block' : 'none';
+        }
+        if (ui.reactivateBtn) {
+            ui.reactivateBtn.style.display = goal.status === 'completed' || goal.status === 'notCompleted'
+                ? 'inline-block'
+                : 'none';
+        }
+        if (ui.forceActivateBtn) {
+            const canForceActivate = goal.status !== 'active' &&
+                goal.status !== 'completed' &&
+                goal.status !== 'notCompleted';
+            ui.forceActivateBtn.style.display = canForceActivate ? 'inline-block' : 'none';
+        }
     }
 
     closeGoalForm() {
@@ -121,6 +196,8 @@ export class GoalFormView extends BaseUIController {
         if (form) {
             form.reset();
         }
+        this.renderViews = null;
+        this.currentGoalId = null;
     }
 
     setupEventListeners(handleGoalSubmit, handleDelete, renderViews, openCompletionModal) {
@@ -128,7 +205,7 @@ export class GoalFormView extends BaseUIController {
         if (goalForm) {
             goalForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                handleGoalSubmit();
+                this.handleGoalSubmit(renderViews);
             });
         }
 
@@ -138,15 +215,15 @@ export class GoalFormView extends BaseUIController {
         }
 
         // Toggle recurrence period container visibility
-        const recurringCheckbox = getOptionalElement('goalIsRecurring');
-        const recurringPeriodContainer = getOptionalElement('recurringPeriodContainer');
-        if (recurringCheckbox && recurringPeriodContainer) {
+        const recurringCheckbox = getOptionalElement('recurringCheckbox');
+        const recurringPeriodGroup = getOptionalElement('recurrencePeriodGroup');
+        if (recurringCheckbox && recurringPeriodGroup) {
             recurringCheckbox.addEventListener('change', () => {
-                recurringPeriodContainer.style.display = recurringCheckbox.checked ? 'block' : 'none';
+                recurringPeriodGroup.style.display = recurringCheckbox.checked ? 'block' : 'none';
                 // Reset to defaults if unchecked
                 if (!recurringCheckbox.checked) {
-                    const recurPeriodInput = getOptionalElement('goalRecurPeriod');
-                    const recurPeriodUnitSelect = getOptionalElement('goalRecurPeriodUnit');
+                    const recurPeriodInput = getOptionalElement('recurrencePeriod');
+                    const recurPeriodUnitSelect = getOptionalElement('recurrencePeriodUnit');
                     if (recurPeriodInput) {
                         recurPeriodInput.value = 7;
                     }
@@ -157,14 +234,7 @@ export class GoalFormView extends BaseUIController {
             });
         }
 
-        const deleteBtn = getOptionalElement('deleteBtn');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', () => {
-                if (confirm(this.translate('goalForm.confirmDelete'))) {
-                    handleDelete();
-                }
-            });
-        }
+        // Delete button listener is now set in _setupEditMode
 
         const completeBtn = getOptionalElement('completeGoalBtn');
         if (completeBtn) {
@@ -209,34 +279,50 @@ export class GoalFormView extends BaseUIController {
             closeBtn.addEventListener('click', () => this.closeGoalForm());
         }
 
-        // Use mousedown instead of click to avoid closing the modal immediately
-        window.addEventListener('mousedown', (e) => {
-            const modal = getOptionalElement('goalModal');
-            if (modal) {
-                const isModalVisible = modal.classList.contains('is-visible');
-
-                // Close only when the click happens outside the modal
-                if (isModalVisible && e.target?.nodeType === 1) {
-                    try {
-                        if (!modal.contains(e.target)) {
-                            // Check if the click is on another modal (completion, pause, etc.)
-                            const clickedOnOtherModal = e.target.closest('.modal') && !e.target.closest('#goalModal');
-
-                            // Check if the click target is a button that opens the modal
-                            const clickedElement = e.target;
-                            const isAddGoalBtn = clickedElement.id === 'addGoalBtn' || clickedElement.closest('#addGoalBtn');
-                            const isEditBtn = clickedElement.classList && (clickedElement.classList.contains('edit-goal') || clickedElement.closest('.edit-goal'));
-
-                            if (!isAddGoalBtn && !isEditBtn && !clickedOnOtherModal) {
-                                this.closeGoalForm();
-                            }
-                        }
-                    } catch {
-                        // Contains check failed, ignore
-                    }
+        // Global keydown listener for Escape to close modal
+        document.addEventListener('keydown', (e) => {
+            const modal = getElement('goalModal');
+            if (e.key === 'Escape' && modal && modal.classList.contains('is-visible')) {
+                // Check if any other modal is open on top (like reset confirmation)
+                const completionModal = getElement('completionModal');
+                if (completionModal && completionModal.classList.contains('is-visible')) {
+                    return;
                 }
+                this.closeGoalForm();
             }
         });
+
+        // Use mousedown instead of click to avoid closing the modal immediately
+        document.addEventListener('mousedown', (e) => this._handleOutsideClick(e));
+    }
+
+    /** @private */
+    _handleOutsideClick(e) {
+        const modal = getOptionalElement('goalModal');
+        if (!modal) return;
+
+        const isModalVisible = modal.classList.contains('is-visible');
+
+        // Close only when the click happens outside the modal
+        if (isModalVisible && e.target?.nodeType === 1) {
+            try {
+                if (!modal.contains(e.target)) {
+                    // Check if the click is on another modal (completion, pause, etc.)
+                    const clickedOnOtherModal = e.target.closest('.modal') && !e.target.closest('#goalModal');
+
+                    // Check if the click target is a button that opens the modal
+                    const clickedElement = e.target;
+                    const isAddGoalBtn = clickedElement.id === 'addGoalBtn' || clickedElement.closest('#addGoalBtn');
+                    const isEditBtn = clickedElement.classList && (clickedElement.classList.contains('edit-goal') || clickedElement.closest('.edit-goal'));
+
+                    if (!isAddGoalBtn && !isEditBtn && !clickedOnOtherModal) {
+                        this.closeGoalForm();
+                    }
+                }
+            } catch {
+                // Contains check failed, ignore
+            }
+        }
     }
 
     handleGoalSubmit(renderViews) {
@@ -305,7 +391,7 @@ export class GoalFormView extends BaseUIController {
 
         this.app.goalService.unpauseGoal(goal.id, this.app.settingsService.getSettings().maxActiveGoals);
         // Refresh the goal form to update button visibility
-        this.openGoalForm(goal.id, renderViews);
+        this.openGoalForm(renderViews, goal.id);
         renderViews();
     }
 
@@ -317,7 +403,7 @@ export class GoalFormView extends BaseUIController {
         // This ensures the goal is reactivated based on priority
         this.app.goalService.setGoalStatus(goal.id, 'inactive', this.app.settingsService.getSettings().maxActiveGoals);
         // Refresh the goal form to update button visibility
-        this.openGoalForm(goal.id, renderViews);
+        this.openGoalForm(renderViews, goal.id);
         renderViews();
     }
 
@@ -329,7 +415,7 @@ export class GoalFormView extends BaseUIController {
         this.app.goalService.forceActivateGoal(goal.id, maxActiveGoals);
 
         // Refresh the goal form to update button visibility
-        this.openGoalForm(goal.id, renderViews);
+        this.openGoalForm(renderViews, goal.id);
         renderViews();
     }
 
