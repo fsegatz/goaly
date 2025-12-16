@@ -36,7 +36,7 @@ export class GoalFormView extends BaseUIController {
         modal.classList.add('is-visible');
 
         // Focus title input
-        const titleInput = getElement('goalTitle');
+        const titleInput = getOptionalElement('goalTitle');
         if (titleInput) {
             setTimeout(() => titleInput.focus(), 50);
         }
@@ -44,15 +44,16 @@ export class GoalFormView extends BaseUIController {
 
     /** @private */
     _resetFormState() {
-        const goalIdInput = getElement('goalId');
+        const goalIdInput = getOptionalElement('goalId');
         if (goalIdInput) goalIdInput.value = '';
 
-        const deleteBtn = getElement('deleteGoalBtn');
+        const deleteBtn = getOptionalElement('deleteGoalBtn');
         if (deleteBtn) deleteBtn.style.display = 'none';
 
         // Reset recurrence section
-        const recurringCheckbox = getElement('recurringCheckbox');
-        const periodGroup = getElement('recurrencePeriodGroup');
+        // Reset recurrence section
+        const recurringCheckbox = getOptionalElement('recurringCheckbox');
+        const periodGroup = getOptionalElement('recurrencePeriodGroup');
         if (recurringCheckbox) recurringCheckbox.checked = false;
         if (periodGroup) periodGroup.style.display = 'none';
 
@@ -96,7 +97,7 @@ export class GoalFormView extends BaseUIController {
     _setupCreateMode(form) {
         form.reset();
 
-        const modalTitle = getElement('goalModalTitle');
+        const modalTitle = getOptionalElement('goalModalTitle');
         if (modalTitle) {
             modalTitle.textContent = this.translate('goalForm.createTitle');
         }
@@ -111,22 +112,22 @@ export class GoalFormView extends BaseUIController {
     /** @private */
     _getFormUIElements() {
         return {
-            modalTitle: getElement('goalModalTitle'),
-            goalIdInput: getElement('goalId'),
-            titleInput: getElement('goalTitle'),
-            motivationInput: getElement('goalMotivation'),
-            urgencyInput: getElement('goalUrgency'),
-            deadlineInput: getElement('goalDeadline'),
-            recurringCheckbox: getElement('recurringCheckbox'),
-            periodInput: getElement('recurrencePeriod'),
-            periodUnitSelect: getElement('recurrencePeriodUnit'),
-            periodGroup: getElement('recurrencePeriodGroup'),
-            deleteBtn: getElement('deleteGoalBtn'),
-            completeBtn: getElement('completeGoalBtn'),
-            unpauseBtn: getElement('unpauseGoalBtn'),
-            reactivateBtn: getElement('reactivateGoalBtn'),
-            forceActivateBtn: getElement('forceActivateGoalBtn'),
-            stateManagementSection: getElement('goalStateManagementSection')
+            modalTitle: getOptionalElement('goalModalTitle'),
+            goalIdInput: getOptionalElement('goalId'),
+            titleInput: getOptionalElement('goalTitle'),
+            motivationInput: getOptionalElement('goalMotivation'),
+            urgencyInput: getOptionalElement('goalUrgency'),
+            deadlineInput: getOptionalElement('goalDeadline'),
+            recurringCheckbox: getOptionalElement('recurringCheckbox'),
+            periodInput: getOptionalElement('recurrencePeriod'),
+            periodUnitSelect: getOptionalElement('recurrencePeriodUnit'),
+            periodGroup: getOptionalElement('recurrencePeriodGroup'),
+            deleteBtn: getOptionalElement('deleteGoalBtn'),
+            completeBtn: getOptionalElement('completeGoalBtn'),
+            unpauseBtn: getOptionalElement('unpauseGoalBtn'),
+            reactivateBtn: getOptionalElement('reactivateGoalBtn'),
+            forceActivateBtn: getOptionalElement('forceActivateGoalBtn'),
+            stateManagementSection: getOptionalElement('goalStateManagementSection')
         };
     }
 
@@ -281,10 +282,10 @@ export class GoalFormView extends BaseUIController {
 
         // Global keydown listener for Escape to close modal
         document.addEventListener('keydown', (e) => {
-            const modal = getElement('goalModal');
+            const modal = getOptionalElement('goalModal');
             if (e.key === 'Escape' && modal && modal.classList.contains('is-visible')) {
                 // Check if any other modal is open on top (like reset confirmation)
-                const completionModal = getElement('completionModal');
+                const completionModal = getOptionalElement('completionModal');
                 if (completionModal && completionModal.classList.contains('is-visible')) {
                     return;
                 }
