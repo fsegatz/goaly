@@ -1,0 +1,6 @@
+{
+    "sonarlint.connectedMode.project": {
+        "connectionId": "fsegatz",
+        "projectKey": "fsegatz_goaly"
+    }
+}
