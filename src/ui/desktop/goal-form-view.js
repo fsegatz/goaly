@@ -19,8 +19,8 @@ export class GoalFormView extends BaseUIController {
         this.renderViews = renderViews;
         this.currentGoalId = goalId;
 
-        const modal = getElement('goalModal');
-        const form = getElement('goalForm');
+        const modal = getOptionalElement('goalModal');
+        const form = getOptionalElement('goalForm');
 
         if (!modal || !form) return;
 
