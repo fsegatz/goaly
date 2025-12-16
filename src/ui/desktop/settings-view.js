@@ -60,7 +60,7 @@ export class SettingsView extends BaseUIController {
             const option = document.createElement('option');
             option.value = languageCode;
             option.textContent = this.translate(`language.names.${languageCode}`);
-            option.setAttribute('data-i18n-key', `language.names.${languageCode}`);
+            option.dataset.i18nKey = `language.names.${languageCode}`;
             languageSelect.appendChild(option);
         });
 
@@ -77,7 +77,7 @@ export class SettingsView extends BaseUIController {
                 const previousLanguage = currentSettings.language;
                 const reviewIntervalsInput = getOptionalElement('reviewIntervals');
                 const newSettings = {
-                    maxActiveGoals: parseInt(getElement('maxActiveGoals').value),
+                    maxActiveGoals: Number.parseInt(getElement('maxActiveGoals').value, 10),
                     language: languageSelect ? languageSelect.value : previousLanguage,
                     reviewIntervals: reviewIntervalsInput ? reviewIntervalsInput.value : currentSettings.reviewIntervals
                 };
@@ -153,7 +153,7 @@ export class SettingsView extends BaseUIController {
     }
 
     updateGoogleDriveUI() {
-        if (!this.app.syncManager || !this.app.syncManager.isAvailable()) {
+        if (!this.app.syncManager?.isAvailable()) {
             return;
         }
 
@@ -224,11 +224,13 @@ export class SettingsView extends BaseUIController {
 
         statusDiv.hidden = false;
         statusDiv.textContent = message;
-        statusDiv.className = isError
-            ? 'google-drive-status google-drive-status-error'
-            : (isSuccess
-                ? 'google-drive-status google-drive-status-authenticated'
-                : 'google-drive-status google-drive-status-info');
+        let statusClass = 'google-drive-status google-drive-status-info';
+        if (isError) {
+            statusClass = 'google-drive-status google-drive-status-error';
+        } else if (isSuccess) {
+            statusClass = 'google-drive-status google-drive-status-authenticated';
+        }
+        statusDiv.className = statusClass;
 
         // Mark status as locked so regular UI refreshes do not overwrite it
         this.statusLocked = true;

@@ -216,7 +216,7 @@ export class GoalFormView extends BaseUIController {
                 const isModalVisible = modal.classList.contains('is-visible');
 
                 // Close only when the click happens outside the modal
-                if (isModalVisible && e.target && e.target.nodeType === 1) {
+                if (isModalVisible && e.target?.nodeType === 1) {
                     try {
                         if (!modal.contains(e.target)) {
                             // Check if the click is on another modal (completion, pause, etc.)
@@ -231,8 +231,8 @@ export class GoalFormView extends BaseUIController {
                                 this.closeGoalForm();
                             }
                         }
-                    } catch (error) {
-                        // Ignore errors if contains fails
+                    } catch {
+                        // Contains check failed, ignore
                     }
                 }
             }
@@ -256,7 +256,7 @@ export class GoalFormView extends BaseUIController {
             const recurPeriodInput = getOptionalElement('goalRecurPeriod');
             const recurPeriodUnitSelect = getOptionalElement('goalRecurPeriodUnit');
             if (recurPeriodInput) {
-                goalData.recurPeriod = parseInt(recurPeriodInput.value) || 7;
+                goalData.recurPeriod = Number.parseInt(recurPeriodInput.value, 10) || 7;
             } else {
                 goalData.recurPeriod = 7; // Default
             }

@@ -89,7 +89,7 @@ export class MobileDashboardView extends DashboardView {
             emptyState.style.color = '#888';
             emptyState.style.padding = '40px';
             emptyState.textContent = this.translate('dashboard.noActiveGoals');
-            emptyState.setAttribute('data-i18n-key', 'dashboard.noActiveGoals');
+            emptyState.dataset.i18nKey = 'dashboard.noActiveGoals';
             dashboardList.appendChild(emptyState);
             this.cards = [];
             this.currentIndex = 0;
@@ -367,7 +367,7 @@ export class MobileDashboardView extends DashboardView {
         const wrapper = currentCard.closest('.mobile-dashboard-cards-wrapper');
         if (wrapper) {
             // Force a reflow to ensure card is measured correctly
-            void currentCard.offsetHeight;
+            currentCard.offsetHeight; // eslint-disable-line no-unused-expressions
             // Reset height to auto to measure natural height
             wrapper.style.height = 'auto';
             // Get the natural height of the card

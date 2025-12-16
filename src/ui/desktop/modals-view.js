@@ -117,7 +117,7 @@ export class ModalsView extends BaseUIController {
         const recurringCheckbox = this.getCompletionElement('completionRecurringCheckbox');
         const recurDateContainer = this.getCompletionElement('completionRecurDateContainer');
 
-        if (goal && goal.isRecurring) {
+        if (goal?.isRecurring) {
             // Pre-check checkbox for recurring goals
             if (recurringCheckbox) {
                 recurringCheckbox.checked = true;
@@ -188,11 +188,11 @@ export class ModalsView extends BaseUIController {
         const recurringCheckbox = this.getCompletionElement('completionRecurringCheckbox');
         const recurDate = this.getCompletionElement('completionRecurDate');
 
-        if (!recurringCheckbox || !recurringCheckbox.checked) {
+        if (!recurringCheckbox?.checked) {
             return null;
         }
 
-        if (!recurDate || !recurDate.value) {
+        if (!recurDate?.value) {
             // Show error if recurring is checked but no date provided
             alert(this.translate('completionModal.recurDateRequired') || 'Please select a recurrence date');
             return false; // Return false to indicate validation error
@@ -430,7 +430,7 @@ export class ModalsView extends BaseUIController {
             this.completionModalRefs = {};
         }
         const cached = this.completionModalRefs[id];
-        if (cached && cached.isConnected) {
+        if (cached?.isConnected) {
             return cached;
         }
         const element = getOptionalElement(id);
@@ -440,7 +440,7 @@ export class ModalsView extends BaseUIController {
 
     getMigrationElement(id) {
         const cached = this.migrationModalRefs[id];
-        if (cached && cached.isConnected) {
+        if (cached?.isConnected) {
             return cached;
         }
         const element = getOptionalElement(id);
@@ -467,13 +467,13 @@ export class ModalsView extends BaseUIController {
 
                 if (pauseType === 'date') {
                     const dateInput = this.getPauseElement('pauseUntilDateInput');
-                    if (dateInput && dateInput.value) {
+                    if (dateInput?.value) {
                         // Parse date in local timezone to avoid off-by-one-day errors
                         pauseUntil = new Date(dateInput.value + 'T00:00:00');
                     }
                 } else {
                     const goalSelect = this.getPauseElement('pauseUntilGoalSelect');
-                    if (goalSelect && goalSelect.value) {
+                    if (goalSelect?.value) {
                         pauseUntilGoalId = goalSelect.value;
                     }
                 }
@@ -626,7 +626,7 @@ export class ModalsView extends BaseUIController {
             this.pauseModalRefs = {};
         }
         const cached = this.pauseModalRefs[id];
-        if (cached && cached.isConnected) {
+        if (cached?.isConnected) {
             return cached;
         }
         const element = getOptionalElement(id);

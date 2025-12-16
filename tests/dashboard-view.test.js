@@ -30,10 +30,10 @@ beforeEach(() => {
     document = dom.window.document;
     window = dom.window;
 
-    global.document = document;
-    global.window = window;
-    global.alert = jest.fn();
-    window.alert = global.alert;
+    globalThis.document = document;
+    globalThis.window = window;
+    globalThis.alert = jest.fn();
+    window.alert = globalThis.alert;
 
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2025-11-09T12:00:00.000Z'));
@@ -78,9 +78,9 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-    delete global.document;
-    delete global.window;
-    delete global.alert;
+    delete globalThis.document;
+    delete globalThis.window;
+    delete globalThis.alert;
     jest.useRealTimers();
     jest.restoreAllMocks();
 });
@@ -252,7 +252,7 @@ describe('DashboardView', () => {
     });
 
     test('formatReviewIntervalInput should return empty string for invalid values', () => {
-        expect(dashboardView.formatReviewIntervalInput(NaN)).toBe('');
+        expect(dashboardView.formatReviewIntervalInput(Number.NaN)).toBe('');
         expect(dashboardView.formatReviewIntervalInput(0)).toBe('');
         expect(dashboardView.formatReviewIntervalInput(-5)).toBe('');
     });
@@ -266,7 +266,7 @@ describe('DashboardView', () => {
     });
 
     test('formatReviewIntervalDisplay should return unknown for invalid values', () => {
-        const result1 = dashboardView.formatReviewIntervalDisplay(NaN);
+        const result1 = dashboardView.formatReviewIntervalDisplay(Number.NaN);
         const result2 = dashboardView.formatReviewIntervalDisplay(0);
         const result3 = dashboardView.formatReviewIntervalDisplay(-5);
         // Should return translated "unknown" message

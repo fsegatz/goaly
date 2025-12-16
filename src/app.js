@@ -118,24 +118,19 @@ class GoalyApp {
         logo.addEventListener('mouseleave', cancelPress);
 
         // Touch events (for mobile)
-        let touchMoved = false;
         logo.addEventListener('touchstart', () => {
-            touchMoved = false;
             // Don't preventDefault immediately - allow click for quick taps
             // Quick tap navigation is handled by the 'click' event in ui-controller.js
             startPress(null); // Pass null so preventDefault isn't called
         }, { passive: true });
         logo.addEventListener('touchmove', () => {
-            touchMoved = true;
             cancelPress();
         }, { passive: true });
         logo.addEventListener('touchend', () => {
             cancelPress();
-            touchMoved = false;
         }, { passive: true });
         logo.addEventListener('touchcancel', () => {
             cancelPress();
-            touchMoved = false;
         }, { passive: true });
 
         // Update visibility on load
@@ -183,7 +178,7 @@ class GoalyApp {
 
     applyImportedPayload(payload) {
         if (!Array.isArray(payload.goals)) {
-            throw new Error('Missing goals array in payload.');
+            throw new TypeError('Missing goals array in payload.');
         }
 
         // Load settings first when available
@@ -239,7 +234,7 @@ class GoalyApp {
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
-    new GoalyApp();
+    globalThis.goalyApp = new GoalyApp();
 });
 
 export default GoalyApp;

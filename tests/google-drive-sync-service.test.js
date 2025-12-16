@@ -74,6 +74,10 @@ describe('GoogleDriveSyncService', () => {
             }
         };
 
+        // Also assign to globalThis for source code compatibility
+        globalThis.gapi = mockGapi;
+        globalThis.google = { accounts: mockGoogleAccounts };
+
         global.fetch = jest.fn();
 
         service = new GoogleDriveSyncService();
@@ -506,7 +510,7 @@ describe('GoogleDriveSyncService', () => {
 
             service.refreshTokenIfNeeded = jest.fn().mockResolvedValue(true);
             service._getCurrentAccessToken = jest.fn().mockReturnValue('new-token');
-            const ensureAuthSpy = jest.spyOn(service, 'ensureAuthenticated').mockResolvedValue();
+            jest.spyOn(service, 'ensureAuthenticated').mockResolvedValue();
 
             const result = await service.executeWithTokenRefresh(apiCall);
 
@@ -518,7 +522,7 @@ describe('GoogleDriveSyncService', () => {
         test('executeWithTokenRefresh should throw after max retries', async () => {
             const apiCall = jest.fn().mockRejectedValue({ status: 401 });
             service.refreshTokenIfNeeded = jest.fn().mockResolvedValue(true);
-            const ensureAuthSpy = jest.spyOn(service, 'ensureAuthenticated').mockResolvedValue();
+            jest.spyOn(service, 'ensureAuthenticated').mockResolvedValue();
 
             await expect(service.executeWithTokenRefresh(apiCall)).rejects.toEqual({ status: 401 });
             expect(apiCall).toHaveBeenCalledTimes(2); // Initial + 1 retry

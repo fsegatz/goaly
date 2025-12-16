@@ -29,12 +29,12 @@ beforeEach(() => {
     document = dom.window.document;
     window = dom.window;
 
-    global.document = document;
-    global.window = window;
-    global.confirm = jest.fn();
-    global.alert = jest.fn();
-    window.confirm = global.confirm;
-    window.alert = global.alert;
+    globalThis.document = document;
+    globalThis.window = window;
+    globalThis.confirm = jest.fn();
+    globalThis.alert = jest.fn();
+    window.confirm = globalThis.confirm;
+    window.alert = globalThis.alert;
 
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2025-11-09T12:00:00.000Z'));
@@ -71,10 +71,10 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-    delete global.document;
-    delete global.window;
-    delete global.confirm;
-    delete global.alert;
+    delete globalThis.document;
+    delete globalThis.window;
+    delete globalThis.confirm;
+    delete globalThis.alert;
     jest.useRealTimers();
     jest.restoreAllMocks();
 });
@@ -198,7 +198,7 @@ describe('GoalFormView', () => {
         const renderViews = jest.fn();
         goalFormView.handleGoalSubmit(renderViews);
 
-        expect(global.alert).toHaveBeenCalledWith('Test error message');
+        expect(globalThis.alert).toHaveBeenCalledWith('Test error message');
     });
 
     test('handleDelete should delete goal', () => {
@@ -215,27 +215,27 @@ describe('GoalFormView', () => {
 
     test('deleteBtn click should call handleDelete if confirmed', () => {
         document.getElementById('goalId').value = 'goal-to-delete';
-        global.confirm.mockReturnValue(true);
+        globalThis.confirm.mockReturnValue(true);
         const renderViews = jest.fn();
         const handleDelete = jest.fn();
         goalFormView.setupEventListeners(jest.fn(), handleDelete, renderViews);
 
         document.getElementById('deleteBtn').click();
 
-        expect(global.confirm).toHaveBeenCalledWith(expect.stringContaining('delete'));
+        expect(globalThis.confirm).toHaveBeenCalledWith(expect.stringContaining('delete'));
         expect(handleDelete).toHaveBeenCalled();
     });
 
     test('deleteBtn click should not call handleDelete if not confirmed', () => {
         document.getElementById('goalId').value = 'goal-to-delete';
-        global.confirm.mockReturnValue(false);
+        globalThis.confirm.mockReturnValue(false);
         const renderViews = jest.fn();
         const handleDelete = jest.fn();
         goalFormView.setupEventListeners(jest.fn(), handleDelete, renderViews);
 
         document.getElementById('deleteBtn').click();
 
-        expect(global.confirm).toHaveBeenCalledWith(expect.stringContaining('delete'));
+        expect(globalThis.confirm).toHaveBeenCalledWith(expect.stringContaining('delete'));
         expect(handleDelete).not.toHaveBeenCalled();
     });
 
@@ -268,7 +268,7 @@ describe('GoalFormView', () => {
         // Note: The actual implementation checks for modal visibility and target containment
         // This test verifies the event handler is set up correctly
         expect(modal).toBeDefined();
-        document.body.removeChild(outsideElement);
+        outsideElement.remove();
     });
 
     test('window mousedown should not close modal when clicking on add goal button', () => {
@@ -288,7 +288,7 @@ describe('GoalFormView', () => {
         window.dispatchEvent(mousedownEvent);
 
         expect(goalFormView.closeGoalForm).not.toHaveBeenCalled();
-        document.body.removeChild(addGoalBtn);
+        addGoalBtn.remove();
     });
 
     test('window mousedown should not close modal when clicking inside modal', () => {

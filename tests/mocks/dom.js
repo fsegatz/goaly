@@ -175,13 +175,13 @@ function setupGlobalDOM(dom) {
     const document = dom.window.document;
     const window = dom.window;
 
-    global.document = document;
-    global.window = window;
-    global.navigator = window.navigator || { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
+    globalThis.document = document;
+    globalThis.window = window;
+    globalThis.navigator = window.navigator || { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
 
     // Ensure navigator is available on window
     if (!window.navigator) {
-        window.navigator = global.navigator;
+        window.navigator = globalThis.navigator;
     }
 
     return { document, window };
@@ -194,9 +194,9 @@ function cleanupGlobalDOM(dom) {
     if (dom) {
         dom.window.close();
     }
-    delete global.document;
-    delete global.window;
-    delete global.navigator;
+    delete globalThis.document;
+    delete globalThis.window;
+    delete globalThis.navigator;
 }
 
 module.exports = {

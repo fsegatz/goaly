@@ -78,8 +78,8 @@ function createMockLanguageService(translations = {}) {
  */
 function createMockSyncManager(overrides = {}) {
     return {
-        isAvailable: jest.fn(() => overrides.isAvailable !== undefined ? overrides.isAvailable : true),
-        isAuthenticated: jest.fn(() => overrides.isAuthenticated !== undefined ? overrides.isAuthenticated : false),
+        isAvailable: jest.fn(() => overrides.isAvailable ?? true),
+        isAuthenticated: jest.fn(() => overrides.isAuthenticated ?? false),
         authenticateGoogleDrive: jest.fn(),
         signOutGoogleDrive: jest.fn(),
         syncWithGoogleDrive: jest.fn(),

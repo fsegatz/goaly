@@ -17,7 +17,6 @@ const {
 
 describe('SyncManager', () => {
     let dom;
-    let document;
     let window;
     let mockApp;
     let manager;
@@ -25,10 +24,10 @@ describe('SyncManager', () => {
     beforeEach(() => {
         jest.useFakeTimers();
         dom = createBasicDOM();
-        ({ document, window } = setupGlobalDOM(dom));
-        global.localStorage = createSimpleLocalStorageMock();
+        ({ window } = setupGlobalDOM(dom));
+        globalThis.localStorage = createSimpleLocalStorageMock();
         setupBrowserMocks();
-        global.console.error = jest.fn();
+        globalThis.console.error = jest.fn();
 
         const translations = {
             'googleDrive.notConfigured': 'Not configured',
@@ -95,14 +94,14 @@ describe('SyncManager', () => {
 
     afterEach(() => {
         // Clear any pending timers before restoring real timers
-        if (manager && manager.syncDebounce) {
+        if (manager?.syncDebounce) {
             clearTimeout(manager.syncDebounce);
             manager.syncDebounce = null;
         }
         jest.useRealTimers();
         cleanupGlobalDOM(dom);
         cleanupBrowserMocks();
-        delete global.localStorage;
+        delete globalThis.localStorage;
     });
 
     test('initGoogleDriveSync should not initialize without credentials', async () => {
@@ -271,7 +270,7 @@ describe('SyncManager', () => {
 
     test('getLastSyncStorageKey should use localStorage fileId', () => {
         manager.googleDriveSyncService = null;
-        global.localStorage.getItem.mockReturnValue('stored-file-id');
+        globalThis.localStorage.getItem.mockReturnValue('stored-file-id');
 
         const key = manager.getLastSyncStorageKey();
 
@@ -280,7 +279,7 @@ describe('SyncManager', () => {
 
     test('getLastSyncStorageKey should use unknown as fallback', () => {
         manager.googleDriveSyncService = null;
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         const key = manager.getLastSyncStorageKey();
 
@@ -383,7 +382,7 @@ describe('SyncManager', () => {
 
         manager.showError('googleDrive.notConfigured');
 
-        expect(global.alert).toHaveBeenCalledWith('Not configured');
+        expect(globalThis.alert).toHaveBeenCalledWith('Not configured');
     });
 
     test('showError should use alert when settingsView missing', () => {
@@ -395,7 +394,7 @@ describe('SyncManager', () => {
 
         manager.showError('googleDrive.notConfigured');
 
-        expect(global.alert).toHaveBeenCalledWith('Not configured');
+        expect(globalThis.alert).toHaveBeenCalledWith('Not configured');
     });
 
     test('syncWithGoogleDrive should show error when not configured', async () => {
@@ -530,7 +529,7 @@ describe('SyncManager', () => {
             isAuthenticated: jest.fn(() => true)
         };
         manager.syncWithGoogleDrive = jest.fn(() => Promise.resolve());
-        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+        const clearTimeoutSpy = jest.spyOn(globalThis, 'clearTimeout');
 
         // Set up first debounce
         manager.scheduleBackgroundSyncSoon();
@@ -552,8 +551,8 @@ describe('SyncManager', () => {
         manager.syncWithGoogleDrive = jest.fn(() => Promise.resolve());
 
         const unrefSpy = jest.fn();
-        const originalSetTimeout = global.setTimeout;
-        global.setTimeout = jest.fn((callback, delay) => {
+        const originalSetTimeout = globalThis.setTimeout;
+        globalThis.setTimeout = jest.fn((callback, delay) => {
             const timer = originalSetTimeout(callback, delay);
             timer.unref = unrefSpy;
             return timer;
@@ -563,7 +562,7 @@ describe('SyncManager', () => {
 
         expect(unrefSpy).toHaveBeenCalled();
 
-        global.setTimeout = originalSetTimeout;
+        globalThis.setTimeout = originalSetTimeout;
     });
 
     test('scheduleBackgroundSyncSoon should handle timer without unref method', () => {
@@ -572,8 +571,8 @@ describe('SyncManager', () => {
         };
         manager.syncWithGoogleDrive = jest.fn(() => Promise.resolve());
 
-        const originalSetTimeout = global.setTimeout;
-        global.setTimeout = jest.fn((callback, delay) => {
+        const originalSetTimeout = globalThis.setTimeout;
+        globalThis.setTimeout = jest.fn((callback, delay) => {
             const timer = originalSetTimeout(callback, delay);
             // Remove unref to test the branch where it doesn't exist
             delete timer.unref;
@@ -584,7 +583,7 @@ describe('SyncManager', () => {
         expect(() => manager.scheduleBackgroundSyncSoon()).not.toThrow();
         expect(manager.syncDebounce).not.toBeNull();
 
-        global.setTimeout = originalSetTimeout;
+        globalThis.setTimeout = originalSetTimeout;
     });
 
     test('hookGoalSavesForBackgroundSync listener should respect _suppressAutoSync', () => {
@@ -637,13 +636,13 @@ describe('SyncManager', () => {
 
     test('authenticateGoogleDrive should handle error without message', async () => {
         const mockSyncService = {
-            authenticate: jest.fn(() => Promise.reject(new Error()))
+            authenticate: jest.fn(() => Promise.reject(new Error('Auth failed')))
         };
         manager.googleDriveSyncService = mockSyncService;
 
         await manager.authenticateGoogleDrive();
 
-        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('googleDrive.authError', { message: 'Unknown error occurred' }, expect.any(Error));
+        expect(mockApp.errorHandler.error).toHaveBeenCalledWith('googleDrive.authError', { message: 'Auth failed' }, expect.any(Error));
     });
 
     test('downloadFromGoogleDrive should handle incompatible version', async () => {
@@ -665,10 +664,6 @@ describe('SyncManager', () => {
         };
         // Mock version checks to all return false to trigger incompatible
         const versioning = require('../src/domain/utils/versioning');
-        const originalIsSame = versioning.isSameVersion;
-        const originalIsOlder = versioning.isOlderVersion;
-        const originalIsNewer = versioning.isNewerVersion;
-
         jest.spyOn(versioning, 'isSameVersion').mockReturnValue(false);
         jest.spyOn(versioning, 'isOlderVersion').mockReturnValue(false);
         jest.spyOn(versioning, 'isNewerVersion').mockReturnValue(false);
@@ -707,7 +702,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         await manager.syncWithGoogleDrive({ background: false });
 
@@ -724,7 +719,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         // Should not throw when ensureAuthenticated doesn't exist
         await expect(manager.syncWithGoogleDrive({ background: true })).resolves.not.toThrow();
@@ -780,7 +775,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         await manager.syncWithGoogleDrive({ background: false });
 
@@ -809,7 +804,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
-        global.localStorage.getItem.mockReturnValue('invalid json');
+        globalThis.localStorage.getItem.mockReturnValue('invalid json');
 
         await manager.syncWithGoogleDrive();
 
@@ -819,7 +814,7 @@ describe('SyncManager', () => {
             expect.any(Error),
             { context: 'parseBasePayload' }
         );
-        expect(global.localStorage.removeItem).toHaveBeenCalled();
+        expect(globalThis.localStorage.removeItem).toHaveBeenCalled();
     });
 
     test('syncWithGoogleDrive should handle missing base payload', async () => {
@@ -830,7 +825,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         await manager.syncWithGoogleDrive();
 
@@ -859,7 +854,7 @@ describe('SyncManager', () => {
         manager.googleDriveSyncService = mockSyncService;
         // Use the same goal structure to ensure merge produces identical result
         mockApp.goalService.goals = [goal];
-        global.localStorage.getItem.mockReturnValue(JSON.stringify(basePayload));
+        globalThis.localStorage.getItem.mockReturnValue(JSON.stringify(basePayload));
 
         await manager.syncWithGoogleDrive({ background: false });
 
@@ -881,7 +876,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [{ id: '1', title: 'New Title' }];
-        global.localStorage.getItem.mockReturnValue(JSON.stringify(remotePayload));
+        globalThis.localStorage.getItem.mockReturnValue(JSON.stringify(remotePayload));
 
         await manager.syncWithGoogleDrive({ background: false });
 
@@ -896,7 +891,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         await manager.syncWithGoogleDrive({ background: false });
 
@@ -920,7 +915,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [{ id: '1', title: 'Test' }];
-        global.localStorage.getItem.mockReturnValue(JSON.stringify(remotePayload));
+        globalThis.localStorage.getItem.mockReturnValue(JSON.stringify(remotePayload));
 
         await manager.syncWithGoogleDrive({ background: false });
 
@@ -939,7 +934,7 @@ describe('SyncManager', () => {
         mockApp.applyImportedPayload.mockImplementation(() => {
             throw new Error('Apply error');
         });
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         await manager.syncWithGoogleDrive();
 
@@ -954,7 +949,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         await manager.syncWithGoogleDrive();
 
@@ -976,7 +971,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         await manager.syncWithGoogleDrive({ background: false });
 
@@ -1006,7 +1001,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [goalWithDates];
-        global.localStorage.getItem.mockReturnValue(JSON.stringify(remotePayload));
+        globalThis.localStorage.getItem.mockReturnValue(JSON.stringify(remotePayload));
 
         await manager.syncWithGoogleDrive();
 
@@ -1027,7 +1022,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         await manager.syncWithGoogleDrive();
 
@@ -1090,7 +1085,7 @@ describe('SyncManager', () => {
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
         mockApp.uiController.settingsView = null;
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         await expect(manager.syncWithGoogleDrive({ background: false })).rejects.toThrow();
     });
@@ -1103,7 +1098,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         await manager.syncWithGoogleDrive();
 
@@ -1118,7 +1113,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         await manager.syncWithGoogleDrive();
 
@@ -1138,7 +1133,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
-        global.localStorage.getItem.mockReturnValue(JSON.stringify(basePayload));
+        globalThis.localStorage.getItem.mockReturnValue(JSON.stringify(basePayload));
 
         await manager.syncWithGoogleDrive();
 
@@ -1153,7 +1148,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         await manager.syncWithGoogleDrive();
 
@@ -1175,7 +1170,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [goalWithoutId];
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         await manager.syncWithGoogleDrive();
 
@@ -1197,7 +1192,7 @@ describe('SyncManager', () => {
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
-        global.localStorage.getItem.mockReturnValue(null);
+        globalThis.localStorage.getItem.mockReturnValue(null);
 
         await manager.syncWithGoogleDrive();
 
@@ -1207,7 +1202,11 @@ describe('SyncManager', () => {
     test('syncWithGoogleDrive should handle error without message property', async () => {
         const mockSyncService = {
             isAuthenticated: jest.fn(() => true),
-            downloadData: jest.fn(() => Promise.reject({})) // Error without message
+            downloadData: jest.fn(() => {
+                const err = new Error('No message');
+                delete err.message;
+                return Promise.reject(err);
+            }) // Error without message
         };
         manager.googleDriveSyncService = mockSyncService;
         mockApp.goalService.goals = [];
