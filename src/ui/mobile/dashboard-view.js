@@ -80,57 +80,10 @@ export class MobileDashboardView extends DashboardView {
     }
 
     /** @private */
-    _cleanupExistingCards(container) {
-        for (const card of container.querySelectorAll('.goal-card, .review-card')) {
-            if (card._stepEventManager) {
-                card._stepEventManager.cleanup();
-            }
-        }
-    }
-
-    /** @private */
-    _updateFeedback(feedbackElement) {
-        if (!feedbackElement) return;
-
-        if (this.latestReviewFeedback) {
-            const { messageKey, messageArgs, type } = this.latestReviewFeedback;
-            feedbackElement.hidden = false;
-            feedbackElement.textContent = this.translate(messageKey, messageArgs);
-            feedbackElement.dataset.state = type || 'info';
-        } else {
-            feedbackElement.hidden = true;
-            feedbackElement.textContent = '';
-            feedbackElement.dataset.state = '';
-        }
-    }
-
-    /** @private */
-    _prepareCardData(reviews, dashboardGoals) {
-        const reviewCards = reviews.map((review, index) => ({
-            type: 'review',
-            data: review,
-            position: index + 1,
-            total: reviews.length
-        }));
-
-        const goalCards = dashboardGoals.map(goal => ({
-            type: 'goal',
-            data: goal
-        }));
-
-        return [...reviewCards, ...goalCards];
-    }
-
-    /** @private */
     _renderEmptyState(container) {
-        container.innerHTML = '';
-        const emptyState = document.createElement('p');
-        emptyState.style.textAlign = 'center';
-        emptyState.style.color = '#888';
-        emptyState.style.padding = '40px';
-        emptyState.textContent = this.translate('dashboard.noActiveGoals');
-        emptyState.dataset.i18nKey = 'dashboard.noActiveGoals';
-        container.appendChild(emptyState);
+        // Call parent's empty state rendering
+        super._renderEmptyState(container);
+        // Reset mobile-specific state
         this.cards = [];
         this.currentIndex = 0;
     }
