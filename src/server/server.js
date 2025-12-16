@@ -4,7 +4,7 @@ const path = require('node:path');
 const { handleAuthRequest } = require('../domain/sync/google-oauth-server');
 
 const PORT = process.env.PORT || 8080;
-const ROOT_DIR = path.join(__dirname, '../../'); // Assuming src/server/server.js, so up two levels to root
+const ROOT_DIR = path.resolve(__dirname, '../../'); // Assuming src/server/server.js, so up two levels to root
 
 // MIME types for static files
 const MIME_TYPES = {
@@ -29,7 +29,9 @@ const server = http.createServer(async (req, res) => {
 
     // Static File Serving
     if (req.method === 'GET') {
-        let filePath = path.join(ROOT_DIR, req.url === '/' ? 'index.html' : req.url);
+        // Sanitize and resolve the file path to prevent path injection (S2083)
+        const requestPath = req.url === '/' ? 'index.html' : decodeURIComponent(req.url.split('?')[0]);
+        let filePath = path.resolve(ROOT_DIR, '.' + (requestPath.startsWith('/') ? requestPath : '/' + requestPath));
 
         // Prevent directory traversal
         if (!filePath.startsWith(ROOT_DIR)) {

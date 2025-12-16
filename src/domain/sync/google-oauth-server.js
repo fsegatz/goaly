@@ -6,22 +6,28 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
 // Encryption key for refresh token (in memory, generates new one on restart currently)
 const ENCRYPTION_KEY = crypto.randomBytes(32);
-const IV_LENGTH = 16;
+const IV_LENGTH = 12; // GCM recommended IV length is 12 bytes
+const AUTH_TAG_LENGTH = 16; // GCM auth tag length
 
 function encrypt(text) {
     const iv = crypto.randomBytes(IV_LENGTH);
-    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
-    let encrypted = cipher.update(text);
+    const cipher = crypto.createCipheriv('aes-256-gcm', Buffer.from(ENCRYPTION_KEY), iv);
+    let encrypted = cipher.update(text, 'utf8');
     encrypted = Buffer.concat([encrypted, cipher.final()]);
-    return iv.toString('hex') + ':' + encrypted.toString('hex');
+    const authTag = cipher.getAuthTag();
+    // Format: iv:authTag:encrypted (all in hex)
+    return iv.toString('hex') + ':' + authTag.toString('hex') + ':' + encrypted.toString('hex');
 }
 
 function decrypt(text) {
     try {
         const textParts = text.split(':');
-        const iv = Buffer.from(textParts.shift(), 'hex');
-        const encryptedText = Buffer.from(textParts.join(':'), 'hex');
-        const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+        if (textParts.length < 3) return null;
+        const iv = Buffer.from(textParts[0], 'hex');
+        const authTag = Buffer.from(textParts[1], 'hex');
+        const encryptedText = Buffer.from(textParts.slice(2).join(':'), 'hex');
+        const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(ENCRYPTION_KEY), iv);
+        decipher.setAuthTag(authTag);
         let decrypted = decipher.update(encryptedText);
         decrypted = Buffer.concat([decrypted, decipher.final()]);
         return decrypted.toString();
