@@ -1,69 +1,30 @@
 const { JSDOM } = require('jsdom');
 const { MobileAllGoalsView } = require('../src/ui/mobile/all-goals-view.js');
 const Goal = require('../src/domain/models/goal').default;
-const LanguageService = require('../src/domain/services/language-service').default;
+const {
+    STATUS_FILTER_HTML,
+    createMockGoalService,
+    createMockApp,
+    createTestGoals,
+    runBaseAllGoalsViewTests
+} = require('./shared/all-goals-view-test-utils.js');
+
+/**
+ * Mobile-specific HTML for MobileAllGoalsView tests.
+ */
+const MOBILE_CONTAINER_HTML = `<div id="allGoalsMobileContainer"></div>`;
 
 let dom;
 let document;
 let window;
-let mockApp;
 let mockGoalService;
+let mockApp;
 let mobileAllGoalsView;
 
 beforeEach(() => {
     dom = new JSDOM(`<!DOCTYPE html><html><body>
-        <div id="allGoalsMobileContainer"></div>
-        <div class="all-goals-controls">
-            <label for="allGoalsStatusFilter">
-                <span>Status</span>
-                <div class="status-filter-dropdown" id="allGoalsStatusFilter">
-                    <button type="button" class="status-filter-button" id="allGoalsStatusFilterButton" aria-haspopup="true" aria-expanded="false">
-                        <span class="status-filter-button-text">All statuses</span>
-                        <span class="status-filter-button-arrow">▼</span>
-                    </button>
-                    <div class="status-filter-dropdown-menu" id="allGoalsStatusFilterMenu" role="menu" aria-hidden="true">
-                        <label class="status-filter-option" role="menuitem">
-                            <input type="checkbox" value="all" class="status-filter-checkbox" checked>
-                            <span>All statuses</span>
-                        </label>
-                        <label class="status-filter-option" role="menuitem">
-                            <input type="checkbox" value="active" class="status-filter-checkbox">
-                            <span>Active</span>
-                        </label>
-                        <label class="status-filter-option" role="menuitem">
-                            <input type="checkbox" value="inactive" class="status-filter-checkbox">
-                            <span>Inactive</span>
-                        </label>
-                        <label class="status-filter-option" role="menuitem">
-                            <input type="checkbox" value="paused" class="status-filter-checkbox">
-                            <span>Paused</span>
-                        </label>
-                        <label class="status-filter-option" role="menuitem">
-                            <input type="checkbox" value="completed" class="status-filter-checkbox">
-                            <span>Completed</span>
-                        </label>
-                        <label class="status-filter-option" role="menuitem">
-                            <input type="checkbox" value="notCompleted" class="status-filter-checkbox">
-                            <span>Not Completed</span>
-                        </label>
-                        <button type="button" class="status-filter-clear" id="allGoalsStatusFilterClear">Clear filter</button>
-                    </div>
-                </div>
-            </label>
-            <label for="allGoalsPriorityFilter">
-                <span>Minimum priority</span>
-                <input type="number" id="allGoalsPriorityFilter" value="0" />
-            </label>
-            <label for="allGoalsSort">
-                <span>Sorting</span>
-                <select id="allGoalsSort">
-                    <option value="priority-desc">Priority (high → low)</option>
-                    <option value="priority-asc">Priority (low → high)</option>
-                    <option value="updated-desc">Last update (new → old)</option>
-                    <option value="updated-asc">Last update (old → new)</option>
-                </select>
-            </label>
-        </div>
+        ${MOBILE_CONTAINER_HTML}
+        ${STATUS_FILTER_HTML}
     </body></html>`, { url: "http://localhost" });
     document = dom.window.document;
     window = dom.window;
@@ -74,35 +35,8 @@ beforeEach(() => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2025-11-09T12:00:00.000Z'));
 
-    mockGoalService = {
-        goals: [],
-        calculatePriority: jest.fn((goal) => goal.motivation + goal.urgency),
-        priorityCache: {
-            getPriority: jest.fn((goalId) => {
-                const goal = mockGoalService.goals.find(g => g.id === goalId);
-                return goal ? mockGoalService.calculatePriority(goal) : 0;
-            }),
-            getAllPriorities: jest.fn(() => {
-                const priorities = new Map();
-                mockGoalService.goals.forEach(goal => {
-                    priorities.set(goal.id, mockGoalService.calculatePriority(goal));
-                });
-                return priorities;
-            }),
-            invalidate: jest.fn(),
-            refreshIfNeeded: jest.fn(),
-            clear: jest.fn()
-        }
-    };
-
-    const languageService = new LanguageService();
-    languageService.init('en');
-
-    mockApp = {
-        goalService: mockGoalService,
-        languageService,
-    };
-
+    mockGoalService = createMockGoalService();
+    mockApp = createMockApp(mockGoalService);
     mobileAllGoalsView = new MobileAllGoalsView(mockApp);
 });
 
@@ -114,495 +48,145 @@ afterEach(() => {
 });
 
 describe('MobileAllGoalsView', () => {
-    test('render should display empty state when no goals', () => {
-        mockGoalService.goals = [];
-        const openGoalForm = jest.fn();
-
-        mobileAllGoalsView.render(openGoalForm);
-
-        const container = document.getElementById('allGoalsMobileContainer');
-        expect(container.children.length).toBe(1);
-        expect(container.querySelector('.mobile-goals-empty')).not.toBeNull();
+    // Run shared tests from base class
+    runBaseAllGoalsViewTests({
+        createView: (app) => new MobileAllGoalsView(app),
+        getRenderedItems: () => document.querySelectorAll('.mobile-goal-card'),
+        getItemId: (card) => {
+            // Extract goal ID from card's click handler by checking aria-label
+            const ariaLabel = card.getAttribute('aria-label') || '';
+            // Find goal by title match from test data
+            const title = card.querySelector('.mobile-goal-card__title')?.textContent;
+            const testGoals = createTestGoals();
+            for (const [, goal] of Object.entries(testGoals)) {
+                if (goal.title === title) {
+                    return goal.id;
+                }
+            }
+            return null;
+        }
     });
 
-    test('render should return early when container is missing', () => {
-        const container = document.getElementById('allGoalsMobileContainer');
-        container.remove();
-        const openGoalForm = jest.fn();
-
-        expect(() => mobileAllGoalsView.render(openGoalForm)).not.toThrow();
-    });
-
-    test('render should create goal cards', () => {
-        const goal1 = new Goal({ id: '1', title: 'Goal 1', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-12-01'), lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
-        const goal2 = new Goal({ id: '2', title: 'Goal 2', motivation: 3, urgency: 2, status: 'paused', deadline: null, lastUpdated: new Date('2025-11-08T10:00:00.000Z') });
-        mockGoalService.goals = [goal1, goal2];
-        const openGoalForm = jest.fn();
-
-        mobileAllGoalsView.render(openGoalForm);
-
-        const container = document.getElementById('allGoalsMobileContainer');
-        const cards = container.querySelectorAll('.mobile-goal-card');
-        expect(cards.length).toBe(2);
-        expect(cards[0].textContent).toContain('Goal 1');
-        expect(cards[1].textContent).toContain('Goal 2');
-    });
-
-    test('render should filter by status', () => {
-        const goal1 = new Goal({ id: '1', title: 'Active Goal', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
-        const goal2 = new Goal({ id: '2', title: 'Paused Goal', motivation: 3, urgency: 2, status: 'paused', deadline: null, lastUpdated: new Date('2025-11-08T10:00:00.000Z') });
-        mockGoalService.goals = [goal1, goal2];
-        mobileAllGoalsView.allGoalsState.statusFilter = 'paused';
-        const openGoalForm = jest.fn();
-
-        mobileAllGoalsView.render(openGoalForm);
-
-        const container = document.getElementById('allGoalsMobileContainer');
-        const cards = container.querySelectorAll('.mobile-goal-card');
-        expect(cards.length).toBe(1);
-        expect(cards[0].textContent).toContain('Paused Goal');
-    });
-
-    test('render should filter by minimum priority', () => {
-        const goal1 = new Goal({ id: '1', title: 'High Priority', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
-        const goal2 = new Goal({ id: '2', title: 'Low Priority', motivation: 1, urgency: 1, status: 'active', deadline: null, lastUpdated: new Date('2025-11-08T10:00:00.000Z') });
-        mockGoalService.goals = [goal1, goal2];
-        mobileAllGoalsView.allGoalsState.minPriority = 5;
-        const openGoalForm = jest.fn();
-
-        mobileAllGoalsView.render(openGoalForm);
-
-        const container = document.getElementById('allGoalsMobileContainer');
-        const cards = container.querySelectorAll('.mobile-goal-card');
-        expect(cards.length).toBe(1);
-        expect(cards[0].textContent).toContain('High Priority');
-    });
-
-    test('render should filter out completed goals when includeCompleted is false', () => {
-        const goal1 = new Goal({ id: '1', title: 'Active Goal', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
-        const goal2 = new Goal({ id: '2', title: 'Completed Goal', motivation: 3, urgency: 2, status: 'completed', deadline: null, lastUpdated: new Date('2025-11-08T10:00:00.000Z') });
-        mockGoalService.goals = [goal1, goal2];
-        mobileAllGoalsView.allGoalsState.includeCompleted = false;
-        const openGoalForm = jest.fn();
-
-        mobileAllGoalsView.render(openGoalForm);
-
-        const container = document.getElementById('allGoalsMobileContainer');
-        const cards = container.querySelectorAll('.mobile-goal-card');
-        expect(cards.length).toBe(1);
-        expect(cards[0].textContent).toContain('Active Goal');
-    });
-
-    test('render should filter out notCompleted goals when includeNotCompleted is false', () => {
-        const goal1 = new Goal({ id: '1', title: 'Active Goal', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
-        const goal2 = new Goal({ id: '2', title: 'Not Completed Goal', motivation: 3, urgency: 2, status: 'notCompleted', deadline: null, lastUpdated: new Date('2025-11-08T10:00:00.000Z') });
-        mockGoalService.goals = [goal1, goal2];
-        mobileAllGoalsView.allGoalsState.includeNotCompleted = false;
-        const openGoalForm = jest.fn();
-
-        mobileAllGoalsView.render(openGoalForm);
-
-        const container = document.getElementById('allGoalsMobileContainer');
-        const cards = container.querySelectorAll('.mobile-goal-card');
-        expect(cards.length).toBe(1);
-        expect(cards[0].textContent).toContain('Active Goal');
-    });
-
-    test('render should sort by priority ascending', () => {
-        const goal1 = new Goal({ id: '1', title: 'High Priority', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
-        const goal2 = new Goal({ id: '2', title: 'Low Priority', motivation: 1, urgency: 1, status: 'active', deadline: null, lastUpdated: new Date('2025-11-08T10:00:00.000Z') });
-        mockGoalService.goals = [goal1, goal2];
-        mobileAllGoalsView.allGoalsState.sort = 'priority-asc';
-        const openGoalForm = jest.fn();
-
-        mobileAllGoalsView.render(openGoalForm);
-
-        const container = document.getElementById('allGoalsMobileContainer');
-        const cards = container.querySelectorAll('.mobile-goal-card');
-        expect(cards[0].textContent).toContain('Low Priority');
-        expect(cards[1].textContent).toContain('High Priority');
-    });
-
-    test('render should sort by updated descending', () => {
-        const goal1 = new Goal({ id: '1', title: 'Old Goal', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-08T10:00:00.000Z') });
-        const goal2 = new Goal({ id: '2', title: 'New Goal', motivation: 3, urgency: 2, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
-        mockGoalService.goals = [goal1, goal2];
-        mobileAllGoalsView.allGoalsState.sort = 'updated-desc';
-        const openGoalForm = jest.fn();
-
-        mobileAllGoalsView.render(openGoalForm);
-
-        const container = document.getElementById('allGoalsMobileContainer');
-        const cards = container.querySelectorAll('.mobile-goal-card');
-        expect(cards[0].textContent).toContain('New Goal');
-        expect(cards[1].textContent).toContain('Old Goal');
-    });
-
-    test('render should sort by updated ascending', () => {
-        const goal1 = new Goal({ id: '1', title: 'Old Goal', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-08T10:00:00.000Z') });
-        const goal2 = new Goal({ id: '2', title: 'New Goal', motivation: 3, urgency: 2, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
-        mockGoalService.goals = [goal1, goal2];
-        mobileAllGoalsView.allGoalsState.sort = 'updated-asc';
-        const openGoalForm = jest.fn();
-
-        mobileAllGoalsView.render(openGoalForm);
-
-        const container = document.getElementById('allGoalsMobileContainer');
-        const cards = container.querySelectorAll('.mobile-goal-card');
-        expect(cards[0].textContent).toContain('Old Goal');
-        expect(cards[1].textContent).toContain('New Goal');
-    });
-
-    test('render should sort by updated with string dates', () => {
-        // Goal constructor might convert strings to Dates, but let's force them to be strings 
-        // by modifying them after creation or ensuring we mock the behavior if strict types aren't enforced
-        const goal1 = new Goal({ id: '1', title: 'Old String Goal', status: 'active' });
-        goal1.lastUpdated = '2025-11-08T10:00:00.000Z'; // Explicitly string
-
-        const goal2 = new Goal({ id: '2', title: 'New String Goal', status: 'active' });
-        goal2.lastUpdated = '2025-11-10T10:00:00.000Z'; // Explicitly string
-
-        mockGoalService.goals = [goal1, goal2];
-        mobileAllGoalsView.allGoalsState.sort = 'updated-desc';
-        const openGoalForm = jest.fn();
-
-        mobileAllGoalsView.render(openGoalForm);
-
-        const container = document.getElementById('allGoalsMobileContainer');
-        const cards = container.querySelectorAll('.mobile-goal-card');
-        expect(cards[0].textContent).toContain('New String Goal');
-        expect(cards[1].textContent).toContain('Old String Goal');
-    });
-
-    test('createGoalCard should create card with correct structure', () => {
-        const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-12-01'), lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
-        const openGoalForm = jest.fn();
-
-        const card = mobileAllGoalsView.createGoalCard(goal, 9.0, openGoalForm);
-
-        expect(card.className).toContain('mobile-goal-card');
-        expect(card.className).toContain('status-active');
-        expect(card.textContent).toContain('Test Goal');
-        expect(card.textContent).toContain('9.0');
-        expect(card.textContent).toContain('5/5');
-        expect(card.textContent).toContain('4/5');
-    });
-
-    test('createGoalCard should call openGoalForm on click', () => {
-        const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
-        const openGoalForm = jest.fn();
-
-        const card = mobileAllGoalsView.createGoalCard(goal, 9.0, openGoalForm);
-        card.click();
-
-        expect(openGoalForm).toHaveBeenCalledWith('1');
-    });
-
-    test('createGoalCard should call openGoalForm on Enter key', () => {
-        const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
-        const openGoalForm = jest.fn();
-
-        const card = mobileAllGoalsView.createGoalCard(goal, 9.0, openGoalForm);
-        const keydownEvent = new window.KeyboardEvent('keydown', { key: 'Enter' });
-        card.dispatchEvent(keydownEvent);
-
-        expect(openGoalForm).toHaveBeenCalledWith('1');
-    });
-
-    test('createGoalCard should call openGoalForm on Space key', () => {
-        const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
-        const openGoalForm = jest.fn();
-
-        const card = mobileAllGoalsView.createGoalCard(goal, 9.0, openGoalForm);
-        const keydownEvent = new window.KeyboardEvent('keydown', { key: ' ' });
-        card.dispatchEvent(keydownEvent);
-
-        expect(openGoalForm).toHaveBeenCalledWith('1');
-    });
-
-    test('setupControls should update state on filter change', () => {
-        const openGoalForm = jest.fn();
-        mobileAllGoalsView.render = jest.fn();
-        mobileAllGoalsView.setupControls(openGoalForm);
-
-        const dropdown = document.getElementById('allGoalsStatusFilter');
-        const activeCheckbox = dropdown.querySelector('input[value="active"]');
-        const inactiveCheckbox = dropdown.querySelector('input[value="inactive"]');
-        const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
-        const completedCheckbox = dropdown.querySelector('input[value="completed"]');
-        const notCompletedCheckbox = dropdown.querySelector('input[value="notCompleted"]');
-        const allCheckbox = dropdown.querySelector('input[value="all"]');
-
-        // Uncheck "all" first - this will check all others
-        allCheckbox.checked = false;
-        allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        // Uncheck all except paused
-        activeCheckbox.checked = false;
-        inactiveCheckbox.checked = false;
-        completedCheckbox.checked = false;
-        notCompletedCheckbox.checked = false;
-        activeCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        expect(mobileAllGoalsView.allGoalsState.statusFilter).toEqual(['paused']);
-        expect(mobileAllGoalsView.render).toHaveBeenCalledWith(openGoalForm);
-    });
-
-    test('setupControls should handle missing elements', () => {
-        const openGoalForm = jest.fn();
-        document.getElementById('allGoalsStatusFilter').remove();
-        document.getElementById('allGoalsPriorityFilter').remove();
-        document.getElementById('allGoalsSort').remove();
-
-        expect(() => mobileAllGoalsView.setupControls(openGoalForm)).not.toThrow();
-    });
-
-    test('setupControls should parse priority filter correctly', () => {
-        const openGoalForm = jest.fn();
-        mobileAllGoalsView.render = jest.fn();
-        mobileAllGoalsView.setupControls(openGoalForm);
-
-        const priorityFilter = document.getElementById('allGoalsPriorityFilter');
-        priorityFilter.value = '42';
-        priorityFilter.dispatchEvent(new window.Event('input', { bubbles: true }));
-
-        expect(mobileAllGoalsView.allGoalsState.minPriority).toBe(42);
-    });
-
-    test('setupControls should handle invalid priority filter', () => {
-        const openGoalForm = jest.fn();
-        mobileAllGoalsView.render = jest.fn();
-        mobileAllGoalsView.setupControls(openGoalForm);
-
-        const priorityFilter = document.getElementById('allGoalsPriorityFilter');
-        priorityFilter.value = 'invalid';
-        priorityFilter.dispatchEvent(new window.Event('input', { bubbles: true }));
-
-        expect(mobileAllGoalsView.allGoalsState.minPriority).toBe(0);
-    });
-
-    test('setupControls should update sort on change', () => {
-        const openGoalForm = jest.fn();
-        mobileAllGoalsView.render = jest.fn();
-        mobileAllGoalsView.setupControls(openGoalForm);
-
-        const sortSelect = document.getElementById('allGoalsSort');
-        sortSelect.value = 'updated-asc';
-        sortSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        expect(mobileAllGoalsView.allGoalsState.sort).toBe('updated-asc');
-        expect(mobileAllGoalsView.render).toHaveBeenCalledWith(openGoalForm);
-    });
-
-    test('setupStatusFilterDropdown should toggle dropdown on button click', () => {
-        const openGoalForm = jest.fn();
-        mobileAllGoalsView.setupControls(openGoalForm);
-
-        const button = document.getElementById('allGoalsStatusFilterButton');
-        const menu = document.getElementById('allGoalsStatusFilterMenu');
-
-        expect(button.getAttribute('aria-expanded')).toBe('false');
-        expect(menu.getAttribute('aria-hidden')).toBe('true');
-
-        button.click();
-
-        expect(button.getAttribute('aria-expanded')).toBe('true');
-        expect(menu.getAttribute('aria-hidden')).toBe('false');
-
-        button.click();
-
-        expect(button.getAttribute('aria-expanded')).toBe('false');
-        expect(menu.getAttribute('aria-hidden')).toBe('true');
-    });
-
-    test('setupStatusFilterDropdown should close dropdown when clicking outside', () => {
-        const openGoalForm = jest.fn();
-        mobileAllGoalsView.setupControls(openGoalForm);
-
-        const button = document.getElementById('allGoalsStatusFilterButton');
-        const menu = document.getElementById('allGoalsStatusFilterMenu');
-        const outsideElement = document.createElement('div');
-        document.body.appendChild(outsideElement);
-
-        // Open dropdown
-        button.click();
-        expect(button.getAttribute('aria-expanded')).toBe('true');
-
-        // Click outside
-        outsideElement.click();
-
-        expect(button.getAttribute('aria-expanded')).toBe('false');
-        expect(menu.getAttribute('aria-hidden')).toBe('true');
-
-        document.body.removeChild(outsideElement);
-    });
-
-    test('setupStatusFilterDropdown should clear filter when clear button is clicked', () => {
-        const openGoalForm = jest.fn();
-        mobileAllGoalsView.render = jest.fn();
-        mobileAllGoalsView.setupControls(openGoalForm);
-
-        const dropdown = document.getElementById('allGoalsStatusFilter');
-        const clearButton = document.getElementById('allGoalsStatusFilterClear');
-        const allCheckbox = dropdown.querySelector('input[value="all"]');
-        const activeCheckbox = dropdown.querySelector('input[value="active"]');
-        const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
-
-        // Set some filters
-        allCheckbox.checked = false;
-        activeCheckbox.checked = true;
-        pausedCheckbox.checked = true;
-        mobileAllGoalsView.allGoalsState.statusFilter = ['active', 'paused'];
-
-        // Clear filter
-        clearButton.click();
-
-        expect(mobileAllGoalsView.allGoalsState.statusFilter).toEqual(['all']);
-        expect(allCheckbox.checked).toBe(true);
-        expect(activeCheckbox.checked).toBe(false);
-        expect(pausedCheckbox.checked).toBe(false);
-        expect(mobileAllGoalsView.render).toHaveBeenCalledWith(openGoalForm);
-    });
-
-    test('handleStatusFilterChange should check all when "all" is checked', () => {
-        const openGoalForm = jest.fn();
-        mobileAllGoalsView.setupControls(openGoalForm);
-
-        const dropdown = document.getElementById('allGoalsStatusFilter');
-        const allCheckbox = dropdown.querySelector('input[value="all"]');
-        const activeCheckbox = dropdown.querySelector('input[value="active"]');
-        const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
-        const completedCheckbox = dropdown.querySelector('input[value="completed"]');
-        const notCompletedCheckbox = dropdown.querySelector('input[value="notCompleted"]');
-        const checkboxes = dropdown.querySelectorAll('.status-filter-checkbox');
-
-        // Uncheck all first
-        allCheckbox.checked = false;
-        allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        // Now check "all"
-        allCheckbox.checked = true;
-        allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        expect(mobileAllGoalsView.allGoalsState.statusFilter).toEqual(['all']);
-        expect(activeCheckbox.checked).toBe(false);
-        expect(pausedCheckbox.checked).toBe(false);
-        expect(completedCheckbox.checked).toBe(false);
-        expect(notCompletedCheckbox.checked).toBe(false);
-    });
-
-    test('handleStatusFilterChange should uncheck "all" when specific status is changed', () => {
-        const openGoalForm = jest.fn();
-        mobileAllGoalsView.setupControls(openGoalForm);
-
-        const dropdown = document.getElementById('allGoalsStatusFilter');
-        const allCheckbox = dropdown.querySelector('input[value="all"]');
-        const activeCheckbox = dropdown.querySelector('input[value="active"]');
-        const checkboxes = dropdown.querySelectorAll('.status-filter-checkbox');
-
-        // "all" is initially checked
-        expect(allCheckbox.checked).toBe(true);
-
-        // Uncheck active (but this should uncheck "all" first)
-        allCheckbox.checked = false;
-        allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        // Now check active
-        activeCheckbox.checked = true;
-        activeCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        expect(allCheckbox.checked).toBe(false);
-        expect(mobileAllGoalsView.allGoalsState.statusFilter).toContain('active');
-    });
-
-    test('handleStatusFilterChange should select "all" when nothing is selected', () => {
-        const openGoalForm = jest.fn();
-        mobileAllGoalsView.setupControls(openGoalForm);
-
-        const dropdown = document.getElementById('allGoalsStatusFilter');
-        const allCheckbox = dropdown.querySelector('input[value="all"]');
-        const activeCheckbox = dropdown.querySelector('input[value="active"]');
-        const inactiveCheckbox = dropdown.querySelector('input[value="inactive"]');
-        const pausedCheckbox = dropdown.querySelector('input[value="paused"]');
-        const completedCheckbox = dropdown.querySelector('input[value="completed"]');
-        const notCompletedCheckbox = dropdown.querySelector('input[value="notCompleted"]');
-        const checkboxes = dropdown.querySelectorAll('.status-filter-checkbox');
-
-        // Uncheck all first - this checks all others
-        allCheckbox.checked = false;
-        allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        // Now uncheck all specific statuses one by one
-        activeCheckbox.checked = false;
-        activeCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        inactiveCheckbox.checked = false;
-        inactiveCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        pausedCheckbox.checked = false;
-        pausedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        completedCheckbox.checked = false;
-        completedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        // Last one should trigger "select all"
-        notCompletedCheckbox.checked = false;
-        notCompletedCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        expect(allCheckbox.checked).toBe(true);
-        expect(mobileAllGoalsView.allGoalsState.statusFilter).toEqual(['all']);
-    });
-
-    test('updateStatusFilterButtonText should handle missing button text element', () => {
-        const button = document.createElement('button');
-        // No buttonText element inside
-
-        expect(() => mobileAllGoalsView.updateStatusFilterButtonText(button)).not.toThrow();
-    });
-
-    test('updateStatusFilterButtonText should update to "All statuses" when all individual statuses are selected', () => {
-        const openGoalForm = jest.fn();
-        mobileAllGoalsView.setupControls(openGoalForm);
-
-        const dropdown = document.getElementById('allGoalsStatusFilter');
-        const checkboxes = dropdown.querySelectorAll('.status-filter-checkbox:not([value="all"])');
-        const allCheckbox = dropdown.querySelector('input[value="all"]');
-
-        // Uncheck "all" first
-        allCheckbox.checked = false;
-        allCheckbox.dispatchEvent(new window.Event('change', { bubbles: true }));
-
-        // Check all individual statuses
-        checkboxes.forEach(cb => {
-            cb.checked = true;
-            cb.dispatchEvent(new window.Event('change', { bubbles: true }));
+    // Mobile-specific tests
+    describe('Mobile-specific rendering', () => {
+        test('render should display empty state when no goals', () => {
+            mockGoalService.goals = [];
+            const openGoalForm = jest.fn();
+
+            mobileAllGoalsView.render(openGoalForm);
+
+            const container = document.getElementById('allGoalsMobileContainer');
+            expect(container.children.length).toBe(1);
+            expect(container.querySelector('.mobile-goals-empty')).not.toBeNull();
         });
 
-        const button = document.getElementById('allGoalsStatusFilterButton');
-        const buttonText = button.querySelector('.status-filter-button-text');
+        test('render should return early when container is missing', () => {
+            const container = document.getElementById('allGoalsMobileContainer');
+            container.remove();
+            const openGoalForm = jest.fn();
 
-        expect(buttonText.textContent).toMatch(/All statuses|filters.statusOptions.all/);
+            expect(() => mobileAllGoalsView.render(openGoalForm)).not.toThrow();
+        });
+
+        test('render should create goal cards', () => {
+            const goal1 = new Goal({ id: '1', title: 'Goal 1', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-12-01'), lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
+            const goal2 = new Goal({ id: '2', title: 'Goal 2', motivation: 3, urgency: 2, status: 'paused', deadline: null, lastUpdated: new Date('2025-11-08T10:00:00.000Z') });
+            mockGoalService.goals = [goal1, goal2];
+            const openGoalForm = jest.fn();
+
+            mobileAllGoalsView.render(openGoalForm);
+
+            const container = document.getElementById('allGoalsMobileContainer');
+            const cards = container.querySelectorAll('.mobile-goal-card');
+            expect(cards.length).toBe(2);
+            expect(cards[0].textContent).toContain('Goal 1');
+            expect(cards[1].textContent).toContain('Goal 2');
+        });
+
+        test('render should sort by updated with string dates', () => {
+            const goal1 = new Goal({ id: '1', title: 'Old String Goal', status: 'active' });
+            goal1.lastUpdated = '2025-11-08T10:00:00.000Z';
+
+            const goal2 = new Goal({ id: '2', title: 'New String Goal', status: 'active' });
+            goal2.lastUpdated = '2025-11-10T10:00:00.000Z';
+
+            mockGoalService.goals = [goal1, goal2];
+            mobileAllGoalsView.allGoalsState.sort = 'updated-desc';
+            const openGoalForm = jest.fn();
+
+            mobileAllGoalsView.render(openGoalForm);
+
+            const container = document.getElementById('allGoalsMobileContainer');
+            const cards = container.querySelectorAll('.mobile-goal-card');
+            expect(cards[0].textContent).toContain('New String Goal');
+            expect(cards[1].textContent).toContain('Old String Goal');
+        });
     });
 
-    test('updateStatusFilterButtonText should show count when multiple statuses selected', () => {
-        const openGoalForm = jest.fn();
-        mobileAllGoalsView.setupControls(openGoalForm);
+    describe('createGoalCard', () => {
+        test('should create card with correct structure', () => {
+            const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-12-01'), lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
+            const openGoalForm = jest.fn();
 
-        const button = document.getElementById('allGoalsStatusFilterButton');
-        const buttonText = button.querySelector('.status-filter-button-text');
+            const card = mobileAllGoalsView.createGoalCard(goal, 9.0, openGoalForm);
 
-        mobileAllGoalsView.allGoalsState.statusFilter = ['active', 'paused'];
-        mobileAllGoalsView.updateStatusFilterButtonText(button);
+            expect(card.className).toContain('mobile-goal-card');
+            expect(card.className).toContain('status-active');
+            expect(card.textContent).toContain('Test Goal');
+            expect(card.textContent).toContain('9.0');
+            expect(card.textContent).toContain('5/5');
+            expect(card.textContent).toContain('4/5');
+        });
 
-        expect(buttonText.textContent).toContain('2');
-        expect(buttonText.textContent).toContain('status');
-    });
+        test('should show "No deadline" when goal has null deadline', () => {
+            const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
+            const openGoalForm = jest.fn();
 
-    test('setupStatusFilterDropdown should handle missing dropdown elements', () => {
-        const openGoalForm = jest.fn();
-        document.getElementById('allGoalsStatusFilter').remove();
+            const card = mobileAllGoalsView.createGoalCard(goal, 9.0, openGoalForm);
 
-        expect(() => mobileAllGoalsView.setupStatusFilterDropdown(openGoalForm)).not.toThrow();
+            expect(card.textContent).toMatch(/No deadline|goalCard.noDeadline/);
+        });
+
+        test('should show dash when goal has null lastUpdated', () => {
+            const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 5, urgency: 4, status: 'active', deadline: new Date('2025-12-01') });
+            Object.defineProperty(goal, 'lastUpdated', { value: null, writable: true, configurable: true });
+            const openGoalForm = jest.fn();
+
+            const card = mobileAllGoalsView.createGoalCard(goal, 9.0, openGoalForm);
+
+            expect(card.textContent).toContain('—');
+        });
+
+        test('should call openGoalForm on click', () => {
+            const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
+            const openGoalForm = jest.fn();
+
+            const card = mobileAllGoalsView.createGoalCard(goal, 9.0, openGoalForm);
+            card.click();
+
+            expect(openGoalForm).toHaveBeenCalledWith('1');
+        });
+
+        test('should call openGoalForm on Enter key', () => {
+            const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
+            const openGoalForm = jest.fn();
+
+            const card = mobileAllGoalsView.createGoalCard(goal, 9.0, openGoalForm);
+            const keydownEvent = new window.KeyboardEvent('keydown', { key: 'Enter' });
+            card.dispatchEvent(keydownEvent);
+
+            expect(openGoalForm).toHaveBeenCalledWith('1');
+        });
+
+        test('should call openGoalForm on Space key', () => {
+            const goal = new Goal({ id: '1', title: 'Test Goal', motivation: 5, urgency: 4, status: 'active', deadline: null, lastUpdated: new Date('2025-11-10T10:00:00.000Z') });
+            const openGoalForm = jest.fn();
+
+            const card = mobileAllGoalsView.createGoalCard(goal, 9.0, openGoalForm);
+            const keydownEvent = new window.KeyboardEvent('keydown', { key: ' ' });
+            card.dispatchEvent(keydownEvent);
+
+            expect(openGoalForm).toHaveBeenCalledWith('1');
+        });
     });
 });
-
