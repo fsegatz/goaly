@@ -283,10 +283,10 @@ export class GoalFormView extends BaseUIController {
         // Global keydown listener for Escape to close modal
         document.addEventListener('keydown', (e) => {
             const modal = getOptionalElement('goalModal');
-            if (e.key === 'Escape' && modal && modal.classList.contains('is-visible')) {
+            if (e.key === 'Escape' && modal?.classList.contains('is-visible')) {
                 // Check if any other modal is open on top (like reset confirmation)
                 const completionModal = getOptionalElement('completionModal');
-                if (completionModal && completionModal.classList.contains('is-visible')) {
+                if (completionModal?.classList.contains('is-visible')) {
                     return;
                 }
                 this.closeGoalForm();
