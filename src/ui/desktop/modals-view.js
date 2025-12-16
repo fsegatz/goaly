@@ -432,23 +432,11 @@ export class ModalsView extends BaseUIController {
         if (!this.completionModalRefs) {
             this.completionModalRefs = {};
         }
-        const cached = this.completionModalRefs[id];
-        if (cached?.isConnected) {
-            return cached;
-        }
-        const element = getOptionalElement(id);
-        this.completionModalRefs[id] = element || null;
-        return element || null;
+        return this.getCachedElement(this.completionModalRefs, id, getOptionalElement);
     }
 
     getMigrationElement(id) {
-        const cached = this.migrationModalRefs[id];
-        if (cached?.isConnected) {
-            return cached;
-        }
-        const element = getOptionalElement(id);
-        this.migrationModalRefs[id] = element || null;
-        return element || null;
+        return this.getCachedElement(this.migrationModalRefs, id, getOptionalElement);
     }
 
     setupPauseModal(handlePauseChoice) {
@@ -638,15 +626,7 @@ export class ModalsView extends BaseUIController {
         if (!this.pauseModalRefs) {
             this.pauseModalRefs = {};
         }
-        const cached = this.pauseModalRefs[id];
-        if (cached?.isConnected) {
-            return cached;
-        }
-        const element = getOptionalElement(id);
-        if (element) {
-            this.pauseModalRefs[id] = element;
-        }
-        return element || null;
+        return this.getCachedElement(this.pauseModalRefs, id, getOptionalElement);
     }
 }
 

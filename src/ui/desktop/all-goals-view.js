@@ -145,12 +145,6 @@ export class AllGoalsView extends BaseAllGoalsView {
         if (!this.allGoalsControlRefs) {
             this.allGoalsControlRefs = {};
         }
-        const cached = this.allGoalsControlRefs[id];
-        if (cached?.isConnected) {
-            return cached;
-        }
-        const element = getOptionalElement(id);
-        this.allGoalsControlRefs[id] = element || null;
-        return element || null;
+        return this.getCachedElement(this.allGoalsControlRefs, id, getOptionalElement);
     }
 }
