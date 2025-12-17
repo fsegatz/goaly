@@ -65,12 +65,15 @@ beforeEach(() => {
     };
 
     createModal = new CreateModal(mockApp);
+
+    // Silence console logs during tests
+    jest.spyOn(console, 'log').mockImplementation(() => { });
 });
 
 afterEach(() => {
     delete globalThis.document;
     delete globalThis.window;
-    jest.restoreAllMocks();
+    jest.restoreAllMocks(); // This will also restore console.log
 });
 
 describe('CreateModal', () => {
@@ -119,5 +122,175 @@ describe('CreateModal', () => {
         checkbox.checked = false;
         checkbox.dispatchEvent(new window.Event('change'));
         expect(recurGroup.style.display).toBe('none');
+    });
+    test('handleOutsideClick logic verification (branch coverage)', () => {
+        const modal = document.getElementById('goalModal');
+        modal.classList.add('is-visible');
+
+        // Case 1: Click outside (e.g., body)
+        const originalContains = modal.contains;
+        modal.contains = jest.fn((target) => false);
+        createModal.close = jest.fn();
+
+        createModal._handleOutsideClick({ target: document.body, nodeType: 1 });
+        expect(createModal.close).toHaveBeenCalled();
+
+        // Case 2: Click inside
+        createModal.close.mockClear();
+        modal.contains = jest.fn((target) => true);
+        createModal._handleOutsideClick({ target: modal, nodeType: 1 });
+        expect(createModal.close).not.toHaveBeenCalled();
+
+        // Case 3: modal not visible
+        modal.classList.remove('is-visible');
+        createModal.close.mockClear();
+        createModal._handleOutsideClick({ target: document.body, nodeType: 1 });
+        expect(createModal.close).not.toHaveBeenCalled();
+
+        modal.contains = originalContains;
+    });
+
+    test('_getFormUIElements should handle missing elements', () => {
+        document.body.innerHTML = ''; // Clear DOM
+        const ui = createModal._getFormUIElements();
+        expect(ui.modalTitle).toBeNull();
+    });
+
+    test('getFormData handles missing recurrence inputs', () => {
+        document.getElementById('goalIsRecurring').checked = true;
+        document.getElementById('goalRecurPeriod').remove();
+        document.getElementById('goalRecurPeriodUnit').remove();
+
+        const data = createModal.getFormData();
+
+        // These fallback to default values in the code
+        expect(data.recurPeriod).toBe(7);
+        expect(data.recurPeriodUnit).toBe('days');
+    });
+
+    test('open should handle missing title input', () => {
+        document.getElementById('goalTitle').remove();
+        // Should not throw
+        expect(() => createModal.open(jest.fn())).not.toThrow();
+    });
+    test('handleOutsideClick should close modal when click is not contained in modal', () => {
+        document.getElementById('goalModal').classList.add('is-visible');
+        const modal = document.getElementById('goalModal');
+
+        // Mock contains to return false (as if clicked outside the relevant area)
+        const originalContains = modal.contains;
+        modal.contains = jest.fn(() => false);
+        createModal.close = jest.fn();
+
+        createModal._handleOutsideClick({ target: document.body, nodeType: 1 });
+
+        expect(createModal.close).toHaveBeenCalled();
+        modal.contains = originalContains;
+    });
+
+    test('handleOutsideClick should NOT close when clicking specific buttons', () => {
+        document.getElementById('goalModal').classList.add('is-visible');
+        const modal = document.getElementById('goalModal');
+        createModal.close = jest.fn();
+
+        // 1. Click on Add Goal Button
+        const addBtn = document.createElement('button');
+        addBtn.id = 'addGoalBtn';
+        const eventAdd = { target: addBtn, nodeType: 1 };
+        // We need to ensure modal.contains returns false for this element to reach the check
+        const originalContains = modal.contains;
+        modal.contains = jest.fn(() => false);
+
+        createModal._handleOutsideClick(eventAdd);
+        expect(createModal.close).not.toHaveBeenCalled();
+
+        // 2. Click on Edit Goal Button (class check)
+        createModal.close.mockClear();
+        const editBtn = document.createElement('button');
+        editBtn.classList.add('edit-goal');
+        const eventEdit = { target: editBtn, nodeType: 1 };
+
+        createModal._handleOutsideClick(eventEdit);
+        expect(createModal.close).not.toHaveBeenCalled();
+
+        modal.contains = originalContains;
+    });
+
+    test('handleGoalSubmit should handle errors securely', () => {
+        // Setup error
+        mockGoalService.createGoal.mockImplementation(() => {
+            throw new Error('Test Error');
+        });
+
+        // Suppress console.error for this test
+        const originalError = console.error;
+        console.error = jest.fn();
+
+        document.getElementById('goalTitle').value = 'Test';
+        createModal.handleGoalSubmit();
+
+        expect(console.error).toHaveBeenCalled();
+        expect(globalThis.alert).toHaveBeenCalledWith('Test Error');
+
+        console.error = originalError;
+    });
+
+    test('open should populate form with provided values (branch check)', () => {
+        // Test open when elements missing (console.error path)
+        const originalError = console.error;
+        console.error = jest.fn();
+        document.getElementById('goalModal').remove(); // Remove modal to trigger error
+
+        createModal.open(jest.fn());
+        expect(console.error).toHaveBeenCalledWith(expect.stringContaining('not found'));
+
+        console.error = originalError;
+    });
+
+    test('getFormData handles null/undefined values gracefully', () => {
+        // Setup form to have missing optional elements
+        document.getElementById('goalIsRecurring').remove();
+        document.getElementById('goalRecurPeriod').remove();
+        document.getElementById('goalRecurPeriodUnit').remove();
+
+        const data = createModal.getFormData();
+
+        expect(data.isRecurring).toBe(false);
+        // data.recurPeriod won't be set if isRecurring is false/missing logic
+    });
+
+    test('setupEventListeners Escape key should close modal', () => {
+        createModal.setupEventListeners();
+        const modal = document.getElementById('goalModal');
+        modal.classList.add('is-visible');
+        createModal.close = jest.fn();
+
+        // Simulate Escape
+        const event = new window.KeyboardEvent('keydown', { key: 'Escape' });
+        document.dispatchEvent(event);
+
+        expect(createModal.close).toHaveBeenCalled();
+    });
+
+    test('setupEventListeners Escape key should NOT close if completion modal is open', () => {
+        createModal.setupEventListeners();
+        const modal = document.getElementById('goalModal');
+        modal.classList.add('is-visible');
+
+        // Add completion modal to DOM for this test
+        const completionModalDiv = document.createElement('div');
+        completionModalDiv.id = 'completionModal';
+        completionModalDiv.classList.add('is-visible');
+        document.body.appendChild(completionModalDiv);
+
+        createModal.close = jest.fn();
+
+        const event = new window.KeyboardEvent('keydown', { key: 'Escape' });
+        document.dispatchEvent(event);
+
+        expect(createModal.close).not.toHaveBeenCalled();
+
+        // Cleanup
+        completionModalDiv.remove();
     });
 });
