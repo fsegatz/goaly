@@ -272,6 +272,15 @@ export class AllGoalsView extends BaseView {
     }
 
     render(openGoalForm) {
+        // Persist callback if provided, otherwise use stored callback
+        if (openGoalForm) {
+            this.openGoalFormCallback = openGoalForm;
+        } else if (this.openGoalFormCallback) {
+            openGoalForm = this.openGoalFormCallback;
+        } else {
+            console.warn('AllGoalsView: openGoalForm callback missing and none stored');
+        }
+
         const tableBody = this.getControlElement('allGoalsTableBody');
         const emptyState = this.getControlElement('allGoalsEmptyState');
 

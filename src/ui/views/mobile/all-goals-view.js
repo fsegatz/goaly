@@ -10,6 +10,15 @@ export class MobileAllGoalsView extends AllGoalsView {
     }
 
     render(openGoalForm) {
+        // Persist callback if provided, otherwise use stored callback
+        if (openGoalForm) {
+            this.openGoalFormCallback = openGoalForm;
+        } else if (this.openGoalFormCallback) {
+            openGoalForm = this.openGoalFormCallback;
+        } else {
+            console.warn('MobileAllGoalsView: openGoalForm callback missing and none stored');
+        }
+
         const container = getOptionalElement('allGoalsMobileContainer');
         if (!container) {
             return;
