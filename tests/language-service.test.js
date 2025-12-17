@@ -1,6 +1,9 @@
 const { JSDOM } = require('jsdom');
 const LanguageService = require('../src/domain/services/language-service').default;
+const { getAllKeys } = require('../src/domain/services/language-service');
 const enTranslations = require('../src/language/en').default;
+const deTranslations = require('../src/language/de').default;
+const svTranslations = require('../src/language/sv').default;
 
 describe('LanguageService', () => {
     let dom;
@@ -327,6 +330,57 @@ describe('LanguageService', () => {
         // Only "en" is available, so defaultLanguage should fall back to "en"
         expect(service.defaultLanguage).toBe('en');
         expect(service.getLanguage()).toBe('en');
+    });
+});
+
+describe('Language key consistency', () => {
+    test('all languages have the same keys as English (source of truth)', () => {
+        const enKeys = getAllKeys(enTranslations).sort();
+
+        const languages = [
+            { name: 'German (de)', translations: deTranslations },
+            { name: 'Swedish (sv)', translations: svTranslations }
+        ];
+
+        const errors = [];
+
+        for (const { name, translations } of languages) {
+            const langKeys = getAllKeys(translations).sort();
+
+            const missingKeys = enKeys.filter(key => !langKeys.includes(key));
+            const extraKeys = langKeys.filter(key => !enKeys.includes(key));
+
+            if (missingKeys.length > 0) {
+                errors.push(`${name} is missing ${missingKeys.length} keys:\n  - ${missingKeys.join('\n  - ')}`);
+            }
+
+            if (extraKeys.length > 0) {
+                errors.push(`${name} has ${extraKeys.length} extra keys (not in English):\n  - ${extraKeys.join('\n  - ')}`);
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error(`Language key inconsistencies found:\n\n${errors.join('\n\n')}`);
+        }
+    });
+
+    test('getAllKeys extracts nested keys correctly', () => {
+        const testObj = {
+            a: 'value',
+            b: {
+                c: 'nested',
+                d: {
+                    e: 'deep'
+                }
+            }
+        };
+
+        const keys = getAllKeys(testObj);
+
+        expect(keys).toContain('a');
+        expect(keys).toContain('b.c');
+        expect(keys).toContain('b.d.e');
+        expect(keys).toHaveLength(3);
     });
 });
 

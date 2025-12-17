@@ -64,6 +64,7 @@ const de = {
         priorityLabel: 'Priorität',
         deadlinePrefix: '📅 {{deadline}}',
         noDeadline: 'Keine Deadline',
+        deadlineClickable: 'Klicken, um die Deadline zu bearbeiten',
         actions: {
             edit: 'Bearbeiten',
             complete: 'Abschließen',
@@ -79,6 +80,32 @@ const de = {
             deadline: 'Deadline',
             motivation: 'Motivation',
             urgency: 'Dringlichkeit'
+        },
+        steps: {
+            title: 'Schritte',
+            add: 'Schritt hinzufügen',
+            placeholder: 'Schritt eingeben...',
+            empty: 'Noch keine Schritte',
+            delete: 'Schritt löschen'
+        },
+        resources: {
+            title: 'Ressourcen',
+            add: 'Ressource hinzufügen',
+            placeholder: 'Ressource eingeben...',
+            empty: 'Noch keine Ressourcen',
+            delete: 'Ressource löschen',
+            types: {
+                general: 'Allgemein',
+                contact: 'Kontakt',
+                group: 'Gruppe',
+                institution: 'Institution',
+                knowledge: 'Wissen',
+                financial: 'Finanziell'
+            }
+        },
+        recurring: {
+            badge: 'Wiederkehrend',
+            stats: 'Wiederholungen: {{recurCount}} | Erreicht: {{completionCount}} | Nicht erreicht: {{notCompletedCount}}'
         }
     },
     settingsPanel: {
@@ -98,6 +125,15 @@ const de = {
         motivationLabel: 'Motivation (1-5) *',
         urgencyLabel: 'Dringlichkeit (1-5) *',
         deadlineLabel: 'Deadline (optional)',
+        recurringLabel: 'Wiederkehrendes Ziel',
+        recurringHelp: 'Dieses Ziel wiederholt sich nach Abschluss',
+        recurPeriodLabel: 'Wiederholungszeitraum',
+        recurPeriodHelp: 'Das Ziel wiederholt sich nach dieser Anzahl von Perioden',
+        periodUnits: {
+            days: 'Tage',
+            weeks: 'Wochen',
+            months: 'Monate'
+        },
         actions: {
             save: 'Speichern',
             cancel: 'Abbrechen',
@@ -106,12 +142,12 @@ const de = {
         stateManagement: {
             title: 'Ziel-Status',
             complete: 'Abschließen',
-            abandon: 'Aufgeben',
+            notComplete: 'Nicht erreicht',
             unpause: 'Fortsetzen',
             reactivate: 'Reaktivieren',
             help: 'Verwalte den Lebenszyklus dieses Ziels.',
             confirmComplete: 'Dieses Ziel als abgeschlossen markieren?',
-            confirmAbandon: 'Dieses Ziel aufgeben? Diese Aktion kann nicht rückgängig gemacht werden.'
+            confirmNotComplete: 'Dieses Ziel als nicht erreicht markieren?'
         }
     },
     goalHistory: {
@@ -121,7 +157,11 @@ const de = {
         title: 'Ziel abschließen',
         question: 'Hast du dein Ziel erreicht?',
         success: 'Ziel erreicht',
-        failure: 'Nicht erreicht'
+        failure: 'Nicht erreicht',
+        makeRecurring: 'Dieses Ziel wiederholen',
+        recurDate: 'Wiederholungsdatum',
+        recurDateRequired: 'Bitte wähle ein Wiederholungsdatum',
+        nextRecurrence: 'Nächste Wiederholung:'
     },
     pauseModal: {
         title: 'Ziel pausieren',
@@ -129,6 +169,7 @@ const de = {
         untilDate: 'Bis zu einem bestimmten Datum',
         untilGoal: 'Bis ein anderes Ziel abgeschlossen ist',
         selectGoal: 'Wähle ein Ziel...',
+        noGoalsAvailable: 'Keine anderen Ziele verfügbar',
         confirm: 'Pausieren',
         cancel: 'Abbrechen'
     },
@@ -140,6 +181,7 @@ const de = {
     },
     status: {
         active: 'Aktiv',
+        inactive: 'Inaktiv',
         paused: 'Pausiert',
         completed: 'Erreicht',
         notCompleted: 'Nicht erreicht'

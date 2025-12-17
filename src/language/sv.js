@@ -26,7 +26,6 @@
     sections: {
         dashboard: 'Dashboard',
         allGoals: 'Alla mål',
-        overview: 'Översikt',
         checkIn: 'Review',
         settings: 'Inställningar'
     },
@@ -39,7 +38,7 @@
         minPriorityLabel: 'Minsta prioritet',
         sortLabel: 'Sortering',
         includeCompleted: 'Visa slutförda',
-        includeAbandoned: 'Visa avbrutna',
+        includeNotCompleted: 'Visa ej slutförda',
         clearFilter: 'Rensa filter',
         statusOptions: {
             all: 'Alla statusar',
@@ -65,6 +64,7 @@
         priorityLabel: 'Prioritet',
         deadlinePrefix: '📅 {{deadline}}',
         noDeadline: 'Ingen deadline',
+        deadlineClickable: 'Klicka för att redigera deadline',
         actions: {
             edit: 'Redigera',
             complete: 'Slutför',
@@ -80,6 +80,32 @@
             deadline: 'Deadline',
             motivation: 'Motivation',
             urgency: 'Brådska'
+        },
+        steps: {
+            title: 'Steg',
+            add: 'Lägg till steg',
+            placeholder: 'Ange ett steg...',
+            empty: 'Ännu inga steg',
+            delete: 'Ta bort steg'
+        },
+        resources: {
+            title: 'Resurser',
+            add: 'Lägg till resurs',
+            placeholder: 'Ange en resurs...',
+            empty: 'Ännu inga resurser',
+            delete: 'Ta bort resurs',
+            types: {
+                general: 'Allmän',
+                contact: 'Kontakt',
+                group: 'Grupp',
+                institution: 'Institution',
+                knowledge: 'Kunskap',
+                financial: 'Finansiell'
+            }
+        },
+        recurring: {
+            badge: 'Återkommande',
+            stats: 'Återkommit: {{recurCount}} | Avklarade: {{completionCount}} | Ej avklarade: {{notCompletedCount}}'
         }
     },
     settingsPanel: {
@@ -99,6 +125,15 @@
         motivationLabel: 'Motivation (1-5) *',
         urgencyLabel: 'Brådska (1-5) *',
         deadlineLabel: 'Deadline (valfritt)',
+        recurringLabel: 'Återkommande mål',
+        recurringHelp: 'Detta mål upprepas efter slutförande',
+        recurPeriodLabel: 'Återkommande period',
+        recurPeriodHelp: 'Målet återkommer efter detta antal perioder',
+        periodUnits: {
+            days: 'Dagar',
+            weeks: 'Veckor',
+            months: 'Månader'
+        },
         actions: {
             save: 'Spara',
             cancel: 'Avbryt',
@@ -107,12 +142,12 @@
         stateManagement: {
             title: 'Målstatus',
             complete: 'Slutför',
-            abandon: 'Avbryt',
+            notComplete: 'Ej slutfört',
             unpause: 'Återuppta',
             reactivate: 'Återaktivera',
             help: 'Hantera livscykeln för detta mål.',
             confirmComplete: 'Markera detta mål som slutfört?',
-            confirmAbandon: 'Avbryt detta mål? Denna åtgärd kan inte ångras.'
+            confirmNotComplete: 'Markera detta mål som ej slutfört?'
         }
     },
     goalHistory: {
@@ -122,7 +157,11 @@
         title: 'Slutför mål',
         question: 'Uppnådde du målet?',
         success: 'Mål slutfört',
-        failure: 'Inte slutfört'
+        failure: 'Inte slutfört',
+        makeRecurring: 'Gör detta mål återkommande',
+        recurDate: 'Återkommande datum',
+        recurDateRequired: 'Välj ett återkommande datum',
+        nextRecurrence: 'Nästa återkommande:'
     },
     pauseModal: {
         title: 'Pausa mål',
@@ -130,6 +169,7 @@
         untilDate: 'Till ett specifikt datum',
         untilGoal: 'Tills ett annat mål är slutfört',
         selectGoal: 'Välj ett mål...',
+        noGoalsAvailable: 'Inga andra mål tillgängliga',
         confirm: 'Pausa',
         cancel: 'Avbryt'
     },

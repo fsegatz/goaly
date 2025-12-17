@@ -53,7 +53,7 @@ class LanguageService {
 
     onChange(callback) {
         if (typeof callback !== 'function') {
-            return () => {};
+            return () => { };
         }
         this.listeners.add(callback);
         return () => {
@@ -222,6 +222,35 @@ class LanguageService {
         });
     }
 }
+
+/**
+ * Utility to get all keys from a nested object as dot-notation strings.
+ * Used for validation testing to ensure all language files have consistent keys.
+ * @param {Object} obj - Object to extract keys from
+ * @param {string} prefix - Current key prefix
+ * @returns {string[]} Array of dot-notation keys
+ */
+export function getAllKeys(obj, prefix = '') {
+    let keys = [];
+
+    for (const key of Object.keys(obj)) {
+        const fullKey = prefix ? `${prefix}.${key}` : key;
+        const value = obj[key];
+
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+            keys = keys.concat(getAllKeys(value, fullKey));
+        } else {
+            keys.push(fullKey);
+        }
+    }
+
+    return keys;
+}
+
+/**
+ * All available translations for validation.
+ */
+export const translations = { en, de, sv };
 
 export default LanguageService;
 
