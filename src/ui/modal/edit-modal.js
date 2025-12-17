@@ -22,7 +22,10 @@ export class EditModal extends BaseModal {
         const modal = getOptionalElement('goalModal');
         const form = getOptionalElement('goalForm');
 
-        if (!modal || !form) return;
+        if (!modal || !form) {
+            console.error('Goal modal elements not found in DOM');
+            return;
+        }
 
         // Reset form state first
         this._resetFormState();
@@ -66,8 +69,17 @@ export class EditModal extends BaseModal {
 
     /** @private */
     _setupEditMode(goalId, form) {
-        const goal = this.app.goalService.getGoal(goalId);
-        if (!goal) return;
+        let goal = this.app.goalService.getGoal(goalId);
+
+        // Fallback: try loose comparison if exact match failed (e.g. string vs number)
+        if (!goal && this.app.goalService.goals) {
+            goal = this.app.goalService.goals.find(g => String(g.id) === String(goalId));
+        }
+
+        if (!goal) {
+            console.error(`EditModal: Goal not found for id ${goalId}`);
+            return;
+        }
 
         const uiElements = this._getFormUIElements();
 
