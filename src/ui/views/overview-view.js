@@ -109,10 +109,12 @@ export class OverviewView extends BaseView {
         `;
     }
 
+    /** @typedef {Object} AnalyticsService */
+
     /**
      * Render SVG bar chart for goals over time.
      * @param {Object} goalsByPeriod - Goals grouped by period
-     * @param {Object} analyticsService - Analytics service instance
+     * @param {AnalyticsService} analyticsService - Analytics service instance
      * @returns {string} HTML string for the bar chart
      */
     renderBarChart(goalsByPeriod, analyticsService) {

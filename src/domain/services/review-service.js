@@ -42,8 +42,14 @@ function getMostRecentReview(goal) {
  * Reviews help users stay engaged with their goals and adjust priorities.
  * @class
  */
+
+/** @typedef {Object} GoalService */
+/** @typedef {Object} SettingsService */
+
 class ReviewService {
     /**
+     * Create a new ReviewService instance.
+     * Create a new ReviewService instance.
      * Create a new ReviewService instance.
      * @param {GoalService} goalService - The goal service instance
      * @param {SettingsService} settingsService - The settings service instance

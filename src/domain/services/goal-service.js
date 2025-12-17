@@ -12,6 +12,8 @@ import { STORAGE_KEY_GOALS, DEADLINE_BONUS_DAYS } from '../utils/constants.js';
 import { PriorityCacheManager } from '../priority-cache-manager.js';
 import { setToMidnight, normalizeDate } from '../utils/date-utils.js';
 
+/** @typedef {Object} ErrorHandler */
+
 /**
  * Parse a date string in local timezone to avoid off-by-one-day errors.
  * @param {string|Date|null} value - The date value to parse
