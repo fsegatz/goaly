@@ -354,8 +354,8 @@ class UIController {
         // Check if the goal modal is currently open for this goal
         const goalModal = getOptionalElement('goalModal');
         const goalIdInput = getOptionalElement('goalId');
-        const isGoalModalOpen = goalModal && goalModal.classList.contains('is-visible') &&
-            goalIdInput && goalIdInput.value === goalId;
+        const isGoalModalOpen = goalModal?.classList.contains('is-visible') &&
+            goalIdInput?.value === goalId;
 
         // Handle recurring goals
         if (recurrenceData?.isRecurring && recurrenceData.recurrenceDate) {
