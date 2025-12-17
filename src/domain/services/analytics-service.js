@@ -77,12 +77,12 @@ class AnalyticsService {
      * @private
      */
     _fillMissingPeriods(grouped, period) {
-        const keys = Object.keys(grouped).sort();
+        const keys = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
         if (keys.length === 0) return grouped;
 
         const result = {};
         const startKey = keys[0];
-        const endKey = keys[keys.length - 1];
+        const endKey = keys.at(-1);
 
         // Generate all periods between start and end
         const periods = this._generatePeriodRange(startKey, endKey, period);
@@ -128,7 +128,7 @@ class AnalyticsService {
                 return new Date(year, month - 1, 1);
             }
             case 'year': {
-                return new Date(parseInt(key), 0, 1);
+                return new Date(Number.parseInt(key), 0, 1);
             }
             default:
                 throw new Error(`Unknown period type: ${period}`);
@@ -220,7 +220,7 @@ class AnalyticsService {
             completed: completionStats.completed,
             notCompleted: completionStats.notCompleted,
             completionRate: completionStats.completionRate,
-            avgPerPeriod: parseFloat(avgPerPeriod),
+            avgPerPeriod: Number.parseFloat(avgPerPeriod),
             period
         };
     }

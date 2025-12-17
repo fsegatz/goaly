@@ -2,7 +2,7 @@ export function splitLines(value) {
     if (typeof value !== 'string') {
         return [];
     }
-    const normalized = value.replace(/\r\n/g, '\n');
+    const normalized = value.replaceAll('\r\n', '\n');
     if (normalized === '') {
         return [];
     }
@@ -15,7 +15,7 @@ export function computeLineDiff(oldContent, newContent) {
     const rows = oldLines.length;
     const cols = newLines.length;
 
-    const dp = Array.from({ length: rows + 1 }, () => Array(cols + 1).fill(0));
+    const dp = Array.from({ length: rows + 1 }, () => new Array(cols + 1).fill(0));
 
     for (let row = rows - 1; row >= 0; row -= 1) {
         for (let col = cols - 1; col >= 0; col -= 1) {

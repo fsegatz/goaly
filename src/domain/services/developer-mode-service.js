@@ -1,9 +1,8 @@
 // src/domain/developer-mode-service.js
 
 class DeveloperModeService {
-    constructor() {
-        this.isEnabled = false;
-    }
+    isEnabled = false;
+
 
     enable() {
         this.isEnabled = true;

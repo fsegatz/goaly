@@ -4,6 +4,46 @@
  * Centralized error handling system for the application
  * Provides consistent error logging and user-facing error messages
  */
+
+/**
+ * Convert error to a string message
+ * @param {Error|Object|null} error - Error object
+ * @param {string} fallback - Fallback message
+ * @returns {string}
+ */
+function getErrorMessage(error, fallback) {
+    if (error?.message) {
+        return error.message;
+    }
+    if (error) {
+        // Convert to string, but handle objects specially to avoid [object Object]
+        if (typeof error === 'object') {
+            return JSON.stringify(error);
+        }
+        return String(error);
+    }
+    return fallback;
+}
+
+/**
+ * Prepare error object for logging to avoid stringification issues
+ * @param {Error|Object|null} error - Error object
+ * @returns {Error|Object|null}
+ */
+function prepareErrorForLog(error) {
+    if (!error) {
+        return null;
+    }
+    if (error.message) {
+        return error;
+    }
+    // Safely convert to a loggable format
+    if (typeof error === 'object') {
+        return { message: JSON.stringify(error) };
+    }
+    return { message: String(error) };
+}
+
 class ErrorHandler {
     constructor(languageService = null, uiController = null) {
         this.languageService = languageService;
@@ -63,8 +103,9 @@ class ErrorHandler {
      */
     showError(messageKey, replacements = {}, severity = 'error', error = null, context = {}) {
         // Log the error first
-        const errorMessage = error?.message || error?.toString() || messageKey;
-        this.log(severity, errorMessage, error, { messageKey, ...context });
+        const errorMessage = getErrorMessage(error, messageKey);
+        const errorForLog = prepareErrorForLog(error);
+        this.log(severity, errorMessage, errorForLog, { messageKey, ...context });
 
         // Get translated message
         let userMessage;
@@ -79,9 +120,8 @@ class ErrorHandler {
         }
 
         // Display to user
-        // TODO: Consider refactoring to an event-based system or custom display handlers
-        // to reduce coupling to specific UI components
-        if (this.uiController && this.uiController.settingsView) {
+        // Note: Using event-based system would reduce coupling to specific UI components
+        if (this.uiController?.settingsView) {
             // Use settings view for Google Drive errors (existing pattern)
             // This maintains backward compatibility with existing Google Drive error handling
             if (messageKey.startsWith('googleDrive.')) {
@@ -145,9 +185,10 @@ class ErrorHandler {
      * @param {Object} context - Additional context
      */
     handleError(error, defaultMessageKey = 'errors.generic', context = {}) {
-        const errorMessage = error?.message || error?.toString() || defaultMessageKey;
+        const errorMessage = getErrorMessage(error, defaultMessageKey);
+        const errorForLog = prepareErrorForLog(error);
         const severity = error?.severity || 'error';
-        
+
         // Try to extract message key from error if it's a structured error
         let messageKey = defaultMessageKey;
         if (error?.messageKey) {
@@ -157,7 +198,7 @@ class ErrorHandler {
             messageKey = `errors.${error.code}`;
         }
 
-        this.showError(messageKey, { message: errorMessage }, severity, error, context);
+        this.showError(messageKey, { message: errorMessage }, severity, errorForLog, context);
     }
 }
 

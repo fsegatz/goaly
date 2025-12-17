@@ -17,14 +17,13 @@ const {
 
 describe('SyncManager', () => {
     let dom;
-    let window;
     let mockApp;
     let manager;
 
     beforeEach(() => {
         jest.useFakeTimers();
         dom = createBasicDOM();
-        ({ window } = setupGlobalDOM(dom));
+        setupGlobalDOM(dom);
         globalThis.localStorage = createSimpleLocalStorageMock();
         setupBrowserMocks();
         globalThis.console.error = jest.fn();
@@ -105,8 +104,8 @@ describe('SyncManager', () => {
     });
 
     test('initGoogleDriveSync should not initialize without credentials', async () => {
-        delete window.GOOGLE_API_KEY;
-        delete window.GOOGLE_CLIENT_ID;
+        delete globalThis.GOOGLE_API_KEY;
+        delete globalThis.GOOGLE_CLIENT_ID;
         if (process.env) {
             delete process.env.GOOGLE_API_KEY;
             delete process.env.GOOGLE_CLIENT_ID;
@@ -117,9 +116,9 @@ describe('SyncManager', () => {
         expect(manager.googleDriveSyncService).toBeNull();
     }, 10000);
 
-    test('initGoogleDriveSync should initialize with window credentials', async () => {
-        window.GOOGLE_API_KEY = 'test-api-key';
-        window.GOOGLE_CLIENT_ID = 'test-client-id';
+    test('initGoogleDriveSync should initialize with globalThis credentials', async () => {
+        globalThis.GOOGLE_API_KEY = 'test-api-key';
+        globalThis.GOOGLE_CLIENT_ID = 'test-client-id';
 
         // Create a new manager instance for this test
         const testManager = new SyncManager(mockApp);
@@ -142,13 +141,13 @@ describe('SyncManager', () => {
 
         // Restore original
         GoogleDriveSyncService.prototype.initialize = originalInit;
-        delete window.GOOGLE_API_KEY;
-        delete window.GOOGLE_CLIENT_ID;
+        delete globalThis.GOOGLE_API_KEY;
+        delete globalThis.GOOGLE_CLIENT_ID;
     });
 
     test('initGoogleDriveSync should perform background sync when already authenticated', async () => {
-        window.GOOGLE_API_KEY = 'test-api-key';
-        window.GOOGLE_CLIENT_ID = 'test-client-id';
+        globalThis.GOOGLE_API_KEY = 'test-api-key';
+        globalThis.GOOGLE_CLIENT_ID = 'test-client-id';
 
         const testManager = new SyncManager(mockApp);
         testManager.syncWithGoogleDrive = jest.fn(() => Promise.resolve());
@@ -173,8 +172,8 @@ describe('SyncManager', () => {
         // Restore originals
         GoogleDriveSyncService.prototype.initialize = originalInit;
         GoogleDriveSyncService.prototype.isAuthenticated = originalIsAuthenticated;
-        delete window.GOOGLE_API_KEY;
-        delete window.GOOGLE_CLIENT_ID;
+        delete globalThis.GOOGLE_API_KEY;
+        delete globalThis.GOOGLE_CLIENT_ID;
     });
 
     test('hookGoalSavesForBackgroundSync should register listener', () => {
@@ -743,9 +742,9 @@ describe('SyncManager', () => {
         expect(mockApp.applyImportedPayload).toHaveBeenCalledWith(data);
     });
 
-    test('initGoogleDriveSync should use process.env credentials when window credentials not available', async () => {
-        delete window.GOOGLE_API_KEY;
-        delete window.GOOGLE_CLIENT_ID;
+    test('initGoogleDriveSync should use process.env credentials when globalThis credentials not available', async () => {
+        delete globalThis.GOOGLE_API_KEY;
+        delete globalThis.GOOGLE_CLIENT_ID;
         process.env.GOOGLE_API_KEY = 'env-api-key';
         process.env.GOOGLE_CLIENT_ID = 'env-client-id';
 
@@ -1045,8 +1044,8 @@ describe('SyncManager', () => {
     });
 
     test('initGoogleDriveSync should handle initialization errors', async () => {
-        window.GOOGLE_API_KEY = 'test-api-key';
-        window.GOOGLE_CLIENT_ID = 'test-client-id';
+        globalThis.GOOGLE_API_KEY = 'test-api-key';
+        globalThis.GOOGLE_CLIENT_ID = 'test-client-id';
 
         // Create a new manager instance
         const testManager = new SyncManager(mockApp);
@@ -1072,8 +1071,8 @@ describe('SyncManager', () => {
         // Restore
         GoogleDriveSyncService.prototype.initialize = originalInit;
         consoleErrorSpy.mockRestore();
-        delete window.GOOGLE_API_KEY;
-        delete window.GOOGLE_CLIENT_ID;
+        delete globalThis.GOOGLE_API_KEY;
+        delete globalThis.GOOGLE_CLIENT_ID;
     });
 
     test('syncWithGoogleDrive should handle missing statusView gracefully', async () => {

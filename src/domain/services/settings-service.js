@@ -24,7 +24,8 @@ function parseIntervalToken(rawValue) {
         return null;
     }
 
-    const match = trimmed.match(/^(\d+(?:\.\d+)?)([dhms]?)$/i);
+    const regex = /^(\d+(?:\.\d+)?)([dhms]?)$/i;
+    const match = regex.exec(trimmed);
     if (!match) {
         return null;
     }
@@ -137,7 +138,7 @@ class SettingsService {
 
     onAfterSave(listener) {
         if (typeof listener !== 'function') {
-            return () => {}; // Return a no-op for invalid listeners
+            return () => { }; // Return a no-op for invalid listeners
         }
         this._listeners.afterSave.push(listener);
 

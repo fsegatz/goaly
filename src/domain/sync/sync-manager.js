@@ -22,8 +22,8 @@ class SyncManager {
      * Initialize Google Drive sync service if credentials are available
      */
     async initGoogleDriveSync() {
-        const apiKey = window.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY;
-        const clientId = window.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+        const apiKey = globalThis.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY;
+        const clientId = globalThis.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
 
         if (apiKey && clientId) {
             this.googleDriveSyncService = new GoogleDriveSyncService();
@@ -74,7 +74,7 @@ class SyncManager {
      * Schedule a background sync after a debounce period
      */
     scheduleBackgroundSyncSoon() {
-        if (!this.googleDriveSyncService || !this.googleDriveSyncService.isAuthenticated()) {
+        if (!this.googleDriveSyncService?.isAuthenticated()) {
             return;
         }
         if (this._isSyncing || this._suppressAutoSync) {
@@ -98,9 +98,9 @@ class SyncManager {
      * Get the localStorage key for last sync data
      */
     getLastSyncStorageKey() {
-        const fileId = this.googleDriveSyncService?.fileId || 
-                      localStorage.getItem(STORAGE_KEY_GDRIVE_FILE_ID) || 
-                      'unknown';
+        const fileId = this.googleDriveSyncService?.fileId ||
+            localStorage.getItem(STORAGE_KEY_GDRIVE_FILE_ID) ||
+            'unknown';
         return `goaly_gdrive_last_sync_${fileId}`;
     }
 
@@ -109,7 +109,7 @@ class SyncManager {
      */
     async authenticateGoogleDrive() {
         if (!this.googleDriveSyncService) {
-            this.showError('googleDrive.notConfigured');
+            this.app.errorHandler.error('googleDrive.notConfigured', {});
             return;
         }
 
@@ -117,7 +117,7 @@ class SyncManager {
             await this.googleDriveSyncService.authenticate();
             this.app.uiController.settingsView.updateGoogleDriveUI();
             // Perform a one-time sync after successful authentication
-            this.syncWithGoogleDrive({ background: true }).catch(() => {});
+            this.syncWithGoogleDrive({ background: true }).catch(() => { });
             this.app.uiController.settingsView.showGoogleDriveStatus(
                 this.app.languageService.translate('googleDrive.authenticated'),
                 false
@@ -145,16 +145,111 @@ class SyncManager {
     }
 
     /**
+     * Download remote data from Google Drive
+     * @private
+     */
+    async _downloadRemoteData(statusView, background) {
+        try {
+            if (!background) {
+                statusView.showGoogleDriveStatus(
+                    this.app.languageService.translate('googleDrive.status.checkingRemote') || 'Checking remote data…',
+                    false
+                );
+            }
+            const downloaded = await this.googleDriveSyncService.downloadData();
+            const remotePayload = downloaded?.data ?? null;
+            if (!background) {
+                statusView.showGoogleDriveStatus(
+                    this.app.languageService.translate('googleDrive.status.remoteFound') || 'Remote data found. Downloaded successfully.',
+                    false
+                );
+            }
+            return remotePayload;
+        } catch (e) {
+            if (!(e instanceof GoogleDriveFileNotFoundError)) {
+                throw e;
+            }
+            if (!background) {
+                statusView.showGoogleDriveStatus(
+                    this.app.languageService.translate('googleDrive.status.noRemote') || 'No remote data found. Will create it on upload.',
+                    false
+                );
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Load base payload from last successful sync
+     * @private
+     */
+    _loadBasePayload() {
+        try {
+            const baseStr = localStorage.getItem(this.getLastSyncStorageKey());
+            return baseStr ? JSON.parse(baseStr) : null;
+        } catch (e) {
+            this.app.errorHandler.warning('googleDrive.syncError', { message: 'Failed to parse base payload from localStorage; clearing corrupted entry' }, e, { context: 'parseBasePayload' });
+            localStorage.removeItem(this.getLastSyncStorageKey());
+            return null;
+        }
+    }
+
+    /**
+     * Upload merged data if changes detected
+     * @private
+     */
+    async _uploadIfChanged(merged, remotePayload, statusView, background) {
+        const canonicalize = (payload) => {
+            if (!payload) return null;
+            const migrated = migratePayloadToCurrent(payload);
+            const goals = Array.isArray(migrated.goals) ? migrated.goals.map(g => {
+                const c = { ...g };
+                if (c.createdAt instanceof Date) c.createdAt = c.createdAt.toISOString();
+                if (c.lastUpdated instanceof Date) c.lastUpdated = c.lastUpdated.toISOString();
+                if (c.deadline instanceof Date) c.deadline = c.deadline.toISOString();
+                return c;
+            }).sort((a, b) => (a.id || '').localeCompare(b.id || '')) : [];
+            return {
+                version: migrated.version,
+                exportDate: null,
+                goals,
+                settings: migrated.settings || {}
+            };
+        };
+
+        const mergedCanonical = canonicalize(merged);
+        const remoteCanonical = canonicalize(remotePayload);
+        const shouldUpload =
+            !remoteCanonical ||
+            JSON.stringify(mergedCanonical) !== JSON.stringify(remoteCanonical);
+
+        if (shouldUpload) {
+            if (!background) {
+                statusView.showGoogleDriveStatus(
+                    this.app.languageService.translate('googleDrive.status.uploading') || 'Uploading merged data to Google Drive…',
+                    false
+                );
+            }
+            await this.googleDriveSyncService.uploadData(
+                this.app.goalService.goals,
+                this.app.settingsService.getSettings()
+            );
+        }
+
+        return shouldUpload;
+    }
+
+    /**
      * Sync with Google Drive (three-way merge)
      */
     async syncWithGoogleDrive({ background = false } = {}) {
         if (!this.googleDriveSyncService) {
-            this.showError('googleDrive.notConfigured');
+            this.app.errorHandler.error('googleDrive.notConfigured', {});
             return;
         }
 
         if (!this.googleDriveSyncService.isAuthenticated()) {
-            this.showError('googleDrive.authError', { message: 'Not authenticated' });
+            this.app.errorHandler.error('googleDrive.authError', { message: 'Not authenticated' });
             return;
         }
 
@@ -163,8 +258,6 @@ class SyncManager {
             try {
                 await this.googleDriveSyncService.ensureAuthenticated();
             } catch (error) {
-                // If token refresh fails, show error but don't block sync attempt
-                // The API call will handle auth errors and retry
                 this.app.errorHandler.warning('googleDrive.syncError', { message: 'Token refresh check failed, proceeding with sync' }, error, { context: 'tokenRefresh' });
             }
         }
@@ -183,59 +276,19 @@ class SyncManager {
 
         try {
             if (this._isSyncing) {
-                // Drop overlapping syncs; background triggers are frequent
                 return;
             }
             this._isSyncing = true;
             this._suppressAutoSync = true;
 
-            // Build local payload
             const localPayload = prepareExportPayload(
                 this.app.goalService.goals || [],
                 this.app.settingsService.getSettings()
             );
 
-            // Download remote if exists
-            let remotePayload = null;
-            try {
-                if (!background) {
-                    statusView.showGoogleDriveStatus(
-                        this.app.languageService.translate('googleDrive.status.checkingRemote') || 'Checking remote data…',
-                        false
-                    );
-                }
-                const downloaded = await this.googleDriveSyncService.downloadData();
-                remotePayload = downloaded?.data ?? null;
-                if (!background) {
-                    statusView.showGoogleDriveStatus(
-                        this.app.languageService.translate('googleDrive.status.remoteFound') || 'Remote data found. Downloaded successfully.',
-                        false
-                    );
-                }
-            } catch (e) {
-                // If no file found, proceed with local as source
-                if (!(e instanceof GoogleDriveFileNotFoundError)) {
-                    throw e;
-                }
-                if (!background) {
-                    statusView.showGoogleDriveStatus(
-                        this.app.languageService.translate('googleDrive.status.noRemote') || 'No remote data found. Will create it on upload.',
-                        false
-                    );
-                }
-            }
+            const remotePayload = await this._downloadRemoteData(statusView, background);
+            const basePayload = this._loadBasePayload();
 
-            // Load base from last successful sync
-            let basePayload = null;
-            try {
-                const baseStr = localStorage.getItem(this.getLastSyncStorageKey());
-                if (baseStr) basePayload = JSON.parse(baseStr);
-            } catch (e) {
-                this.app.errorHandler.warning('googleDrive.syncError', { message: 'Failed to parse base payload from localStorage; clearing corrupted entry' }, e, { context: 'parseBasePayload' });
-                localStorage.removeItem(this.getLastSyncStorageKey());
-            }
-
-            // Merge (three-way if possible)
             if (!background) {
                 statusView.showGoogleDriveStatus(
                     this.app.languageService.translate('googleDrive.status.merging') || 'Merging data (base/local/remote)…',
@@ -248,7 +301,6 @@ class SyncManager {
                 remote: remotePayload
             });
 
-            // Apply merged locally
             if (!background) {
                 statusView.showGoogleDriveStatus(
                     this.app.languageService.translate('googleDrive.status.applying') || 'Applying merged data locally…',
@@ -257,45 +309,8 @@ class SyncManager {
             }
             this.app.applyImportedPayload(merged);
 
-            // Determine if upload is necessary (skip if no content changes)
-            const canonicalize = (payload) => {
-                if (!payload) return null;
-                const migrated = migratePayloadToCurrent(payload);
-                const goals = Array.isArray(migrated.goals) ? migrated.goals.map(g => {
-                    const c = { ...g };
-                    if (c.createdAt instanceof Date) c.createdAt = c.createdAt.toISOString();
-                    if (c.lastUpdated instanceof Date) c.lastUpdated = c.lastUpdated.toISOString();
-                    if (c.deadline instanceof Date) c.deadline = c.deadline.toISOString();
-                    return c;
-                }).sort((a, b) => (a.id || '').localeCompare(b.id || '')) : [];
-                return {
-                    version: migrated.version,
-                    exportDate: null,
-                    goals,
-                    settings: migrated.settings || {}
-                };
-            };
-            
-            const mergedCanonical = canonicalize(merged);
-            const remoteCanonical = canonicalize(remotePayload);
-            const shouldUpload =
-                !remoteCanonical ||
-                JSON.stringify(mergedCanonical) !== JSON.stringify(remoteCanonical);
+            const shouldUpload = await this._uploadIfChanged(merged, remotePayload, statusView, background);
 
-            if (shouldUpload) {
-                if (!background) {
-                    statusView.showGoogleDriveStatus(
-                        this.app.languageService.translate('googleDrive.status.uploading') || 'Uploading merged data to Google Drive…',
-                        false
-                    );
-                }
-                await this.googleDriveSyncService.uploadData(
-                    this.app.goalService.goals,
-                    this.app.settingsService.getSettings()
-                );
-            }
-
-            // Persist last sync base for future merges
             localStorage.setItem(this.getLastSyncStorageKey(), JSON.stringify(prepareExportPayload(
                 this.app.goalService.goals,
                 this.app.settingsService.getSettings()
@@ -310,7 +325,6 @@ class SyncManager {
                 );
             }
         } catch (error) {
-            // Provide better error messages - handle undefined error.message
             const errorMessage = error?.message || error?.toString() || 'Unknown error occurred';
             this.app.errorHandler.error('googleDrive.syncError', { message: errorMessage }, error);
         } finally {
@@ -323,7 +337,7 @@ class SyncManager {
      * Download data from Google Drive
      */
     async downloadFromGoogleDrive() {
-        if (!this.googleDriveSyncService || !this.googleDriveSyncService.isAuthenticated()) {
+        if (!this.googleDriveSyncService?.isAuthenticated()) {
             return;
         }
 
@@ -348,7 +362,7 @@ class SyncManager {
             const fileVersion = Array.isArray(data) ? null : data.version ?? null;
 
             if (fileVersion && !isValidVersion(fileVersion)) {
-                this.showError('import.invalidVersionFormat', { version: fileVersion });
+                this.app.errorHandler.error('import.invalidVersionFormat', { version: fileVersion });
                 return;
             }
 
@@ -365,12 +379,12 @@ class SyncManager {
                     fileName: 'Google Drive'
                 });
             } else if (isNewerVersion(fileVersion, this.app.currentDataVersion)) {
-                this.showError('import.versionTooNew', {
+                this.app.errorHandler.error('import.versionTooNew', {
                     fileVersion,
                     currentVersion: this.app.currentDataVersion
                 });
             } else {
-                this.showError('import.incompatible');
+                this.app.errorHandler.error('import.incompatible', {});
             }
         } catch (error) {
             // Provide better error messages - handle undefined error.message

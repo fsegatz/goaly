@@ -1,7 +1,67 @@
 import { GOAL_FILE_VERSION } from '../utils/versioning.js';
 
+/**
+ * Checks if a value is a Date object (works across realms)
+ * @param {*} value - The value to check
+ * @returns {boolean} - True if the value is a Date object
+ */
+function isDate(value) {
+    return Object.prototype.toString.call(value) === '[object Date]';
+}
+
+/**
+ * Recursively converts Date objects to ISO strings within an object.
+ * This is needed because structuredClone preserves Date objects,
+ * but we need string serialization for storage compatibility.
+ * @param {*} value - The value to process
+ * @returns {*} - The value with all Date objects converted to ISO strings
+ */
+function serializeDates(value) {
+    if (value === null || value === undefined) {
+        return value;
+    }
+
+    if (isDate(value)) {
+        return value.toISOString();
+    }
+
+    if (Array.isArray(value)) {
+        return value.map(item => serializeDates(item));
+    }
+
+    if (typeof value === 'object') {
+        const result = {};
+        for (const key of Object.keys(value)) {
+            result[key] = serializeDates(value[key]);
+        }
+        return result;
+    }
+
+    return value;
+}
+
+/**
+ * Deep clones a value and serializes all Date objects to ISO strings.
+ * Uses structuredClone for proper deep cloning when available,
+ * otherwise serializeDates handles both cloning and serialization.
+ * This ensures Date objects are converted to strings for storage compatibility.
+ * @param {*} value - The value to clone
+ * @returns {*} - A deep clone with Date objects serialized to strings
+ */
 function deepClone(value) {
-    return JSON.parse(JSON.stringify(value ?? null));
+    if (value === null || value === undefined) {
+        return null;
+    }
+
+    // Use structuredClone if available for optimal cloning, then serialize dates
+    if (typeof globalThis.structuredClone === 'function') {
+        const cloned = globalThis.structuredClone(value);
+        return serializeDates(cloned);
+    }
+
+    // Fallback: serializeDates creates new objects, effectively deep cloning
+    // while also converting dates to strings
+    return serializeDates(value);
 }
 
 function serializeGoals(goals = []) {
@@ -78,7 +138,7 @@ function migrateGoalDescriptionToStep(goal, index = 0) {
     // Convert description to first step if it exists and is not empty
     if (description && typeof description === 'string' && description.trim().length > 0) {
         const existingSteps = Array.isArray(migrated.steps) ? migrated.steps : [];
-        
+
         // Create a step from the description
         const descriptionStep = {
             id: `${Date.now()}-${index}-${Math.random().toString(16).slice(2, 10)}`,

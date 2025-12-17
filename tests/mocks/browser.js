@@ -10,8 +10,13 @@ function setupBrowserMocks() {
             constructor(parts, name, options) {
                 this.parts = parts;
                 this.name = name;
-                this.text = Array.isArray(parts) ? parts.join('') : String(parts);
+                this._textContent = Array.isArray(parts) ? parts.join('') : String(parts);
                 this.type = options?.type || 'application/json';
+            }
+
+            // Modern Blob.text() API
+            async text() {
+                return this._textContent;
             }
         };
     }
@@ -28,7 +33,7 @@ function setupBrowserMocks() {
                 const self = this;
                 setTimeout(() => {
                     if (self.onload) {
-                        const result = file instanceof File ? file.text : String(file);
+                        const result = file instanceof File ? file._textContent : String(file);
                         self.onload({ target: { result } });
                     }
                 }, 0);
