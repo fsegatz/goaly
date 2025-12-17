@@ -14,14 +14,13 @@ const {
 describe('ImportExportService', () => {
     let dom;
     let document;
-    let window;
     let mockApp;
     let service;
 
     beforeEach(() => {
         jest.useFakeTimers();
         dom = createBasicDOM();
-        ({ document, window } = setupGlobalDOM(dom));
+        ({ document } = setupGlobalDOM(dom));
         setupBrowserMocks();
 
         const translations = {
@@ -66,13 +65,14 @@ describe('ImportExportService', () => {
     test('exportData should create and download a JSON file', () => {
         const createElementSpy = jest.spyOn(document, 'createElement');
         const appendChildSpy = jest.spyOn(document.body, 'appendChild');
-        const removeChildSpy = jest.spyOn(document.body, 'removeChild');
         const clickSpy = jest.fn();
+        const removeSpy = jest.fn();
         const revokeObjectURLSpy = jest.spyOn(URL, 'revokeObjectURL');
         const createObjectURLSpy = jest.spyOn(URL, 'createObjectURL').mockReturnValue('blob:url');
 
         const mockAnchor = document.createElement('a');
         mockAnchor.click = clickSpy;
+        mockAnchor.remove = removeSpy;
         createElementSpy.mockReturnValue(mockAnchor);
 
         service.exportData();
@@ -80,49 +80,42 @@ describe('ImportExportService', () => {
         expect(createElementSpy).toHaveBeenCalledWith('a');
         expect(appendChildSpy).toHaveBeenCalled();
         expect(clickSpy).toHaveBeenCalled();
-        expect(removeChildSpy).toHaveBeenCalled();
+        expect(removeSpy).toHaveBeenCalled();
         expect(revokeObjectURLSpy).toHaveBeenCalled();
 
         createElementSpy.mockRestore();
         appendChildSpy.mockRestore();
-        removeChildSpy.mockRestore();
         revokeObjectURLSpy.mockRestore();
         createObjectURLSpy.mockRestore();
     });
 
-    test('importData should handle invalid JSON', () => {
+    test('importData should handle invalid JSON', async () => {
         const file = new File(['invalid json'], 'test.json', { type: 'application/json' });
 
-        service.importData(file);
-
-        jest.advanceTimersByTime(10);
+        await service.importData(file);
 
         expect(mockApp.languageService.translate).toHaveBeenCalledWith('import.invalidJson', undefined);
-        expect(global.alert).toHaveBeenCalledWith('Invalid JSON');
+        expect(globalThis.alert).toHaveBeenCalledWith('Invalid JSON');
     });
 
-    test('importData should handle invalid structure', () => {
+    test('importData should handle invalid structure', async () => {
         const file = new File(['null'], 'test.json', { type: 'application/json' });
 
-        service.importData(file);
-
-        jest.advanceTimersByTime(10);
+        await service.importData(file);
 
         expect(mockApp.languageService.translate).toHaveBeenCalledWith('import.invalidStructure', undefined);
-        expect(global.alert).toHaveBeenCalledWith('Invalid structure');
+        expect(globalThis.alert).toHaveBeenCalledWith('Invalid structure');
     });
 
-    test('importData should handle invalid version format', () => {
+    test('importData should handle invalid version format', async () => {
         const file = new File(['{"version": "invalid"}'], 'test.json', { type: 'application/json' });
 
-        service.importData(file);
-
-        jest.advanceTimersByTime(10);
+        await service.importData(file);
 
         expect(mockApp.languageService.translate).toHaveBeenCalledWith('import.invalidVersionFormat', { version: 'invalid' });
     });
 
-    test('importData should handle same version payload', () => {
+    test('importData should handle same version payload', async () => {
         const payload = {
             version: GOAL_FILE_VERSION,
             goals: [{ id: '1', title: 'Test' }],
@@ -130,16 +123,14 @@ describe('ImportExportService', () => {
         };
         const file = new File([JSON.stringify(payload)], 'test.json', { type: 'application/json' });
 
-        service.importData(file);
-
-        jest.advanceTimersByTime(10);
+        await service.importData(file);
 
         expect(mockApp.applyImportedPayload).toHaveBeenCalledWith(payload);
         expect(mockApp.languageService.translate).toHaveBeenCalledWith('import.success');
-        expect(global.alert).toHaveBeenCalledWith('Import successful');
+        expect(globalThis.alert).toHaveBeenCalledWith('Import successful');
     });
 
-    test('importData should handle error during applyImportedPayload', () => {
+    test('importData should handle error during applyImportedPayload', async () => {
         const payload = {
             version: GOAL_FILE_VERSION,
             goals: [{ id: '1', title: 'Test' }],
@@ -151,24 +142,20 @@ describe('ImportExportService', () => {
             throw new Error('Test error');
         });
 
-        service.importData(file);
-
-        jest.advanceTimersByTime(10);
+        await service.importData(file);
 
         expect(mockApp.languageService.translate).toHaveBeenCalledWith('import.error', { message: 'Test error' });
-        expect(global.alert).toHaveBeenCalledWith('Error: Test error');
+        expect(globalThis.alert).toHaveBeenCalledWith('Error: Test error');
     });
 
-    test('importData should handle older version and trigger migration', () => {
+    test('importData should handle older version and trigger migration', async () => {
         const payload = {
             version: '0.9.0',
             goals: [{ id: '1', title: 'Test' }]
         };
         const file = new File([JSON.stringify(payload)], 'test.json', { type: 'application/json' });
 
-        service.importData(file);
-
-        jest.advanceTimersByTime(10);
+        await service.importData(file);
 
         expect(mockApp.beginMigration).toHaveBeenCalledWith({
             originalPayload: payload,
@@ -177,16 +164,14 @@ describe('ImportExportService', () => {
         });
     });
 
-    test('importData should handle newer version', () => {
+    test('importData should handle newer version', async () => {
         const payload = {
             version: '2.0.0',
             goals: [{ id: '1', title: 'Test' }]
         };
         const file = new File([JSON.stringify(payload)], 'test.json', { type: 'application/json' });
 
-        service.importData(file);
-
-        jest.advanceTimersByTime(10);
+        await service.importData(file);
 
         expect(mockApp.languageService.translate).toHaveBeenCalledWith('import.versionTooNew', {
             fileVersion: '2.0.0',
@@ -194,7 +179,7 @@ describe('ImportExportService', () => {
         });
     });
 
-    test('importData should handle incompatible version', () => {
+    test('importData should handle incompatible version', async () => {
         // When version is null, isOlderVersion(null, ...) returns true
         // So it should trigger migration, not incompatible
         // To test incompatible, we need a case where none of the version checks match
@@ -214,24 +199,20 @@ describe('ImportExportService', () => {
         };
         const file = new File([JSON.stringify(payload)], 'test.json', { type: 'application/json' });
 
-        service.importData(file);
-
-        jest.advanceTimersByTime(10);
+        await service.importData(file);
 
         // null version triggers migration because isOlderVersion(null, ...) returns true
         expect(mockApp.beginMigration).toHaveBeenCalled();
     });
 
-    test('importData should handle array format (legacy)', () => {
+    test('importData should handle array format (legacy)', async () => {
         // Array format means fileVersion is null (Array.isArray(data) ? null : data.version ?? null)
         // When fileVersion is null, isOlderVersion(null, ...) returns true
         // So it should trigger migration, not incompatible
         const payload = [{ id: '1', title: 'Test' }];
         const file = new File([JSON.stringify(payload)], 'test.json', { type: 'application/json' });
 
-        service.importData(file);
-
-        jest.advanceTimersByTime(10);
+        await service.importData(file);
 
         // Array format sets fileVersion to null
         // isOlderVersion(null, ...) returns true, so it triggers migration
@@ -242,7 +223,7 @@ describe('ImportExportService', () => {
         });
     });
 
-    test('importData should handle file without name', () => {
+    test('importData should handle file without name', async () => {
         const payload = {
             version: '0.9.0',
             goals: []
@@ -250,9 +231,7 @@ describe('ImportExportService', () => {
         const file = new File([JSON.stringify(payload)], 'test.json', { type: 'application/json' });
         Object.defineProperty(file, 'name', { value: null, writable: true });
 
-        service.importData(file);
-
-        jest.advanceTimersByTime(10);
+        await service.importData(file);
 
         expect(mockApp.beginMigration).toHaveBeenCalledWith({
             originalPayload: payload,

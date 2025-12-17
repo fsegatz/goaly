@@ -33,8 +33,11 @@ function readBody(request) {
         }).on('end', () => {
             try {
                 const str = Buffer.concat(body).toString();
-                if (!str) resolve({});
-                else resolve(JSON.parse(str));
+                if (str) {
+                    resolve(JSON.parse(str));
+                } else {
+                    resolve({});
+                }
             } catch (e) {
                 reject(e);
             }

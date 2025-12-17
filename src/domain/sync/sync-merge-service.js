@@ -13,7 +13,7 @@ function indexById(array) {
 	const map = new Map();
 	if (Array.isArray(array)) {
 		for (const item of array) {
-			if (item && item.id) {
+			if (item?.id) {
 				map.set(item.id, item);
 			}
 		}
@@ -34,7 +34,7 @@ function mergeGoalHistories(hists, limit = 100) {
 	const seen = new Set();
 	const merged = [];
 	const add = (entry) => {
-		if (!entry || !entry.id) return;
+		if (!entry?.id) return;
 		if (seen.has(entry.id)) return;
 		seen.add(entry.id);
 		merged.push(entry);
@@ -55,6 +55,39 @@ function mergeGoalHistories(hists, limit = 100) {
 	return merged;
 }
 
+/**
+ * Check if one side equals base in three-way merge
+ * @private
+ */
+function isThreeWayMergeCandidate(local, remote, base) {
+	if (!base) return null;
+
+	const baseJson = JSON.stringify(base);
+	const localJson = JSON.stringify(local);
+	const remoteJson = JSON.stringify(remote);
+
+	if (localJson === baseJson && remoteJson !== baseJson) return remote;
+	if (remoteJson === baseJson && localJson !== baseJson) return local;
+	return null;
+}
+
+/**
+ * Compare timestamps and return the latest goal
+ * @private
+ */
+function compareByTimestamp(local, remote) {
+	const lUpdated = parseDate(local.lastUpdated)?.getTime() ?? 0;
+	const rUpdated = parseDate(remote.lastUpdated)?.getTime() ?? 0;
+
+	if (lUpdated !== rUpdated) {
+		return lUpdated > rUpdated ? local : remote;
+	}
+
+	const lCreated = parseDate(local.createdAt)?.getTime() ?? 0;
+	const rCreated = parseDate(remote.createdAt)?.getTime() ?? 0;
+	return lCreated >= rCreated ? local : remote;
+}
+
 function latestGoal(local, remote, base) {
 	// If goals exist in only one side, take that
 	if (local && !remote) return local;
@@ -62,23 +95,11 @@ function latestGoal(local, remote, base) {
 	if (!local && !remote) return null;
 
 	// If both exist, attempt three-way: if one side equals base, take the other
-	const baseJson = base ? JSON.stringify(base) : null;
-	const localJson = JSON.stringify(local);
-	const remoteJson = JSON.stringify(remote);
-	if (baseJson) {
-		if (localJson === baseJson && remoteJson !== baseJson) return remote;
-		if (remoteJson === baseJson && localJson !== baseJson) return local;
-	}
+	const threeWayResult = isThreeWayMergeCandidate(local, remote, base);
+	if (threeWayResult) return threeWayResult;
 
 	// Fallback: latest edit wins by lastUpdated; tie-breaker by createdAt
-	const lUpdated = parseDate(local.lastUpdated)?.getTime() ?? 0;
-	const rUpdated = parseDate(remote.lastUpdated)?.getTime() ?? 0;
-	if (lUpdated !== rUpdated) {
-		return lUpdated > rUpdated ? local : remote;
-	}
-	const lCreated = parseDate(local.createdAt)?.getTime() ?? 0;
-	const rCreated = parseDate(remote.createdAt)?.getTime() ?? 0;
-	return lCreated >= rCreated ? local : remote;
+	return compareByTimestamp(local, remote);
 }
 
 function mergeGoal(localRaw, remoteRaw, baseRaw) {

@@ -1,14 +1,29 @@
 // src/domain/goal-service.js
 
-import Goal from '../models/goal.js';
+import createGoal from '../models/goal.js';
 import { prepareGoalsStoragePayload } from '../migration/migration-service.js';
 import { STORAGE_KEY_GOALS, DEADLINE_BONUS_DAYS } from '../utils/constants.js';
 import { PriorityCacheManager } from '../priority-cache-manager.js';
 import { setToMidnight, normalizeDate } from '../utils/date-utils.js';
 
+/**
+ * Parse a date string in local timezone to avoid off-by-one-day errors.
+ * @param {string|Date|null} value - The date value to parse
+ * @returns {Date|null}
+ */
+function parseLocalDate(value) {
+    if (!value) {
+        return null;
+    }
+    if (typeof value === 'string' && !value.includes('T')) {
+        return new Date(value + 'T00:00:00');
+    }
+    return new Date(value);
+}
+
 class GoalService {
     constructor(goals = [], errorHandler = null) {
-        this.goals = goals.map(g => new Goal(g));
+        this.goals = goals.map(g => createGoal(g));
         this._listeners = { afterSave: [] };
         this.errorHandler = errorHandler;
         this.priorityCache = new PriorityCacheManager(this);
@@ -42,13 +57,13 @@ class GoalService {
             try {
                 const parsed = JSON.parse(saved);
                 if (Array.isArray(parsed)) {
-                    this.goals = parsed.map(goal => new Goal(goal));
+                    this.goals = parsed.map(goal => createGoal(goal));
                     this.priorityCache.invalidate();
                     this.saveGoals();
                     return;
                 }
                 if (parsed && Array.isArray(parsed.goals)) {
-                    this.goals = parsed.goals.map(goal => new Goal(goal));
+                    this.goals = parsed.goals.map(goal => createGoal(goal));
                     this.priorityCache.invalidate();
                     if (!parsed.version) {
                         this.saveGoals();
@@ -127,7 +142,7 @@ class GoalService {
 
     createGoal(goalData, maxActiveGoals) {
         // Status is determined automatically rather than set manually
-        const goal = new Goal({ ...goalData, status: 'inactive' }); // Temporarily set to inactive
+        const goal = createGoal({ ...goalData, status: 'inactive' }); // Temporarily set to inactive
         this.goals.push(goal);
         this.priorityCache.invalidate();
 
@@ -137,51 +152,68 @@ class GoalService {
         return goal;
     }
 
-    updateGoal(id, goalData, maxActiveGoals) {
-        const goal = this.goals.find(g => g.id === id);
-        if (!goal) return null;
-
-        let priorityChanged = false;
-        const updates = {};
-
+    /**
+     * Update title field if changed
+     * @private
+     */
+    _updateTitle(goal, goalData, updates) {
         if (goalData.title !== undefined && goalData.title !== goal.title) {
             updates.title = goalData.title;
         }
+    }
+
+    /**
+     * Update motivation field if changed
+     * @private
+     */
+    _updateMotivation(goal, goalData, updates) {
         if (goalData.motivation !== undefined) {
-            const parsedMotivation = parseInt(goalData.motivation, 10);
+            const parsedMotivation = Number.parseInt(goalData.motivation, 10);
             if (parsedMotivation !== goal.motivation) {
                 updates.motivation = parsedMotivation;
-                priorityChanged = true;
+                return true; // Priority changed
             }
         }
+        return false;
+    }
+
+    /**
+     * Update urgency field if changed
+     * @private
+     */
+    _updateUrgency(goal, goalData, updates) {
         if (goalData.urgency !== undefined) {
-            const parsedUrgency = parseInt(goalData.urgency, 10);
+            const parsedUrgency = Number.parseInt(goalData.urgency, 10);
             if (parsedUrgency !== goal.urgency) {
                 updates.urgency = parsedUrgency;
-                priorityChanged = true;
+                return true; // Priority changed
             }
         }
+        return false;
+    }
+
+    /**
+     * Update deadline field if changed
+     * @private
+     */
+    _updateDeadline(goal, goalData, updates) {
         if (goalData.deadline !== undefined) {
-            // Parse deadline in local timezone to avoid off-by-one-day errors
-            const newDeadline = goalData.deadline
-                ? new Date(typeof goalData.deadline === 'string' && !goalData.deadline.includes('T')
-                    ? goalData.deadline + 'T00:00:00'
-                    : goalData.deadline)
-                : null;
+            const newDeadline = parseLocalDate(goalData.deadline);
             const currentTime = goal.deadline instanceof Date ? goal.deadline.getTime() : null;
             const newTime = newDeadline instanceof Date ? newDeadline.getTime() : null;
             if (currentTime !== newTime) {
                 updates.deadline = newDeadline;
-                priorityChanged = true;
+                return true; // Priority changed
             }
         }
-        if (goalData.steps !== undefined) {
-            updates.steps = Array.isArray(goalData.steps) ? goalData.steps : [];
-        }
-        if (goalData.resources !== undefined) {
-            updates.resources = Array.isArray(goalData.resources) ? goalData.resources : [];
-        }
-        // Add recurring goal fields
+        return false;
+    }
+
+    /**
+     * Update recurring goal fields
+     * @private
+     */
+    _updateRecurringFields(goalData, updates) {
         if (goalData.isRecurring !== undefined) {
             updates.isRecurring = Boolean(goalData.isRecurring);
         }
@@ -195,15 +227,37 @@ class GoalService {
                 ? goalData.recurPeriodUnit
                 : 'days';
         }
+    }
+
+    updateGoal(id, goalData, maxActiveGoals) {
+        const goal = this.goals.find(g => g.id === id);
+        if (!goal) return null;
+
+        const updates = {};
+        let priorityChanged = false;
+
+        // Update basic fields
+        this._updateTitle(goal, goalData, updates);
+        priorityChanged = this._updateMotivation(goal, goalData, updates) || priorityChanged;
+        priorityChanged = this._updateUrgency(goal, goalData, updates) || priorityChanged;
+        priorityChanged = this._updateDeadline(goal, goalData, updates) || priorityChanged;
+
+        // Update steps and resources
+        if (goalData.steps !== undefined) {
+            updates.steps = Array.isArray(goalData.steps) ? goalData.steps : [];
+        }
+        if (goalData.resources !== undefined) {
+            updates.resources = Array.isArray(goalData.resources) ? goalData.resources : [];
+        }
+
+        // Update recurring goal fields
+        this._updateRecurringFields(goalData, updates);
 
         if (Object.keys(updates).length === 0) {
             return goal;
         }
 
         updates.lastUpdated = new Date();
-
-        // Status is determined automatically; ignore goalData.status input
-
         Object.assign(goal, updates);
 
         // Invalidate cache when goal is updated (priority may have changed)

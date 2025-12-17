@@ -27,21 +27,21 @@ class ImportExportService {
         a.download = `goaly-export-${new Date().toISOString().split('T')[0]}.json`;
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
+        a.remove();
         URL.revokeObjectURL(url);
     }
 
     /**
      * Import data from JSON file
      */
-    importData(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const rawContent = e.target.result;
+    async importData(file) {
+        try {
+            const rawContent = await file.text();
             let data;
             try {
                 data = JSON.parse(rawContent);
             } catch (error) {
+                console.error('Import JSON parse error:', error);
                 this.alertError('import.invalidJson');
                 return;
             }
@@ -86,8 +86,10 @@ class ImportExportService {
             }
 
             this.alertError('import.incompatible');
-        };
-        reader.readAsText(file);
+        } catch (error) {
+            console.error('Import file read error:', error);
+            this.alertError('import.error', { message: error.message || 'Failed to read file' });
+        }
     }
 
     /**

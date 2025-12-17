@@ -29,7 +29,7 @@ export function daysBetween(date1, date2) {
     const d1 = normalizeDate(date1);
     const d2 = normalizeDate(date2);
     if (!d1 || !d2) {
-        return NaN;
+        return Number.NaN;
     }
     const diffMs = d2.getTime() - d1.getTime();
     return Math.ceil(diffMs / DAY_IN_MS);
@@ -42,7 +42,7 @@ export function daysBetween(date1, date2) {
  */
 export function setToMidnight(date) {
     const normalized = normalizeDate(date, new Date());
-    const result = new Date(normalized.getTime());
+    const result = new Date(normalized);
     result.setHours(0, 0, 0, 0);
     return result;
 }
@@ -72,7 +72,7 @@ export function isDateValid(value) {
 export function getDaysUntilDeadline(deadline, now = new Date()) {
     const deadlineDate = normalizeDate(deadline);
     if (!deadlineDate) {
-        return NaN;
+        return Number.NaN;
     }
     const nowDate = normalizeDate(now, new Date());
     return Math.ceil((deadlineDate.getTime() - nowDate.getTime()) / DAY_IN_MS);
