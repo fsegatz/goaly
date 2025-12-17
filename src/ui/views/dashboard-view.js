@@ -15,6 +15,23 @@ export class DashboardView extends BaseView {
 
     render(openCompletionModal, updateGoalInline, openGoalForm, handleReviewSubmit, renderViews, openPauseModal) {
         this.openPauseModal = openPauseModal;
+        const { dashboardList, allCards } = this._getRenderData();
+
+        dashboardList.innerHTML = '';
+
+        if (allCards.length === 0) {
+            this._renderEmptyState(dashboardList);
+        } else {
+            this._renderCards(dashboardList, allCards, openGoalForm, handleReviewSubmit, renderViews, openCompletionModal, updateGoalInline);
+        }
+    }
+
+    /**
+     * Prepares data needed for rendering the dashboard.
+     * @returns {Object} { dashboardList, feedbackElement, allCards }
+     * @protected
+     */
+    _getRenderData() {
         const settings = this.app.settingsService.getSettings();
         const activeGoals = this.app.goalService.getActiveGoals();
         const dashboardGoals = activeGoals.slice(0, settings.maxActiveGoals);
@@ -24,18 +41,14 @@ export class DashboardView extends BaseView {
         const feedbackElement = getOptionalElement('dashboardFeedback');
 
         this._cleanupExistingCards(dashboardList);
-        dashboardList.innerHTML = '';
-
         this._updateFeedback(feedbackElement);
 
         const allCards = this._prepareCardData(reviews, dashboardGoals);
 
-        if (allCards.length === 0) {
-            this._renderEmptyState(dashboardList);
-        } else {
-            this._renderCards(dashboardList, allCards, openGoalForm, handleReviewSubmit, renderViews, openCompletionModal, updateGoalInline);
-        }
+        return { dashboardList, feedbackElement, allCards };
     }
+
+
 
     /** @private */
     _cleanupExistingCards(container) {

@@ -18,18 +18,7 @@ export class MobileDashboardView extends DashboardView {
 
     render(openCompletionModal, updateGoalInline, openGoalForm, handleReviewSubmit, renderViews, openPauseModal) {
         this.openPauseModal = openPauseModal;
-        const settings = this.app.settingsService.getSettings();
-        const activeGoals = this.app.goalService.getActiveGoals();
-        const dashboardGoals = activeGoals.slice(0, settings.maxActiveGoals);
-        const reviews = Array.isArray(this.app.reviews) ? this.app.reviews : [];
-
-        const dashboardList = getElement('goalsList');
-        const feedbackElement = getOptionalElement('dashboardFeedback');
-
-        this._cleanupExistingCards(dashboardList);
-        this._updateFeedback(feedbackElement);
-
-        const allCards = this._prepareCardData(reviews, dashboardGoals);
+        const { dashboardList, allCards } = this._getRenderData();
 
         // Handle empty state
         if (allCards.length === 0) {
