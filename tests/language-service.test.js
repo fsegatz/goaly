@@ -27,25 +27,25 @@ describe('LanguageService', () => {
             value: storageMock
         });
 
-        global.window = dom.window;
-        global.document = dom.window.document;
-        global.navigator = dom.window.navigator;
-        global.localStorage = storageMock;
+        globalThis.window = dom.window;
+        globalThis.document = dom.window.document;
+        globalThis.navigator = dom.window.navigator;
+        globalThis.localStorage = storageMock;
 
-        window.localStorage.clear();
+        globalThis.localStorage.clear();
         document.documentElement.setAttribute('lang', '');
     });
 
     afterEach(() => {
         dom.window.close();
-        delete global.window;
-        delete global.document;
-        delete global.navigator;
-        delete global.localStorage;
+        delete globalThis.window;
+        delete globalThis.document;
+        delete globalThis.navigator;
+        delete globalThis.localStorage;
     });
 
     test('init prefers stored language and updates document language', () => {
-        window.localStorage.setItem('goaly_language', 'de');
+        globalThis.localStorage.setItem('goaly_language', 'de');
         const service = new LanguageService();
         const language = service.init();
 
@@ -102,8 +102,8 @@ describe('LanguageService', () => {
     });
 
     test('detectBrowserLanguage uses navigator languages', () => {
-        const languageSpy = jest.spyOn(global.navigator, 'language', 'get').mockReturnValue('sv-SE');
-        const languagesSpy = jest.spyOn(global.navigator, 'languages', 'get').mockReturnValue(['sv-SE', 'en-US']);
+        const languageSpy = jest.spyOn(globalThis.navigator, 'language', 'get').mockReturnValue('sv-SE');
+        const languagesSpy = jest.spyOn(globalThis.navigator, 'languages', 'get').mockReturnValue(['sv-SE', 'en-US']);
 
         const service = new LanguageService();
         const detected = service.detectBrowserLanguage();
@@ -115,17 +115,17 @@ describe('LanguageService', () => {
 
     test('detectBrowserLanguage returns null when navigator missing', () => {
         const service = new LanguageService();
-        const originalNavigator = global.navigator;
-        delete global.navigator;
+        const originalNavigator = globalThis.navigator;
+        delete globalThis.navigator;
 
         expect(service.detectBrowserLanguage()).toBeNull();
 
-        global.navigator = originalNavigator;
+        globalThis.navigator = originalNavigator;
     });
 
     test('detectBrowserLanguage returns null when no candidate matches', () => {
-        const languageSpy = jest.spyOn(global.navigator, 'language', 'get').mockReturnValue('fr-FR');
-        const languagesSpy = jest.spyOn(global.navigator, 'languages', 'get').mockReturnValue(['fr-FR']);
+        const languageSpy = jest.spyOn(globalThis.navigator, 'language', 'get').mockReturnValue('fr-FR');
+        const languagesSpy = jest.spyOn(globalThis.navigator, 'languages', 'get').mockReturnValue(['fr-FR']);
 
         const service = new LanguageService();
         expect(service.detectBrowserLanguage()).toBeNull();
@@ -135,9 +135,9 @@ describe('LanguageService', () => {
     });
 
     test('init falls back to detected browser language', () => {
-        window.localStorage.getItem.mockReturnValue(null);
-        const languageSpy = jest.spyOn(global.navigator, 'language', 'get').mockReturnValue('sv-SE');
-        const languagesSpy = jest.spyOn(global.navigator, 'languages', 'get').mockReturnValue([]);
+        globalThis.localStorage.getItem.mockReturnValue(null);
+        const languageSpy = jest.spyOn(globalThis.navigator, 'language', 'get').mockReturnValue('sv-SE');
+        const languagesSpy = jest.spyOn(globalThis.navigator, 'languages', 'get').mockReturnValue([]);
 
         const service = new LanguageService();
         const resolved = service.init();
@@ -145,13 +145,13 @@ describe('LanguageService', () => {
         expect(resolved).toBe('sv');
         languageSpy.mockRestore();
         languagesSpy.mockRestore();
-        window.localStorage.getItem.mockReset();
+        globalThis.localStorage.getItem.mockReset();
     });
 
     test('init uses default language when no resolver succeeds', () => {
-        window.localStorage.getItem.mockReturnValue(null);
-        const languageSpy = jest.spyOn(global.navigator, 'language', 'get').mockReturnValue('fr-FR');
-        const languagesSpy = jest.spyOn(global.navigator, 'languages', 'get').mockReturnValue([]);
+        globalThis.localStorage.getItem.mockReturnValue(null);
+        const languageSpy = jest.spyOn(globalThis.navigator, 'language', 'get').mockReturnValue('fr-FR');
+        const languagesSpy = jest.spyOn(globalThis.navigator, 'languages', 'get').mockReturnValue([]);
 
         const service = new LanguageService();
         const resolved = service.init();
@@ -159,7 +159,7 @@ describe('LanguageService', () => {
         expect(resolved).toBe('en');
         languageSpy.mockRestore();
         languagesSpy.mockRestore();
-        window.localStorage.getItem.mockReset();
+        globalThis.localStorage.getItem.mockReset();
     });
 
     test('applyTranslations updates text content, attributes and handles replacements', () => {
@@ -169,23 +169,23 @@ describe('LanguageService', () => {
         const root = document.createElement('div');
 
         const textElement = document.createElement('span');
-        textElement.setAttribute('data-i18n-key', 'actions.export');
+        textElement.dataset.i18nKey = 'actions.export';
         root.appendChild(textElement);
 
         const attrElement = document.createElement('input');
-        attrElement.setAttribute('data-i18n-key', 'goalCard.descriptionPlaceholder');
-        attrElement.setAttribute('data-i18n-attr', 'placeholder');
+        attrElement.dataset.i18nKey = 'goalCard.descriptionPlaceholder';
+        attrElement.dataset.i18nAttr = 'placeholder';
         root.appendChild(attrElement);
 
         const htmlElement = document.createElement('div');
-        htmlElement.setAttribute('data-i18n-key', 'goalCard.deadlinePrefix');
-        htmlElement.setAttribute('data-i18n-attr', 'innerHTML');
-        htmlElement.setAttribute('data-i18n-args', JSON.stringify({ deadline: 'Tomorrow' }));
+        htmlElement.dataset.i18nKey = 'goalCard.deadlinePrefix';
+        htmlElement.dataset.i18nAttr = 'innerHTML';
+        htmlElement.dataset.i18nArgs = JSON.stringify({ deadline: 'Tomorrow' });
         root.appendChild(htmlElement);
 
         const invalidArgsElement = document.createElement('span');
-        invalidArgsElement.setAttribute('data-i18n-key', 'deadline.overdue');
-        invalidArgsElement.setAttribute('data-i18n-args', '{invalid-json');
+        invalidArgsElement.dataset.i18nKey = 'deadline.overdue';
+        invalidArgsElement.dataset.i18nArgs = '{invalid-json';
         root.appendChild(invalidArgsElement);
 
         service.applyTranslations(root);
@@ -204,7 +204,7 @@ describe('LanguageService', () => {
 
         const root = document.createElement('div');
         const element = document.createElement('span');
-        element.setAttribute('data-i18n-key', '');
+        element.dataset.i18nKey = '';
         root.appendChild(element);
 
         expect(() => service.applyTranslations(root)).not.toThrow();
@@ -230,14 +230,14 @@ describe('LanguageService', () => {
         const service = new LanguageService();
         service.init('en');
 
-        window.localStorage.setItem.mockClear();
+        globalThis.localStorage.setItem.mockClear();
         const callback = jest.fn();
         service.onChange(callback);
 
         service.setLanguage('de', { persist: false, notify: false });
 
         expect(service.getLanguage()).toBe('de');
-        expect(window.localStorage.setItem).not.toHaveBeenCalled();
+        expect(globalThis.localStorage.setItem).not.toHaveBeenCalled();
         expect(callback).not.toHaveBeenCalled();
     });
 
@@ -256,7 +256,7 @@ describe('LanguageService', () => {
         const service = new LanguageService();
         service.init('en');
 
-        const storage = window.localStorage;
+        const storage = globalThis.localStorage;
         const getItemSpy = jest.spyOn(storage, 'getItem').mockImplementation(() => { throw new Error('blocked'); });
         const setItemSpy = jest.spyOn(storage, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
 
@@ -278,12 +278,12 @@ describe('LanguageService', () => {
 
     test('updateDocumentLanguage does nothing when document is undefined', () => {
         const service = new LanguageService();
-        const originalDocument = global.document;
-        delete global.document;
+        const originalDocument = globalThis.document;
+        delete globalThis.document;
 
         expect(() => service.updateDocumentLanguage('de')).not.toThrow();
 
-        global.document = originalDocument;
+        globalThis.document = originalDocument;
     });
 
     test('applyReplacements leaves non-string templates untouched', () => {
@@ -308,8 +308,8 @@ describe('LanguageService', () => {
     });
 
     test('detectBrowserLanguage handles missing languages list gracefully', () => {
-        const languageSpy = jest.spyOn(global.navigator, 'language', 'get').mockReturnValue('de-DE');
-        const languagesSpy = jest.spyOn(global.navigator, 'languages', 'get').mockReturnValue(undefined);
+        const languageSpy = jest.spyOn(globalThis.navigator, 'language', 'get').mockReturnValue('de-DE');
+        const languagesSpy = jest.spyOn(globalThis.navigator, 'languages', 'get').mockReturnValue(undefined);
         const service = new LanguageService();
         expect(service.detectBrowserLanguage()).toBe('de');
         languageSpy.mockRestore();
@@ -335,7 +335,7 @@ describe('LanguageService', () => {
 
 describe('Language key consistency', () => {
     test('all languages have the same keys as English (source of truth)', () => {
-        const enKeys = getAllKeys(enTranslations).sort();
+        const enKeys = getAllKeys(enTranslations).sort((a, b) => a.localeCompare(b));
 
         const languages = [
             { name: 'German (de)', translations: deTranslations },
@@ -345,7 +345,7 @@ describe('Language key consistency', () => {
         const errors = [];
 
         for (const { name, translations } of languages) {
-            const langKeys = getAllKeys(translations).sort();
+            const langKeys = getAllKeys(translations).sort((a, b) => a.localeCompare(b));
 
             const missingKeys = enKeys.filter(key => !langKeys.includes(key));
             const extraKeys = langKeys.filter(key => !enKeys.includes(key));

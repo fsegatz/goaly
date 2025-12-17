@@ -105,24 +105,24 @@ class LanguageService {
 
         const elements = root.querySelectorAll('[data-i18n-key]');
         elements.forEach((element) => {
-            const key = element.getAttribute('data-i18n-key');
+            const key = element.dataset.i18nKey;
             if (!key) {
                 return;
             }
 
             let replacements = {};
-            const args = element.getAttribute('data-i18n-args');
+            const args = element.dataset.i18nArgs;
             if (args) {
                 try {
                     replacements = JSON.parse(args);
-                } catch (error) {
+                } catch {
                     // Fallback to empty replacements on parse error
                     replacements = {};
                 }
             }
 
             const translated = this.translate(key, replacements);
-            const targetAttr = element.getAttribute('data-i18n-attr');
+            const targetAttr = element.dataset.i18nAttr;
 
             if (targetAttr) {
                 if (targetAttr === 'innerHTML') {
@@ -177,16 +177,16 @@ class LanguageService {
 
     getStoredLanguage() {
         try {
-            return window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-        } catch (error) {
+            return globalThis.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+        } catch {
             return null;
         }
     }
 
     persistLanguage(language) {
         try {
-            window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-        } catch (error) {
+            globalThis.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+        } catch {
             // Ignore storage errors (e.g., disabled cookies)
         }
     }
@@ -214,8 +214,8 @@ class LanguageService {
         if (typeof template !== 'string') {
             return template;
         }
-        return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, name) => {
-            if (Object.prototype.hasOwnProperty.call(replacements, name)) {
+        return template.replaceAll(/\{\{\s*(\w+)\s*\}\}/g, (match, name) => {
+            if (Object.hasOwn(replacements, name)) {
                 return replacements[name];
             }
             return match;
