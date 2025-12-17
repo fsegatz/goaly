@@ -44,7 +44,7 @@ export class AllGoalsView extends BaseView {
         const priorityFilter = this.getFilterElement('allGoalsPriorityFilter');
         if (priorityFilter) {
             priorityFilter.addEventListener('input', () => {
-                const parsed = parseInt(priorityFilter.value, 10);
+                const parsed = Number.parseInt(priorityFilter.value, 10);
                 this.allGoalsState.minPriority = Number.isNaN(parsed) ? 0 : parsed;
                 this.render(openGoalForm);
             });

@@ -14,83 +14,94 @@ export class MigrationModal extends BaseModal {
     }
 
     setup(cancelMigration, handleMigrationReviewRequest, completeMigration) {
+        this._setupPromptHandlers(cancelMigration, handleMigrationReviewRequest);
+        this._setupDiffHandlers(cancelMigration, completeMigration);
+    }
+
+    _setupPromptHandlers(cancelMigration, handleMigrationReviewRequest) {
         const promptModal = this.getElement('migrationPromptModal');
-        const diffModal = this.getElement('migrationDiffModal');
+        if (!promptModal) return;
 
-        if (promptModal) {
-            const reviewBtn = this.getElement('migrationReviewBtn');
-            if (reviewBtn) {
-                reviewBtn.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    this.closePrompt();
-                    handleMigrationReviewRequest();
-                });
-            }
-
-            const promptCancel = this.getElement('migrationPromptCancelBtn');
-            if (promptCancel) {
-                promptCancel.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    this.closeAll();
-                    cancelMigration();
-                });
-            }
-
-            const promptClose = this.getElement('migrationPromptClose');
-            if (promptClose) {
-                promptClose.addEventListener('click', () => {
-                    this.closeAll();
-                    cancelMigration();
-                });
-            }
+        const reviewBtn = this.getElement('migrationReviewBtn');
+        if (reviewBtn) {
+            reviewBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                this.closePrompt();
+                handleMigrationReviewRequest();
+            });
         }
 
-        if (diffModal) {
-            const diffClose = this.getElement('migrationDiffClose');
-            if (diffClose) {
-                diffClose.addEventListener('click', () => {
-                    this.closeAll();
-                    cancelMigration();
-                });
-            }
+        const promptCancel = this.getElement('migrationPromptCancelBtn');
+        if (promptCancel) {
+            promptCancel.addEventListener('click', (event) => {
+                event.preventDefault();
+                this.closeAll();
+                cancelMigration();
+            });
+        }
 
-            const diffCancel = this.getElement('migrationCancelBtn');
-            if (diffCancel) {
-                diffCancel.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    this.closeAll();
-                    cancelMigration();
-                });
-            }
+        const promptClose = this.getElement('migrationPromptClose');
+        if (promptClose) {
+            promptClose.addEventListener('click', () => {
+                this.closeAll();
+                cancelMigration();
+            });
+        }
+    }
 
-            const diffApply = this.getElement('migrationApplyBtn');
-            if (diffApply) {
-                diffApply.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    completeMigration();
-                });
-            }
+    _setupDiffHandlers(cancelMigration, completeMigration) {
+        const diffModal = this.getElement('migrationDiffModal');
+        if (!diffModal) return;
 
-            if (!this.migrationScrollBound) {
-                const oldView = this.getElement('migrationDiffOld');
-                const newView = this.getElement('migrationDiffNew');
-                if (oldView && newView) {
-                    const syncScroll = (source, target) => {
-                        if (this.isSyncingMigrationScroll) {
-                            return;
-                        }
-                        this.isSyncingMigrationScroll = true;
-                        target.scrollTop = source.scrollTop;
-                        target.scrollLeft = source.scrollLeft;
-                        requestAnimationFrame(() => {
-                            this.isSyncingMigrationScroll = false;
-                        });
-                    };
-                    oldView.addEventListener('scroll', () => syncScroll(oldView, newView));
-                    newView.addEventListener('scroll', () => syncScroll(newView, oldView));
-                    this.migrationScrollBound = true;
+        const diffClose = this.getElement('migrationDiffClose');
+        if (diffClose) {
+            diffClose.addEventListener('click', () => {
+                this.closeAll();
+                cancelMigration();
+            });
+        }
+
+        const diffCancel = this.getElement('migrationCancelBtn');
+        if (diffCancel) {
+            diffCancel.addEventListener('click', (event) => {
+                event.preventDefault();
+                this.closeAll();
+                cancelMigration();
+            });
+        }
+
+        const diffApply = this.getElement('migrationApplyBtn');
+        if (diffApply) {
+            diffApply.addEventListener('click', (event) => {
+                event.preventDefault();
+                completeMigration();
+            });
+        }
+
+        this._setupScrollSync();
+    }
+
+    _setupScrollSync() {
+        if (this.migrationScrollBound) return;
+
+        const oldView = this.getElement('migrationDiffOld');
+        const newView = this.getElement('migrationDiffNew');
+
+        if (oldView && newView) {
+            const syncScroll = (source, target) => {
+                if (this.isSyncingMigrationScroll) {
+                    return;
                 }
-            }
+                this.isSyncingMigrationScroll = true;
+                target.scrollTop = source.scrollTop;
+                target.scrollLeft = source.scrollLeft;
+                requestAnimationFrame(() => {
+                    this.isSyncingMigrationScroll = false;
+                });
+            };
+            oldView.addEventListener('scroll', () => syncScroll(oldView, newView));
+            newView.addEventListener('scroll', () => syncScroll(newView, oldView));
+            this.migrationScrollBound = true;
         }
     }
 

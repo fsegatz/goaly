@@ -51,24 +51,18 @@ export class CompletionModal extends BaseModal {
         const successBtn = this.getElement('completionSuccessBtn');
         if (successBtn) {
             successBtn.addEventListener('click', () => {
-                const recurrenceData = this.getRecurrenceData();
-                // If validation failed (returns false), don't proceed
-                if (recurrenceData === false) {
-                    return;
-                }
-                handleCompletionChoice('completed', recurrenceData);
+                const { isValid, data } = this.getRecurrenceData();
+                if (!isValid) return;
+                handleCompletionChoice('completed', data);
             });
         }
 
         const failureBtn = this.getElement('completionFailureBtn');
         if (failureBtn) {
             failureBtn.addEventListener('click', () => {
-                const recurrenceData = this.getRecurrenceData();
-                // If validation failed (returns false), don't proceed
-                if (recurrenceData === false) {
-                    return;
-                }
-                handleCompletionChoice('notCompleted', recurrenceData);
+                const { isValid, data } = this.getRecurrenceData();
+                if (!isValid) return;
+                handleCompletionChoice('notCompleted', data);
             });
         }
 
@@ -183,21 +177,24 @@ export class CompletionModal extends BaseModal {
         const recurDate = this.getElement('completionRecurDate');
 
         if (!recurringCheckbox?.checked) {
-            return null;
+            return { isValid: true, data: null };
         }
 
         if (!recurDate?.value) {
             // Show error if recurring is checked but no date provided
             alert(this.translate('completionModal.recurDateRequired') || 'Please select a recurrence date');
-            return false; // Return false to indicate validation error
+            return { isValid: false, data: null };
         }
 
         // Parse date in local timezone to avoid off-by-one-day errors
         const recurrenceDate = new Date(recurDate.value + 'T00:00:00');
 
         return {
-            isRecurring: true,
-            recurrenceDate
+            isValid: true,
+            data: {
+                isRecurring: true,
+                recurrenceDate
+            }
         };
     }
 
