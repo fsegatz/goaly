@@ -93,7 +93,11 @@ export class MobileAllGoalsView extends AllGoalsView {
             </div>
         `;
 
-        card.addEventListener('click', () => openGoalForm(goal.id));
+        card.addEventListener('click', () => {
+            if (typeof openGoalForm === 'function') {
+                openGoalForm(goal.id);
+            }
+        });
         card.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();

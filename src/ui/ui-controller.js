@@ -5,6 +5,7 @@ import { AllGoalsView } from './views/all-goals-view.js';
 import { SettingsView } from './views/settings-view.js';
 import { HelpView } from './views/help-view.js';
 import { OverviewView } from './views/overview-view.js';
+import { CreateModal } from './modal/create-modal.js';
 import { EditModal } from './modal/edit-modal.js';
 import { CompletionModal } from './modal/completion-modal.js';
 import { MigrationModal } from './modal/migration-modal.js';
@@ -23,7 +24,8 @@ class UIController {
         this.settingsView = new SettingsView(app);
         this.helpView = new HelpView(app);
         this.overviewView = new OverviewView(app);
-        this.goalEditModal = new EditModal(app);
+        this.createModal = new CreateModal(app);
+        this.editModal = new EditModal(app);
         this.completionModal = new CompletionModal(app);
         this.migrationModal = new MigrationModal(app);
         this.pauseModal = new PauseModal(app);
@@ -60,7 +62,7 @@ class UIController {
                 if (oldState) {
                     this.allGoalsView.allGoalsState = oldState;
                 }
-                this.allGoalsView.setupControls((goalId) => this.goalEditModal.openGoalForm(() => this.renderViews(), goalId));
+                this.allGoalsView.setupControls((goalId) => this.editModal.open(() => this.renderViews(), goalId));
                 this.renderViews();
             }
         });
@@ -77,12 +79,12 @@ class UIController {
         this.dashboardView.render(
             (goalId) => this.completionModal.open(goalId),
             (goalId, updates) => this.updateGoalInline(goalId, updates),
-            (goalId) => this.goalEditModal.openGoalForm(() => this.renderViews(), goalId),
+            (goalId) => this.editModal.open(() => this.renderViews(), goalId),
             (goalId, ratings, renderViews) => this.handleReviewSubmit(goalId, ratings, renderViews),
             () => this.renderViews(),
             (goalId) => this.pauseModal.open(goalId)
         );
-        this.allGoalsView.render((goalId) => this.goalEditModal.openGoalForm(() => this.renderViews(), goalId));
+        this.allGoalsView.render((goalId) => this.editModal.open(() => this.renderViews(), goalId));
         this.overviewView.render();
         this.settingsView.syncSettingsForm();
         this.helpView.render();
@@ -93,7 +95,7 @@ class UIController {
         const addGoalBtnDesktop = getOptionalElement('addGoalBtnDesktop');
         const handleAddGoal = (e) => {
             e.stopPropagation();
-            this.goalEditModal.openGoalForm(() => this.renderViews(), null);
+            this.createModal.open(() => this.renderViews());
         };
         if (addGoalBtn) {
             addGoalBtn.addEventListener('click', handleAddGoal);
@@ -102,12 +104,118 @@ class UIController {
             addGoalBtnDesktop.addEventListener('click', handleAddGoal);
         }
 
-        this.goalEditModal.setupEventListeners(
-            () => this.goalEditModal.handleGoalSubmit(() => this.renderViews()),
-            () => this.goalEditModal.handleDelete(() => this.renderViews()),
-            () => this.renderViews(),
-            (goalId) => this.openCompletionModal(goalId)
-        );
+        // Setup CreateModal Listeners
+        this.createModal.setupEventListeners();
+
+        // Setup EditModal Listeners
+        // EditModal extends CreateModal, so we need careful setup to not conflict or double bind if they share elements.
+        // However, EditModal and CreateModal share the SAME dom ID 'goalForm'.
+        // This means adding listeners to 'goalForm' in both classes is redundant/conflict-prone if initialized on same DOM.
+        // But setupEventListeners adds them. If both run, we verify if they overwrite or stack.
+        // addEventListener stacks.
+        // So hitting Submit would trigger BOTH create and edit handlers if both attached.
+
+        // FIX: EditModal setupEventListeners calls super.setupEventListeners().
+        // If we call createModal.setupEventListeners() AND editModal.setupEventListeners(), we attach TWICE.
+        // Since they share the DOM form, we should only call setupEventListeners on ONE active controller or handle differently?
+        // Actually, CreateModal is just for Create. EditModal is for Edit.
+        // But they operate on the SAME HTML form `#goalForm`.
+        // If we attach 'submit' listener from CreateModal, it calls `createGoal`.
+        // If we attach 'submit' listener from EditModal, it calls `updateGoal`.
+        // If both are attached, submitting the form will try to Create AND Update.
+
+        // Solution: Only attach listeners via the current modal mode? No, event listeners are persistent.
+        // Better: Attach a SINGLE listener to the form that delegating based on state?
+        // OR: `EditModal` is the ONLY class we instantiate? NO, user asked for separation.
+
+        // Re-reading user request: "split up the create modal from the edit modal and make the edit modal and extention to the create modal".
+        // If `EditModal` extends `CreateModal`, `EditModal` IS A `CreateModal`.
+
+        // If we want two instances `createModal` and `editModal` co-existing and sharing the same DOM `#goalForm`:
+        // We must ensure they don't fight over the event listener.
+        // When `createModal.open()` is called, it should perhaps attach its "submit for create" logic.
+        // When `editModal.open()` is called, it should attach its "submit for edit" logic.
+        // OR simpler: `EditModal` handles EVERYTHING if it extends `CreateModal`?
+        // No, user specifically asked to SPLIT them.
+
+        // Design:
+        // `CreateModal` holds the basic "Open/Setup/Close" for creation.
+        // `EditModal` extends it.
+        // Since they share the DOM, maybe `UIController` shouldn't instantiate both if they bind to the same static DOM at startup.
+        // But we have `this.createModal` and `this.editModal`.
+
+        // Approach:
+        // Use `EditModal` instance for EVERYTHING? 
+        // If `EditModal` extends `CreateModal`, it has all the capabilities. 
+        // `editModal.open()` (defaults to CreateMode if no ID passed in original code, but we changed `open(id)`).
+
+        // If strict separation is required:
+        // They share `goalForm`.
+        // We can't have two permanent 'submit' listeners on the same form.
+        // We should attach the specific submit handler when the modal OPENS.
+        // And remove it when CLOSES.
+        // But `setupEventListeners` is typically one-time setup.
+
+        // Let's modify `CreateModal` and `EditModal` to attach the heavy logic in `open`? 
+        // Or keep it simple: `EditModal` instance CAN handle creation if we used the old logic.
+        // But the refactor forces separation.
+
+        // Let's use `createModal` instance for `handleAddGoal`.
+        // Let's use `editModal` instance for `edit`.
+        // ISSUE: Event Listener collision on #goalForm.
+
+        // HACK/FIX:
+        // Only `EditModal` needs to be instantiated if it covers both cases?
+        // User asked: "split up the create modal from the edit modal". 
+        // If I instantiate both, I have the collision.
+        // If I use `EditModal` for everything, did I really split them? Yes, class-wise.
+        // `CreateModal` class exists. `EditModal` class exists.
+        // In the app, do I need two INSTANCES?
+        // If `EditModal` extends `CreateModal`, it inherits `open(renderViews)`.
+        // But `EditModal.open` overrides it to require `goalId`.
+
+        // Let's check `EditModal` code again.
+        // `open(renderViews, goalId)` calls `super.open(renderViews)`.
+        // `super.open` sets up Create Mode (resets form).
+        // Then `EditModal.open` continues to setup Edit Mode.
+
+        // So `EditModal` instance could technically handle Create if we add a `openCreate()` method or let `open` handle null?
+        // But `EditModal` forces `goalId` check.
+
+        // To support two instances sharing the DOM:
+        // We need `setupEventListeners` to NOT attach the submit handler permanently, OR make the handle dynamic.
+        // In `CreateModal`, `setupEventListeners` attaches `this.handleGoalSubmit()`.
+        // In `EditModal`, it overrides `setupEventListeners`? No, it calls super.
+
+        // I will assume for now that I should clean up the event listeners or use one instance.
+        // But the request implies separate USAGE.
+        // "make the edit modal and extention to the create modal".
+
+        // If I only instantiate `CreateModal` for `addGoalBtn` and `EditModal` for edits...
+        // `setupEventListeners` call order:
+        // `createModal.setup(...)` -> adds listener A to #goalForm.
+        // `editModal.setup(...)` -> adds listener B to #goalForm.
+        // Submit -> A runs (Create) AND B runs (Edit). Chaos.
+
+        // Real Fix: 
+        // Move the checking logic to a shared handler or delegate?
+        // OR:
+        // Only attach the submit listener in `open()`, remove in `close()`.
+        // This is safe for modal pattern.
+
+        // Let's modify `CreateModal.js` to attach/detach on open/close?
+        // That is a significant change to the pattern used elsewhere.
+
+        // Alternative:
+        // `UIController` assigns a `onsubmit` property to the form wrapper?
+        // Use `goalForm.onsubmit = ...` instead of `addEventListener`?
+        // That would ensure only ONE handler exists at a time (the last one assigned).
+        // This is strictly better for this "Shared DOM, Multiple Controllers" scenario.
+
+        // I will modify `CreateModal` and `EditModal` to use `goalForm.onsubmit = ...`.
+
+        this.createModal.setupEventListeners();
+        this.editModal.setupEventListeners((goalId) => this.openCompletionModal(goalId));
 
         this.settingsView.setupEventListeners(
             () => this.renderViews(),
@@ -122,7 +230,7 @@ class UIController {
             () => this.app.completeMigration()
         );
 
-        this.allGoalsView.setupControls((goalId) => this.goalEditModal.openGoalForm(() => this.renderViews(), goalId));
+        this.allGoalsView.setupControls((goalId) => this.editModal.open(() => this.renderViews(), goalId));
 
         // Logo click handler - navigate to dashboard
         const goalyLogo = getOptionalElement('goalyLogo');
@@ -246,7 +354,7 @@ class UIController {
 
         // If the goal form was open, refresh it to show the updated status
         if (isGoalModalOpen) {
-            this.goalEditModal.openGoalForm(() => this.renderViews(), goalId);
+            this.editModal.open(() => this.renderViews(), goalId);
         }
     }
 
@@ -363,14 +471,6 @@ class UIController {
         }
     }
 
-    openGoalForm(goalId = null) {
-        this.goalEditModal.openGoalForm(() => this.renderViews(), goalId);
-    }
-
-    openCompletionModal(goalId) {
-        this.completionModal.open(goalId);
-    }
-
     openMigrationPrompt({ fromVersion, toVersion, fileName }) {
         this.migrationModal.openPrompt({ fromVersion, toVersion, fileName });
     }
@@ -382,6 +482,11 @@ class UIController {
     closeMigrationModals() {
         this.migrationModal.closeAll();
     }
+
+    openCompletionModal(goalId) {
+        this.completionModal.open(goalId);
+    }
 }
 
 export default UIController;
+
