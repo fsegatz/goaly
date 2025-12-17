@@ -75,31 +75,42 @@ export class EditModal extends CreateModal {
     }
 
     /** @private */
+    /** @private */
     _populateFormFields(goal, ui) {
         if (ui.goalIdInput) ui.goalIdInput.value = goal.id;
         if (ui.titleInput) ui.titleInput.value = goal.title || '';
         if (ui.motivationInput) ui.motivationInput.value = goal.motivation || 1;
         if (ui.urgencyInput) ui.urgencyInput.value = goal.urgency || 1;
 
-        if (ui.deadlineInput) {
-            try {
-                if (goal.deadline) {
-                    const date = new Date(goal.deadline);
-                    if (!isNaN(date.getTime())) {
-                        ui.deadlineInput.value = date.toISOString().split('T')[0];
-                    } else {
-                        console.warn('EditModal: Invalid deadline date encountered', goal.deadline);
-                        ui.deadlineInput.value = '';
-                    }
-                } else {
-                    ui.deadlineInput.value = '';
-                }
-            } catch (e) {
-                console.warn('EditModal: Error formatting deadline', e);
-                ui.deadlineInput.value = '';
-            }
+        this._populateDeadline(goal, ui);
+        this._populateRecurringFields(goal, ui);
+    }
+
+    /** @private */
+    _populateDeadline(goal, ui) {
+        if (!ui.deadlineInput) return;
+
+        if (!goal.deadline) {
+            ui.deadlineInput.value = '';
+            return;
         }
 
+        try {
+            const date = new Date(goal.deadline);
+            if (Number.isFinite(date.getTime())) {
+                ui.deadlineInput.value = date.toISOString().split('T')[0];
+            } else {
+                console.warn('EditModal: Invalid deadline date encountered', goal.deadline);
+                ui.deadlineInput.value = '';
+            }
+        } catch (e) {
+            console.warn('EditModal: Error formatting deadline', e);
+            ui.deadlineInput.value = '';
+        }
+    }
+
+    /** @private */
+    _populateRecurringFields(goal, ui) {
         if (ui.recurringCheckbox) {
             ui.recurringCheckbox.checked = goal.isRecurring || false;
         }

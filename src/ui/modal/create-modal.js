@@ -214,8 +214,8 @@ export class CreateModal extends BaseModal {
         if (data.isRecurring) {
             const recurPeriodInput = getOptionalElement('goalRecurPeriod');
             const recurPeriodUnitSelect = getOptionalElement('goalRecurPeriodUnit');
-            data.recurPeriod = (recurPeriodInput && Number.parseInt(recurPeriodInput.value, 10)) || 7;
-            data.recurPeriodUnit = (recurPeriodUnitSelect && recurPeriodUnitSelect.value) || 'days';
+            data.recurPeriod = Number.parseInt(recurPeriodInput?.value, 10) || 7;
+            data.recurPeriodUnit = recurPeriodUnitSelect?.value || 'days';
         }
         return data;
     }

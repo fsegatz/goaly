@@ -203,8 +203,108 @@ describe('CompletionModal', () => {
 
     test('getElement should initialize completionModalRefs if it does not exist', () => {
         completionModal.completionModalRefs = undefined;
-        const element = completionModal.getElement('goal-1');
+        completionModal.getElement('goal-1');
         expect(completionModal.completionModalRefs).toBeDefined();
         expect(typeof completionModal.completionModalRefs).toBe('object');
+    });
+    test('_calculateNextRecurrenceDate should calculate correctly for days', () => {
+        const goal = new Goal({ id: '1', recurPeriod: 5, recurPeriodUnit: 'days' });
+        const nextDate = completionModal._calculateNextRecurrenceDate(goal);
+
+        const expected = new Date();
+        expected.setHours(0, 0, 0, 0);
+        expected.setDate(expected.getDate() + 5);
+
+        expect(nextDate.toISOString().split('T')[0]).toBe(expected.toISOString().split('T')[0]);
+    });
+
+    test('_calculateNextRecurrenceDate should calculate correctly for weeks', () => {
+        const goal = new Goal({ id: '1', recurPeriod: 2, recurPeriodUnit: 'weeks' });
+        const nextDate = completionModal._calculateNextRecurrenceDate(goal);
+
+        const expected = new Date();
+        expected.setHours(0, 0, 0, 0);
+        expected.setDate(expected.getDate() + 14);
+
+        expect(nextDate.toISOString().split('T')[0]).toBe(expected.toISOString().split('T')[0]);
+    });
+
+    test('_calculateNextRecurrenceDate should calculate correctly for months', () => {
+        const goal = new Goal({ id: '1', recurPeriod: 1, recurPeriodUnit: 'months' });
+        const nextDate = completionModal._calculateNextRecurrenceDate(goal);
+
+        const expected = new Date();
+        expected.setHours(0, 0, 0, 0);
+        expected.setMonth(expected.getMonth() + 1);
+
+        expect(nextDate.toISOString().split('T')[0]).toBe(expected.toISOString().split('T')[0]);
+    });
+
+    test('_setupRecurringFields should pre-fill date input', () => {
+        const goal = new Goal({ id: '1', isRecurring: true, recurPeriod: 1, recurPeriodUnit: 'days' });
+
+        completionModal._setupRecurringFields(goal);
+
+        const dateInput = document.getElementById('completionRecurDate');
+        const checkbox = document.getElementById('completionRecurringCheckbox');
+
+        expect(checkbox.checked).toBe(true);
+        expect(dateInput.value).toBeTruthy();
+        expect(document.getElementById('completionRecurDateContainer').style.display).toBe('block');
+    });
+
+    test('_resetRecurringFields should clear inputs', () => {
+        const checkbox = document.getElementById('completionRecurringCheckbox');
+        checkbox.checked = true;
+        document.getElementById('completionRecurDateContainer').style.display = 'block';
+        document.getElementById('completionRecurDate').value = '2025-12-31';
+
+        completionModal._resetRecurringFields();
+
+        expect(checkbox.checked).toBe(false);
+        expect(document.getElementById('completionRecurDateContainer').style.display).toBe('none');
+        expect(document.getElementById('completionRecurDate').value).toBe('');
+    });
+    test('recurring checkbox toggle should control date container visibility', () => {
+        completionModal.setup(jest.fn()); // Attach listeners
+
+        const checkbox = document.getElementById('completionRecurringCheckbox');
+        const container = document.getElementById('completionRecurDateContainer');
+        const dateInput = document.getElementById('completionRecurDate');
+
+        // Check (show)
+        checkbox.checked = true;
+        checkbox.dispatchEvent(new window.Event('change'));
+        expect(container.style.display).toBe('block');
+
+        // Uncheck (hide and clear)
+        dateInput.value = '2025-01-01';
+        checkbox.checked = false;
+        checkbox.dispatchEvent(new window.Event('change'));
+        expect(container.style.display).toBe('none');
+        expect(dateInput.value).toBe('');
+    });
+
+    test('getRecurrenceData should return valid null if checkbox unchecked', () => {
+        document.getElementById('completionRecurringCheckbox').checked = false;
+
+        const result = completionModal.getRecurrenceData();
+
+        expect(result.isValid).toBe(true);
+        expect(result.data).toBeNull();
+    });
+
+    test('open should reset recurring fields if goal is not recurring', () => {
+        // Setup initial dirty state
+        document.getElementById('completionRecurringCheckbox').checked = true;
+
+        // Mock non-recurring goal
+        const goal = new Goal({ id: 'nr1', isRecurring: false });
+        mockGoalService.goals = [goal];
+
+        completionModal.open('nr1');
+
+        expect(document.getElementById('completionRecurringCheckbox').checked).toBe(false);
+        expect(document.getElementById('completionRecurDateContainer').style.display).toBe('none');
     });
 });
