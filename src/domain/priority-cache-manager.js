@@ -1,6 +1,11 @@
 // src/domain/priority-cache-manager.js
 
 /**
+ * @module PriorityCacheManager
+ * @description Centralized cache manager for goal priorities to improve performance.
+ */
+
+/**
  * Manages priority cache for goals, automatically invalidating when goals change.
  * This centralizes cache management so views don't need to manually invalidate caches.
  */

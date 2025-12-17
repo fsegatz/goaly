@@ -1,3 +1,11 @@
+// src/server/utils/http.js
+
+/**
+ * @module HttpUtils
+ * @description Utility functions for handling HTTP requests and responses.
+ * Includes cookie parsing, body reading, and response formatting.
+ */
+
 const http = require('node:http');
 
 /**

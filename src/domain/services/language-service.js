@@ -1,3 +1,11 @@
+// src/domain/services/language-service.js
+
+/**
+ * @module LanguageService
+ * @description Service for handling application localization.
+ * Manages language selection, persistence, and string translation.
+ */
+
 import en from '../../language/en.js';
 import de from '../../language/de.js';
 import sv from '../../language/sv.js';
@@ -8,6 +16,7 @@ const DEFAULT_LOCALE_MAP = {
     sv: 'sv-SE'
 };
 
+/** @constant {string} LANGUAGE_STORAGE_KEY - Key for storing selected language in local storage */
 const LANGUAGE_STORAGE_KEY = 'goaly_language';
 
 const merge = (target, source) => {
@@ -25,7 +34,19 @@ const merge = (target, source) => {
     return result;
 };
 
+/**
+ * Service for managing application localization and translations.
+ * Handles language detection, storage persistence, and dynamic content updates.
+ * @class
+ */
 class LanguageService {
+    /**
+     * Create a new LanguageService instance.
+     * @param {Object} options - Configuration options
+     * @param {Object} options.translations - Translation dictionaries
+     * @param {string} options.defaultLanguage - Default language code
+     * @param {Object} options.localeMap - Map of language codes to locale strings
+     */
     constructor(options = {}) {
         const { translations, defaultLanguage = 'en', localeMap } = options;
         this.translations = translations || { en, de, sv };
@@ -38,6 +59,12 @@ class LanguageService {
         this.listeners = new Set();
     }
 
+    /**
+     * Initialize the language service.
+     * resolving the initial language from arguments, storage, or browser settings.
+     * @param {string} initialLanguage - Optional initial language code
+     * @returns {string} The resolved language code
+     */
     init(initialLanguage) {
         const resolved =
             this.resolveLanguage(initialLanguage) ||
@@ -51,6 +78,11 @@ class LanguageService {
         return resolved;
     }
 
+    /**
+     * Subscribe to language change events.
+     * @param {Function} callback - Function to call when language changes
+     * @returns {Function} Unsubscribe function
+     */
     onChange(callback) {
         if (typeof callback !== 'function') {
             return () => { };
@@ -61,14 +93,29 @@ class LanguageService {
         };
     }
 
+    /**
+     * Get the current language code.
+     * @returns {string} Current language code (e.g., 'en')
+     */
     getLanguage() {
         return this.currentLanguage;
     }
 
+    /**
+     * Get the current locale string.
+     * @returns {string} Current locale (e.g., 'en-US')
+     */
     getLocale() {
         return this.localeMap[this.currentLanguage] || this.localeMap[this.defaultLanguage];
     }
 
+    /**
+     * Set the current language.
+     * @param {string} language - Language code to set
+     * @param {Object} options - Options
+     * @param {boolean} [options.persist=true] - Whether to save to local storage
+     * @param {boolean} [options.notify=true] - Whether to notify listeners
+     */
     setLanguage(language, { persist = true, notify = true } = {}) {
         const resolved = this.resolveLanguage(language) || this.defaultLanguage;
         if (resolved === this.currentLanguage && notify) {
@@ -85,6 +132,12 @@ class LanguageService {
         }
     }
 
+    /**
+     * Translate a key with optional replacements.
+     * @param {string} key - The translation key (e.g., 'common.save')
+     * @param {Object} replacements - Key-value pairs for template replacement
+     * @returns {string} Translated string or key if not found
+     */
     translate(key, replacements = {}) {
         if (!key) {
             return '';
@@ -98,6 +151,11 @@ class LanguageService {
         return this.applyReplacements(value, replacements);
     }
 
+    /**
+     * Apply translations to the DOM.
+     * searches for elements with data-i18n-key attributes.
+     * @param {Document|HTMLElement} root - Root element to search within
+     */
     applyTranslations(root = document) {
         if (!root || typeof root.querySelectorAll !== 'function') {
             return;
@@ -136,10 +194,20 @@ class LanguageService {
         });
     }
 
+    /**
+     * Get list of supported languages.
+     * @returns {string[]} Array of supported language codes
+     */
     getSupportedLanguages() {
         return [...this.availableLanguages];
     }
 
+    /**
+     * Resolve a language code to a supported one.
+     * Checks exact match, then base language (e.g., 'en-US' -> 'en').
+     * @param {string} language - Input language string
+     * @returns {string|null} Resolved language code or null
+     */
     resolveLanguage(language) {
         if (!language) {
             return null;
@@ -155,6 +223,10 @@ class LanguageService {
         return null;
     }
 
+    /**
+     * Detect the user's preferred language from the browser.
+     * @returns {string|null} Detected supported language or null
+     */
     detectBrowserLanguage() {
         if (typeof navigator === 'undefined') {
             return null;
@@ -175,6 +247,10 @@ class LanguageService {
         return null;
     }
 
+    /**
+     * Retrieve the stored language preference.
+     * @returns {string|null} Stored language code or null
+     */
     getStoredLanguage() {
         try {
             return globalThis.localStorage.getItem(LANGUAGE_STORAGE_KEY);
@@ -183,6 +259,10 @@ class LanguageService {
         }
     }
 
+    /**
+     * Persist the language preference to local storage.
+     * @param {string} language - Language code to save
+     */
     persistLanguage(language) {
         try {
             globalThis.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
@@ -191,6 +271,10 @@ class LanguageService {
         }
     }
 
+    /**
+     * Update the document's `lang` attribute.
+     * @param {string} language - Language code
+     */
     updateDocumentLanguage(language) {
         if (typeof document === 'undefined') {
             return;
@@ -198,6 +282,12 @@ class LanguageService {
         document.documentElement.setAttribute('lang', language);
     }
 
+    /**
+     * Lookup a key in a translation tree.
+     * @param {Object} tree - Translation object
+     * @param {string} key - Dot-notation key
+     * @returns {string|Object|null} Value or null if not found
+     */
     lookup(tree, key) {
         if (!tree) {
             return null;
@@ -210,6 +300,12 @@ class LanguageService {
         }, tree);
     }
 
+    /**
+     * Replace placeholders in a template string.
+     * @param {string} template - Template string with {{key}} placeholders
+     * @param {Object} replacements - Replacement values
+     * @returns {string} Resulting string
+     */
     applyReplacements(template, replacements) {
         if (typeof template !== 'string') {
             return template;

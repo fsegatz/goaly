@@ -1,6 +1,12 @@
 // src/ui/utils/event-manager.js
 
 /**
+ * @module EventManager
+ * @description Utility for managing DOM event listener lifecycle.
+ * Provides a centralized way to attach and clean up event listeners to prevent memory leaks.
+ */
+
+/**
  * EventManager utility class for managing event listener lifecycle.
  * 
  * Provides a simple API for attaching and automatically cleaning up event listeners,

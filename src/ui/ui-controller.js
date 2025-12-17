@@ -1,5 +1,11 @@
 // src/ui/ui-controller.js
 
+/**
+ * @module UIController
+ * @description Main UI controller that orchestrates all views, modals, and user interactions.
+ * Handles view switching, event delegation, and coordinates between UI components.
+ */
+
 import { DashboardView } from './views/dashboard-view.js';
 import { AllGoalsView } from './views/all-goals-view.js';
 import { SettingsView } from './views/settings-view.js';
@@ -15,7 +21,16 @@ import { MobileDashboardView } from './views/mobile/dashboard-view.js';
 import { isMobileDevice } from '../domain/utils/device-utils.js';
 import { getOptionalElement, querySelectorAllSafe, querySelectorSafe } from './utils/dom-utils.js';
 
+/**
+ * Main controller for the application UI.
+ * Coordinates views, modals, and user interactions.
+ * @class
+ */
 class UIController {
+    /**
+     * Create a new UIController instance.
+     * @param {Object} app - The application instance
+     */
     constructor(app) {
         this.app = app;
         this.isMobile = isMobileDevice();

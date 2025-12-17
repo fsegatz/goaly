@@ -1,5 +1,10 @@
 // src/domain/utils/device-utils.js
 
+/**
+ * @module DeviceUtils
+ * @description Utility functions for device detection and responsive behavior.
+ */
+
 import { MOBILE_BREAKPOINT_PX } from './constants.js';
 
 /**

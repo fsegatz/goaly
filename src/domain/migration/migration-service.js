@@ -1,3 +1,11 @@
+// src/domain/migration/migration-service.js
+
+/**
+ * @module MigrationService
+ * @description Core logic for data migration, serialization, and version updates.
+ * Handles deep cloning, Date serialization, and schema transformation rules.
+ */
+
 import { GOAL_FILE_VERSION } from '../utils/versioning.js';
 
 /**
@@ -71,6 +79,12 @@ function serializeGoals(goals = []) {
     return goals.map(goal => deepClone(goal));
 }
 
+/**
+ * Prepare payload for export (file download or sync).
+ * @param {Array<Object>} goals - The goals to export
+ * @param {Object} settings - Application settings
+ * @returns {Object} Export payload with version and export date
+ */
 export function prepareExportPayload(goals, settings) {
     return {
         version: GOAL_FILE_VERSION,
@@ -80,6 +94,11 @@ export function prepareExportPayload(goals, settings) {
     };
 }
 
+/**
+ * Prepare payload for local storage (lightweight).
+ * @param {Array<Object>} goals - The goals to store
+ * @returns {Object} Storage payload with version
+ */
 export function prepareGoalsStoragePayload(goals) {
     return {
         version: GOAL_FILE_VERSION,
@@ -87,6 +106,12 @@ export function prepareGoalsStoragePayload(goals) {
     };
 }
 
+/**
+ * Migrate any data payload to the current schema version.
+ * Handles legacy array formats and older object schemas.
+ * @param {Object|Array} payload - The raw data payload
+ * @returns {Object} Migrated payload conforming to current schema
+ */
 export function migratePayloadToCurrent(payload) {
     if (Array.isArray(payload)) {
         // Legacy array format - migrate each goal

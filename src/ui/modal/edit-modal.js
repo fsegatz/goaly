@@ -1,9 +1,23 @@
 // src/ui/modal/edit-modal.js
 
+/**
+ * @module EditModal
+ * @description Modal for editing existing goals.
+ * Extends CreateModal to pre-fill data and handle updates/deletions.
+ */
+
 import { CreateModal } from './create-modal.js';
 import { getElement, getOptionalElement } from '../utils/dom-utils.js';
 
+/**
+ * Modal controller for editing existing goals.
+ * @class
+ * @extends CreateModal
+ */
 export class EditModal extends CreateModal {
+    /**
+     * @param {Object} app - The main application instance
+     */
     constructor(app) {
         super(app);
         this.currentGoalId = null;
@@ -39,7 +53,12 @@ export class EditModal extends CreateModal {
         }
     }
 
-    /** @private */
+    /**
+     * Prepares the form for editing a specific goal.
+     * @private
+     * @param {string} goalId - ID of the goal to edit
+     * @param {HTMLFormElement} form - The form element
+     */
     _setupEditMode(goalId, form) {
         // Find goal by ID using loose comparison to handle both string and number IDs
         const goal = this.app.goalService.goals?.find(g => String(g.id) === String(goalId));
@@ -157,6 +176,10 @@ export class EditModal extends CreateModal {
         }
     }
 
+    /**
+     * Handles the form submission for updating a goal.
+     * Overrides CreateModal.handleGoalSubmit.
+     */
     handleGoalSubmit() {
         const goalData = this.getFormData();
         const id = getElement('goalId').value;
@@ -176,6 +199,9 @@ export class EditModal extends CreateModal {
         }
     }
 
+    /**
+     * Handles goal deletion with confirmation.
+     */
     handleDelete() {
         const id = getElement('goalId').value;
         this.app.goalService.deleteGoal(id, this.app.settingsService.getSettings().maxActiveGoals);
@@ -183,6 +209,11 @@ export class EditModal extends CreateModal {
         if (this.renderViews) this.renderViews();
     }
 
+    /**
+     * Retrieves the current goal object based on the form ID.
+     * @private
+     * @returns {Object|null} The goal object or null if not found
+     */
     _getGoalFromForm() {
         const id = getElement('goalId').value;
         if (!id) return null;
@@ -190,6 +221,9 @@ export class EditModal extends CreateModal {
         return goal || null;
     }
 
+    /**
+     * Unpauses a paused goal.
+     */
     handleUnpauseGoal() {
         const goal = this._getGoalFromForm();
         if (!goal) return;
@@ -199,6 +233,9 @@ export class EditModal extends CreateModal {
         if (this.renderViews) this.renderViews();
     }
 
+    /**
+     * Reactivates a completed or abandoned goal.
+     */
     handleReactivateGoal() {
         const goal = this._getGoalFromForm();
         if (!goal) return;
@@ -207,6 +244,9 @@ export class EditModal extends CreateModal {
         if (this.renderViews) this.renderViews();
     }
 
+    /**
+     * Forcefully activates a goal (developer/debug utility).
+     */
     handleForceActivateGoal() {
         const goal = this._getGoalFromForm();
         if (!goal) return;
@@ -219,6 +259,10 @@ export class EditModal extends CreateModal {
     // Parent setupEventListeners attaches submit -> logic handles dispatch.
     // Parent attaches close/cancel.
     // We need to attach Unpause/Reactivate etc.
+    /**
+     * Sets up event listeners for edit-specific actions.
+     * @param {Function} openCompletionModal - Callback to open completion modal
+     */
     setupEventListeners(openCompletionModal) {
         // Call parent for basic listeners (Submit, Cancel, Close, Recurring Toggle)
         super.setupEventListeners();

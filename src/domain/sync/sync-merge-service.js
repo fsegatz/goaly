@@ -1,4 +1,11 @@
-// src/domain/sync-merge-service.js
+// src/domain/sync/sync-merge-service.js
+
+/**
+ * @module SyncMergeService
+ * @description Logic for merging goal data from different sources (local, remote, base).
+ * Implements a three-way merge strategy to resolve conflicts and preserve data integrity.
+ */
+
 import Goal from '../models/goal.js';
 import { migratePayloadToCurrent } from '../migration/migration-service.js';
 import { GOAL_FILE_VERSION } from '../utils/versioning.js';
@@ -120,6 +127,14 @@ function mergeGoal(localRaw, remoteRaw, baseRaw) {
 	return result;
 }
 
+/**
+ * Merge payloads using three-way merge strategy.
+ * @param {Object} context - Merge context
+ * @param {Object} context.base - Base payload (last common ancestor)
+ * @param {Object} context.local - Local payload (current device)
+ * @param {Object} context.remote - Remote payload (server/cloud)
+ * @returns {Object} Merged payload containing version, exportDate, goals, and settings
+ */
 export function mergePayloads({ base, local, remote }) {
 	// Migrate to current schema first
 	const baseCur = base ? migratePayloadToCurrent(base) : null;
@@ -160,6 +175,12 @@ export function mergePayloads({ base, local, remote }) {
 	};
 }
 
+/**
+ * Compute a two-way merge (simplification of three-way where base is null).
+ * @param {Object} local - Local payload
+ * @param {Object} remote - Remote payload
+ * @returns {Object} Merged payload
+ */
 export function computeTwoWayMerge(local, remote) {
 	return mergePayloads({ base: null, local, remote });
 }

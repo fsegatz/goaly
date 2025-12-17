@@ -1,6 +1,12 @@
 // src/domain/goal.js
 
 /**
+ * @module Goal
+ * @description Goal model definition and factory functions.
+ * Contains logic for parsing and normalizing goal data.
+ */
+
+/**
  * Parse a date string in local timezone to avoid off-by-one-day errors.
  * @param {string|Date|null} value - The date value to parse
  * @returns {Date|null}

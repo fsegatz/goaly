@@ -1,11 +1,29 @@
 // src/domain/settings-service.js
 
+/**
+ * @module SettingsService
+ * @description Service for managing application settings including language preferences,
+ * maximum active goals, and review intervals. Persists settings to localStorage.
+ */
+
 import { STORAGE_KEY_SETTINGS } from '../utils/constants.js';
 
+/** @constant {number[]} Default review intervals in days */
 export const DEFAULT_REVIEW_INTERVALS = [7, 14, 30];
+
+/** @constant {number[]} Fallback intervals when parsing fails */
 const FALLBACK_REVIEW_INTERVALS = DEFAULT_REVIEW_INTERVALS;
+
+/** @constant {number} Precision for interval deduplication */
 const INTERVAL_PRECISION = 6;
 
+/**
+ * Parse a single interval token into days.
+ * Supports formats like "7", "7d", "24h", "30m", "60s".
+ * @param {string|number|null|undefined} rawValue - Raw interval value
+ * @returns {number|null} Interval in days, or null if invalid
+ * @private
+ */
 function parseIntervalToken(rawValue) {
     if (rawValue === null || rawValue === undefined) {
         return null;
@@ -52,6 +70,13 @@ function parseIntervalToken(rawValue) {
     return Number.isFinite(days) && days > 0 ? days : null;
 }
 
+/**
+ * Normalize review intervals from various input formats.
+ * Accepts arrays, comma/semicolon/space-separated strings, or single values.
+ * @param {Array|string|number|null|undefined} value - Input value to normalize
+ * @returns {number[]} Sorted array of unique interval values in days
+ * @private
+ */
 function normalizeReviewIntervals(value) {
     let tokens = [];
     if (Array.isArray(value)) {
@@ -84,7 +109,19 @@ function normalizeReviewIntervals(value) {
     return normalized.sort((a, b) => a - b);
 }
 
+/**
+ * Service for managing application settings.
+ * Handles persistence to localStorage and provides observer pattern for change notifications.
+ * @class
+ */
 class SettingsService {
+    /**
+     * Create a new SettingsService instance.
+     * @param {Object} [settings] - Initial settings object
+     * @param {number} [settings.maxActiveGoals=3] - Maximum number of active goals
+     * @param {string} [settings.language='en'] - Application language code
+     * @param {number[]} [settings.reviewIntervals] - Review intervals in days
+     */
     constructor(settings) {
         this.settings = settings || {
             maxActiveGoals: 3,
@@ -98,12 +135,20 @@ class SettingsService {
         this.settings.reviewIntervals = normalizeReviewIntervals(this.settings.reviewIntervals);
     }
 
+    /**
+     * Remove deprecated settings from the settings object.
+     * @private
+     */
     _cleanupDeprecatedSettings() {
         delete this.settings.checkInInterval;
         delete this.settings.reviewsEnabled;
         delete this.settings.checkInsEnabled;
     }
 
+    /**
+     * Load settings from localStorage.
+     * Merges saved settings with current settings and normalizes values.
+     */
     loadSettings() {
         const saved = localStorage.getItem(STORAGE_KEY_SETTINGS);
         if (saved) {
@@ -116,14 +161,26 @@ class SettingsService {
         this.settings.reviewIntervals = normalizeReviewIntervals(this.settings.reviewIntervals);
     }
 
+    /**
+     * Save current settings to localStorage.
+     */
     saveSettings() {
         localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(this.settings));
     }
 
+    /**
+     * Get the current settings object.
+     * @returns {Object} Current settings
+     */
     getSettings() {
         return this.settings;
     }
 
+    /**
+     * Update settings with new values.
+     * Merges new settings, normalizes values, saves, and notifies listeners.
+     * @param {Object} newSettings - New settings to merge
+     */
     updateSettings(newSettings) {
         const merged = { ...this.settings, ...newSettings };
         merged.reviewIntervals = normalizeReviewIntervals(newSettings?.reviewIntervals ?? merged.reviewIntervals);
@@ -136,6 +193,11 @@ class SettingsService {
         this._notifyAfterSave();
     }
 
+    /**
+     * Register a listener to be called after settings are saved.
+     * @param {Function} listener - Callback function
+     * @returns {Function} Unsubscribe function
+     */
     onAfterSave(listener) {
         if (typeof listener !== 'function') {
             return () => { }; // Return a no-op for invalid listeners
@@ -150,6 +212,10 @@ class SettingsService {
         };
     }
 
+    /**
+     * Notify all afterSave listeners.
+     * @private
+     */
     _notifyAfterSave() {
         // Iterate over a copy of the listeners array to prevent issues if a listener unsubscribes during execution.
         const listeners = [...(this._listeners?.afterSave || [])];
@@ -163,6 +229,10 @@ class SettingsService {
         }
     }
 
+    /**
+     * Get the review intervals.
+     * @returns {number[]} Copy of the review intervals array
+     */
     getReviewIntervals() {
         return [...this.settings.reviewIntervals];
     }

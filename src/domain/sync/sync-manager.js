@@ -7,7 +7,15 @@ import { isValidVersion, isSameVersion, isOlderVersion, isNewerVersion } from '.
 import { GOOGLE_DRIVE_SYNC_DEBOUNCE_MS, STORAGE_KEY_GDRIVE_FILE_ID } from '../utils/constants.js';
 
 /**
+ * @module SyncManager
+ * @description Manager for high-level synchronization logic.
+ * Coordinaties between the app and the storage service (Google Drive),
+ * handling auto-sync, background sync processes, and sync status updates.
+ */
+
+/**
  * Manages Google Drive synchronization for the app
+ * @class
  */
 class SyncManager {
     constructor(app) {
@@ -19,7 +27,9 @@ class SyncManager {
     }
 
     /**
-     * Initialize Google Drive sync service if credentials are available
+     * Initialize Google Drive sync service if credentials are available.
+     * @async
+     * @returns {Promise<void>}
      */
     async initGoogleDriveSync() {
         const apiKey = globalThis.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY;

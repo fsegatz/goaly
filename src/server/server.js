@@ -1,3 +1,11 @@
+// src/server/server.js
+
+/**
+ * @module Server
+ * @description Main entry point for the static file server.
+ * Handles static file serving, API proxying (if any), and dynamic configuration injection.
+ */
+
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -21,14 +29,25 @@ const MIME_TYPES = {
     '.woff2': 'font/woff2'
 };
 
-// Helper to serve dynamic config
+/**
+ * Serves the dynamic configuration for the client.
+ * Injects environment variables like GOOGLE_API_KEY into the global window object.
+ * @param {http.ServerResponse} res - The response object
+ */
 function serveConfig(res) {
     const configContent = `window.GOOGLE_API_KEY = "${process.env.GOOGLE_API_KEY || ''}";\nwindow.GOOGLE_CLIENT_ID = "${process.env.GOOGLE_CLIENT_ID || ''}";`;
     res.writeHead(200, { 'Content-Type': 'text/javascript' });
     res.end(configContent);
 }
 
-// Helper to serve static files with SPA fallback
+/**
+ * Serves static files with SPA fallback logic.
+ * If a file is not found and is not a static asset, it serves index.html.
+ * @async
+ * @param {http.IncomingMessage} req - The request object
+ * @param {http.ServerResponse} res - The response object
+ * @param {string} rootDir - The root directory to serve files from
+ */
 async function serveStaticFile(req, res, rootDir) {
     // Sanitize and resolve the file path to prevent path injection (S2083)
     const requestPath = req.url === '/' ? 'index.html' : decodeURIComponent(req.url.split('?')[0]);

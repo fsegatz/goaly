@@ -1,5 +1,11 @@
 // Goaly MVP - Main Application Logic
 
+/**
+ * @module GoalyApp
+ * @description Main application entry point and orchestrator.
+ * Initializes all services, managers, and the UI controller.
+ */
+
 import GoalService from './domain/services/goal-service.js';
 import SettingsService from './domain/services/settings-service.js';
 import ReviewService from './domain/services/review-service.js';
@@ -17,6 +23,11 @@ import { GOAL_FILE_VERSION } from './domain/utils/versioning.js';
 import { DEVELOPER_MODE_PRESS_DURATION_MS, DEVELOPER_MODE_VISUAL_FEEDBACK_MS, GOAL_SAVE_INTERVAL_MS } from './domain/utils/constants.js';
 import { getOptionalElement } from './ui/utils/dom-utils.js';
 
+/**
+ * Main application class.
+ * Orchestrates service initialization and dependency injection.
+ * @class
+ */
 class GoalyApp {
     constructor() {
         this.settingsService = new SettingsService();
@@ -38,6 +49,10 @@ class GoalyApp {
         this.init();
     }
 
+    /**
+     * Initialize the application.
+     * Loads settings, goals, and sets up services.
+     */
     init() {
         this.settingsService.loadSettings();
         const resolvedLanguage = this.languageService.init(this.settingsService.getSettings().language);

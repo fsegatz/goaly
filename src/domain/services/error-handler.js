@@ -1,8 +1,9 @@
 // src/domain/services/error-handler.js
 
 /**
- * Centralized error handling system for the application
- * Provides consistent error logging and user-facing error messages
+ * @module ErrorHandler
+ * @description Centralized error handling system for the application.
+ * Provides consistent error logging and user-facing error messages.
  */
 
 /**

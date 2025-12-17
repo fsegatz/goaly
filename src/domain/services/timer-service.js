@@ -1,5 +1,10 @@
 // src/domain/timer-service.js
 
+/**
+ * @module TimerService
+ * @description Service for managing application-wide timers and scheduled tasks.
+ */
+
 import { REVIEW_REFRESH_INTERVAL_MS } from '../utils/constants.js';
 
 /**
@@ -24,13 +29,13 @@ class TimerService {
         this.reviewTimer = setInterval(() => {
             this.app.refreshReviews();
         }, REVIEW_REFRESH_INTERVAL_MS);
-        
+
         // Use unref() to prevent timer from keeping Node.js process alive (for testing)
         if (typeof this.reviewTimer.unref === 'function') {
             this.reviewTimer.unref();
         }
     }
-    
+
     /**
      * Stop the review refresh timer
      */

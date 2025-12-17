@@ -1,5 +1,11 @@
 // src/ui/views/all-goals-view.js
 
+/**
+ * @module AllGoalsView
+ * @description View for displaying a comprehensive list of all goals.
+ * Supports filtering by status, sorting by priority or date, and pagination (if applicable).
+ */
+
 import { BaseView } from '../base-view.js';
 import { MAX_RATING_VALUE } from '../../domain/utils/constants.js';
 import { getOptionalElement } from '../utils/dom-utils.js';
@@ -12,8 +18,13 @@ const ALL_STATUSES = ['active', 'inactive', 'paused', 'completed', 'notCompleted
 /**
  * AllGoalsView handles displaying and filtering all goals in a table format.
  * Contains shared state management, filtering, sorting, and status filter dropdown logic.
+ * @class
+ * @extends BaseView
  */
 export class AllGoalsView extends BaseView {
+    /**
+     * @param {Object} app - The main application instance
+     */
     constructor(app) {
         super(app);
         this.allGoalsState = {
@@ -271,6 +282,10 @@ export class AllGoalsView extends BaseView {
         }
     }
 
+    /**
+     * Renders the all goals table.
+     * @param {Function} openGoalForm - Callback to open goal editing form
+     */
     render(openGoalForm) {
         // Persist callback if provided, otherwise use stored callback
         if (openGoalForm) {

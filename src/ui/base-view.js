@@ -1,8 +1,25 @@
 // src/ui/base-view.js
 
+/**
+ * @module BaseView
+ * @description Base class for all UI views, providing common functionality
+ * for translation, date formatting, and DOM element caching.
+ */
+
 import { URGENT_DEADLINE_DAYS } from '../domain/utils/constants.js';
 
+/**
+ * Base class for UI views.
+ * Provides common methods for translation, formatting, and caching.
+ * @class
+ */
 export class BaseView {
+    /**
+     * Create a new BaseView instance.
+     * @param {Object} app - The application instance
+     * @param {LanguageService} app.languageService - Language service for translations
+     * @param {GoalService} app.goalService - Goal service for goal management
+     */
     constructor(app) {
         this.app = app;
         this.languageService = app.languageService;
@@ -14,6 +31,10 @@ export class BaseView {
         });
     }
 
+    /**
+     * Apply language updates to the view.
+     * Called when the language changes.
+     */
     applyLanguageUpdates() {
         this.languageService.applyTranslations(document);
         this.renderViews();
@@ -36,6 +57,12 @@ export class BaseView {
         return this.app.goalService.priorityCache.getAllPriorities();
     }
 
+    /**
+     * Format a deadline date for display.
+     * Shows relative time for urgent deadlines, full date otherwise.
+     * @param {Date} deadline - The deadline date
+     * @returns {string} Formatted deadline string
+     */
     formatDeadline(deadline) {
         const now = new Date();
         const days = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
@@ -54,6 +81,11 @@ export class BaseView {
         }
     }
 
+    /**
+     * Check if a deadline is urgent (within URGENT_DEADLINE_DAYS).
+     * @param {Date|null} deadline - The deadline to check
+     * @returns {boolean} True if deadline is urgent
+     */
     isDeadlineUrgent(deadline) {
         if (!deadline) return false;
         const now = new Date();
@@ -61,6 +93,11 @@ export class BaseView {
         return days <= URGENT_DEADLINE_DAYS && days >= 0;
     }
 
+    /**
+     * Get translated text for a status.
+     * @param {string} status - The status key
+     * @returns {string} Translated status text
+     */
     getStatusText(status) {
         if (status === 'inactive') {
             return this.translate('status.inactive');
@@ -70,12 +107,22 @@ export class BaseView {
         return translated === key ? status : translated;
     }
 
+    /**
+     * Escape HTML special characters in text.
+     * @param {string} text - Text to escape
+     * @returns {string} HTML-escaped text
+     */
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
 
+    /**
+     * Format a date and time for display.
+     * @param {Date|string|null} date - Date to format
+     * @returns {string} Formatted date and time string
+     */
     formatDateTime(date) {
         if (!date) {
             return '';
@@ -89,6 +136,11 @@ export class BaseView {
         );
     }
 
+    /**
+     * Format a date for display.
+     * @param {Date|string|null} date - Date to format
+     * @returns {string} Formatted date string
+     */
     formatDate(date) {
         if (!date) {
             return '';
@@ -98,6 +150,11 @@ export class BaseView {
         return dateObj.toLocaleDateString(locale);
     }
 
+    /**
+     * Format a review interval for input display (e.g., "7d", "24h").
+     * @param {number} intervalDays - Interval in days
+     * @returns {string} Formatted interval string
+     */
     formatReviewIntervalInput(intervalDays) {
         if (!Number.isFinite(intervalDays) || intervalDays <= 0) {
             return '';
@@ -117,6 +174,11 @@ export class BaseView {
         return `${totalSeconds}s`;
     }
 
+    /**
+     * Format a review interval for human-readable display.
+     * @param {number} intervalDays - Interval in days
+     * @returns {string} Translated interval string
+     */
     formatReviewIntervalDisplay(intervalDays) {
         if (!Number.isFinite(intervalDays) || intervalDays <= 0) {
             return this.translate('reviews.interval.unknown');

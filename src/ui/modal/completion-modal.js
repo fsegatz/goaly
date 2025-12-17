@@ -1,9 +1,23 @@
 // src/ui/modal/completion-modal.js
 
+/**
+ * @module CompletionModal
+ * @description Modal for handling goal completion flow.
+ * Supports marking as completed/not completed and scheduling recurrences.
+ */
+
 import { getOptionalElement } from '../utils/dom-utils.js';
 import { BaseModal } from '../base-modal.js';
 
+/**
+ * Modal controller for completing goals.
+ * @class
+ * @extends BaseModal
+ */
 export class CompletionModal extends BaseModal {
+    /**
+     * @param {Object} app - The main application instance
+     */
     constructor(app) {
         super(app);
         this.completionModalRefs = {
@@ -19,6 +33,10 @@ export class CompletionModal extends BaseModal {
         this.completionModalInitialized = false;
     }
 
+    /**
+     * Sets up the completion modal handlers.
+     * @param {Function} handleCompletionChoice - Callback for completion action
+     */
     setup(handleCompletionChoice) {
         if (this.completionModalInitialized) {
             return;
@@ -86,6 +104,10 @@ export class CompletionModal extends BaseModal {
         this.completionModalInitialized = true;
     }
 
+    /**
+     * Opens the completion modal for a specific goal.
+     * @param {string} goalId - ID of the goal to complete
+     */
     open(goalId) {
         if (!goalId) return;
 
@@ -160,6 +182,9 @@ export class CompletionModal extends BaseModal {
         if (recurDateInput) recurDateInput.value = '';
     }
 
+    /**
+     * Closes the completion modal.
+     */
     close() {
         const modal = this.getElement('completionModal');
         if (modal) {
@@ -172,6 +197,10 @@ export class CompletionModal extends BaseModal {
         return this.pendingCompletionGoalId;
     }
 
+    /**
+     * Retrieves recurrence data from the modal.
+     * @returns {Object} Object containing validity and recurrence data
+     */
     getRecurrenceData() {
         const recurringCheckbox = this.getElement('completionRecurringCheckbox');
         const recurDate = this.getElement('completionRecurDate');

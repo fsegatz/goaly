@@ -1,21 +1,47 @@
-// src/domain/google-drive-sync-service.js
+// src/domain/sync/google-drive-sync-service.js
+
+/**
+ * @module GoogleDriveSyncService
+ * @description Service handling Google Drive API interactions for data synchronization.
+ * Manages authentication, file operations (find, create, update, download), and token refreshment.
+ */
 
 import { prepareExportPayload } from '../migration/migration-service.js';
 import { isOlderVersion } from '../utils/versioning.js';
 import { STORAGE_KEY_GDRIVE_TOKEN, STORAGE_KEY_GDRIVE_FILE_ID, STORAGE_KEY_GDRIVE_FOLDER_ID } from '../utils/constants.js';
 
+/** @constant {string} GOOGLE_DRIVE_FOLDER_NAME - Name of the application folder in Google Drive */
 const GOOGLE_DRIVE_FOLDER_NAME = 'Goaly';
+
+/** @constant {string} GOOGLE_DRIVE_FILE_NAME - Name of the data file */
 const GOOGLE_DRIVE_FILE_NAME = 'goaly-data.json';
+
+/** @constant {string} SCOPES - OAuth scopes required */
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+/** @constant {Array<string>} DISCOVERY_DOCS - Google API discovery docs */
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 
+/**
+ * Error class for when the data file is not found in Google Drive.
+ * @class
+ * @extends Error
+ */
 export class GoogleDriveFileNotFoundError extends Error {
+    /**
+     * Create a new GoogleDriveFileNotFoundError.
+     * @param {string} [message] - Error message
+     */
     constructor(message = 'No data file found in Google Drive') {
         super(message);
         this.name = 'GoogleDriveFileNotFoundError';
     }
 }
 
+/**
+ * Service to manage Google Drive sychronization operations.
+ * @class
+ */
 class GoogleDriveSyncService {
     tokenClient = null;
     gapiLoaded = false;

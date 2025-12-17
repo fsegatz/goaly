@@ -1,5 +1,11 @@
 // src/domain/utils/date-utils.js
 
+/**
+ * @module DateUtils
+ * @description Utility functions for date manipulation and formatting.
+ * Handles normalization, comparison, and display formatting of dates.
+ */
+
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 /**

@@ -1,9 +1,23 @@
 // src/ui/modal/create-modal.js
 
+/**
+ * @module CreateModal
+ * @description Modal for creating new goals.
+ * Handles form validation, recurrence settings, and goal submission.
+ */
+
 import { BaseModal } from '../base-modal.js';
 import { getElement, getOptionalElement } from '../utils/dom-utils.js';
 
+/**
+ * Modal controller for creating new goals.
+ * @class
+ * @extends BaseModal
+ */
 export class CreateModal extends BaseModal {
+    /**
+     * @param {Object} app - The main application instance
+     */
     constructor(app) {
         super(app);
         this.renderViews = null;
@@ -91,7 +105,11 @@ export class CreateModal extends BaseModal {
         if (ui.forceActivateBtn) ui.forceActivateBtn.style.display = 'none';
     }
 
-    /** @protected */
+    /**
+     * Get references to all form UI elements.
+     * @protected
+     * @returns {Object} Map of element names to DOM elements
+     */
     _getFormUIElements() {
         return {
             modalTitle: getOptionalElement('modalTitle'),
@@ -113,6 +131,9 @@ export class CreateModal extends BaseModal {
         };
     }
 
+    /**
+     * Closes the modal and resets the form.
+     */
     close() {
         const modal = getOptionalElement('goalModal');
         if (modal) {
@@ -127,6 +148,9 @@ export class CreateModal extends BaseModal {
         this.renderViews = null;
     }
 
+    /**
+     * Sets up event listeners for the modal.
+     */
     setupEventListeners() {
         // NOTE: Submit listener listener Removed. Handled dynamically in open() via onsubmit.
 
@@ -174,7 +198,11 @@ export class CreateModal extends BaseModal {
         document.addEventListener('mousedown', (e) => this._handleOutsideClick(e));
     }
 
-    /** @private */
+    /**
+     * Handles clicks outside the modal content to close it.
+     * @private
+     * @param {Event} e - Click event
+     */
     _handleOutsideClick(e) {
         const modal = getOptionalElement('goalModal');
         if (!modal) return;
@@ -201,6 +229,10 @@ export class CreateModal extends BaseModal {
         }
     }
 
+    /**
+     * Extracts data from the form.
+     * @returns {Object} Goal data object
+     */
     getFormData() {
         const recurringCheckbox = getOptionalElement('goalIsRecurring');
         const data = {
@@ -220,6 +252,9 @@ export class CreateModal extends BaseModal {
         return data;
     }
 
+    /**
+     * Handles the form submission for creating a goal.
+     */
     handleGoalSubmit() {
         console.log('CreateModal.handleGoalSubmit called');
         try {

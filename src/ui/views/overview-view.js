@@ -1,10 +1,18 @@
 // src/ui/views/overview-view.js
 
+/**
+ * @module OverviewView
+ * @description View for displaying analytics, statistics, and charts.
+ * Visualizes goal progress over time and status distribution using SVG and CSS charts.
+ */
+
 import { BaseView } from '../base-view.js';
 import { getElement } from '../utils/dom-utils.js';
 
 /**
  * Overview view for displaying goal analytics and statistics.
+ * @class
+ * @extends BaseView
  */
 export class OverviewView extends BaseView {
     constructor(app) {
@@ -75,6 +83,8 @@ export class OverviewView extends BaseView {
 
     /**
      * Render summary statistic cards.
+     * @param {Object} stats - Summary statistics object
+     * @returns {string} HTML string for stat cards
      */
     renderStatCards(stats) {
         const periodLabel = this.translate(`overview.periodSelector.${stats.period}`).toLowerCase();
@@ -101,6 +111,9 @@ export class OverviewView extends BaseView {
 
     /**
      * Render SVG bar chart for goals over time.
+     * @param {Object} goalsByPeriod - Goals grouped by period
+     * @param {Object} analyticsService - Analytics service instance
+     * @returns {string} HTML string for the bar chart
      */
     renderBarChart(goalsByPeriod, analyticsService) {
         const periods = Object.keys(goalsByPeriod);
@@ -162,6 +175,8 @@ export class OverviewView extends BaseView {
 
     /**
      * Render CSS pie chart for status distribution.
+     * @param {Object} distribution - Status distribution counts
+     * @returns {string} HTML string for the pie chart
      */
     renderPieChart(distribution) {
         const total = Object.values(distribution).reduce((sum, val) => sum + val, 0);
@@ -224,6 +239,7 @@ export class OverviewView extends BaseView {
 
     /**
      * Set up event listeners for the view.
+     * @param {HTMLElement} container - The main view container
      */
     setupEventListeners(container) {
         const periodButtons = container.querySelectorAll('.period-btn');

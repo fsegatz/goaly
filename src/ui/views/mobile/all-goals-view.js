@@ -1,14 +1,32 @@
 // src/ui/views/mobile/all-goals-view.js
 
+/**
+ * @module MobileAllGoalsView
+ * @description Mobile-specific view for the "All Goals" list.
+ * Renders goals as cards instead of a table for better mobile experience.
+ */
+
 import { AllGoalsView } from '../all-goals-view.js';
 import { MAX_RATING_VALUE } from '../../../domain/utils/constants.js';
 import { getOptionalElement } from '../../utils/dom-utils.js';
 
+/**
+ * Mobile-specific all goals view controller.
+ * @class
+ * @extends AllGoalsView
+ */
 export class MobileAllGoalsView extends AllGoalsView {
+    /**
+     * @param {Object} app - The main application instance
+     */
     constructor(app) {
         super(app);
     }
 
+    /**
+     * Renders the mobile all goals view.
+     * @param {Function} openGoalForm - Callback to open goal editing form
+     */
     render(openGoalForm) {
         // Persist callback if provided, otherwise use stored callback
         if (openGoalForm) {
