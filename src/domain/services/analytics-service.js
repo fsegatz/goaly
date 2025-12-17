@@ -1,7 +1,14 @@
 // src/domain/services/analytics-service.js
 
 /**
+ * @module AnalyticsService
+ * @description Service for aggregating and analyzing goal data.
+ * Used primarily by the Overview view to calculate statistics and charts.
+ */
+
+/**
  * Service for aggregating and analyzing goal data for the Overview view.
+ * @class
  */
 class AnalyticsService {
     constructor(goalService) {

@@ -4,7 +4,14 @@ import { prepareExportPayload } from '../migration/migration-service.js';
 import { isValidVersion, isSameVersion, isOlderVersion, isNewerVersion } from './versioning.js';
 
 /**
+ * @module ImportExportService
+ * @description Service for determining import/export logic and file handling.
+ * Manages file I/O triggering, validating JSON structure, and initiating migration flows.
+ */
+
+/**
  * Handles import and export of goal data
+ * @class
  */
 class ImportExportService {
     constructor(app) {
@@ -32,7 +39,11 @@ class ImportExportService {
     }
 
     /**
-     * Import data from JSON file
+     * Import data from a JSON file.
+     * Validates version compatibility and triggers migration if needed.
+     * @async
+     * @param {File} file - The file object to import
+     * @returns {Promise<void>}
      */
     async importData(file) {
         try {

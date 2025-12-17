@@ -1,18 +1,43 @@
 // src/ui/views/dashboard-view.js
 
+/**
+ * @module DashboardView
+ * @description The main dashboard view of the application.
+ * Displays active goals, pending reviews, and provides quick actions for checking off steps or pausing goals.
+ */
+
 import { BaseView } from '../base-view.js';
 import { MAX_RATING_VALUE } from '../../domain/utils/constants.js';
 import { getElement, getOptionalElement } from '../utils/dom-utils.js';
 import { EventManager } from '../utils/event-manager.js';
 
+/** @constant {number} DAY_IN_MS - Milliseconds in a day */
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
+/** @constant {number} BLUR_SAVE_DELAY_MS - Delay before saving on input blur */
 const BLUR_SAVE_DELAY_MS = 200;
 
+/**
+ * Main dashboard view controller.
+ * @class
+ * @extends BaseView
+ */
 export class DashboardView extends BaseView {
+    /**
+     * @param {Object} app - The main application instance
+     */
     constructor(app) {
         super(app);
     }
 
+    /**
+     * Renders the dashboard view.
+     * @param {Function} openCompletionModal - Callback to open completion modal
+     * @param {Function} updateGoalInline - Callback to update goal data inline
+     * @param {Function} openGoalForm - Callback to open goal editing form
+     * @param {Function} handleReviewSubmit - Callback for review submission
+     * @param {Function} renderViews - Callback to re-render views
+     * @param {Function} openPauseModal - Callback to open pause modal
+     */
     render(openCompletionModal, updateGoalInline, openGoalForm, handleReviewSubmit, renderViews, openPauseModal) {
         this.openPauseModal = openPauseModal;
         const { dashboardList, allCards } = this._getRenderData();
@@ -133,6 +158,16 @@ export class DashboardView extends BaseView {
         container.appendChild(separator);
     }
 
+    /**
+     * Create a review card element.
+     * @param {Object} review - Review data
+     * @param {number} position - Card position in list
+     * @param {number} total - Total number of cards
+     * @param {Function} openGoalForm - Callback to open form
+     * @param {Function} handleReviewSubmit - Callback for submission
+     * @param {Function} renderViews - Callback to refresh views
+     * @returns {HTMLElement} The created review card
+     */
     createReviewCard(review, position, total, openGoalForm, handleReviewSubmit, renderViews) {
         const { goal, dueAt } = review;
         const card = document.createElement('form');

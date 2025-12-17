@@ -1,3 +1,10 @@
+// src/language/de.js
+
+/**
+ * @module LanguageDe
+ * @description German language translation strings.
+ */
+
 const de = {
     language: {
         names: {

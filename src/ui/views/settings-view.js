@@ -1,9 +1,20 @@
 // src/ui/views/settings-view.js
 
+/**
+ * @module SettingsView
+ * @description View for application settings configuration.
+ * Handles general settings, language selection, data import/export, and Google Drive sync configuration.
+ */
+
 import { getElement, getOptionalElement } from '../utils/dom-utils.js';
 
 import { BaseView } from '../base-view.js';
 
+/**
+ * Settings page view controller.
+ * @class
+ * @extends BaseView
+ */
 export class SettingsView extends BaseView {
     constructor(app) {
         super(app);
@@ -12,12 +23,18 @@ export class SettingsView extends BaseView {
         this._lastStatusCheck = 0;
     }
 
+    /**
+     * Initialize language controls and apply translations.
+     */
     initializeLanguageControls() {
         this.updateLanguageOptions();
         this.syncSettingsForm();
         this.languageService.applyTranslations(document);
     }
 
+    /**
+     * Sync settings form with current stored settings.
+     */
     syncSettingsForm() {
         const settings = this.app.settingsService.getSettings();
         const maxActiveGoals = getOptionalElement('maxActiveGoals');
@@ -48,6 +65,9 @@ export class SettingsView extends BaseView {
         this.updateDeveloperModeVisibility();
     }
 
+    /**
+     * Populate language dropdown options.
+     */
     updateLanguageOptions() {
         const languageSelect = getOptionalElement('languageSelect');
         if (!languageSelect) {
@@ -68,6 +88,11 @@ export class SettingsView extends BaseView {
         languageSelect.value = effectiveLanguage;
     }
 
+    /**
+     * Set up event listeners for settings controls.
+     * @param {Function} renderViews - Callback to re-render views
+     * @param {Function} startReviewTimer - Callback to restart review timer
+     */
     setupEventListeners(renderViews, startReviewTimer) {
         const saveSettingsBtn = getOptionalElement('saveSettingsBtn');
         if (saveSettingsBtn) {
@@ -152,6 +177,9 @@ export class SettingsView extends BaseView {
         this.updateGoogleDriveUI();
     }
 
+    /**
+     * Update the Google Drive sync UI state (buttons, status).
+     */
     updateGoogleDriveUI() {
         if (!this.app.syncManager?.isAvailable()) {
             return;
@@ -211,6 +239,12 @@ export class SettingsView extends BaseView {
         }
     }
 
+    /**
+     * Show a temporary status message for Google Drive operations.
+     * @param {string} message - Message to display
+     * @param {boolean} [isError=false] - Whether it's an error message
+     * @param {boolean} [isSuccess=false] - Whether it's a success message
+     */
     showGoogleDriveStatus(message, isError = false, isSuccess = false) {
         const statusDiv = getOptionalElement('googleDriveAuthStatus');
         if (!statusDiv) {

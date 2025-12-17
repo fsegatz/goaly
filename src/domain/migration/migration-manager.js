@@ -4,7 +4,14 @@ import { migratePayloadToCurrent } from './migration-service.js';
 import { isSameVersion } from '../utils/versioning.js';
 
 /**
+ * @module MigrationManager
+ * @description Manages the data migration workflow.
+ * Handles the UI flow for reviewing, confirming, or cancelling migrations when importing older data versions.
+ */
+
+/**
  * Manages data migration when importing older versions
+ * @class
  */
 class MigrationManager {
     constructor(app) {
@@ -13,7 +20,12 @@ class MigrationManager {
     }
 
     /**
-     * Begin migration process for an older data version
+     * Begin migration process for an older data version.
+     * Generates a preview of the migrated data and prompts the user.
+     * @param {Object} context - Migration context
+     * @param {Object} context.originalPayload - The raw data to import
+     * @param {string} context.sourceVersion - The version of the imported data
+     * @param {string} [context.fileName] - Optional filename source
      */
     beginMigration({ originalPayload, sourceVersion, fileName }) {
         const migrated = migratePayloadToCurrent(originalPayload);

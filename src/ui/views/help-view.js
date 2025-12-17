@@ -1,8 +1,19 @@
 // src/ui/views/help-view.js
 
+/**
+ * @module HelpView
+ * @description View for displaying helper information, FAQs, and links to support.
+ * Serves as a static information page with localization support.
+ */
+
 import { BaseView } from '../base-view.js';
 import { getOptionalElement } from '../utils/dom-utils.js';
 
+/**
+ * Help page view controller.
+ * @class
+ * @extends BaseView
+ */
 export class HelpView extends BaseView {
     constructor(app) {
         super(app);

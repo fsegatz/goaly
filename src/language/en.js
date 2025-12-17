@@ -1,3 +1,10 @@
+// src/language/en.js
+
+/**
+ * @module LanguageEn
+ * @description English language translation strings.
+ */
+
 const en = {
     language: {
         names: {

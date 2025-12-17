@@ -1,10 +1,24 @@
 // src/ui/modal/migration-modal.js
 
+/**
+ * @module MigrationModal
+ * @description Modal handling version migration prompts and diff reviews.
+ * Displays version mismatch warnings and diff views for data migration.
+ */
+
 import { getOptionalElement } from '../utils/dom-utils.js';
 import { BaseModal } from '../base-modal.js';
 import { computeLineDiff } from '../../domain/utils/diff-utils.js';
 
+/**
+ * Modal controller for data migration.
+ * @class
+ * @extends BaseModal
+ */
 export class MigrationModal extends BaseModal {
+    /**
+     * @param {Object} app - The main application instance
+     */
     constructor(app) {
         super(app);
         this.migrationModalRefs = {};
@@ -13,6 +27,12 @@ export class MigrationModal extends BaseModal {
         this.migrationScrollBound = false;
     }
 
+    /**
+     * Sets up migration modal handlers.
+     * @param {Function} cancelMigration - Callback to cancel migration
+     * @param {Function} handleMigrationReviewRequest - Callback to review changes
+     * @param {Function} completeMigration - Callback to apply changes
+     */
     setup(cancelMigration, handleMigrationReviewRequest, completeMigration) {
         this._setupPromptHandlers(cancelMigration, handleMigrationReviewRequest);
         this._setupDiffHandlers(cancelMigration, completeMigration);
@@ -105,6 +125,10 @@ export class MigrationModal extends BaseModal {
         }
     }
 
+    /**
+     * Opens the migration prompt modal.
+     * @param {Object} options - Prompt options (versions, filename)
+     */
     openPrompt({ fromVersion, toVersion, fileName }) {
         const modal = this.getElement('migrationPromptModal');
         if (!modal) {
@@ -131,6 +155,10 @@ export class MigrationModal extends BaseModal {
         this.languageService.applyTranslations(modal);
     }
 
+    /**
+     * Opens the diff review modal.
+     * @param {Object} options - Diff options (versions, strings, filename)
+     */
     openDiff({ fromVersion, toVersion, originalString, migratedString, fileName }) {
         const promptModal = this.getElement('migrationPromptModal');
         if (promptModal) {
@@ -194,6 +222,11 @@ export class MigrationModal extends BaseModal {
         this.closeDiff();
     }
 
+    /**
+     * Renders the line-by-line diff.
+     * @param {string} originalString - Original content
+     * @param {string} migratedString - Migrated content
+     */
     renderDiff(originalString, migratedString) {
         const diffLines = computeLineDiff(originalString, migratedString);
         this.migrationDiffData = diffLines;

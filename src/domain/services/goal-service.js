@@ -1,5 +1,11 @@
 // src/domain/goal-service.js
 
+/**
+ * @module GoalService
+ * @description Core service for managing goals including CRUD operations,
+ * status transitions, priority calculations, and auto-activation logic.
+ */
+
 import createGoal from '../models/goal.js';
 import { prepareGoalsStoragePayload } from '../migration/migration-service.js';
 import { STORAGE_KEY_GOALS, DEADLINE_BONUS_DAYS } from '../utils/constants.js';
@@ -10,6 +16,7 @@ import { setToMidnight, normalizeDate } from '../utils/date-utils.js';
  * Parse a date string in local timezone to avoid off-by-one-day errors.
  * @param {string|Date|null} value - The date value to parse
  * @returns {Date|null}
+ * @private
  */
 function parseLocalDate(value) {
     if (!value) {
@@ -21,7 +28,17 @@ function parseLocalDate(value) {
     return new Date(value);
 }
 
+/**
+ * Service for managing goals and their lifecycle.
+ * Handles persistence, priority-based activation, and pause functionality.
+ * @class
+ */
 class GoalService {
+    /**
+     * Create a new GoalService instance.
+     * @param {Array} [goals=[]] - Initial goals array
+     * @param {ErrorHandler} [errorHandler=null] - Error handler for logging
+     */
     constructor(goals = [], errorHandler = null) {
         this.goals = goals.map(g => createGoal(g));
         this._listeners = { afterSave: [] };

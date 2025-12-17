@@ -1,11 +1,24 @@
 // src/domain/services/review-service.js
 
+/**
+ * @module ReviewService
+ * @description Service for managing periodic goal reviews with spaced repetition intervals.
+ * Determines when goals need review and adjusts intervals based on rating stability.
+ */
+
 import { MAX_RATING_VALUE } from '../utils/constants.js';
 import { DEFAULT_REVIEW_INTERVALS } from './settings-service.js';
 import { normalizeDate } from '../utils/date-utils.js';
 
+/** @constant {number} DAY_IN_MS - Milliseconds in a day */
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Get the most recent review date from a goal's review history.
+ * @param {Object} goal - The goal object
+ * @returns {Date|null} Most recent review date or null
+ * @private
+ */
 function getMostRecentReview(goal) {
     if (!goal || !Array.isArray(goal.reviewDates) || goal.reviewDates.length === 0) {
         return null;
@@ -24,12 +37,26 @@ function getMostRecentReview(goal) {
     return new Date(Math.max(...timestamps));
 }
 
+/**
+ * Service for managing goal reviews with spaced repetition.
+ * Reviews help users stay engaged with their goals and adjust priorities.
+ * @class
+ */
 class ReviewService {
+    /**
+     * Create a new ReviewService instance.
+     * @param {GoalService} goalService - The goal service instance
+     * @param {SettingsService} settingsService - The settings service instance
+     */
     constructor(goalService, settingsService) {
         this.goalService = goalService;
         this.settingsService = settingsService;
     }
 
+    /**
+     * Get configured review intervals.
+     * @returns {number[]} Array of review interval days
+     */
     getReviewIntervals() {
         if (this.settingsService && typeof this.settingsService.getReviewIntervals === 'function') {
             const intervals = this.settingsService.getReviewIntervals();
@@ -40,6 +67,13 @@ class ReviewService {
         return [...DEFAULT_REVIEW_INTERVALS];
     }
 
+
+    /**
+     * Ensure a goal has valid review schedule metadata.
+     * Calculates next review date if missing or invalid.
+     * @param {Object} goal - The goal to check
+     * @returns {Object|null} The updated goal or null if goal is ineligible
+     */
     ensureGoalSchedule(goal) {
         // Include active, inactive, and paused goals for reviews (exclude completed and abandoned)
         if (!goal || (goal.status !== 'active' && goal.status !== 'inactive' && goal.status !== 'paused')) {
@@ -88,12 +122,23 @@ class ReviewService {
         return goal;
     }
 
+    /**
+     * Calculate the next review date based on a base date and interval.
+     * @param {Date|string} baseDate - The reference date
+     * @param {number} intervalDays - Days until next review
+     * @returns {Date} The calculated next review date
+     */
     calculateNextReviewDate(baseDate, intervalDays) {
         const base = normalizeDate(baseDate, new Date());
         const days = Number.isFinite(intervalDays) && intervalDays > 0 ? intervalDays : this.getReviewIntervals()[0];
         return new Date(base.getTime() + days * DAY_IN_MS);
     }
 
+    /**
+     * Check if a goal is due for review.
+     * @param {Object} goal - The goal to check
+     * @returns {boolean} True if review is due
+     */
     shouldReview(goal) {
         const ensuredGoal = this.ensureGoalSchedule(goal);
         if (!ensuredGoal) {
@@ -103,6 +148,10 @@ class ReviewService {
         return ensuredGoal.nextReviewAt && ensuredGoal.nextReviewAt <= now;
     }
 
+    /**
+     * Get all goals that are due for review.
+     * @returns {Array} Array of review objects with goal and metadata
+     */
     getReviews() {
         const goals = this.goalService?.goals ?? [];
         const now = new Date();
@@ -123,6 +172,12 @@ class ReviewService {
             }));
     }
 
+    /**
+     * Parse a rating value with boundaries.
+     * @param {string|number} value - The rating value
+     * @param {number} fallback - Fallback value if parsing fails
+     * @returns {number} Parsed rating (1-5)
+     */
     parseRating(value, fallback) {
         const parsed = Number.parseInt(value, 10);
         if (!Number.isFinite(parsed)) {
@@ -131,6 +186,13 @@ class ReviewService {
         return Math.min(MAX_RATING_VALUE, Math.max(1, parsed));
     }
 
+    /**
+     * Record a review for a goal.
+     * Updates goal priority, motivation, urgency, and schedules next review.
+     * @param {string} goalId - The goal ID
+     * @param {Object} ratings - Rating updates { motivation, urgency }
+     * @returns {Object|null} Result object { goal, ratingsMatch } or null if not found
+     */
     recordReview(goalId, ratings = {}) {
         const goal = this.goalService?.goals?.find((g) => g.id === goalId);
         if (!goal) {
@@ -183,6 +245,12 @@ class ReviewService {
         };
     }
 
+    /**
+     * Alias for recordReview.
+     * @param {string} goalId - The goal ID
+     * @param {Object} ratings - Rating updates
+     * @returns {Object|null} Result object
+     */
     performReview(goalId, ratings) {
         return this.recordReview(goalId, ratings);
     }

@@ -1,9 +1,23 @@
 // src/ui/views/mobile/dashboard-view.js
 
+/**
+ * @module MobileDashboardView
+ * @description Mobile-specific dashboard view implementation.
+ * Adds swipe gestures, card stack navigation, and mobile-optimized layouts.
+ */
+
 import { DashboardView } from '../dashboard-view.js';
 
 
+/**
+ * Mobile-specific dashboard view controller.
+ * @class
+ * @extends DashboardView
+ */
 export class MobileDashboardView extends DashboardView {
+    /**
+     * @param {Object} app - The main application instance
+     */
     constructor(app) {
         super(app);
         this.currentIndex = 0;
@@ -163,6 +177,11 @@ export class MobileDashboardView extends DashboardView {
         document.body.appendChild(indicators);
     }
 
+    /**
+     * Set up swipe event handlers for the container.
+     * Handles touch and mouse interactions for swiping cards.
+     * @param {HTMLElement} container - The swipe container element
+     */
     setupSwipeHandlers(container) {
         const cardsWrapper = container.querySelector('.mobile-dashboard-cards-wrapper');
         if (!cardsWrapper) {

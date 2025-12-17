@@ -1,4 +1,11 @@
-﻿const sv = {
+﻿// src/language/sv.js
+
+/**
+ * @module LanguageSv
+ * @description Swedish language translation strings.
+ */
+
+const sv = {
     language: {
         names: {
             en: 'Engelska',

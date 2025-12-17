@@ -1,6 +1,11 @@
 // src/ui/utils/dom-utils.js
 
 /**
+ * @module DOMUtils
+ * @description Utility functions for safe DOM element access and querying.
+ */
+
+/**
  * Gets an element by ID, throwing an error if not found.
  * @param {string} id - The element ID
  * @returns {HTMLElement} The element

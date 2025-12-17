@@ -1,3 +1,16 @@
+// src/domain/utils/diff-utils.js
+
+/**
+ * @module DiffUtils
+ * @description Utilities for computing line-by-line differences between text content.
+ * Used for migration diffs and version comparisons.
+ */
+
+/**
+ * Split a string into an array of lines, handling normalization.
+ * @param {string} value - The input text
+ * @returns {string[]} Array of lines
+ */
 export function splitLines(value) {
     if (typeof value !== 'string') {
         return [];
@@ -9,6 +22,13 @@ export function splitLines(value) {
     return normalized.split('\n');
 }
 
+/**
+ * Compute the line-by-line difference between two strings.
+ * Uses a dynamic programming approach to find the Longest Common Subsequence (LCS).
+ * @param {string} oldContent - Original text
+ * @param {string} newContent - New text
+ * @returns {Array<Object>} List of diff segments { type, oldLine, newLine }
+ */
 export function computeLineDiff(oldContent, newContent) {
     const oldLines = splitLines(oldContent);
     const newLines = splitLines(newContent);

@@ -1,3 +1,11 @@
+// src/domain/sync/google-oauth-server.js
+
+/**
+ * @module GoogleOAuthServer
+ * @description Server-side handler for Google OAuth flows.
+ * Manages token exchange, refreshment, and secure cookie storage for auth tokens.
+ */
+
 const crypto = require('node:crypto');
 const { parseCookies, readBody, sendResponse } = require('../../server/utils/http');
 
@@ -8,6 +16,11 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const ENCRYPTION_KEY = crypto.randomBytes(32);
 const IV_LENGTH = 12; // GCM recommended IV length is 12 bytes
 
+/**
+ * Encrypt sensitive text (like refresh tokens).
+ * @param {string} text - The text to encrypt
+ * @returns {string} Encrypted text in format iv:authTag:encrypted
+ */
 function encrypt(text) {
     const iv = crypto.randomBytes(IV_LENGTH);
     const cipher = crypto.createCipheriv('aes-256-gcm', Buffer.from(ENCRYPTION_KEY), iv);
@@ -18,6 +31,11 @@ function encrypt(text) {
     return iv.toString('hex') + ':' + authTag.toString('hex') + ':' + encrypted.toString('hex');
 }
 
+/**
+ * Decrypt text encrypted by this module.
+ * @param {string} text - The encrypted text
+ * @returns {string|null} Decrypted text or null if failed
+ */
 function decrypt(text) {
     try {
         const textParts = text.split(':');
@@ -37,9 +55,9 @@ function decrypt(text) {
 }
 
 /**
- * Handle Google OAuth API requests
- * @param {http.IncomingMessage} req 
- * @param {http.ServerResponse} res 
+ * Handle exchange of authorization code for tokens.
+ * @param {http.IncomingMessage} req - The request object
+ * @param {http.ServerResponse} res - The response object
  */
 async function handleExchange(req, res) {
     try {
@@ -87,6 +105,11 @@ async function handleExchange(req, res) {
     }
 }
 
+/**
+ * Handle access token refresh using stored refresh token cookie.
+ * @param {http.IncomingMessage} req - The request object
+ * @param {http.ServerResponse} res - The response object
+ */
 async function handleRefreshToken(req, res) {
     try {
         const cookies = parseCookies(req);
@@ -132,6 +155,10 @@ async function handleRefreshToken(req, res) {
     }
 }
 
+/**
+ * Handle user logout by clearing cookies.
+ * @param {http.ServerResponse} res - The response object
+ */
 function handleLogout(res) {
     return sendResponse(res, 200, { success: true }, {
         'Set-Cookie': ['refresh_token=; HttpOnly; Secure; SameSite=Strict; Path=/api/auth/; Max-Age=0']
@@ -139,9 +166,11 @@ function handleLogout(res) {
 }
 
 /**
- * Handle Google OAuth API requests
- * @param {http.IncomingMessage} req 
- * @param {http.ServerResponse} res 
+ * Main router for OAuth API requests.
+ * Routes to: /api/auth/exchange, /api/auth/refresh, /api/auth/logout
+ * @param {http.IncomingMessage} req - The request object
+ * @param {http.ServerResponse} res - The response object
+ * @returns {Promise<void>}
  */
 async function handleAuthRequest(req, res) {
     // Exchange Auth Code

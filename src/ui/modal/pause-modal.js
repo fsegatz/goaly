@@ -1,9 +1,23 @@
 // src/ui/modal/pause-modal.js
 
+/**
+ * @module PauseModal
+ * @description Modal for pausing goals.
+ * Allows pausing until a specific date or until another goal is completed.
+ */
+
 import { getOptionalElement } from '../utils/dom-utils.js';
 import { BaseModal } from '../base-modal.js';
 
+/**
+ * Modal controller for pausing goals.
+ * @class
+ * @extends BaseModal
+ */
 export class PauseModal extends BaseModal {
+    /**
+     * @param {Object} app - The main application instance
+     */
     constructor(app) {
         super(app);
         this.pauseModalRefs = {};
@@ -11,6 +25,10 @@ export class PauseModal extends BaseModal {
         this.pauseModalInitialized = false;
     }
 
+    /**
+     * Sets up the pause modal handlers.
+     * @param {Function} handlePauseChoice - Callback for pause action
+     */
     setup(handlePauseChoice) {
         if (this.pauseModalInitialized) {
             return;
@@ -107,6 +125,10 @@ export class PauseModal extends BaseModal {
         this.pauseModalInitialized = true;
     }
 
+    /**
+     * Opens the pause modal for a goal.
+     * @param {string} goalId - ID of the goal to pause
+     */
     open(goalId) {
         if (!goalId) return;
 
