@@ -16,6 +16,9 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const ENCRYPTION_KEY = crypto.randomBytes(32);
 const IV_LENGTH = 12; // GCM recommended IV length is 12 bytes
 
+/** @typedef {Object} IncomingMessage */
+/** @typedef {Object} ServerResponse */
+
 /**
  * Encrypt sensitive text (like refresh tokens).
  * @param {string} text - The text to encrypt
@@ -56,8 +59,8 @@ function decrypt(text) {
 
 /**
  * Handle exchange of authorization code for tokens.
- * @param {http.IncomingMessage} req - The request object
- * @param {http.ServerResponse} res - The response object
+ * @param {IncomingMessage} req - The request object
+ * @param {ServerResponse} res - The response object
  */
 async function handleExchange(req, res) {
     try {
@@ -107,8 +110,8 @@ async function handleExchange(req, res) {
 
 /**
  * Handle access token refresh using stored refresh token cookie.
- * @param {http.IncomingMessage} req - The request object
- * @param {http.ServerResponse} res - The response object
+ * @param {IncomingMessage} req - The request object
+ * @param {ServerResponse} res - The response object
  */
 async function handleRefreshToken(req, res) {
     try {
@@ -157,7 +160,7 @@ async function handleRefreshToken(req, res) {
 
 /**
  * Handle user logout by clearing cookies.
- * @param {http.ServerResponse} res - The response object
+ * @param {ServerResponse} res - The response object
  */
 function handleLogout(res) {
     return sendResponse(res, 200, { success: true }, {
@@ -168,8 +171,8 @@ function handleLogout(res) {
 /**
  * Main router for OAuth API requests.
  * Routes to: /api/auth/exchange, /api/auth/refresh, /api/auth/logout
- * @param {http.IncomingMessage} req - The request object
- * @param {http.ServerResponse} res - The response object
+ * @param {IncomingMessage} req - The request object
+ * @param {ServerResponse} res - The response object
  * @returns {Promise<void>}
  */
 async function handleAuthRequest(req, res) {

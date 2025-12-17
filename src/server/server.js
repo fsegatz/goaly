@@ -40,12 +40,16 @@ function serveConfig(res) {
     res.end(configContent);
 }
 
+/** @typedef {Object} IncomingMessage */
+/** @typedef {Object} ServerResponse */
+
 /**
  * Serves static files with SPA fallback logic.
  * If a file is not found and is not a static asset, it serves index.html.
  * @async
- * @param {http.IncomingMessage} req - The request object
- * @param {http.ServerResponse} res - The response object
+ * @async
+ * @param {IncomingMessage} req - The request object
+ * @param {ServerResponse} res - The response object
  * @param {string} rootDir - The root directory to serve files from
  */
 async function serveStaticFile(req, res, rootDir) {

@@ -14,6 +14,9 @@ import { URGENT_DEADLINE_DAYS } from '../domain/utils/constants.js';
  * @class
  */
 export class BaseView {
+    /** @typedef {Object} LanguageService */
+    /** @typedef {Object} GoalService */
+
     /**
      * Create a new BaseView instance.
      * @param {Object} app - The application instance

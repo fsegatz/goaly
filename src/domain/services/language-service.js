@@ -39,13 +39,18 @@ const merge = (target, source) => {
  * Handles language detection, storage persistence, and dynamic content updates.
  * @class
  */
+
+/**
+ * @typedef {Object} LanguageServiceOptions
+ * @property {Object} [translations] - Translation dictionaries
+ * @property {string} [defaultLanguage='en'] - Default language code
+ * @property {Object} [localeMap] - Map of language codes to locale strings
+ */
 class LanguageService {
     /**
      * Create a new LanguageService instance.
-     * @param {Object} options - Configuration options
-     * @param {Object} options.translations - Translation dictionaries
-     * @param {string} options.defaultLanguage - Default language code
-     * @param {Object} options.localeMap - Map of language codes to locale strings
+     * Create a new LanguageService instance.
+     * @param {LanguageServiceOptions} options - Configuration options
      */
     constructor(options = {}) {
         const { translations, defaultLanguage = 'en', localeMap } = options;
