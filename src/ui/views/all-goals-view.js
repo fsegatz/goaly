@@ -382,7 +382,9 @@ export class AllGoalsView extends BaseView {
         });
 
         row.addEventListener('click', () => {
-            openGoalForm(goal.id);
+            if (typeof openGoalForm === 'function') {
+                openGoalForm(goal.id);
+            }
         });
         row.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' || event.key === ' ') {
