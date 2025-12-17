@@ -1,12 +1,12 @@
-// src/ui/desktop/overview-view.js
+// src/ui/views/overview-view.js
 
-import { BaseUIController } from './base-ui-controller.js';
+import { BaseView } from '../base-view.js';
 import { getElement } from '../utils/dom-utils.js';
 
 /**
  * Overview view for displaying goal analytics and statistics.
  */
-export class OverviewView extends BaseUIController {
+export class OverviewView extends BaseView {
     constructor(app) {
         super(app);
         this.currentPeriod = 'month';

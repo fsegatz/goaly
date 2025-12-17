@@ -1,9 +1,9 @@
-// src/ui/desktop/goal-form-view.js
+// src/ui/modal/edit-modal.js
 
-import { BaseUIController } from './base-ui-controller.js';
+import { BaseModal } from '../base-modal.js';
 import { getElement, getOptionalElement } from '../utils/dom-utils.js';
 
-export class GoalFormView extends BaseUIController {
+export class EditModal extends BaseModal {
     constructor(app) {
         super(app);
         this.renderViews = null;

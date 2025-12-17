@@ -1,8 +1,8 @@
-// src/ui/mobile/all-goals-view.js
+// src/ui/views/mobile/all-goals-view.js
 
-import { AllGoalsView } from '../desktop/all-goals-view.js';
-import { MAX_RATING_VALUE } from '../../domain/utils/constants.js';
-import { getOptionalElement } from '../utils/dom-utils.js';
+import { AllGoalsView } from '../all-goals-view.js';
+import { MAX_RATING_VALUE } from '../../../domain/utils/constants.js';
+import { getOptionalElement } from '../../utils/dom-utils.js';
 
 export class MobileAllGoalsView extends AllGoalsView {
     constructor(app) {

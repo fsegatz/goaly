@@ -1,5 +1,5 @@
 const { JSDOM } = require('jsdom');
-const { SettingsView } = require('../src/ui/desktop/settings-view.js');
+const { SettingsView } = require('../src/ui/views/settings-view.js');
 const LanguageService = require('../src/domain/services/language-service').default;
 
 let dom;
@@ -57,7 +57,7 @@ afterEach(() => {
     }
     jest.clearAllTimers();
     jest.useRealTimers();
-    
+
     delete global.document;
     delete global.window;
     jest.restoreAllMocks();
@@ -117,51 +117,51 @@ describe('SettingsView', () => {
     test('setupEventListeners should handle missing exportBtn', () => {
         const exportBtn = document.getElementById('exportBtn');
         exportBtn.remove();
-        
+
         const renderViews = jest.fn();
         const startCheckInTimer = jest.fn();
-        
+
         expect(() => settingsView.setupEventListeners(renderViews, startCheckInTimer)).not.toThrow();
     });
 
     test('setupEventListeners should handle missing importBtn', () => {
         const importBtn = document.getElementById('importBtn');
         importBtn.remove();
-        
+
         const renderViews = jest.fn();
         const startCheckInTimer = jest.fn();
-        
+
         expect(() => settingsView.setupEventListeners(renderViews, startCheckInTimer)).not.toThrow();
     });
 
     test('setupEventListeners should handle missing importFile', () => {
         const importFile = document.getElementById('importFile');
         importFile.remove();
-        
+
         const renderViews = jest.fn();
         const startCheckInTimer = jest.fn();
-        
+
         expect(() => settingsView.setupEventListeners(renderViews, startCheckInTimer)).not.toThrow();
     });
 
     test('setupEventListeners should handle missing googleDriveAuthBtn', () => {
         const renderViews = jest.fn();
         const startCheckInTimer = jest.fn();
-        
+
         expect(() => settingsView.setupEventListeners(renderViews, startCheckInTimer)).not.toThrow();
     });
 
     test('setupEventListeners should handle missing googleDriveSignOutBtn', () => {
         const renderViews = jest.fn();
         const startCheckInTimer = jest.fn();
-        
+
         expect(() => settingsView.setupEventListeners(renderViews, startCheckInTimer)).not.toThrow();
     });
 
     test('setupEventListeners should handle missing googleDriveSyncBtn', () => {
         const renderViews = jest.fn();
         const startCheckInTimer = jest.fn();
-        
+
         expect(() => settingsView.setupEventListeners(renderViews, startCheckInTimer)).not.toThrow();
     });
 
@@ -204,11 +204,11 @@ describe('SettingsView', () => {
         const languageSelect = document.getElementById('languageSelect');
         languageSelect.innerHTML = '<option value="en">English</option><option value="de">German</option>';
         languageSelect.value = 'de';
-        
+
         mockSettingsService.getSettings.mockReturnValue({ maxActiveGoals: 3, language: 'en', reviewIntervals: [30, 14, 7] });
         const renderViews = jest.fn();
         const startReviewTimer = jest.fn();
-        
+
         // Mock renderViews on settingsView to prevent error
         settingsView.renderViews = renderViews;
         settingsView.setupEventListeners(renderViews, startReviewTimer);
@@ -223,10 +223,10 @@ describe('SettingsView', () => {
     test('saveSettingsBtn click should handle missing saveSettingsBtn gracefully', () => {
         const saveBtn = document.getElementById('saveSettingsBtn');
         saveBtn.remove();
-        
+
         const renderViews = jest.fn();
         const startCheckInTimer = jest.fn();
-        
+
         expect(() => settingsView.setupEventListeners(renderViews, startCheckInTimer)).not.toThrow();
     });
 
@@ -258,11 +258,11 @@ describe('SettingsView', () => {
         // Test the first syncSettingsForm method (line 18) that checks for focused element
         const reviewIntervals = document.getElementById('reviewIntervals');
         reviewIntervals.value = 'user typing...';
-        
+
         // Create a spy to intercept the call and check which method is called
         const originalSync = settingsView.syncSettingsForm;
         let syncCalled = false;
-        settingsView.syncSettingsForm = function() {
+        settingsView.syncSettingsForm = function () {
             syncCalled = true;
             // Call the first syncSettingsForm implementation
             const settings = this.app.settingsService.getSettings();
@@ -287,24 +287,24 @@ describe('SettingsView', () => {
                 }
             }
         };
-        
+
         // Simulate focus by setting activeElement
         Object.defineProperty(document, 'activeElement', {
             value: reviewIntervals,
             writable: true,
             configurable: true
         });
-        mockSettingsService.getSettings.mockReturnValue({ 
-            maxActiveGoals: 3, 
-            language: 'en', 
-            reviewIntervals: [7, 14, 30] 
+        mockSettingsService.getSettings.mockReturnValue({
+            maxActiveGoals: 3,
+            language: 'en',
+            reviewIntervals: [7, 14, 30]
         });
 
         settingsView.syncSettingsForm();
 
         // Should preserve user input when focused
         expect(reviewIntervals.value).toBe('user typing...');
-        
+
         // Restore
         settingsView.syncSettingsForm = originalSync;
         Object.defineProperty(document, 'activeElement', {
@@ -325,7 +325,7 @@ describe('SettingsView', () => {
         const languageSelect = document.getElementById('languageSelect');
         languageSelect.innerHTML = '<option value="en">English</option><option value="de">German</option>';
         languageSelect.value = 'de';
-        
+
         // Mock settings to return 'de' as the language
         mockSettingsService.getSettings.mockReturnValue({ language: 'de' });
 
@@ -473,8 +473,8 @@ describe('SettingsView', () => {
         mockApp.syncManager = {
             isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => true),
-            getSyncStatus: jest.fn(() => Promise.resolve({ 
-                authenticated: true, 
+            getSyncStatus: jest.fn(() => Promise.resolve({
+                authenticated: true,
                 synced: true,
                 lastSyncTime: '2025-01-01T00:00:00Z'
             }))
@@ -526,8 +526,8 @@ describe('SettingsView', () => {
         mockApp.syncManager = {
             isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => true),
-            getSyncStatus: jest.fn(() => Promise.resolve({ 
-                authenticated: true, 
+            getSyncStatus: jest.fn(() => Promise.resolve({
+                authenticated: true,
                 synced: false
                 // No lastSyncTime
             }))
@@ -585,7 +585,7 @@ describe('SettingsView', () => {
             isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => false)
         };
-        
+
         const updateGoogleDriveUISpy = jest.spyOn(settingsView, 'updateGoogleDriveUI');
 
         settingsView.showGoogleDriveStatus('Test message', false);
@@ -598,7 +598,7 @@ describe('SettingsView', () => {
         expect(updateGoogleDriveUISpy).toHaveBeenCalled();
 
         updateGoogleDriveUISpy.mockRestore();
-        
+
         // Clear any remaining timers
         if (settingsView.statusTimeout) {
             clearTimeout(settingsView.statusTimeout);

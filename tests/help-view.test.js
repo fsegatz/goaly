@@ -1,5 +1,5 @@
 const { JSDOM } = require('jsdom');
-const { HelpView } = require('../src/ui/desktop/help-view.js');
+const { HelpView } = require('../src/ui/views/help-view.js');
 const LanguageService = require('../src/domain/services/language-service').default;
 
 let dom;
@@ -43,9 +43,9 @@ afterEach(() => {
 describe('HelpView', () => {
     test('render should apply translations when helpView element exists', () => {
         const applyTranslationsSpy = jest.spyOn(mockApp.languageService, 'applyTranslations');
-        
+
         helpView.render();
-        
+
         expect(applyTranslationsSpy).toHaveBeenCalledWith(document.getElementById('helpView'));
     });
 
@@ -55,7 +55,7 @@ describe('HelpView', () => {
         if (helpViewElement) {
             helpViewElement.remove();
         }
-        
+
         expect(() => {
             helpView.render();
         }).not.toThrow();
@@ -71,7 +71,7 @@ describe('HelpView', () => {
         // Create a new DOM without helpView element
         const newDom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`, { url: "http://localhost" });
         global.document = newDom.window.document;
-        
+
         expect(() => {
             helpView.render();
         }).not.toThrow();

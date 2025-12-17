@@ -1,14 +1,16 @@
 // src/ui/ui-controller.js
 
-import { DashboardView } from './desktop/dashboard-view.js';
-import { AllGoalsView } from './desktop/all-goals-view.js';
-import { SettingsView } from './desktop/settings-view.js';
-import { HelpView } from './desktop/help-view.js';
-import { OverviewView } from './desktop/overview-view.js';
-import { GoalFormView } from './desktop/goal-form-view.js';
-import { ModalsView } from './desktop/modals-view.js';
-import { MobileAllGoalsView } from './mobile/all-goals-view.js';
-import { MobileDashboardView } from './mobile/dashboard-view.js';
+import { DashboardView } from './views/dashboard-view.js';
+import { AllGoalsView } from './views/all-goals-view.js';
+import { SettingsView } from './views/settings-view.js';
+import { HelpView } from './views/help-view.js';
+import { OverviewView } from './views/overview-view.js';
+import { EditModal } from './modal/edit-modal.js';
+import { CompletionModal } from './modal/completion-modal.js';
+import { MigrationModal } from './modal/migration-modal.js';
+import { PauseModal } from './modal/pause-modal.js';
+import { MobileAllGoalsView } from './views/mobile/all-goals-view.js';
+import { MobileDashboardView } from './views/mobile/dashboard-view.js';
 import { isMobileDevice } from '../domain/utils/device-utils.js';
 import { getOptionalElement, querySelectorAllSafe, querySelectorSafe } from './utils/dom-utils.js';
 
@@ -21,8 +23,10 @@ class UIController {
         this.settingsView = new SettingsView(app);
         this.helpView = new HelpView(app);
         this.overviewView = new OverviewView(app);
-        this.goalFormView = new GoalFormView(app);
-        this.modalsView = new ModalsView(app);
+        this.goalEditModal = new EditModal(app);
+        this.completionModal = new CompletionModal(app);
+        this.migrationModal = new MigrationModal(app);
+        this.pauseModal = new PauseModal(app);
 
         this.settingsView.initializeLanguageControls();
         this.setupEventListeners();
@@ -56,7 +60,7 @@ class UIController {
                 if (oldState) {
                     this.allGoalsView.allGoalsState = oldState;
                 }
-                this.allGoalsView.setupControls((goalId) => this.goalFormView.openGoalForm(() => this.renderViews(), goalId));
+                this.allGoalsView.setupControls((goalId) => this.goalEditModal.openGoalForm(() => this.renderViews(), goalId));
                 this.renderViews();
             }
         });
@@ -71,14 +75,14 @@ class UIController {
 
     renderViews() {
         this.dashboardView.render(
-            (goalId) => this.modalsView.openCompletionModal(goalId),
+            (goalId) => this.completionModal.open(goalId),
             (goalId, updates) => this.updateGoalInline(goalId, updates),
-            (goalId) => this.goalFormView.openGoalForm(() => this.renderViews(), goalId),
+            (goalId) => this.goalEditModal.openGoalForm(() => this.renderViews(), goalId),
             (goalId, ratings, renderViews) => this.handleReviewSubmit(goalId, ratings, renderViews),
             () => this.renderViews(),
-            (goalId) => this.modalsView.openPauseModal(goalId)
+            (goalId) => this.pauseModal.open(goalId)
         );
-        this.allGoalsView.render((goalId) => this.goalFormView.openGoalForm(() => this.renderViews(), goalId));
+        this.allGoalsView.render((goalId) => this.goalEditModal.openGoalForm(() => this.renderViews(), goalId));
         this.overviewView.render();
         this.settingsView.syncSettingsForm();
         this.helpView.render();
@@ -89,7 +93,7 @@ class UIController {
         const addGoalBtnDesktop = getOptionalElement('addGoalBtnDesktop');
         const handleAddGoal = (e) => {
             e.stopPropagation();
-            this.goalFormView.openGoalForm(() => this.renderViews(), null);
+            this.goalEditModal.openGoalForm(() => this.renderViews(), null);
         };
         if (addGoalBtn) {
             addGoalBtn.addEventListener('click', handleAddGoal);
@@ -98,9 +102,9 @@ class UIController {
             addGoalBtnDesktop.addEventListener('click', handleAddGoal);
         }
 
-        this.goalFormView.setupEventListeners(
-            () => this.goalFormView.handleGoalSubmit(() => this.renderViews()),
-            () => this.goalFormView.handleDelete(() => this.renderViews()),
+        this.goalEditModal.setupEventListeners(
+            () => this.goalEditModal.handleGoalSubmit(() => this.renderViews()),
+            () => this.goalEditModal.handleDelete(() => this.renderViews()),
             () => this.renderViews(),
             (goalId) => this.openCompletionModal(goalId)
         );
@@ -110,15 +114,15 @@ class UIController {
             () => this.app.startReviewTimer()
         );
 
-        this.modalsView.setupCompletionModal((status, recurrenceData) => this.handleCompletionChoice(status, recurrenceData));
-        this.modalsView.setupPauseModal((pauseData) => this.handlePauseChoice(pauseData));
-        this.modalsView.setupMigrationModals(
+        this.completionModal.setup((status, recurrenceData) => this.handleCompletionChoice(status, recurrenceData));
+        this.pauseModal.setup((pauseData) => this.handlePauseChoice(pauseData));
+        this.migrationModal.setup(
             () => this.app.cancelMigration(),
             () => this.app.handleMigrationReviewRequest(),
             () => this.app.completeMigration()
         );
 
-        this.allGoalsView.setupControls((goalId) => this.goalFormView.openGoalForm(() => this.renderViews(), goalId));
+        this.allGoalsView.setupControls((goalId) => this.goalEditModal.openGoalForm(() => this.renderViews(), goalId));
 
         // Logo click handler - navigate to dashboard
         const goalyLogo = getOptionalElement('goalyLogo');
@@ -219,7 +223,7 @@ class UIController {
     }
 
     handleCompletionChoice(status, recurrenceData = null) {
-        const goalId = this.modalsView.getPendingCompletionGoalId();
+        const goalId = this.completionModal.getPendingGoalId();
         if (!goalId) {
             return;
         }
@@ -238,11 +242,11 @@ class UIController {
             this.changeGoalStatus(goalId, status);
         }
 
-        this.modalsView.closeCompletionModal();
+        this.completionModal.close();
 
         // If the goal form was open, refresh it to show the updated status
         if (isGoalModalOpen) {
-            this.goalFormView.openGoalForm(() => this.renderViews(), goalId);
+            this.goalEditModal.openGoalForm(() => this.renderViews(), goalId);
         }
     }
 
@@ -285,11 +289,11 @@ class UIController {
     }
 
     handlePauseChoice(pauseData) {
-        const goalId = this.modalsView.getPendingPauseGoalId();
+        const goalId = this.pauseModal.getPendingGoalId();
         if (!goalId) {
             return;
         }
-        this.modalsView.closePauseModal();
+        this.pauseModal.close();
         const { maxActiveGoals } = this.app.settingsService.getSettings();
         this.app.goalService.pauseGoal(goalId, pauseData, maxActiveGoals);
         this.app.reviews = this.app.reviewService.getReviews();
@@ -360,23 +364,23 @@ class UIController {
     }
 
     openGoalForm(goalId = null) {
-        this.goalFormView.openGoalForm(() => this.renderViews(), goalId);
+        this.goalEditModal.openGoalForm(() => this.renderViews(), goalId);
     }
 
     openCompletionModal(goalId) {
-        this.modalsView.openCompletionModal(goalId);
+        this.completionModal.open(goalId);
     }
 
     openMigrationPrompt({ fromVersion, toVersion, fileName }) {
-        this.modalsView.openMigrationPrompt({ fromVersion, toVersion, fileName });
+        this.migrationModal.openPrompt({ fromVersion, toVersion, fileName });
     }
 
     openMigrationDiff({ fromVersion, toVersion, originalString, migratedString, fileName }) {
-        this.modalsView.openMigrationDiff({ fromVersion, toVersion, originalString, migratedString, fileName });
+        this.migrationModal.openDiff({ fromVersion, toVersion, originalString, migratedString, fileName });
     }
 
     closeMigrationModals() {
-        this.modalsView.closeMigrationModals();
+        this.migrationModal.closeAll();
     }
 }
 

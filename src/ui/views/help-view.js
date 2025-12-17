@@ -1,9 +1,9 @@
-// src/ui/desktop/help-view.js
+// src/ui/views/help-view.js
 
-import { BaseUIController } from './base-ui-controller.js';
+import { BaseView } from '../base-view.js';
 import { getOptionalElement } from '../utils/dom-utils.js';
 
-export class HelpView extends BaseUIController {
+export class HelpView extends BaseView {
     constructor(app) {
         super(app);
     }

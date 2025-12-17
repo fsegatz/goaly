@@ -1,5 +1,5 @@
 const { JSDOM } = require('jsdom');
-const { OverviewView } = require('../src/ui/desktop/overview-view.js');
+const { OverviewView } = require('../src/ui/views/overview-view.js');
 const LanguageService = require('../src/domain/services/language-service').default;
 
 let dom;

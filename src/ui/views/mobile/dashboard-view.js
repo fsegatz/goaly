@@ -1,7 +1,7 @@
-// src/ui/mobile/dashboard-view.js
+// src/ui/views/mobile/dashboard-view.js
 
-import { DashboardView } from '../desktop/dashboard-view.js';
-import { getElement, getOptionalElement } from '../utils/dom-utils.js';
+import { DashboardView } from '../dashboard-view.js';
+import { getElement, getOptionalElement } from '../../utils/dom-utils.js';
 
 export class MobileDashboardView extends DashboardView {
     constructor(app) {

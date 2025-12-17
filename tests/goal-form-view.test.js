@@ -1,5 +1,5 @@
 const { JSDOM } = require('jsdom');
-const { GoalFormView } = require('../src/ui/desktop/goal-form-view.js');
+const { EditModal } = require('../src/ui/modal/edit-modal.js');
 const Goal = require('../src/domain/models/goal').default;
 const LanguageService = require('../src/domain/services/language-service').default;
 
@@ -82,7 +82,7 @@ beforeEach(() => {
         languageService,
     };
 
-    goalFormView = new GoalFormView(mockApp);
+    goalFormView = new EditModal(mockApp);
 });
 
 afterEach(() => {

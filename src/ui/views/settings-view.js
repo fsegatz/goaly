@@ -1,10 +1,10 @@
-// src/ui/desktop/settings-view.js
+// src/ui/views/settings-view.js
 
 import { getElement, getOptionalElement } from '../utils/dom-utils.js';
 
-import { BaseUIController } from './base-ui-controller.js';
+import { BaseView } from '../base-view.js';
 
-export class SettingsView extends BaseUIController {
+export class SettingsView extends BaseView {
     constructor(app) {
         super(app);
         this.statusTimeout = null;
