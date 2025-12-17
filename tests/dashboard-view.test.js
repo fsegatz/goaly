@@ -33,6 +33,10 @@ beforeEach(() => {
     globalThis.document = document;
     globalThis.window = window;
     globalThis.alert = jest.fn();
+    globalThis.getSelection = jest.fn(() => ({
+        removeAllRanges: jest.fn(),
+        addRange: jest.fn()
+    }));
     window.alert = globalThis.alert;
 
     jest.useFakeTimers();
@@ -81,6 +85,7 @@ afterEach(() => {
     delete globalThis.document;
     delete globalThis.window;
     delete globalThis.alert;
+    delete globalThis.getSelection;
     jest.useRealTimers();
     jest.restoreAllMocks();
 });
