@@ -1,8 +1,8 @@
-// src/ui/desktop/base-ui-controller.js
+// src/ui/base-view.js
 
-import { URGENT_DEADLINE_DAYS } from '../../domain/utils/constants.js';
+import { URGENT_DEADLINE_DAYS } from '../domain/utils/constants.js';
 
-export class BaseUIController {
+export class BaseView {
     constructor(app) {
         this.app = app;
         this.languageService = app.languageService;
@@ -157,3 +157,5 @@ export class BaseUIController {
     }
 }
 
+// Backward compatibility alias
+export { BaseView as BaseUIController };

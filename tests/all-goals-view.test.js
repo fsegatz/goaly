@@ -1,5 +1,5 @@
 const { JSDOM } = require('jsdom');
-const { AllGoalsView } = require('../src/ui/desktop/all-goals-view.js');
+const { AllGoalsView } = require('../src/ui/views/all-goals-view.js');
 const Goal = require('../src/domain/models/goal').default;
 const LanguageService = require('../src/domain/services/language-service').default;
 

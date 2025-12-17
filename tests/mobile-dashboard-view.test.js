@@ -1,5 +1,5 @@
 
-import { MobileDashboardView } from '../src/ui/mobile/dashboard-view.js';
+import { MobileDashboardView } from '../src/ui/views/mobile/dashboard-view.js';
 import { createBasicDOM, setupGlobalDOM, cleanupGlobalDOM, createMockApp, setupBrowserMocks, cleanupBrowserMocks } from './mocks';
 import Goal from '../src/domain/models/goal';
 

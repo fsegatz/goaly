@@ -1,5 +1,5 @@
 
-import { BaseUIController } from '../src/ui/desktop/base-ui-controller';
+import { BaseUIController } from '../src/ui/base-view';
 import { createBasicDOM, setupGlobalDOM, cleanupGlobalDOM, createMockApp, setupBrowserMocks, cleanupBrowserMocks } from './mocks';
 
 describe('BaseUIController', () => {

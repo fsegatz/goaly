@@ -1,6 +1,6 @@
-// src/ui/desktop/dashboard-view.js
+// src/ui/views/dashboard-view.js
 
-import { BaseUIController } from './base-ui-controller.js';
+import { BaseView } from '../base-view.js';
 import { MAX_RATING_VALUE } from '../../domain/utils/constants.js';
 import { getElement, getOptionalElement } from '../utils/dom-utils.js';
 import { EventManager } from '../utils/event-manager.js';
@@ -8,7 +8,7 @@ import { EventManager } from '../utils/event-manager.js';
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const BLUR_SAVE_DELAY_MS = 200;
 
-export class DashboardView extends BaseUIController {
+export class DashboardView extends BaseView {
     constructor(app) {
         super(app);
     }

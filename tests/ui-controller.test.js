@@ -451,23 +451,23 @@ describe('UIController', () => {
     });
 
     test('addGoalBtn click should call openGoalForm', () => {
-        uiController.goalFormView.openGoalForm = jest.fn();
+        uiController.goalEditModal.openGoalForm = jest.fn();
         uiController.renderViews = jest.fn();
         document.getElementById('addGoalBtn').click();
-        expect(uiController.goalFormView.openGoalForm).toHaveBeenCalledWith(expect.any(Function), null);
+        expect(uiController.goalEditModal.openGoalForm).toHaveBeenCalledWith(expect.any(Function), null);
     });
 
     test('addGoalBtnDesktop click should call openGoalForm', () => {
-        uiController.goalFormView.openGoalForm = jest.fn();
+        uiController.goalEditModal.openGoalForm = jest.fn();
         uiController.renderViews = jest.fn();
         document.getElementById('addGoalBtnDesktop').click();
-        expect(uiController.goalFormView.openGoalForm).toHaveBeenCalledWith(expect.any(Function), null);
+        expect(uiController.goalEditModal.openGoalForm).toHaveBeenCalledWith(expect.any(Function), null);
     });
 
     test('handleCompletionChoice should call changeGoalStatus and close modal', () => {
         mockGoalService.setGoalStatus.mockReturnValue({ id: 'goal-1', status: 'completed' });
-        uiController.modalsView.openCompletionModal('goal-1');
-        uiController.modalsView.setupCompletionModal((status) => uiController.handleCompletionChoice(status));
+        uiController.completionModal.open('goal-1');
+        uiController.completionModal.setup((status) => uiController.handleCompletionChoice(status));
 
         const successBtn = document.getElementById('completionSuccessBtn');
         successBtn.click();
@@ -625,7 +625,7 @@ describe('UIController', () => {
     });
 
     test('handleCompletionChoice should return early when no pending goal', () => {
-        uiController.modalsView.getPendingCompletionGoalId = jest.fn(() => null);
+        uiController.completionModal.getPendingGoalId = jest.fn(() => null);
         uiController.changeGoalStatus = jest.fn();
 
         uiController.handleCompletionChoice('completed');
@@ -634,14 +634,14 @@ describe('UIController', () => {
     });
 
     test('handleCompletionChoice should call changeGoalStatus and close modal', () => {
-        uiController.modalsView.getPendingCompletionGoalId = jest.fn(() => 'goal-1');
+        uiController.completionModal.getPendingGoalId = jest.fn(() => 'goal-1');
         uiController.changeGoalStatus = jest.fn();
-        uiController.modalsView.closeCompletionModal = jest.fn();
+        uiController.completionModal.close = jest.fn();
 
         uiController.handleCompletionChoice('completed');
 
         expect(uiController.changeGoalStatus).toHaveBeenCalledWith('goal-1', 'completed');
-        expect(uiController.modalsView.closeCompletionModal).toHaveBeenCalled();
+        expect(uiController.completionModal.close).toHaveBeenCalled();
     });
 
     test('isMobile should be true for mobile width', () => {
@@ -758,33 +758,33 @@ describe('UIController', () => {
     });
 
     test('openGoalForm should call goalFormView.openGoalForm', () => {
-        uiController.goalFormView.openGoalForm = jest.fn();
+        uiController.goalEditModal.openGoalForm = jest.fn();
         uiController.renderViews = jest.fn();
 
         uiController.openGoalForm('goal-1');
 
-        expect(uiController.goalFormView.openGoalForm).toHaveBeenCalledWith(expect.any(Function), 'goal-1');
+        expect(uiController.goalEditModal.openGoalForm).toHaveBeenCalledWith(expect.any(Function), 'goal-1');
     });
 
-    test('openCompletionModal should call modalsView.openCompletionModal', () => {
-        uiController.modalsView.openCompletionModal = jest.fn();
+    test('openCompletionModal should call completionModal.open', () => {
+        uiController.completionModal.open = jest.fn();
 
         uiController.openCompletionModal('goal-1');
 
-        expect(uiController.modalsView.openCompletionModal).toHaveBeenCalledWith('goal-1');
+        expect(uiController.completionModal.open).toHaveBeenCalledWith('goal-1');
     });
 
-    test('openMigrationPrompt should call modalsView.openMigrationPrompt', () => {
-        uiController.modalsView.openMigrationPrompt = jest.fn();
+    test('openMigrationPrompt should call migrationModal.openPrompt', () => {
+        uiController.migrationModal.openPrompt = jest.fn();
         const migrationData = { fromVersion: '0.9.0', toVersion: '1.0.0', fileName: 'test.json' };
 
         uiController.openMigrationPrompt(migrationData);
 
-        expect(uiController.modalsView.openMigrationPrompt).toHaveBeenCalledWith(migrationData);
+        expect(uiController.migrationModal.openPrompt).toHaveBeenCalledWith(migrationData);
     });
 
-    test('openMigrationDiff should call modalsView.openMigrationDiff', () => {
-        uiController.modalsView.openMigrationDiff = jest.fn();
+    test('openMigrationDiff should call migrationModal.openDiff', () => {
+        uiController.migrationModal.openDiff = jest.fn();
         const diffData = {
             fromVersion: '0.9.0',
             toVersion: '1.0.0',
@@ -795,15 +795,15 @@ describe('UIController', () => {
 
         uiController.openMigrationDiff(diffData);
 
-        expect(uiController.modalsView.openMigrationDiff).toHaveBeenCalledWith(diffData);
+        expect(uiController.migrationModal.openDiff).toHaveBeenCalledWith(diffData);
     });
 
-    test('closeMigrationModals should call modalsView.closeMigrationModals', () => {
-        uiController.modalsView.closeMigrationModals = jest.fn();
+    test('closeMigrationModals should call migrationModal.closeAll', () => {
+        uiController.migrationModal.closeAll = jest.fn();
 
         uiController.closeMigrationModals();
 
-        expect(uiController.modalsView.closeMigrationModals).toHaveBeenCalled();
+        expect(uiController.migrationModal.closeAll).toHaveBeenCalled();
     });
 
     test('mobile menu toggle should open and close dropdown', () => {
