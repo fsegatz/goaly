@@ -410,8 +410,8 @@ describe('SettingsView', () => {
         expect(() => settingsView.showGoogleDriveStatus('Test message', false)).not.toThrow();
     });
 
-    test('updateGoogleDriveUI should handle when syncManager is not available', () => {
-        mockApp.syncManager = null;
+    test('updateGoogleDriveUI should handle when syncService is not available', () => {
+        mockApp.syncService = null;
         expect(() => settingsView.updateGoogleDriveUI()).not.toThrow();
     });
 
@@ -433,7 +433,7 @@ describe('SettingsView', () => {
         document.body.appendChild(syncBtn);
         document.body.appendChild(statusDiv);
 
-        mockApp.syncManager = {
+        mockApp.syncService = {
             isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => false),
             getSyncStatus: jest.fn(() => Promise.resolve({ authenticated: false, synced: false }))
@@ -470,7 +470,7 @@ describe('SettingsView', () => {
         document.body.appendChild(syncBtn);
         document.body.appendChild(statusDiv);
 
-        mockApp.syncManager = {
+        mockApp.syncService = {
             isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => true),
             getSyncStatus: jest.fn(() => Promise.resolve({
@@ -499,7 +499,7 @@ describe('SettingsView', () => {
         authBtn.id = 'googleDriveAuthBtn';
         document.body.appendChild(authBtn);
 
-        mockApp.syncManager = {
+        mockApp.syncService = {
             isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => false)
         };
@@ -523,7 +523,7 @@ describe('SettingsView', () => {
         document.body.appendChild(syncBtn);
         document.body.appendChild(statusDiv);
 
-        mockApp.syncManager = {
+        mockApp.syncService = {
             isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => true),
             getSyncStatus: jest.fn(() => Promise.resolve({
@@ -557,7 +557,7 @@ describe('SettingsView', () => {
         document.body.appendChild(syncBtn);
         document.body.appendChild(statusDiv);
 
-        mockApp.syncManager = {
+        mockApp.syncService = {
             isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => true),
             getSyncStatus: jest.fn(() => Promise.reject(new Error('Network error')))
@@ -581,7 +581,7 @@ describe('SettingsView', () => {
         statusDiv.textContent = 'old message';
         document.body.appendChild(statusDiv);
 
-        mockApp.syncManager = {
+        mockApp.syncService = {
             isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => false)
         };
@@ -660,7 +660,7 @@ describe('SettingsView', () => {
         mockApp.developerModeService = {
             isDeveloperMode: jest.fn(() => false)
         };
-        mockApp.syncManager = {
+        mockApp.syncService = {
             isAvailable: jest.fn(() => true),
             isAuthenticated: jest.fn(() => false)
         };

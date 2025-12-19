@@ -1,26 +1,32 @@
-// src/domain/sync-manager.js
+// src/domain/services/sync-service.js
 
-import GoogleDriveSyncService, { GoogleDriveFileNotFoundError } from './google-drive-sync-service.js';
+/**
+ * @module SyncService
+ * @description High-level synchronization orchestration service.
+ * Coordinates between the app and Google Drive, handling auto-sync,
+ * background sync, and three-way merge operations.
+ */
+
+import GoogleAuthService from './google-auth-service.js';
+import GoogleDriveService, { GoogleDriveFileNotFoundError } from './google-drive-service.js';
 import { prepareExportPayload, migratePayloadToCurrent } from '../migration/migration-service.js';
 import { mergePayloads } from './sync-merge-service.js';
 import { isValidVersion, isSameVersion, isOlderVersion, isNewerVersion } from '../utils/versioning.js';
 import { GOOGLE_DRIVE_SYNC_DEBOUNCE_MS, STORAGE_KEY_GDRIVE_FILE_ID } from '../utils/constants.js';
 
 /**
- * @module SyncManager
- * @description Manager for high-level synchronization logic.
- * Coordinaties between the app and the storage service (Google Drive),
- * handling auto-sync, background sync processes, and sync status updates.
- */
-
-/**
- * Manages Google Drive synchronization for the app
+ * Manages Google Drive synchronization for the app.
  * @class
  */
-class SyncManager {
+class SyncService {
+    /**
+     * Create a SyncService.
+     * @param {Object} app - The main application instance
+     */
     constructor(app) {
         this.app = app;
-        this.googleDriveSyncService = null;
+        this.authService = null;
+        this.driveService = null;
         this.syncDebounce = null;
         this._isSyncing = false;
         this._suppressAutoSync = false;
@@ -36,24 +42,26 @@ class SyncManager {
         const clientId = globalThis.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
 
         if (apiKey && clientId) {
-            this.googleDriveSyncService = new GoogleDriveSyncService();
+            this.authService = new GoogleAuthService();
             try {
-                await this.googleDriveSyncService.initialize(apiKey, clientId);
-                // If already authenticated at startup, perform a one-time background sync
-                if (this.googleDriveSyncService.isAuthenticated()) {
+                await this.authService.initialize(apiKey, clientId);
+                this.driveService = new GoogleDriveService(this.authService);
+
+                if (this.authService.isAuthenticated()) {
                     this.syncWithGoogleDrive({ background: true }).catch(error => {
                         this.app.errorHandler.warning('googleDrive.syncError', { message: error?.message || 'Background sync failed' }, error, { context: 'initialization' });
                     });
                 }
             } catch (error) {
                 this.app.errorHandler.error('googleDrive.syncError', { message: error?.message || 'Failed to initialize Google Drive sync' }, error, { context: 'initialization' });
-                this.googleDriveSyncService = null;
+                this.authService = null;
+                this.driveService = null;
             }
         }
     }
 
     /**
-     * Hook into goal saves to trigger background sync
+     * Hook into goal saves to trigger background sync.
      */
     hookGoalSavesForBackgroundSync() {
         if (!this.app.goalService || typeof this.app.goalService.onAfterSave !== 'function') {
@@ -67,7 +75,7 @@ class SyncManager {
     }
 
     /**
-     * Hook into settings updates to trigger background sync
+     * Hook into settings updates to trigger background sync.
      */
     hookSettingsUpdatesForBackgroundSync() {
         if (!this.app.settingsService || typeof this.app.settingsService.onAfterSave !== 'function') {
@@ -81,10 +89,10 @@ class SyncManager {
     }
 
     /**
-     * Schedule a background sync after a debounce period
+     * Schedule a background sync after a debounce period.
      */
     scheduleBackgroundSyncSoon() {
-        if (!this.googleDriveSyncService?.isAuthenticated()) {
+        if (!this.authService?.isAuthenticated()) {
             return;
         }
         if (this._isSyncing || this._suppressAutoSync) {
@@ -105,28 +113,28 @@ class SyncManager {
     }
 
     /**
-     * Get the localStorage key for last sync data
+     * Get the localStorage key for last sync data.
+     * @returns {string}
      */
     getLastSyncStorageKey() {
-        const fileId = this.googleDriveSyncService?.fileId ||
+        const fileId = this.driveService?.fileId ||
             localStorage.getItem(STORAGE_KEY_GDRIVE_FILE_ID) ||
             'unknown';
         return `goaly_gdrive_last_sync_${fileId}`;
     }
 
     /**
-     * Authenticate with Google Drive
+     * Authenticate with Google Drive.
      */
     async authenticateGoogleDrive() {
-        if (!this.googleDriveSyncService) {
+        if (!this.authService) {
             this.app.errorHandler.error('googleDrive.notConfigured', {});
             return;
         }
 
         try {
-            await this.googleDriveSyncService.authenticate();
+            await this.authService.authenticate();
             this.app.uiController.settingsView.updateGoogleDriveUI();
-            // Perform a one-time sync after successful authentication
             this.syncWithGoogleDrive({ background: true }).catch(() => { });
             this.app.uiController.settingsView.showGoogleDriveStatus(
                 this.app.languageService.translate('googleDrive.authenticated'),
@@ -138,15 +146,16 @@ class SyncManager {
     }
 
     /**
-     * Sign out from Google Drive
+     * Sign out from Google Drive.
      */
     signOutGoogleDrive() {
-        if (!this.googleDriveSyncService) {
+        if (!this.authService) {
             return;
         }
 
-        this.googleDriveSyncService.signOut();
-        // Cleanup debounce timer
+        this.authService.signOut();
+        this.driveService?.clearCache();
+
         if (this.syncDebounce) {
             clearTimeout(this.syncDebounce);
             this.syncDebounce = null;
@@ -155,7 +164,7 @@ class SyncManager {
     }
 
     /**
-     * Download remote data from Google Drive
+     * Download remote data from Google Drive.
      * @private
      */
     async _downloadRemoteData(statusView, background) {
@@ -166,7 +175,7 @@ class SyncManager {
                     false
                 );
             }
-            const downloaded = await this.googleDriveSyncService.downloadData();
+            const downloaded = await this.driveService.downloadData();
             const remotePayload = downloaded?.data ?? null;
             if (!background) {
                 statusView.showGoogleDriveStatus(
@@ -190,7 +199,7 @@ class SyncManager {
     }
 
     /**
-     * Load base payload from last successful sync
+     * Load base payload from last successful sync.
      * @private
      */
     _loadBasePayload() {
@@ -205,7 +214,7 @@ class SyncManager {
     }
 
     /**
-     * Upload merged data if changes detected
+     * Upload merged data if changes detected.
      * @private
      */
     async _uploadIfChanged(merged, remotePayload, statusView, background) {
@@ -240,7 +249,7 @@ class SyncManager {
                     false
                 );
             }
-            await this.googleDriveSyncService.uploadData(
+            await this.driveService.uploadData(
                 this.app.goalService.goals,
                 this.app.settingsService.getSettings()
             );
@@ -250,23 +259,24 @@ class SyncManager {
     }
 
     /**
-     * Sync with Google Drive (three-way merge)
+     * Sync with Google Drive (three-way merge).
+     * @param {Object} options
+     * @param {boolean} options.background - Whether this is a background sync
      */
     async syncWithGoogleDrive({ background = false } = {}) {
-        if (!this.googleDriveSyncService) {
+        if (!this.driveService) {
             this.app.errorHandler.error('googleDrive.notConfigured', {});
             return;
         }
 
-        if (!this.googleDriveSyncService.isAuthenticated()) {
+        if (!this.authService.isAuthenticated()) {
             this.app.errorHandler.error('googleDrive.authError', { message: 'Not authenticated' });
             return;
         }
 
-        // Ensure token is fresh before starting sync
-        if (typeof this.googleDriveSyncService.ensureAuthenticated === 'function') {
+        if (typeof this.authService.ensureAuthenticated === 'function') {
             try {
-                await this.googleDriveSyncService.ensureAuthenticated();
+                await this.authService.ensureAuthenticated();
             } catch (error) {
                 this.app.errorHandler.warning('googleDrive.syncError', { message: 'Token refresh check failed, proceeding with sync' }, error, { context: 'tokenRefresh' });
             }
@@ -344,20 +354,17 @@ class SyncManager {
     }
 
     /**
-     * Download data from Google Drive
+     * Download data from Google Drive.
      */
     async downloadFromGoogleDrive() {
-        if (!this.googleDriveSyncService?.isAuthenticated()) {
+        if (!this.authService?.isAuthenticated()) {
             return;
         }
 
-        // Ensure token is fresh before downloading
-        if (typeof this.googleDriveSyncService.ensureAuthenticated === 'function') {
+        if (typeof this.authService.ensureAuthenticated === 'function') {
             try {
-                await this.googleDriveSyncService.ensureAuthenticated();
+                await this.authService.ensureAuthenticated();
             } catch (error) {
-                // If token refresh fails, show error but don't block download attempt
-                // The API call will handle auth errors and retry
                 this.app.errorHandler.warning('googleDrive.syncError', { message: 'Token refresh check failed, proceeding with download' }, error, { context: 'tokenRefresh' });
             }
         }
@@ -365,10 +372,9 @@ class SyncManager {
         const statusView = this.app.uiController.settingsView;
 
         try {
-            const result = await this.googleDriveSyncService.downloadData();
+            const result = await this.driveService.downloadData();
             const data = result.data;
 
-            // Validate and import the data
             const fileVersion = Array.isArray(data) ? null : data.version ?? null;
 
             if (fileVersion && !isValidVersion(fileVersion)) {
@@ -397,14 +403,13 @@ class SyncManager {
                 this.app.errorHandler.error('import.incompatible', {});
             }
         } catch (error) {
-            // Provide better error messages - handle undefined error.message
             const errorMessage = error?.message || error?.toString() || 'Unknown error occurred';
             this.app.errorHandler.error('googleDrive.downloadError', { message: errorMessage }, error);
         }
     }
 
     /**
-     * Show Google Drive error message
+     * Show Google Drive error message.
      * @deprecated Use app.errorHandler instead
      */
     showError(messageKey, replacements = {}) {
@@ -412,34 +417,35 @@ class SyncManager {
     }
 
     /**
-     * Check if Google Drive sync is available
+     * Check if Google Drive sync is available.
+     * @returns {boolean}
      */
     isAvailable() {
-        return this.googleDriveSyncService !== null;
+        return this.authService !== null;
     }
 
     /**
-     * Check if authenticated
+     * Check if authenticated.
+     * @returns {boolean}
      */
     isAuthenticated() {
-        return this.googleDriveSyncService?.isAuthenticated() || false;
+        return this.authService?.isAuthenticated() || false;
     }
 
     /**
-     * Get sync status information
-     * Delegates to the internal GoogleDriveSyncService to maintain encapsulation
+     * Get sync status information.
+     * @returns {Promise<Object>}
      */
     async getSyncStatus() {
-        if (!this.googleDriveSyncService) {
+        if (!this.driveService) {
             return {
                 authenticated: false,
                 synced: false,
                 lastSyncTime: null
             };
         }
-        return this.googleDriveSyncService.getSyncStatus();
+        return this.driveService.getSyncStatus();
     }
 }
 
-export default SyncManager;
-
+export default SyncService;

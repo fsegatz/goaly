@@ -9,7 +9,7 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const { handleAuthRequest } = require('../domain/sync/google-oauth-server');
+const { handleAuthRequest } = require('./google-oauth-server');
 
 const PORT = process.env.PORT || 8080;
 const ROOT_DIR = path.resolve(__dirname, '../../'); // Assuming src/server/server.js, so up two levels to root

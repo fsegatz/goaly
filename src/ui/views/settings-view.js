@@ -181,7 +181,7 @@ export class SettingsView extends BaseView {
      * Update the Google Drive sync UI state (buttons, status).
      */
     updateGoogleDriveUI() {
-        if (!this.app.syncManager?.isAvailable()) {
+        if (!this.app.syncService?.isAvailable()) {
             return;
         }
 
@@ -194,7 +194,7 @@ export class SettingsView extends BaseView {
             return;
         }
 
-        const isAuthenticated = this.app.syncManager.isAuthenticated();
+        const isAuthenticated = this.app.syncService.isAuthenticated();
 
         if (isAuthenticated) {
             authBtn.hidden = true;
@@ -211,7 +211,7 @@ export class SettingsView extends BaseView {
                 // Only check if we haven't checked recently
                 if (!this._lastStatusCheck || (Date.now() - this._lastStatusCheck) > 60000) {
                     this._lastStatusCheck = Date.now();
-                    this.app.syncManager.getSyncStatus().then(status => {
+                    this.app.syncService.getSyncStatus().then(status => {
                         if (status.synced && status.lastSyncTime && !this.statusLocked) {
                             const syncDate = new Date(status.lastSyncTime);
                             statusDiv.textContent = this.translate('googleDrive.lastSynced', {

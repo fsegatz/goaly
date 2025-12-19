@@ -13,7 +13,7 @@ import UIController from './ui/ui-controller.js';
 import Goal from './domain/models/goal.js';
 import LanguageService from './domain/services/language-service.js';
 import DeveloperModeService from './domain/services/developer-mode-service.js';
-import SyncManager from './domain/sync/sync-manager.js';
+import SyncService from './domain/services/sync-service.js';
 import ImportExportService from './domain/utils/import-export-service.js';
 import MigrationManager from './domain/migration/migration-manager.js';
 import TimerService from './domain/services/timer-service.js';
@@ -41,7 +41,7 @@ class GoalyApp {
         this.reviewService = null;
 
         // Initialize service managers
-        this.syncManager = new SyncManager(this);
+        this.syncService = new SyncService(this);
         this.importExportService = new ImportExportService(this);
         this.migrationManager = new MigrationManager(this);
         this.timerService = new TimerService(this);
@@ -66,11 +66,11 @@ class GoalyApp {
         this.goalService.migrateGoalsToAutoActivation(this.settingsService.getSettings().maxActiveGoals);
         this.reviewService = new ReviewService(this.goalService, this.settingsService);
         this.analyticsService = new AnalyticsService(this.goalService);
-        this.syncManager.hookGoalSavesForBackgroundSync();
-        this.syncManager.hookSettingsUpdatesForBackgroundSync();
+        this.syncService.hookGoalSavesForBackgroundSync();
+        this.syncService.hookSettingsUpdatesForBackgroundSync();
 
         // Initialize Google Drive sync service if credentials are available
-        this.syncManager.initGoogleDriveSync();
+        this.syncService.initGoogleDriveSync();
 
         this.uiController = new UIController(this);
         // Set UI controller in error handler after it's created
@@ -231,19 +231,19 @@ class GoalyApp {
     }
 
     async authenticateGoogleDrive() {
-        await this.syncManager.authenticateGoogleDrive();
+        await this.syncService.authenticateGoogleDrive();
     }
 
     signOutGoogleDrive() {
-        this.syncManager.signOutGoogleDrive();
+        this.syncService.signOutGoogleDrive();
     }
 
     async syncWithGoogleDrive({ background = false } = {}) {
-        await this.syncManager.syncWithGoogleDrive({ background });
+        await this.syncService.syncWithGoogleDrive({ background });
     }
 
     async downloadFromGoogleDrive() {
-        await this.syncManager.downloadFromGoogleDrive();
+        await this.syncService.downloadFromGoogleDrive();
     }
 }
 

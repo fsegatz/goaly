@@ -1,4 +1,4 @@
-// src/domain/sync/google-oauth-server.js
+// src/server/google-oauth-server.js
 
 /**
  * @module GoogleOAuthServer
@@ -7,7 +7,7 @@
  */
 
 const crypto = require('node:crypto');
-const { parseCookies, readBody, sendResponse } = require('../../server/utils/http');
+const { parseCookies, readBody, sendResponse } = require('./utils/http');
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;

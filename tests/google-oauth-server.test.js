@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-const { handleAuthRequest } = require('../src/domain/sync/google-oauth-server');
+const { handleAuthRequest } = require('../src/server/google-oauth-server');
 const { EventEmitter } = require('node:events');
 
 describe('Google OAuth Server', () => {

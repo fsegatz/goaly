@@ -1,6 +1,6 @@
 // tests/sync-merge-service.test.js
-const { mergePayloads } = require('../src/domain/sync/sync-merge-service.js');
-const { computeTwoWayMerge } = require('../src/domain/sync/sync-merge-service.js');
+const { mergePayloads } = require('../src/domain/services/sync-merge-service.js');
+const { computeTwoWayMerge } = require('../src/domain/services/sync-merge-service.js');
 
 describe('sync-merge-service', () => {
     const basePayload = {
@@ -62,7 +62,7 @@ describe('sync-merge-service', () => {
     test('keeps goals present on only one side', () => {
         const local = {
             ...basePayload,
-            goals: [ ...basePayload.goals, { id: 'g2', title: 'Only Local', lastUpdated: '2025-01-01T02:00:00.000Z' } ]
+            goals: [...basePayload.goals, { id: 'g2', title: 'Only Local', lastUpdated: '2025-01-01T02:00:00.000Z' }]
         };
         const remote = { ...basePayload }; // no g2
 
@@ -124,7 +124,7 @@ describe('sync-merge-service', () => {
         const remote = { ...basePayload, exportDate: undefined, settings: { language: 'sv' } };
         const merged = mergePayloads({ base: null, local, remote });
         // When equal/undefined, implementation prefers local branch
-        expect(['en','sv']).toContain(merged.settings.language);
+        expect(['en', 'sv']).toContain(merged.settings.language);
     });
 
     test('merging with no goals on either side yields empty goals', () => {

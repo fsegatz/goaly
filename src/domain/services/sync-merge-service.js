@@ -1,4 +1,4 @@
-// src/domain/sync/sync-merge-service.js
+// src/domain/services/sync-merge-service.js
 
 /**
  * @module SyncMergeService
@@ -184,5 +184,3 @@ export function mergePayloads({ base, local, remote }) {
 export function computeTwoWayMerge(local, remote) {
 	return mergePayloads({ base: null, local, remote });
 }
-
-
