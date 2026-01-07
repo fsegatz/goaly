@@ -53,7 +53,7 @@ class GoalyApp {
      * Initialize the application.
      * Loads settings, goals, and sets up services.
      */
-    init() {
+    async init() {
         this.settingsService.loadSettings();
         const resolvedLanguage = this.languageService.init(this.settingsService.getSettings().language);
         if (resolvedLanguage !== this.settingsService.getSettings().language) {
@@ -70,7 +70,7 @@ class GoalyApp {
         this.syncManager.hookSettingsUpdatesForBackgroundSync();
 
         // Initialize Google Drive sync service if credentials are available
-        this.syncManager.initGoogleDriveSync();
+        await this.syncManager.initGoogleDriveSync();
 
         this.uiController = new UIController(this);
         // Set UI controller in error handler after it's created
