@@ -11,6 +11,7 @@ import { AllGoalsView } from './views/all-goals-view.js';
 import { SettingsView } from './views/settings-view.js';
 import { HelpView } from './views/help-view.js';
 import { OverviewView } from './views/overview-view.js';
+import { LoginView } from './views/login-view.js';
 import { CreateModal } from './modal/create-modal.js';
 import { EditModal } from './modal/edit-modal.js';
 import { CompletionModal } from './modal/completion-modal.js';
@@ -39,12 +40,14 @@ class UIController {
         this.settingsView = new SettingsView(app);
         this.helpView = new HelpView(app);
         this.overviewView = new OverviewView(app);
+        this.loginView = new LoginView(app);
         this.createModal = new CreateModal(app);
         this.editModal = new EditModal(app);
         this.completionModal = new CompletionModal(app);
         this.migrationModal = new MigrationModal(app);
         this.pauseModal = new PauseModal(app);
 
+        this.loginView.initialize();
         this.settingsView.initializeLanguageControls();
         this.setupEventListeners();
 
@@ -500,6 +503,28 @@ class UIController {
 
     openCompletionModal(goalId) {
         this.completionModal.open(goalId);
+    }
+
+    /**
+     * Show the login overlay to prompt user authentication.
+     */
+    showLoginOverlay() {
+        this.loginView.show();
+    }
+
+    /**
+     * Hide the login overlay after successful authentication.
+     */
+    hideLoginOverlay() {
+        this.loginView.hide();
+    }
+
+    /**
+     * Check if the login overlay is currently visible.
+     * @returns {boolean}
+     */
+    isLoginOverlayVisible() {
+        return this.loginView.isVisible();
     }
 }
 

@@ -12,8 +12,15 @@ const { parseCookies, readBody, sendResponse } = require('../../server/utils/htt
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
-// Encryption key for refresh token (in memory, generates new one on restart currently)
-const ENCRYPTION_KEY = crypto.randomBytes(32);
+// Encryption key for refresh token - set via environment variable for persistence
+const REFRESH_TOKEN_KEY = process.env.REFRESH_TOKEN_KEY;
+const ENCRYPTION_KEY = REFRESH_TOKEN_KEY
+    ? Buffer.from(REFRESH_TOKEN_KEY, 'hex')
+    : crypto.randomBytes(32);
+
+if (!REFRESH_TOKEN_KEY) {
+    console.warn('[WARN] REFRESH_TOKEN_KEY not set. Refresh tokens will not persist across server restarts.');
+}
 const IV_LENGTH = 12; // GCM recommended IV length is 12 bytes
 
 /** @typedef {Object} IncomingMessage */

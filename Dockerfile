@@ -8,6 +8,10 @@ WORKDIR /app
 ARG GOOGLE_API_KEY=""
 ARG GOOGLE_CLIENT_ID=""
 
+# IMPORTANT: For production, set REFRESH_TOKEN_KEY environment variable for token persistence.
+# Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# Example: docker run -e REFRESH_TOKEN_KEY=your64characterhexkey ...
+
 # Copy all files
 COPY . .
 
