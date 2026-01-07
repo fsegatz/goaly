@@ -106,12 +106,20 @@ async function serveStaticFile(req, res, rootDir) {
                 res.end(`Server Error: ${err.code}`);
             }
         } else {
-            // Cache control like Nginx
-            const isAsset = ['.js', '.css', '.png', '.jpg'].includes(extname);
+            // Cache control
+            const isAsset = ['.js', '.css'].includes(extname);
+            const isImage = ['.png', '.jpg', '.ico', '.svg'].includes(extname);
             const headers = { 'Content-Type': contentType };
+
             if (isAsset) {
+                // Prevent aggressive caching for scripts and styles during development
+                headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+                headers['Pragma'] = 'no-cache';
+                headers['Expires'] = '0';
+            } else if (isImage) {
                 headers['Cache-Control'] = 'public, max-age=31536000, immutable';
             }
+
             res.writeHead(200, headers);
             res.end(content, 'utf-8');
         }
