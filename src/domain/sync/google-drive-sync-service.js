@@ -269,7 +269,7 @@ class GoogleDriveSyncService {
                         callback: (response) => this._handleCodeResponse(response)
                     });
                 }
-                this.tokenClient.requestCode();
+                this.tokenClient.requestCode({ prompt: 'consent' });
             } catch (error) {
                 this._clearPendingRefreshState();
                 reject(new Error(`Authentication failed: ${error.message}`));
