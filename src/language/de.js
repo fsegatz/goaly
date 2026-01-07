@@ -375,6 +375,15 @@ const de = {
             avgPerPeriod: 'Ø pro {{period}}'
         },
         empty: 'Noch keine Ziele zum Analysieren. Erstelle dein erstes Ziel!'
+    },
+
+    login: {
+        title: 'Willkommen bei Goaly',
+        subtitle: 'Melde dich an, um deine Ziele geräteübergreifend zu synchronisieren',
+        signInWithGoogle: 'Mit Google anmelden',
+        signingIn: 'Anmeldung...',
+        error: 'Anmeldung fehlgeschlagen. Bitte versuche es erneut.',
+        testerInfo: 'Google Drive Synchronisation ist derzeit nur für Tester verfügbar.'
     }
 };
 

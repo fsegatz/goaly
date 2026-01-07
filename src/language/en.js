@@ -375,6 +375,15 @@ const en = {
             avgPerPeriod: 'Avg per {{period}}'
         },
         empty: 'No goals to analyze yet. Create your first goal!'
+    },
+
+    login: {
+        title: 'Welcome to Goaly',
+        subtitle: 'Sign in to sync your goals across devices',
+        signInWithGoogle: 'Sign in with Google',
+        signingIn: 'Signing in...',
+        error: 'Sign in failed. Please try again.',
+        testerInfo: 'Google Drive sync is currently only available to testers.'
     }
 };
 

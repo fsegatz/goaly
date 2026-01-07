@@ -15,3 +15,8 @@ On Windows, Cursor should use `cmd` instead of PowerShell for terminal commands.
 ## Reference Material
 - Product expectations: `README.md` and the documents in `docs/`.
 - Feature priorities: consult project documents first, then ask if unclear.
+
+
+## Deployment (GitHub Actions)
+- The project is deployed using GitHub Actions (deploy-prod.yml and deploy-dev.yml).
+- **Required Secret**: REFRESH_TOKEN_KEY must be set in GitHub Secrets for production/dev environments to ensure token persistence.

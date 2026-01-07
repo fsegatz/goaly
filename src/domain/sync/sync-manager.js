@@ -336,6 +336,12 @@ class SyncManager {
             }
         } catch (error) {
             const errorMessage = error?.message || error?.toString() || 'Unknown error occurred';
+
+            // If auth-related error, show login overlay
+            if (this._isAuthError(error)) {
+                this.app.uiController?.showLoginOverlay();
+            }
+
             this.app.errorHandler.error('googleDrive.syncError', { message: errorMessage }, error);
         } finally {
             this._isSyncing = false;
@@ -344,7 +350,22 @@ class SyncManager {
     }
 
     /**
-     * Download data from Google Drive
+     * Check if an error is authentication-related.
+     * @param {Error} error - The error to check
+     * @returns {boolean}
+     * @private
+     */
+    _isAuthError(error) {
+        const message = error?.message?.toLowerCase() || '';
+        return message.includes('not authenticated') ||
+            message.includes('token') ||
+            message.includes('unauthorized') ||
+            message.includes('401') ||
+            message.includes('auth');
+    }
+
+    /**
+     * Download data from Google Drive.
      */
     async downloadFromGoogleDrive() {
         if (!this.googleDriveSyncService?.isAuthenticated()) {

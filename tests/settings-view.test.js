@@ -415,23 +415,19 @@ describe('SettingsView', () => {
         expect(() => settingsView.updateGoogleDriveUI()).not.toThrow();
     });
 
-    test('updateGoogleDriveUI should show auth button when not authenticated', async () => {
-        const authBtn = document.createElement('button');
-        authBtn.id = 'googleDriveAuthBtn';
-        authBtn.hidden = false;
+    test('updateGoogleDriveUI should hide sync section when not authenticated', async () => {
         const signOutBtn = document.createElement('button');
         signOutBtn.id = 'googleDriveSignOutBtn';
         signOutBtn.hidden = false;
-        const syncBtn = document.createElement('button');
-        syncBtn.id = 'googleDriveSyncBtn';
-        syncBtn.hidden = false;
         const statusDiv = document.createElement('div');
         statusDiv.id = 'googleDriveAuthStatus';
         statusDiv.hidden = false;
-        document.body.appendChild(authBtn);
+        const syncSection = document.createElement('div');
+        syncSection.id = 'googleDriveSyncSection';
+        syncSection.style.display = 'block';
         document.body.appendChild(signOutBtn);
-        document.body.appendChild(syncBtn);
         document.body.appendChild(statusDiv);
+        document.body.appendChild(syncSection);
 
         mockApp.syncManager = {
             isAvailable: jest.fn(() => true),
@@ -441,34 +437,28 @@ describe('SettingsView', () => {
 
         await settingsView.updateGoogleDriveUI();
 
-        expect(authBtn.hidden).toBe(false);
+        expect(syncSection.style.display).toBe('none');
         expect(signOutBtn.hidden).toBe(true);
-        expect(syncBtn.hidden).toBe(true);
         expect(statusDiv.hidden).toBe(true);
 
-        document.body.removeChild(authBtn);
         document.body.removeChild(signOutBtn);
-        document.body.removeChild(syncBtn);
         document.body.removeChild(statusDiv);
+        document.body.removeChild(syncSection);
     });
 
-    test('updateGoogleDriveUI should show sync button when authenticated', async () => {
-        const authBtn = document.createElement('button');
-        authBtn.id = 'googleDriveAuthBtn';
-        authBtn.hidden = false;
+    test('updateGoogleDriveUI should show sign-out button when authenticated', async () => {
         const signOutBtn = document.createElement('button');
         signOutBtn.id = 'googleDriveSignOutBtn';
         signOutBtn.hidden = true;
-        const syncBtn = document.createElement('button');
-        syncBtn.id = 'googleDriveSyncBtn';
-        syncBtn.hidden = true;
         const statusDiv = document.createElement('div');
         statusDiv.id = 'googleDriveAuthStatus';
         statusDiv.hidden = true;
-        document.body.appendChild(authBtn);
+        const syncSection = document.createElement('div');
+        syncSection.id = 'googleDriveSyncSection';
+        syncSection.style.display = 'none';
         document.body.appendChild(signOutBtn);
-        document.body.appendChild(syncBtn);
         document.body.appendChild(statusDiv);
+        document.body.appendChild(syncSection);
 
         mockApp.syncManager = {
             isAvailable: jest.fn(() => true),
@@ -482,22 +472,20 @@ describe('SettingsView', () => {
 
         await settingsView.updateGoogleDriveUI();
 
-        expect(authBtn.hidden).toBe(true);
+        expect(syncSection.style.display).toBe('block');
         expect(signOutBtn.hidden).toBe(false);
-        expect(syncBtn.hidden).toBe(false);
         expect(statusDiv.hidden).toBe(false);
 
-        document.body.removeChild(authBtn);
         document.body.removeChild(signOutBtn);
-        document.body.removeChild(syncBtn);
         document.body.removeChild(statusDiv);
+        document.body.removeChild(syncSection);
     });
 
-    test('updateGoogleDriveUI should handle missing buttons gracefully', () => {
-        // Only create some buttons, not all
-        const authBtn = document.createElement('button');
-        authBtn.id = 'googleDriveAuthBtn';
-        document.body.appendChild(authBtn);
+    test('updateGoogleDriveUI should handle missing elements gracefully', () => {
+        // Only create some elements, not all
+        const signOutBtn = document.createElement('button');
+        signOutBtn.id = 'googleDriveSignOutBtn';
+        document.body.appendChild(signOutBtn);
 
         mockApp.syncManager = {
             isAvailable: jest.fn(() => true),
@@ -506,22 +494,19 @@ describe('SettingsView', () => {
 
         expect(() => settingsView.updateGoogleDriveUI()).not.toThrow();
 
-        document.body.removeChild(authBtn);
+        document.body.removeChild(signOutBtn);
     });
 
     test('updateGoogleDriveUI should handle sync status without lastSyncTime', async () => {
-        const authBtn = document.createElement('button');
-        authBtn.id = 'googleDriveAuthBtn';
         const signOutBtn = document.createElement('button');
         signOutBtn.id = 'googleDriveSignOutBtn';
-        const syncBtn = document.createElement('button');
-        syncBtn.id = 'googleDriveSyncBtn';
         const statusDiv = document.createElement('div');
         statusDiv.id = 'googleDriveAuthStatus';
-        document.body.appendChild(authBtn);
+        const syncSection = document.createElement('div');
+        syncSection.id = 'googleDriveSyncSection';
         document.body.appendChild(signOutBtn);
-        document.body.appendChild(syncBtn);
         document.body.appendChild(statusDiv);
+        document.body.appendChild(syncSection);
 
         mockApp.syncManager = {
             isAvailable: jest.fn(() => true),
@@ -537,25 +522,21 @@ describe('SettingsView', () => {
 
         expect(statusDiv.textContent).toBe(settingsView.translate('googleDrive.authenticated'));
 
-        document.body.removeChild(authBtn);
         document.body.removeChild(signOutBtn);
-        document.body.removeChild(syncBtn);
         document.body.removeChild(statusDiv);
+        document.body.removeChild(syncSection);
     });
 
     test('updateGoogleDriveUI should handle getSyncStatus error', async () => {
-        const authBtn = document.createElement('button');
-        authBtn.id = 'googleDriveAuthBtn';
         const signOutBtn = document.createElement('button');
         signOutBtn.id = 'googleDriveSignOutBtn';
-        const syncBtn = document.createElement('button');
-        syncBtn.id = 'googleDriveSyncBtn';
         const statusDiv = document.createElement('div');
         statusDiv.id = 'googleDriveAuthStatus';
-        document.body.appendChild(authBtn);
+        const syncSection = document.createElement('div');
+        syncSection.id = 'googleDriveSyncSection';
         document.body.appendChild(signOutBtn);
-        document.body.appendChild(syncBtn);
         document.body.appendChild(statusDiv);
+        document.body.appendChild(syncSection);
 
         mockApp.syncManager = {
             isAvailable: jest.fn(() => true),
@@ -568,10 +549,9 @@ describe('SettingsView', () => {
         // Should not throw, error should be caught
         expect(statusDiv.textContent).toBe(settingsView.translate('googleDrive.authenticated'));
 
-        document.body.removeChild(authBtn);
         document.body.removeChild(signOutBtn);
-        document.body.removeChild(syncBtn);
         document.body.removeChild(statusDiv);
+        document.body.removeChild(syncSection);
     });
 
     test('showGoogleDriveStatus should clear status after timeout if message unchanged', () => {
