@@ -92,8 +92,9 @@ class GoogleDriveSyncService {
         // Try to refresh token on init (check if we have a valid session cookie)
         try {
             await this.refreshTokenIfNeeded(true);
+            console.log('[Auth Debug] Initial refresh successful. Authenticated.');
         } catch (e) {
-            console.log('No active session, user needs to login', e);
+            console.warn('[Auth Debug] No active session on init:', e);
             this.accessToken = null;
             // Expected error when not logged in, maintain cleaner state
         }
@@ -343,15 +344,24 @@ class GoogleDriveSyncService {
         }
 
         this.pendingRefreshPromise = (async () => {
+            console.log('[Auth Debug] Starting refresh request...');
             try {
                 const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+                console.log('[Auth Debug] Response received', { status: res.status, ok: res.ok });
+
                 if (!res.ok) {
-                    throw new Error('Refresh failed');
+                    const text = await res.text();
+                    console.error('[Auth Debug] Refresh failed with status:', res.status, text);
+                    throw new Error('Refresh failed: ' + res.status);
                 }
+
                 const tokens = await res.json();
+                console.log('[Auth Debug] Tokens parsed successfully', { hasAccessToken: !!tokens.access_token, expiresIn: tokens.expires_in });
+
                 this._updateAccessToken(tokens.access_token, tokens.expires_in);
                 return true;
             } catch (error) {
+                console.error('[Auth Debug] Refresh caught error:', error);
                 // If refresh failed, we are effectively logged out
                 this.accessToken = null;
                 throw error;
