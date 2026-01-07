@@ -151,25 +151,13 @@ export class SettingsView extends BaseView {
             });
         }
 
-        // Google Drive sync event listeners
-        const googleDriveAuthBtn = getOptionalElement('googleDriveAuthBtn');
-        if (googleDriveAuthBtn) {
-            googleDriveAuthBtn.addEventListener('click', () => {
-                this.app.authenticateGoogleDrive();
-            });
-        }
-
+        // Google Drive sign-out event listener (sign-in is now handled by login overlay)
         const googleDriveSignOutBtn = getOptionalElement('googleDriveSignOutBtn');
         if (googleDriveSignOutBtn) {
             googleDriveSignOutBtn.addEventListener('click', () => {
                 this.app.signOutGoogleDrive();
-            });
-        }
-
-        const googleDriveSyncBtn = getOptionalElement('googleDriveSyncBtn');
-        if (googleDriveSyncBtn) {
-            googleDriveSyncBtn.addEventListener('click', () => {
-                this.app.syncWithGoogleDrive();
+                // Show login overlay after sign out
+                this.app.uiController?.showLoginOverlay();
             });
         }
 
@@ -185,24 +173,24 @@ export class SettingsView extends BaseView {
             return;
         }
 
-        const authBtn = getOptionalElement('googleDriveAuthBtn');
         const signOutBtn = getOptionalElement('googleDriveSignOutBtn');
-        const syncBtn = getOptionalElement('googleDriveSyncBtn');
         const statusDiv = getOptionalElement('googleDriveAuthStatus');
-
-        if (!authBtn || !signOutBtn || !syncBtn || !statusDiv) {
-            return;
-        }
+        const syncSection = getOptionalElement('googleDriveSyncSection');
 
         const isAuthenticated = this.app.syncManager.isAuthenticated();
 
+        // Hide section entirely if not authenticated (sign-in is now via login overlay)
+        if (syncSection) {
+            syncSection.style.display = isAuthenticated ? 'block' : 'none';
+        }
+
         if (isAuthenticated) {
-            authBtn.hidden = true;
-            signOutBtn.hidden = false;
-            syncBtn.hidden = false;
+            if (signOutBtn) {
+                signOutBtn.hidden = false;
+            }
 
             // When an explicit status message is active, avoid overwriting it.
-            if (!this.statusLocked) {
+            if (statusDiv && !this.statusLocked) {
                 statusDiv.hidden = false;
                 statusDiv.className = 'google-drive-status google-drive-status-authenticated';
                 statusDiv.textContent = this.translate('googleDrive.authenticated');
@@ -224,10 +212,12 @@ export class SettingsView extends BaseView {
                 }
             }
         } else {
-            authBtn.hidden = false;
-            signOutBtn.hidden = true;
-            syncBtn.hidden = true;
-            statusDiv.hidden = true;
+            if (signOutBtn) {
+                signOutBtn.hidden = true;
+            }
+            if (statusDiv) {
+                statusDiv.hidden = true;
+            }
         }
     }
 

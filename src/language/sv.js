@@ -375,6 +375,15 @@ const sv = {
             avgPerPeriod: 'Snitt per {{period}}'
         },
         empty: 'Inga mål att analysera ännu. Skapa ditt första mål!'
+    },
+
+    login: {
+        title: 'Välkommen till Goaly',
+        subtitle: 'Logga in för att synkronisera dina mål mellan enheter',
+        signInWithGoogle: 'Logga in med Google',
+        signingIn: 'Loggar in...',
+        error: 'Inloggningen misslyckades. Försök igen.',
+        testerInfo: 'Google Drive-synkronisering är för närvarande endast tillgänglig för testare.'
     }
 };
 

@@ -79,6 +79,20 @@ class GoalyApp {
         this.refreshReviews();
         this.timerService.startReviewTimer();
         this.setupDeveloperMode();
+
+        // Check authentication state and show/hide login overlay
+        this.checkAuthenticationState();
+    }
+
+    /**
+     * Check if user is authenticated and show/hide login overlay accordingly.
+     */
+    checkAuthenticationState() {
+        if (this.syncManager.isAuthenticated()) {
+            this.uiController.hideLoginOverlay();
+        } else {
+            this.uiController.showLoginOverlay();
+        }
     }
 
     setupDeveloperMode() {
