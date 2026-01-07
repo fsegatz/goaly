@@ -101,7 +101,7 @@ async function handleExchange(req, res) {
         let cookies = [];
         if (tokens.refresh_token) {
             const encryptedRefresh = encrypt(tokens.refresh_token);
-            cookies.push(`refresh_token=${encryptedRefresh}; HttpOnly; Secure; SameSite=Lax; Path=/api/auth/; Max-Age=${60 * 60 * 24 * 30}`); // 30 days
+            cookies.push(`refresh_token=${encryptedRefresh}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${60 * 60 * 24 * 30}`); // 30 days
         }
 
         return sendResponse(res, 200, {
@@ -161,7 +161,7 @@ async function handleRefreshToken(req, res) {
             console.error('[Auth] Google Token Refresh Error:', tokens);
             // If refresh fails (revoked?), clear cookie
             return sendResponse(res, 401, { error: 'Refresh failed' }, {
-                'Set-Cookie': ['refresh_token=; HttpOnly; Secure; SameSite=Lax; Path=/api/auth/; Max-Age=0']
+                'Set-Cookie': ['refresh_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0']
             });
         }
 
@@ -184,7 +184,7 @@ async function handleRefreshToken(req, res) {
  */
 function handleLogout(res) {
     return sendResponse(res, 200, { success: true }, {
-        'Set-Cookie': ['refresh_token=; HttpOnly; Secure; SameSite=Lax; Path=/api/auth/; Max-Age=0']
+        'Set-Cookie': ['refresh_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0']
     });
 }
 
