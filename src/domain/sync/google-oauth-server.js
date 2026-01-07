@@ -115,6 +115,9 @@ async function handleExchange(req, res) {
     }
 }
 
+// Log key status on startup
+console.log('[Auth] Server initialized. REFRESH_TOKEN_KEY is ' + (REFRESH_TOKEN_KEY ? 'SET' : 'NOT SET (using random fallback)'));
+
 /**
  * Handle access token refresh using stored refresh token cookie.
  * @param {IncomingMessage} req - The request object
@@ -122,17 +125,24 @@ async function handleExchange(req, res) {
  */
 async function handleRefreshToken(req, res) {
     try {
+        console.log('[Auth] Handling refresh token request');
         const cookies = parseCookies(req);
+        console.log('[Auth] Cookies received keys:', Object.keys(cookies));
+
         const encryptedRefresh = cookies.refresh_token;
 
         if (!encryptedRefresh) {
+            console.warn('[Auth] No refresh_token cookie found');
             return sendResponse(res, 401, { error: 'No refresh token' });
         }
 
         const refreshToken = decrypt(encryptedRefresh);
         if (!refreshToken) {
+            console.error('[Auth] Failed to decrypt refresh token');
             return sendResponse(res, 401, { error: 'Invalid refresh token' });
         }
+
+        console.log('[Auth] Refresh token decrypted successfully. Exchanging with Google...');
 
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
@@ -148,11 +158,14 @@ async function handleRefreshToken(req, res) {
         const tokens = await tokenResponse.json();
 
         if (tokens.error) {
+            console.error('[Auth] Google Token Refresh Error:', tokens);
             // If refresh fails (revoked?), clear cookie
             return sendResponse(res, 401, { error: 'Refresh failed' }, {
                 'Set-Cookie': ['refresh_token=; HttpOnly; Secure; SameSite=Lax; Path=/api/auth/; Max-Age=0']
             });
         }
+
+        console.log('[Auth] Token refresh successful');
 
         return sendResponse(res, 200, {
             access_token: tokens.access_token,
@@ -160,7 +173,7 @@ async function handleRefreshToken(req, res) {
         });
 
     } catch (error) {
-        console.error('Token Refresh Error:', error);
+        console.error('[Auth] Token Refresh Internal Error:', error);
         return sendResponse(res, 500, { error: 'Internal server error' });
     }
 }
