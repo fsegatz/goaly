@@ -1,26 +1,34 @@
-# Dockerfile for Goaly - Node.js Server (handling Auth + Static Files)
-FROM node:20-alpine
+# Dockerfile for Goaly - Nginx Static File Server
+# Now using serverless Cloud Functions for OAuth, so only static files are served
+FROM nginx:alpine
 
-# Set working directory
-WORKDIR /app
+# Copy static files to nginx html directory
+COPY . /usr/share/nginx/html
 
-# Build arguments for Google API credentials (kept for consistency, though server reads env vars)
-ARG GOOGLE_API_KEY=""
-ARG GOOGLE_CLIENT_ID=""
+# Create nginx config for SPA routing
+RUN echo 'server { \
+    listen 8080; \
+    root /usr/share/nginx/html; \
+    index index.html; \
+    \
+    # Gzip compression \
+    gzip on; \
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript; \
+    \
+    # SPA fallback \
+    location / { \
+        try_files $uri $uri/ /index.html; \
+    } \
+    \
+    # Cache static assets \
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ { \
+        expires 1y; \
+        add_header Cache-Control "public, immutable"; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
 
-# IMPORTANT: For production, set REFRESH_TOKEN_KEY environment variable for token persistence.
-# Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-# Example: docker run -e REFRESH_TOKEN_KEY=your64characterhexkey ...
-
-# Copy all files
-COPY . .
-
-# Environment variables
-ENV PORT=8080
-ENV NODE_ENV=production
-
-# Expose port
+# Expose port (Cloud Run uses 8080)
 EXPOSE 8080
 
-# Start server
-CMD ["node", "src/server/server.js"]
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

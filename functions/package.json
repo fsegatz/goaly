@@ -1,0 +1,15 @@
+{
+    "name": "goaly-token-exchange",
+    "version": "1.0.0",
+    "description": "Token exchange Cloud Function for Goaly OAuth",
+    "main": "index.js",
+    "scripts": {
+        "deploy": "gcloud functions deploy exchangeToken --runtime nodejs20 --trigger-http --allow-unauthenticated --set-secrets=GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest"
+    },
+    "engines": {
+        "node": ">=20"
+    },
+    "dependencies": {
+        "@google-cloud/functions-framework": "^3.4.0"
+    }
+}

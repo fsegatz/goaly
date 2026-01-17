@@ -8,7 +8,7 @@
 
 import { prepareExportPayload } from '../migration/migration-service.js';
 import { isOlderVersion } from '../utils/versioning.js';
-import { STORAGE_KEY_GDRIVE_TOKEN, STORAGE_KEY_GDRIVE_FILE_ID, STORAGE_KEY_GDRIVE_FOLDER_ID } from '../utils/constants.js';
+import { STORAGE_KEY_GDRIVE_TOKEN, STORAGE_KEY_GDRIVE_FILE_ID, STORAGE_KEY_GDRIVE_FOLDER_ID, STORAGE_KEY_GDRIVE_REFRESH_TOKEN } from '../utils/constants.js';
 
 /** @constant {string} GOOGLE_DRIVE_FOLDER_NAME - Name of the application folder in Google Drive */
 const GOOGLE_DRIVE_FOLDER_NAME = 'Goaly';
@@ -194,11 +194,15 @@ class GoogleDriveSyncService {
         }
 
         try {
-            // Exchange code for tokens via our backend
-            const tokenRes = await fetch('/api/auth/exchange', {
+            // Exchange code for tokens via Cloud Function
+            const tokenEndpoint = globalThis.TOKEN_ENDPOINT || 'https://us-central1-goaly-478316.cloudfunctions.net/exchangeToken';
+            const tokenRes = await fetch(tokenEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: response.code })
+                body: JSON.stringify({
+                    code: response.code,
+                    redirect_uri: globalThis.location.origin
+                })
             });
 
             if (!tokenRes.ok) {
@@ -208,6 +212,11 @@ class GoogleDriveSyncService {
 
             const tokens = await tokenRes.json();
             this._updateAccessToken(tokens.access_token, tokens.expires_in);
+
+            // Store refresh token in localStorage for serverless flow
+            if (tokens.refresh_token) {
+                localStorage.setItem(STORAGE_KEY_GDRIVE_REFRESH_TOKEN, tokens.refresh_token);
+            }
 
             if (this.refreshResolve) {
                 this.refreshResolve(this.accessToken);
@@ -286,21 +295,17 @@ class GoogleDriveSyncService {
             globalThis.google.accounts.oauth2.revoke(this.accessToken, () => { });
         }
 
-        // Call backend to clear cookie
-        try {
-            await fetch('/api/auth/logout', { method: 'POST' });
-        } catch (e) { console.error('Logout error', e); }
-
         this.accessToken = null;
         this.fileId = null;
         this.folderId = null;
         this._cachedStatus = null;
         this._lastStatusCheck = 0;
 
+        // Clear all stored tokens from localStorage
         localStorage.removeItem(STORAGE_KEY_GDRIVE_FILE_ID);
         localStorage.removeItem(STORAGE_KEY_GDRIVE_FOLDER_ID);
-        // Clean up old token storage if exists
         localStorage.removeItem(STORAGE_KEY_GDRIVE_TOKEN);
+        localStorage.removeItem(STORAGE_KEY_GDRIVE_REFRESH_TOKEN);
 
         if (globalThis.gapi?.client) {
             globalThis.gapi.client.setToken(null);
@@ -338,21 +343,36 @@ class GoogleDriveSyncService {
             return false;
         }
 
+        // Check if we have a refresh token in localStorage
+        const refreshToken = localStorage.getItem(STORAGE_KEY_GDRIVE_REFRESH_TOKEN);
+        if (!refreshToken) {
+            console.log('[Auth Debug] No refresh token available');
+            this.accessToken = null;
+            throw new Error('No refresh token available. Please sign in again.');
+        }
+
         // Avoid multiple parallel refreshes
         if (this.pendingRefreshPromise) {
             return this.pendingRefreshPromise;
         }
 
         this.pendingRefreshPromise = (async () => {
-            console.log('[Auth Debug] Starting refresh request...');
+            console.log('[Auth Debug] Starting refresh request via Cloud Function...');
             try {
-                const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+                const tokenEndpoint = globalThis.TOKEN_ENDPOINT || 'https://us-central1-goaly-478316.cloudfunctions.net/exchangeToken';
+                const res = await fetch(tokenEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh_token: refreshToken })
+                });
                 console.log('[Auth Debug] Response received', { status: res.status, ok: res.ok });
 
                 if (!res.ok) {
-                    const text = await res.text();
-                    console.error('[Auth Debug] Refresh failed with status:', res.status, text);
-                    throw new Error('Refresh failed: ' + res.status);
+                    const errData = await res.json().catch(() => ({ error: 'Unknown error' }));
+                    console.error('[Auth Debug] Refresh failed with status:', res.status, errData);
+                    // Clear invalid refresh token
+                    localStorage.removeItem(STORAGE_KEY_GDRIVE_REFRESH_TOKEN);
+                    throw new Error(errData.error || 'Refresh failed: ' + res.status);
                 }
 
                 const tokens = await res.json();
