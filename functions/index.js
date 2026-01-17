@@ -13,8 +13,13 @@ const functions = require('@google-cloud/functions-framework');
  */
 
 // Configuration from environment/secrets
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+// Configuration from environment/secrets
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.trim() : null;
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ? process.env.GOOGLE_CLIENT_SECRET.trim() : null;
+
+console.log('Cloud Function Initialized');
+console.log('CLIENT_ID loaded:', !!CLIENT_ID, CLIENT_ID ? CLIENT_ID.substring(0, 10) + '...' : 'MISSING');
+console.log('CLIENT_SECRET loaded:', !!CLIENT_SECRET, CLIENT_SECRET ? 'YES (Length: ' + CLIENT_SECRET.length + ')' : 'MISSING');
 
 // CORS headers for browser requests
 const corsHeaders = {
