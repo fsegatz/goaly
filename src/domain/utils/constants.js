@@ -44,6 +44,9 @@ export const STORAGE_KEY_GDRIVE_FILE_ID = 'goaly_gdrive_file_id';
 /** @constant {string} STORAGE_KEY_GDRIVE_FOLDER_ID - Key for storing Google Drive folder ID */
 export const STORAGE_KEY_GDRIVE_FOLDER_ID = 'goaly_gdrive_folder_id';
 
+/** @constant {string} STORAGE_KEY_GDRIVE_REFRESH_TOKEN - Key for storing Google Drive OAuth refresh token */
+export const STORAGE_KEY_GDRIVE_REFRESH_TOKEN = 'goaly_gdrive_refresh_token';
+
 /**
  * UI constants
  * @constant {number} MOBILE_BREAKPOINT_PX - Viewport width breakpoint for mobile layout
