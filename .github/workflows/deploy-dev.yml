@@ -57,7 +57,7 @@ jobs:
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }},GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }},GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }},REFRESH_TOKEN_KEY=${{ secrets.REFRESH_TOKEN_KEY }} \
+            --set-env-vars GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }},GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }},GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }} \
             --labels env=dev \
             --port 8080 \
             --memory 256Mi \
