@@ -195,7 +195,7 @@ class GoogleDriveSyncService {
 
         try {
             // Exchange code for tokens via Cloud Function
-            const tokenEndpoint = globalThis.TOKEN_ENDPOINT || 'https://us-central1-goaly-478316.cloudfunctions.net/exchangeToken';
+            const tokenEndpoint = 'https://us-central1-goaly-478316.cloudfunctions.net/exchangeToken';
             const tokenRes = await fetch(tokenEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -359,7 +359,7 @@ class GoogleDriveSyncService {
         this.pendingRefreshPromise = (async () => {
             console.log('[Auth Debug] Starting refresh request via Cloud Function...');
             try {
-                const tokenEndpoint = globalThis.TOKEN_ENDPOINT || 'https://us-central1-goaly-478316.cloudfunctions.net/exchangeToken';
+                const tokenEndpoint = 'https://us-central1-goaly-478316.cloudfunctions.net/exchangeToken';
                 const res = await fetch(tokenEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

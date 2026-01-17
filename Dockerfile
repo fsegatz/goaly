@@ -3,7 +3,16 @@
 FROM nginx:alpine
 
 # Copy static files to nginx html directory
+# Copy static files to nginx html directory
 COPY . /usr/share/nginx/html
+
+# Build-time arguments for configuration
+ARG GOOGLE_API_KEY
+ARG GOOGLE_CLIENT_ID
+
+# Generate config.js from build arguments
+RUN echo "window.GOOGLE_API_KEY = '${GOOGLE_API_KEY}';" > /usr/share/nginx/html/config.js && \
+    echo "window.GOOGLE_CLIENT_ID = '${GOOGLE_CLIENT_ID}';" >> /usr/share/nginx/html/config.js
 
 # Create nginx config for SPA routing
 RUN echo 'server { \
