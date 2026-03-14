@@ -14,7 +14,6 @@ General guidelines for AI agents working in this repository.
 - All code must pass the SonarQube quality gate.
 - Maintain ≥ 80 % test coverage (statements, branches, functions, lines).
 - Prefer explicit, readable code over clever one-liners.
-- Use JSDoc to document public APIs.
 
 ## Communication
 
@@ -26,9 +25,9 @@ General guidelines for AI agents working in this repository.
 
 - Never commit secrets, tokens, or credentials.
 - Never log sensitive user data.
-- All secrets are stored exclusively in **GitHub repository secrets** (`GCP_PROJECT_ID`, `GCP_SERVICE_ACCOUNT`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GOOGLE_API_KEY`, `GOOGLE_CLIENT_ID`, `SONAR_TOKEN`). Do not store secrets in any other location.
-- The OAuth client secret is the only exception: it is stored in **Google Cloud Secret Manager** and accessed solely by the Cloud Function for token exchange.
 - When in doubt about a security decision, make the conservative choice and note it in the PR.
+- **GitHub repository secrets** contains `GCP_PROJECT_ID`, `GCP_SERVICE_ACCOUNT`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GOOGLE_API_KEY`, `GOOGLE_CLIENT_ID`, `SONAR_TOKEN`
+- **Google Cloud Secret Manager** contains `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 
 ## General Principles
 
