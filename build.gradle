@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.goaly'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.sparkjava:spark-core:2.9.4'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.1'
+    implementation 'org.slf4j:slf4j-simple:2.0.7'
+}
+
+task runDriveMock(type: JavaExec) {
+    group = 'application'
+    mainClass = 'com.goaly.mock.drive.GoogleDriveServerMock'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runTaskMock(type: JavaExec) {
+    group = 'application'
+    mainClass = 'com.goaly.mock.tasks.GoogleTaskServerMock'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runMigration(type: JavaExec) {
+    group = 'application'
+    mainClass = 'com.goaly.migration.MigrationServer'
+    classpath = sourceSets.main.runtimeClasspath
+}

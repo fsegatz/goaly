@@ -1,0 +1,3951 @@
+{
+  "version": "1.2.0",
+  "goals": [
+    {
+      "id": "17632318133330.4948244010097502",
+      "title": "Buy an appartment",
+      "motivation": 3,
+      "urgency": 3,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-15T18:36:53.333Z",
+      "lastUpdated": "2026-03-10T20:49:11.428Z",
+      "reviewDates": [
+        "2025-11-23T18:21:05.717Z",
+        "2025-12-07T20:58:38.952Z",
+        "2026-01-07T15:07:31.155Z",
+        "2026-01-15T20:43:03.800Z",
+        "2026-01-30T15:36:49.935Z",
+        "2026-03-01T15:44:25.376Z",
+        "2026-03-10T20:49:11.428Z"
+      ],
+      "lastReviewAt": "2026-03-10T20:49:11.428Z",
+      "nextReviewAt": "2026-03-17T20:49:11.428Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1771966527417-0788c2d9",
+          "text": "get lånlöfte seb",
+          "completed": false,
+          "order": 0
+        },
+        {
+          "id": "1771966538634-f35fd9dc",
+          "text": "ask parents for money",
+          "completed": false,
+          "order": 1
+        },
+        {
+          "id": "1771966552131-5806d69d",
+          "text": "transfer eur to sek",
+          "completed": false,
+          "order": 2
+        },
+        {
+          "id": "1772442541152-8433c6a8",
+          "text": "kill german bank account",
+          "completed": false,
+          "order": 3
+        },
+        {
+          "id": "1772442550386-5533c12d",
+          "text": "get money from my parents",
+          "completed": false,
+          "order": 4
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632318442760.06526633516534064",
+      "title": "Plan XMas present for Anne",
+      "motivation": 5,
+      "urgency": 4,
+      "deadline": "2025-12-24T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-11-15T18:37:24.276Z",
+      "lastUpdated": "2025-12-02T21:17:51.971Z",
+      "reviewDates": [
+        "2025-11-23T18:19:52.682Z",
+        "2025-11-30T21:49:17.846Z"
+      ],
+      "lastReviewAt": "2025-11-30T21:49:17.846Z",
+      "nextReviewAt": "2025-12-14T21:49:17.846Z",
+      "reviewIntervalIndex": 1,
+      "steps": [
+        {
+          "id": "1764106057959-9323df4a",
+          "text": "Activity together",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1764400436302-5217f10b",
+          "text": "wait for package to arrive",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1764400446594-60a8d3b5",
+          "text": "Pack in gift",
+          "completed": true,
+          "order": 2
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632319631160.7642998930991812",
+      "title": "Buy Monitor speakers for music production",
+      "motivation": 5,
+      "urgency": 4,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-11-15T18:39:23.116Z",
+      "lastUpdated": "2025-12-24T12:59:02.866Z",
+      "reviewDates": [
+        "2025-11-23T18:21:11.220Z",
+        "2025-12-07T20:58:43.012Z",
+        "2025-12-14T22:40:10.764Z",
+        "2025-12-22T08:47:33.351Z"
+      ],
+      "lastReviewAt": "2025-12-22T08:47:33.351Z",
+      "nextReviewAt": "2025-12-29T08:47:33.351Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1766481739289-82bdafce",
+          "text": "buy a soundcard",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1766525372568-8d0b2d9d",
+          "text": "test speakers",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1766439581449-3362ac53",
+          "text": "set up speakers",
+          "completed": true,
+          "order": 2
+        },
+        {
+          "id": "1766439574336-5d06d87e",
+          "text": "pick up speakers",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1766422441361-79db6930",
+          "text": "blocket offer",
+          "completed": true,
+          "order": 4
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632319839380.5641746506281237",
+      "title": "Start a punk band",
+      "motivation": 1,
+      "urgency": 1,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-15T18:39:43.938Z",
+      "lastUpdated": "2026-02-09T18:50:31.689Z",
+      "reviewDates": [
+        "2025-11-23T18:19:55.715Z",
+        "2025-12-07T20:58:19.604Z",
+        "2026-01-07T15:07:20.468Z",
+        "2026-02-09T18:50:31.689Z"
+      ],
+      "lastReviewAt": "2026-02-09T18:50:31.689Z",
+      "nextReviewAt": "2026-03-11T18:50:31.689Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632320106450.3664269265252973",
+      "title": "Improve relationship with my sister",
+      "motivation": 1,
+      "urgency": 1,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-15T18:40:10.645Z",
+      "lastUpdated": "2026-02-09T18:50:32.507Z",
+      "reviewDates": [
+        "2025-11-23T18:19:57.456Z",
+        "2025-12-07T20:58:21.215Z",
+        "2026-01-07T15:07:22.086Z",
+        "2026-02-09T18:50:32.507Z"
+      ],
+      "lastReviewAt": "2026-02-09T18:50:32.507Z",
+      "nextReviewAt": "2026-03-11T18:50:32.507Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632320521100.9160053290449225",
+      "title": "Start running again",
+      "motivation": 3,
+      "urgency": 4,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-15T18:40:52.110Z",
+      "lastUpdated": "2026-02-22T07:29:15.374Z",
+      "reviewDates": [
+        "2025-11-23T18:21:20.961Z",
+        "2025-11-30T21:50:14.506Z",
+        "2025-12-08T10:35:42.401Z",
+        "2025-12-15T12:45:40.376Z",
+        "2025-12-29T13:44:58.518Z",
+        "2026-01-05T16:46:22.068Z",
+        "2026-01-19T21:40:10.976Z",
+        "2026-02-22T07:29:15.374Z"
+      ],
+      "lastReviewAt": "2026-02-22T07:29:15.374Z",
+      "nextReviewAt": "2026-03-24T07:29:15.374Z",
+      "reviewIntervalIndex": 2,
+      "steps": [
+        {
+          "id": "1766481802222-fe8bedc4",
+          "text": "Call Jouko to discuss MRT pictures",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1767853869238-b436c4e0",
+          "text": "ankle hurted a bit after first run",
+          "completed": false,
+          "order": 1
+        },
+        {
+          "id": "1766481772372-dea132c9",
+          "text": "mrt appointment",
+          "completed": true,
+          "order": 2
+        },
+        {
+          "id": "1766394089542-bc040454",
+          "text": "testrun",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1766473779043-e2739762",
+          "text": "set up plan for running & training",
+          "completed": true,
+          "order": 4
+        },
+        {
+          "id": "1766394076060-37f1029b",
+          "text": "go to physio",
+          "completed": true,
+          "order": 5
+        },
+        {
+          "id": "1764624331693-73b4188c",
+          "text": "call hälsolussen",
+          "completed": true,
+          "order": 6
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": true,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632321741950.36637266523842593",
+      "title": "Get vaccinated against influenca",
+      "motivation": 4,
+      "urgency": 3,
+      "deadline": "2025-11-20T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-11-15T18:42:54.195Z",
+      "lastUpdated": "2025-11-21T10:24:11.815Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-11-15T18:42:54.195Z",
+      "nextReviewAt": "2025-11-22T18:42:54.195Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1763329665261-a49305f3",
+          "text": "make an appointment at vaccin.nu and keep the reciept.",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1763329669945-0b816a73",
+          "text": "research if i can get vaccinated when i have a cold",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1763460961984-93f18e1e",
+          "text": "Enter the receipt to HCM",
+          "completed": true,
+          "order": 2
+        },
+        {
+          "id": "1763462695209-c4cb1de9",
+          "text": "Appointment Wednesday 10:30 at vaccindirekt östermalm",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1763547344966-223fe56b",
+          "text": "Wait for concur resolution",
+          "completed": true,
+          "order": 4
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632322597210.6751733998819119",
+      "title": "Write a packing list for stuga travel with Anders",
+      "motivation": 1,
+      "urgency": 4,
+      "deadline": "2025-11-20T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-11-15T18:44:19.721Z",
+      "lastUpdated": "2025-11-16T21:46:29.312Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-11-15T18:44:19.721Z",
+      "nextReviewAt": "2025-11-22T18:44:19.721Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632323328120.042964772705283205",
+      "title": "New skatteverket id card",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2025-11-24T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-11-15T18:45:32.812Z",
+      "lastUpdated": "2025-12-22T08:47:37.551Z",
+      "reviewDates": [
+        "2025-11-23T18:20:06.695Z",
+        "2025-12-07T20:58:26.613Z"
+      ],
+      "lastReviewAt": "2025-12-07T20:58:26.613Z",
+      "nextReviewAt": "2026-01-06T20:58:26.613Z",
+      "reviewIntervalIndex": 2,
+      "steps": [
+        {
+          "id": "1766041035574-88fe9a38",
+          "text": "pick up monday",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1763547520619-7b770b07",
+          "text": "Wait for pickup notification",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1763329726921-ef7625ea",
+          "text": "Check skatteverket.se",
+          "completed": true,
+          "order": 2
+        },
+        {
+          "id": "1763547485334-df6b5274",
+          "text": "Pay fee",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1763547506425-1b359368",
+          "text": "Go to appointment on Monday 10:45",
+          "completed": true,
+          "order": 4
+        },
+        {
+          "id": "1763547620131-add938c4",
+          "text": "Need: Valid German id card",
+          "completed": true,
+          "order": 5
+        },
+        {
+          "id": "1763547651322-e9f6fe40",
+          "text": "Need: Bank statement for payment (printout)",
+          "completed": true,
+          "order": 6
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632323761280.7277449140270836",
+      "title": "Mediate every day in 1 month",
+      "motivation": 1,
+      "urgency": 1,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-15T18:46:16.128Z",
+      "lastUpdated": "2026-02-09T18:50:33.288Z",
+      "reviewDates": [
+        "2025-11-23T18:21:28.803Z",
+        "2025-12-07T20:58:44.866Z",
+        "2026-01-07T15:07:33.249Z",
+        "2026-02-09T18:50:33.288Z"
+      ],
+      "lastReviewAt": "2026-02-09T18:50:33.288Z",
+      "nextReviewAt": "2026-03-11T18:50:33.288Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632324140480.7512266205139603",
+      "title": "Plus-minus list: Anne friends with my friends",
+      "motivation": 2,
+      "urgency": 4,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-11-15T18:46:54.048Z",
+      "lastUpdated": "2025-12-28T10:41:51.628Z",
+      "reviewDates": [
+        "2025-11-23T19:51:33.660Z",
+        "2025-12-07T20:58:49.090Z",
+        "2025-12-14T22:40:14.785Z"
+      ],
+      "lastReviewAt": "2025-12-14T22:40:14.785Z",
+      "nextReviewAt": "2025-12-28T22:40:14.785Z",
+      "reviewIntervalIndex": 1,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632325098340.8789164896573733",
+      "title": "New DBK assigment",
+      "motivation": 3,
+      "urgency": 4,
+      "deadline": "2025-11-16T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-11-15T18:48:29.834Z",
+      "lastUpdated": "2025-11-19T20:49:11.562Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-11-15T18:48:29.834Z",
+      "nextReviewAt": "2025-11-22T18:48:29.834Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1763329613225-00bd1d6f",
+          "text": "Write an email to Eric to get a new assignment.",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1763329618628-d79c73e9",
+          "text": "Wait for the new assignement.",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1763416506545-940217bb",
+          "text": "Descide if I want to do \"Sista utalandet\" as Eric suggestis and go over to Fas 2",
+          "completed": true,
+          "order": 2
+        },
+        {
+          "id": "1763416552855-4646cee1",
+          "text": "Call with Jonas to discuss",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1763471665129-5c398ba4",
+          "text": "answer to Eric that I want to do sista utalandet.",
+          "completed": true,
+          "order": 4
+        },
+        {
+          "id": "1763501738753-acefb5ab",
+          "text": "Create a goaly item to start working on it",
+          "completed": true,
+          "order": 5
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632412331940.15182757055978513",
+      "title": "Finish reading Idas book",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2025-12-06T00:00:00.000Z",
+      "status": "notCompleted",
+      "createdAt": "2025-11-15T21:13:53.194Z",
+      "lastUpdated": "2025-12-14T17:07:35.000Z",
+      "reviewDates": [
+        "2025-11-23T18:20:17.096Z",
+        "2025-12-14T17:07:30.798Z"
+      ],
+      "lastReviewAt": "2025-12-14T17:07:30.798Z",
+      "nextReviewAt": "2025-12-21T17:07:30.798Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1763329702378-62ff189d",
+          "text": "Ask Ida if I can have the book longer",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1763363000919-a0eec200",
+          "text": "Extend deadline",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1763983100256-7e2e6418",
+          "text": "Schedule some time to read",
+          "completed": false,
+          "order": 2
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632412750600.8656706894011871",
+      "title": "Visit doctor",
+      "motivation": 5,
+      "urgency": 4,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-11-15T21:14:35.060Z",
+      "lastUpdated": "2026-01-22T10:43:29.192Z",
+      "reviewDates": [
+        "2025-11-23T18:20:28.973Z",
+        "2025-11-30T21:50:18.996Z",
+        "2025-12-14T22:40:21.227Z",
+        "2026-01-17T17:45:42.234Z"
+      ],
+      "lastReviewAt": "2026-01-17T17:45:42.234Z",
+      "nextReviewAt": "2026-02-16T17:45:42.234Z",
+      "reviewIntervalIndex": 2,
+      "steps": [
+        {
+          "id": "1765802760612-b5a398f1",
+          "text": "see on 14.1 again",
+          "completed": false,
+          "order": 0
+        },
+        {
+          "id": "1764232855342-69768d4a",
+          "text": "see doctor on 15.12 again",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1765314363201-9adf39ca",
+          "text": "call clinic before 10:00",
+          "completed": true,
+          "order": 2
+        },
+        {
+          "id": "1764106026483-b7e39ded",
+          "text": "Häsloslussen",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1764140786002-1206357a",
+          "text": "Figure out if i can use Hälsoslussen without my bank id",
+          "completed": true,
+          "order": 4
+        },
+        {
+          "id": "1764144776694-a6055074",
+          "text": "Go to appointment 11:00",
+          "completed": true,
+          "order": 5
+        },
+        {
+          "id": "1764152151072-a556c033",
+          "text": "pick up ointments at pharmacy",
+          "completed": true,
+          "order": 6
+        },
+        {
+          "id": "1764191411116-3908874b",
+          "text": "upload receipt",
+          "completed": true,
+          "order": 7
+        },
+        {
+          "id": "1764191878128-949ae2ac",
+          "text": "call 0771-555500 to ask if i can upload the receipt in a different way",
+          "completed": true,
+          "order": 8
+        },
+        {
+          "id": "1764233214160-15af8751",
+          "text": "reduce frequency of application on 3.12",
+          "completed": true,
+          "order": 9
+        },
+        {
+          "id": "1765279537223-a52ec3d3",
+          "text": "write a mail",
+          "completed": true,
+          "order": 10
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632415418200.17712157929833316",
+      "title": "Sell the Yamaha soundbar",
+      "motivation": 2,
+      "urgency": 2,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-11-15T21:19:01.820Z",
+      "lastUpdated": "2026-02-22T21:02:43.240Z",
+      "reviewDates": [
+        "2025-11-23T18:20:30.782Z",
+        "2025-12-07T20:58:31.392Z",
+        "2025-12-15T12:45:33.515Z",
+        "2025-12-22T15:47:01.856Z",
+        "2026-01-05T16:46:23.991Z",
+        "2026-02-09T18:50:49.889Z"
+      ],
+      "lastReviewAt": "2026-02-09T18:50:49.889Z",
+      "nextReviewAt": "2026-03-11T18:50:49.889Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632423322940.35582570387383305",
+      "title": "Bella managing DJ instagram",
+      "motivation": 1,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-11-15T21:32:12.295Z",
+      "lastUpdated": "2025-11-21T10:24:03.905Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-11-15T21:32:12.295Z",
+      "nextReviewAt": "2025-11-22T21:32:12.295Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1763413883695-2164f37f",
+          "text": "Give Bella my credentials and block Instagram from my desktop.",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1763646523379-c80db200",
+          "text": "Decouple insta from my meta account",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1763646537869-cd251ade",
+          "text": "Delete facebook",
+          "completed": true,
+          "order": 2
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632425015690.8635448530207316",
+      "title": "Reset my iphone",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-11-15T21:35:01.569Z",
+      "lastUpdated": "2025-11-23T18:20:47.413Z",
+      "reviewDates": [
+        "2025-11-23T18:20:40.962Z"
+      ],
+      "lastReviewAt": "2025-11-23T18:20:40.962Z",
+      "nextReviewAt": "2025-11-30T18:20:40.962Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17633629521250.66958839967791",
+      "title": "Åhland packing list",
+      "motivation": 2,
+      "urgency": 4,
+      "deadline": "2025-12-02T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-11-17T07:02:32.127Z",
+      "lastUpdated": "2025-11-25T18:13:21.193Z",
+      "reviewDates": [
+        "2025-11-24T07:32:44.822Z"
+      ],
+      "lastReviewAt": "2025-11-24T07:32:44.822Z",
+      "nextReviewAt": "2025-12-01T07:32:44.822Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1763931235855-b9a8dc7d",
+          "text": "setup a gdocs with Anne",
+          "completed": false,
+          "order": 0
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17634232011940.18683266589583325",
+      "title": "Fix BankID",
+      "motivation": 5,
+      "urgency": 4,
+      "deadline": "2025-12-08T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-11-17T23:46:41.194Z",
+      "lastUpdated": "2025-12-22T15:47:05.900Z",
+      "reviewDates": [
+        "2025-11-18T08:10:12.315Z",
+        "2025-12-02T11:00:22.184Z"
+      ],
+      "lastReviewAt": "2025-12-02T11:00:22.184Z",
+      "nextReviewAt": "2026-01-01T11:00:22.184Z",
+      "reviewIntervalIndex": 2,
+      "steps": [
+        {
+          "id": "1766043161186-027c75e2",
+          "text": "Go to appointment",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1763547374896-46d202eb",
+          "text": "Make new appointment at SEB",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1763542967894-223e055a",
+          "text": "Organise skatteverket ID",
+          "completed": true,
+          "order": 2
+        },
+        {
+          "id": "1763423207259-1f77f3f0",
+          "text": "Call SEB",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1763453345318-ecd02d31",
+          "text": "Go to appointment Wednesday 10:00",
+          "completed": true,
+          "order": 4
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17634782578650.9850742353457038",
+      "title": "Write msg to Mikko",
+      "motivation": 5,
+      "urgency": 3,
+      "deadline": "2025-11-19T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-11-18T15:04:17.865Z",
+      "lastUpdated": "2025-11-18T20:08:47.538Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-11-18T15:04:17.865Z",
+      "nextReviewAt": "2025-11-25T15:04:17.865Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17634960112530.3085897274138224",
+      "title": "organise concept for se January event",
+      "motivation": 5,
+      "urgency": 2,
+      "deadline": "2025-12-09T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-11-18T20:00:11.253Z",
+      "lastUpdated": "2025-11-29T13:00:46.225Z",
+      "reviewDates": [
+        "2025-11-25T21:18:46.398Z"
+      ],
+      "lastReviewAt": "2025-11-25T21:18:46.398Z",
+      "nextReviewAt": "2025-12-09T21:18:46.398Z",
+      "reviewIntervalIndex": 1,
+      "steps": [
+        {
+          "id": "1764233286663-e6168096",
+          "text": "talk to mete",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1764233293175-f1883ca4",
+          "text": "create plan b",
+          "completed": true,
+          "order": 1
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17634998894530.42441512031985795",
+      "title": "Reach out to my mentor",
+      "motivation": 5,
+      "urgency": 2,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-18T21:04:49.453Z",
+      "lastUpdated": "2026-02-10T22:00:18.205Z",
+      "reviewDates": [
+        "2025-11-25T21:18:49.040Z",
+        "2025-12-10T08:17:42.192Z",
+        "2026-01-11T12:55:56.481Z",
+        "2026-02-10T22:00:18.205Z"
+      ],
+      "lastReviewAt": "2026-02-10T22:00:18.205Z",
+      "nextReviewAt": "2026-03-12T22:00:18.205Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17635369392840.6835316129919302",
+      "title": "Repair vacuum cleaner",
+      "motivation": 1,
+      "urgency": 1,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-19T07:22:19.284Z",
+      "lastUpdated": "2026-02-24T20:52:52.176Z",
+      "reviewDates": [
+        "2025-11-26T08:12:44.325Z",
+        "2025-12-03T20:12:53.702Z",
+        "2025-12-10T21:27:10.576Z",
+        "2025-12-25T07:23:59.211Z",
+        "2026-01-24T22:33:36.044Z",
+        "2026-02-24T20:52:52.176Z"
+      ],
+      "lastReviewAt": "2026-02-24T20:52:52.176Z",
+      "nextReviewAt": "2026-03-26T20:52:52.176Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17635376031910.38341947770361373",
+      "title": "Wintertires",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-11-19T07:33:23.191Z",
+      "lastUpdated": "2025-11-21T10:23:54.087Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-11-19T07:33:23.191Z",
+      "nextReviewAt": "2025-11-26T07:33:23.191Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1763537621124-2f68c1db",
+          "text": "Get tools from Anne",
+          "completed": false,
+          "order": 0
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17635799779040.05097302391817182",
+      "title": "Bella XMAS present",
+      "motivation": 5,
+      "urgency": 4,
+      "deadline": "2025-12-24T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-11-19T19:19:37.904Z",
+      "lastUpdated": "2025-12-15T20:12:54.294Z",
+      "reviewDates": [
+        "2025-11-26T21:10:02.569Z",
+        "2025-12-04T06:24:36.613Z",
+        "2025-12-11T10:45:21.000Z"
+      ],
+      "lastReviewAt": "2025-12-11T10:45:21.000Z",
+      "nextReviewAt": "2025-12-18T10:45:21.000Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1764539466339-cb2012cc",
+          "text": "pack in gift",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1764539529758-4b087a54",
+          "text": "get bredbasked from ikea",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1764623592960-9a41ad51",
+          "text": "wait for amazon package",
+          "completed": true,
+          "order": 2
+        },
+        {
+          "id": "1765141132391-fa7abd35",
+          "text": "pick up package from postnord",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1765229023054-54c9b731",
+          "text": "buy gift paper",
+          "completed": true,
+          "order": 4
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17635853440130.4341194758197372",
+      "title": "Mitt sista uttalande",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2025-11-24T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-11-19T20:49:04.013Z",
+      "lastUpdated": "2025-11-25T13:22:12.179Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-11-19T20:49:04.013Z",
+      "nextReviewAt": "2025-11-26T20:49:04.013Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1763596541088-547a9d92",
+          "text": "Plan some time to work on assignment",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1763927422580-a9800e95",
+          "text": "Present assignment",
+          "completed": true,
+          "order": 1
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17636466659960.8204160806332529",
+      "title": "Deploy goaly properly",
+      "motivation": 5,
+      "urgency": 3,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-11-20T13:51:05.996Z",
+      "lastUpdated": "2025-12-22T21:50:22.488Z",
+      "reviewDates": [
+        "2025-11-27T18:00:16.144Z",
+        "2025-12-05T14:34:37.469Z",
+        "2025-12-12T15:06:07.844Z"
+      ],
+      "lastReviewAt": "2025-12-12T15:06:07.844Z",
+      "nextReviewAt": "2025-12-26T15:06:07.844Z",
+      "reviewIntervalIndex": 1,
+      "steps": [
+        {
+          "id": "1765143345549-7caa8554",
+          "text": "change google sync to not store token",
+          "completed": false,
+          "order": 0
+        },
+        {
+          "id": "1765143370386-4a9aab7c",
+          "text": "find other syncing options",
+          "completed": false,
+          "order": 1
+        },
+        {
+          "id": "1765143402637-fa381deb",
+          "text": "buy domain",
+          "completed": false,
+          "order": 2
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17638117501490.7328280780240702",
+      "title": "Plan Easter Oskviq",
+      "motivation": 5,
+      "urgency": 3,
+      "deadline": "2026-04-16T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-11-22T11:42:30.149Z",
+      "lastUpdated": "2026-02-28T12:33:12.909Z",
+      "reviewDates": [
+        "2025-11-29T11:53:06.532Z",
+        "2025-12-07T20:58:17.580Z",
+        "2025-12-22T08:47:30.751Z",
+        "2026-01-21T20:28:56.797Z",
+        "2026-02-22T07:29:24.172Z"
+      ],
+      "lastReviewAt": "2026-02-22T07:29:24.172Z",
+      "nextReviewAt": "2026-03-24T07:29:24.172Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17638351952970.08586942905691519",
+      "title": "Draft How to event awareness",
+      "motivation": 3,
+      "urgency": 3,
+      "deadline": "2025-12-10T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-11-22T18:13:15.297Z",
+      "lastUpdated": "2025-11-29T11:53:16.181Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-11-22T18:13:15.297Z",
+      "nextReviewAt": "2025-11-29T18:13:15.297Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1763983065462-446c34bd",
+          "text": "Come up with an initial process",
+          "completed": false,
+          "order": 0
+        },
+        {
+          "id": "1763983083541-f0ef3e54",
+          "text": "Ask for feedback",
+          "completed": false,
+          "order": 1
+        },
+        {
+          "id": "1764107344967-f4c638c8",
+          "text": "Set a date to work on it",
+          "completed": false,
+          "order": 2
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17640145687270.050999736173215404",
+      "title": "Signal spende",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-11-24T20:02:48.727Z",
+      "lastUpdated": "2025-11-25T21:19:43.740Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-11-24T20:02:48.727Z",
+      "nextReviewAt": "2025-12-01T20:02:48.727Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17640198436310.8876107648038132",
+      "title": "Ask to move Awareness Meeting",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2025-11-26T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-11-24T21:30:43.631Z",
+      "lastUpdated": "2025-11-25T13:50:20.189Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-11-24T21:30:43.631Z",
+      "nextReviewAt": "2025-12-01T21:30:43.631Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1764077053257-364a7d9c",
+          "text": "write on discord",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1764077066121-109a3837",
+          "text": "check with solene",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1764077082444-280d559b",
+          "text": "check with ida",
+          "completed": true,
+          "order": 2
+        },
+        {
+          "id": "1764077087030-20ffcff1",
+          "text": "check with mete",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1764077128786-ca84b66b",
+          "text": "check with lisa",
+          "completed": true,
+          "order": 4
+        },
+        {
+          "id": "1764077134428-5573d537",
+          "text": "move calendar meeting",
+          "completed": true,
+          "order": 5
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17640937645780.24403522730489713",
+      "title": "Standup /w Ellen",
+      "motivation": 5,
+      "urgency": 4,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-11-25T18:02:44.578Z",
+      "lastUpdated": "2025-12-06T06:58:25.080Z",
+      "reviewDates": [
+        "2025-12-03T07:42:48.647Z"
+      ],
+      "lastReviewAt": "2025-12-03T07:42:48.647Z",
+      "nextReviewAt": "2025-12-10T07:42:48.647Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1764747774102-dcfdc11f",
+          "text": "look up a standup",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1764747780518-1bd63213",
+          "text": "ask ellen if she can make it",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1764747790039-aa471242",
+          "text": "buy tickets",
+          "completed": true,
+          "order": 2
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17642660381640.32544282608754815",
+      "title": "fix bike",
+      "motivation": 1,
+      "urgency": 4,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-27T17:53:58.164Z",
+      "lastUpdated": "2026-03-10T20:08:53.913Z",
+      "reviewDates": [
+        "2025-12-05T14:33:47.583Z",
+        "2025-12-21T10:48:03.438Z",
+        "2026-01-20T21:27:51.184Z",
+        "2026-02-22T07:29:18.799Z"
+      ],
+      "lastReviewAt": "2026-02-22T07:29:18.799Z",
+      "nextReviewAt": "2026-03-24T07:29:18.799Z",
+      "reviewIntervalIndex": 2,
+      "steps": [
+        {
+          "id": "1764623716589-d9c1196b",
+          "text": "Fix Sprayguard front",
+          "completed": false,
+          "order": 0
+        },
+        {
+          "id": "1764623733371-3898e740",
+          "text": "buy silicon oil",
+          "completed": false,
+          "order": 1
+        },
+        {
+          "id": "1764624260744-3d90cd60",
+          "text": "replace cable for gear",
+          "completed": false,
+          "order": 2
+        },
+        {
+          "id": "1764624294000-e3f1ffa4",
+          "text": "wait for package with tools",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1764624240583-b3f0db2b",
+          "text": "Fix back wheel hub - Youtube",
+          "completed": true,
+          "order": 4
+        },
+        {
+          "id": "1764431455223-354fb039",
+          "text": "Fix Belt tension - align back wheel",
+          "completed": true,
+          "order": 5
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17642660501290.2083223934559013",
+      "title": "Buy new bike",
+      "motivation": 4,
+      "urgency": 1,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-27T17:54:10.129Z",
+      "lastUpdated": "2026-02-22T07:29:21.113Z",
+      "reviewDates": [
+        "2025-12-05T14:33:52.693Z",
+        "2025-12-21T10:48:05.060Z",
+        "2026-01-20T21:27:52.815Z",
+        "2026-02-22T07:29:21.113Z"
+      ],
+      "lastReviewAt": "2026-02-22T07:29:21.113Z",
+      "nextReviewAt": "2026-03-24T07:29:21.113Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17642660650110.6585207955739163",
+      "title": "Buy sunglasses with strength",
+      "motivation": 4,
+      "urgency": 2,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-27T17:54:25.011Z",
+      "lastUpdated": "2026-02-22T07:29:21.759Z",
+      "reviewDates": [
+        "2025-12-05T14:33:56.942Z",
+        "2025-12-21T10:48:07.046Z",
+        "2026-01-20T21:27:56.326Z",
+        "2026-02-22T07:29:21.759Z"
+      ],
+      "lastReviewAt": "2026-02-22T07:29:21.759Z",
+      "nextReviewAt": "2026-03-24T07:29:21.759Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17642660884830.4415642167869015",
+      "title": "Change all passwords",
+      "motivation": 3,
+      "urgency": 3,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-27T17:54:48.483Z",
+      "lastUpdated": "2026-03-02T09:08:32.451Z",
+      "reviewDates": [
+        "2025-12-05T14:34:01.619Z",
+        "2025-12-21T10:48:08.357Z",
+        "2026-01-20T21:27:57.668Z",
+        "2026-02-22T07:29:22.540Z"
+      ],
+      "lastReviewAt": "2026-02-22T07:29:22.540Z",
+      "nextReviewAt": "2026-03-24T07:29:22.540Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17642661322190.8157960815561983",
+      "title": "Buy new slippers",
+      "motivation": 3,
+      "urgency": 4,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-11-27T17:55:32.219Z",
+      "lastUpdated": "2025-12-27T16:12:15.544Z",
+      "reviewDates": [
+        "2025-12-05T14:34:15.737Z",
+        "2025-12-12T15:05:44.687Z",
+        "2025-12-27T06:32:50.689Z"
+      ],
+      "lastReviewAt": "2025-12-27T06:32:50.689Z",
+      "nextReviewAt": "2026-01-03T06:32:50.689Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17642661808580.5060677383855688",
+      "title": "Replace apple watch battery",
+      "motivation": 1,
+      "urgency": 1,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-27T17:56:20.858Z",
+      "lastUpdated": "2026-02-24T20:52:53.435Z",
+      "reviewDates": [
+        "2025-12-05T14:34:20.754Z",
+        "2025-12-12T15:05:51.664Z",
+        "2025-12-27T06:32:55.203Z",
+        "2026-01-03T10:45:03.033Z",
+        "2026-01-11T12:55:58.147Z",
+        "2026-01-25T13:00:45.749Z",
+        "2026-02-24T20:52:53.435Z"
+      ],
+      "lastReviewAt": "2026-02-24T20:52:53.435Z",
+      "nextReviewAt": "2026-03-26T20:52:53.435Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17642662146580.2058041823787955",
+      "title": "Replace Iphone battery",
+      "motivation": 2,
+      "urgency": 1,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-27T17:56:54.658Z",
+      "lastUpdated": "2026-02-22T07:29:23.421Z",
+      "reviewDates": [
+        "2025-12-05T14:34:22.926Z",
+        "2025-12-21T10:48:09.587Z",
+        "2026-01-20T21:27:59.241Z",
+        "2026-02-22T07:29:23.421Z"
+      ],
+      "lastReviewAt": "2026-02-22T07:29:23.421Z",
+      "nextReviewAt": "2026-03-24T07:29:23.421Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17642662360200.026285706543775822",
+      "title": "Stock up water",
+      "motivation": 3,
+      "urgency": 3,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-27T17:57:16.020Z",
+      "lastUpdated": "2026-03-02T19:08:54.157Z",
+      "reviewDates": [
+        "2025-12-05T14:34:27.721Z",
+        "2025-12-12T15:05:56.540Z",
+        "2025-12-27T06:33:00.840Z",
+        "2026-01-03T10:45:09.565Z",
+        "2026-01-17T17:45:43.259Z",
+        "2026-02-22T07:29:09.713Z"
+      ],
+      "lastReviewAt": "2026-02-22T07:29:09.713Z",
+      "nextReviewAt": "2026-03-24T07:29:09.713Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17642664068590.501955903062795",
+      "title": "Create recipe storing app",
+      "motivation": 1,
+      "urgency": 2,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-27T18:00:06.859Z",
+      "lastUpdated": "2026-02-24T20:52:54.685Z",
+      "reviewDates": [
+        "2025-12-05T14:34:33.612Z",
+        "2025-12-12T15:06:05.326Z",
+        "2025-12-27T06:33:36.677Z",
+        "2026-01-03T10:45:13.482Z",
+        "2026-01-11T12:56:00.305Z",
+        "2026-01-25T13:00:47.419Z",
+        "2026-02-24T20:52:54.685Z"
+      ],
+      "lastReviewAt": "2026-02-24T20:52:54.685Z",
+      "nextReviewAt": "2026-03-26T20:52:54.685Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17643693835040.40715920537740813",
+      "title": "Zahnarzt untersuchung",
+      "motivation": 1,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-11-28T22:36:23.504Z",
+      "lastUpdated": "2025-12-17T10:52:11.100Z",
+      "reviewDates": [
+        "2025-12-06T06:57:12.537Z",
+        "2025-12-13T07:33:33.044Z"
+      ],
+      "lastReviewAt": "2025-12-13T07:33:33.044Z",
+      "nextReviewAt": "2025-12-27T07:33:33.044Z",
+      "reviewIntervalIndex": 1,
+      "steps": [
+        {
+          "id": "1765227633912-577fe837",
+          "text": "book appointment",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1764624310699-0d836e34",
+          "text": "sign up for last minute at https://distriktstandvarden.se/sista-minuten/",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1765190333987-e7e46b86",
+          "text": "do it this evening",
+          "completed": true,
+          "order": 2
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17643697174310.36599646802724217",
+      "title": "DBK: Start PRI",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-11-28T22:41:57.431Z",
+      "lastUpdated": "2025-12-07T20:59:18.829Z",
+      "reviewDates": [
+        "2025-12-06T06:57:14.116Z"
+      ],
+      "lastReviewAt": "2025-12-06T06:57:14.116Z",
+      "nextReviewAt": "2025-12-20T06:57:14.116Z",
+      "reviewIntervalIndex": 1,
+      "steps": [
+        {
+          "id": "1764431306559-20b85dce",
+          "text": "Sit with assignment",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1764661855892-1a661ed2",
+          "text": "Set deadline until wednesday",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1765114357950-bbcd57b1",
+          "text": "work on it sunday eve",
+          "completed": true,
+          "order": 2
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17646245073540.589778576320754",
+      "title": "Answer Solene",
+      "motivation": 4,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-12-01T21:28:27.354Z",
+      "lastUpdated": "2025-12-01T21:33:06.155Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-12-01T21:28:27.354Z",
+      "nextReviewAt": "2025-12-08T21:28:27.354Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17646245423130.6837464484245364",
+      "title": "Buy gift for Åland host",
+      "motivation": 2,
+      "urgency": 5,
+      "deadline": "2025-12-03T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-12-01T21:29:02.313Z",
+      "lastUpdated": "2025-12-03T07:42:11.609Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-12-01T21:29:02.313Z",
+      "nextReviewAt": "2025-12-08T21:29:02.313Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1764624548951-4acf2155",
+          "text": "Host: Oliveoil",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1764624805421-16a2be2d",
+          "text": "write to anne",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1764661812962-e72002e2",
+          "text": "Lea: Houseplant",
+          "completed": true,
+          "order": 2
+        },
+        {
+          "id": "1764661834859-bae964f1",
+          "text": "Set aside 15min to brainstorm",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1764673241263-42cc95f3",
+          "text": "Lea: 2 Vinyls",
+          "completed": true,
+          "order": 4
+        },
+        {
+          "id": "1764710255948-0d1a6400",
+          "text": "pack in presents",
+          "completed": false,
+          "order": 5
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17646254190020.5025493283404125",
+      "title": "Add affirmation to morning routine",
+      "motivation": 2,
+      "urgency": 4,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-12-01T21:43:39.002Z",
+      "lastUpdated": "2025-12-14T19:45:21.999Z",
+      "reviewDates": [
+        "2025-12-08T21:56:42.172Z"
+      ],
+      "lastReviewAt": "2025-12-08T21:56:42.172Z",
+      "nextReviewAt": "2025-12-22T21:56:42.172Z",
+      "reviewIntervalIndex": 1,
+      "steps": [
+        {
+          "id": "1765114334636-2aff0753",
+          "text": "bring up in the group",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1764625474209-c2e8781e",
+          "text": "ask eric for affirmation format",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1764625641272-2d44f97a",
+          "text": "create affirmations list",
+          "completed": true,
+          "order": 2
+        },
+        {
+          "id": "1764625683499-1bb7ec4e",
+          "text": "start with an “i am …” exercise",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1764947108395-6226ed78",
+          "text": "Add affirmation list to routine",
+          "completed": true,
+          "order": 4
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": true,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17646260260640.7301083412125803",
+      "title": "Reflect about my priorities.",
+      "motivation": 3,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-12-01T21:53:46.064Z",
+      "lastUpdated": "2025-12-05T13:51:58.383Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-12-01T21:53:46.064Z",
+      "nextReviewAt": "2025-12-08T21:53:46.064Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1764626028503-c78e68ac",
+          "text": "Add evening routine",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1764626053149-14e48da3",
+          "text": "Add to släpp taget",
+          "completed": true,
+          "order": 1
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17646594678620.6835293309409516",
+      "title": "Cancel amazon prime",
+      "motivation": 5,
+      "urgency": 4,
+      "deadline": "2025-12-27T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-12-02T07:11:07.862Z",
+      "lastUpdated": "2025-12-25T13:26:01.874Z",
+      "reviewDates": [
+        "2025-12-09T11:25:09.281Z",
+        "2025-12-16T21:20:33.613Z"
+      ],
+      "lastReviewAt": "2025-12-16T21:20:33.613Z",
+      "nextReviewAt": "2025-12-30T21:20:33.613Z",
+      "reviewIntervalIndex": 1,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17652310421330.02282762009744488",
+      "title": "Make appointment with Ben to call",
+      "motivation": 1,
+      "urgency": 2,
+      "deadline": "2025-12-19T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-12-08T21:57:22.133Z",
+      "lastUpdated": "2025-12-11T10:43:41.301Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-12-08T21:57:22.133Z",
+      "nextReviewAt": "2025-12-15T21:57:22.133Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17652310704590.25276088754442105",
+      "title": "Understand priorities in relationship",
+      "motivation": 3,
+      "urgency": 4,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-12-08T21:57:50.459Z",
+      "lastUpdated": "2025-12-24T12:59:07.841Z",
+      "reviewDates": [
+        "2025-12-15T22:07:18.760Z"
+      ],
+      "lastReviewAt": "2025-12-15T22:07:18.760Z",
+      "nextReviewAt": "2025-12-29T22:07:18.760Z",
+      "reviewIntervalIndex": 1,
+      "steps": [
+        {
+          "id": "1766393287037-e3be3731",
+          "text": "have talk with Anne",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1766314466254-b6799c24",
+          "text": "spend 30min reflecting",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1765314376867-84e2c153",
+          "text": "find date",
+          "completed": true,
+          "order": 2
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17652311439950.6453557408656908",
+      "title": "Create awareness steward training",
+      "motivation": 4,
+      "urgency": 4,
+      "deadline": "2026-02-15T23:00:00.000Z",
+      "status": "inactive",
+      "createdAt": "2025-12-08T21:59:03.995Z",
+      "lastUpdated": "2026-02-22T07:29:18.117Z",
+      "reviewDates": [
+        "2025-12-15T22:07:21.358Z",
+        "2025-12-30T06:41:33.414Z",
+        "2026-01-06T07:29:31.604Z",
+        "2026-01-20T21:27:49.870Z",
+        "2026-02-22T07:29:18.117Z"
+      ],
+      "lastReviewAt": "2026-02-22T07:29:18.117Z",
+      "nextReviewAt": "2026-03-24T07:29:18.117Z",
+      "reviewIntervalIndex": 2,
+      "steps": [
+        {
+          "id": "1767047690275-b4b7e2b6",
+          "text": "deploy systemerror lms with andrei",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1767047870510-c495508a",
+          "text": "get feedback",
+          "completed": false,
+          "order": 1
+        },
+        {
+          "id": "1767047877730-9073a9ae",
+          "text": "decide who to ask for feedback",
+          "completed": false,
+          "order": 2
+        },
+        {
+          "id": "1767047681214-4df1eecf",
+          "text": "create a first version",
+          "completed": true,
+          "order": 3
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": true,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17652314121630.9330762464345405",
+      "title": "Write code of conduct for events",
+      "motivation": 3,
+      "urgency": 3,
+      "deadline": "2026-01-19T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-12-08T22:03:32.163Z",
+      "lastUpdated": "2025-12-27T15:56:57.490Z",
+      "reviewDates": [
+        "2025-12-15T22:07:24.403Z"
+      ],
+      "lastReviewAt": "2025-12-15T22:07:24.403Z",
+      "nextReviewAt": "2025-12-29T22:07:24.403Z",
+      "reviewIntervalIndex": 1,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": true,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17657072428000.4897667853280958",
+      "title": "Cancel Google AI Pro Sub",
+      "motivation": 5,
+      "urgency": 3,
+      "deadline": "2026-01-13T00:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-12-14T10:14:02.800Z",
+      "lastUpdated": "2026-01-19T22:04:28.498Z",
+      "reviewDates": [
+        "2025-12-21T10:48:20.108Z",
+        "2026-01-04T21:58:18.941Z"
+      ],
+      "lastReviewAt": "2026-01-04T21:58:18.941Z",
+      "nextReviewAt": "2026-02-03T21:58:18.941Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17659592700830.24189236171436257",
+      "title": "New office chair",
+      "motivation": 4,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-12-17T08:14:30.083Z",
+      "lastUpdated": "2026-01-22T10:43:03.002Z",
+      "reviewDates": [
+        "2025-12-24T09:22:39.673Z",
+        "2025-12-31T14:04:10.559Z",
+        "2026-01-15T20:42:45.806Z"
+      ],
+      "lastReviewAt": "2026-01-15T20:42:45.806Z",
+      "nextReviewAt": "2026-02-14T20:42:45.806Z",
+      "reviewIntervalIndex": 2,
+      "steps": [
+        {
+          "id": "1766689265827-cd12098e",
+          "text": "1500sek",
+          "completed": false,
+          "order": 0
+        },
+        {
+          "id": "1769027365876-abc32e7a",
+          "text": "pick up tomorrow",
+          "completed": false,
+          "order": 1
+        },
+        {
+          "id": "1766422719325-62a49ed4",
+          "text": "Set budget",
+          "completed": true,
+          "order": 2
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17660544593220.13793235793849645",
+      "title": "Check SPP & Avanza",
+      "motivation": 5,
+      "urgency": 4,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-12-18T10:40:59.322Z",
+      "lastUpdated": "2025-12-22T16:38:10.039Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-12-18T10:40:59.322Z",
+      "nextReviewAt": "2025-12-25T10:40:59.322Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17660544792220.32295260568904716",
+      "title": "Send XRay pics to Kay",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-12-18T10:41:19.222Z",
+      "lastUpdated": "2025-12-22T16:30:54.707Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-12-18T10:41:19.222Z",
+      "nextReviewAt": "2025-12-25T10:41:19.222Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1766420564652-c9fde052",
+          "text": "send sms to kay",
+          "completed": false,
+          "order": 0
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17661298367890.9066008115103847",
+      "title": "Start PRI tracking",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-12-19T07:37:16.789Z",
+      "lastUpdated": "2025-12-22T08:48:02.113Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-12-19T07:37:16.789Z",
+      "nextReviewAt": "2025-12-26T07:37:16.789Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1766129858140-aa0a85dd",
+          "text": "Ask for new assignment",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1766129841518-3e6e853c",
+          "text": "Add to forms",
+          "completed": true,
+          "order": 1
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17663881348280.7175212923991329",
+      "title": "Plan summer vacation",
+      "motivation": 4,
+      "urgency": 4,
+      "deadline": null,
+      "status": "active",
+      "createdAt": "2025-12-22T07:22:14.828Z",
+      "lastUpdated": "2026-03-10T20:48:07.502Z",
+      "reviewDates": [
+        "2025-12-29T13:44:55.453Z",
+        "2026-01-05T16:46:15.314Z",
+        "2026-01-13T21:18:04.497Z",
+        "2026-01-28T20:58:52.493Z",
+        "2026-02-28T12:32:52.546Z"
+      ],
+      "lastReviewAt": "2026-02-28T12:32:52.546Z",
+      "nextReviewAt": "2026-03-30T12:32:52.546Z",
+      "reviewIntervalIndex": 2,
+      "steps": [
+        {
+          "id": "1769078637538-c8a4c5ea",
+          "text": "book flight and trains",
+          "completed": false,
+          "order": 0
+        },
+        {
+          "id": "1771355789417-b553370a",
+          "text": "ask Cate",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1771355794952-79f4d332",
+          "text": "find solution for housing in Madrid",
+          "completed": false,
+          "order": 2
+        },
+        {
+          "id": "1771355811279-d907ba36",
+          "text": "find solution for housing in Valencia",
+          "completed": false,
+          "order": 3
+        },
+        {
+          "id": "1769078623916-58c5af4a",
+          "text": "ask Lukas about Cologne",
+          "completed": true,
+          "order": 4
+        },
+        {
+          "id": "1767853809543-5d4e1efa",
+          "text": "ask angelica about the wedding",
+          "completed": true,
+          "order": 5
+        },
+        {
+          "id": "1767853779721-d9e08613",
+          "text": "ask cate if she is in barcelona",
+          "completed": true,
+          "order": 6
+        },
+        {
+          "id": "1766400779065-005410e5",
+          "text": "19. September Wedding Toulouse",
+          "completed": true,
+          "order": 7
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17664226804530.7074603361317374",
+      "title": "DBK: Förlustgraph",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2026-01-06T23:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-12-22T16:58:00.453Z",
+      "lastUpdated": "2026-03-04T21:15:01.701Z",
+      "reviewDates": [
+        "2025-12-29T20:44:17.377Z",
+        "2026-01-06T07:29:28.693Z",
+        "2026-01-20T21:27:47.680Z",
+        "2026-02-22T07:29:16.318Z"
+      ],
+      "lastReviewAt": "2026-02-22T07:29:16.318Z",
+      "nextReviewAt": "2026-03-24T07:29:16.318Z",
+      "reviewIntervalIndex": 2,
+      "steps": [
+        {
+          "id": "1771355744012-4d4706bb",
+          "text": "present",
+          "completed": false,
+          "order": 0
+        },
+        {
+          "id": "1767165005090-3387ebf9",
+          "text": "do assignment",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1767041061621-5c80e7fb",
+          "text": "write another mail to erik",
+          "completed": true,
+          "order": 2
+        },
+        {
+          "id": "1766597447577-f5b3d5b6",
+          "text": "wait for erik to send assignment",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1766439552292-6c4d22ac",
+          "text": "Set up initial document",
+          "completed": true,
+          "order": 4
+        },
+        {
+          "id": "1766439532680-b7e39330",
+          "text": "Ask for assignment description",
+          "completed": true,
+          "order": 5
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17665253570050.7240018074033495",
+      "title": "XMas donations",
+      "motivation": 5,
+      "urgency": 3,
+      "deadline": "2025-12-23T23:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-12-23T21:29:17.005Z",
+      "lastUpdated": "2025-12-24T14:21:31.264Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-12-23T21:29:17.005Z",
+      "nextReviewAt": "2025-12-30T21:29:17.005Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17665254043280.5373682613152451",
+      "title": "Systemerror: Send mail to slakthuset",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2025-12-23T23:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-12-23T21:30:04.328Z",
+      "lastUpdated": "2025-12-24T12:38:49.394Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-12-23T21:30:04.328Z",
+      "nextReviewAt": "2025-12-30T21:30:04.328Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17665681892200.9464781256915255",
+      "title": "Call with Luke & Ray",
+      "motivation": 4,
+      "urgency": 1,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-12-24T09:23:09.220Z",
+      "lastUpdated": "2026-02-09T18:50:28.504Z",
+      "reviewDates": [
+        "2025-12-31T14:04:12.372Z",
+        "2026-01-15T20:42:51.794Z",
+        "2026-01-22T21:18:02.701Z",
+        "2026-02-09T18:50:28.504Z"
+      ],
+      "lastReviewAt": "2026-02-09T18:50:28.504Z",
+      "nextReviewAt": "2026-03-11T18:50:28.504Z",
+      "reviewIntervalIndex": 2,
+      "steps": [
+        {
+          "id": "1767874947658-6fd04167",
+          "text": "Make an appointment",
+          "completed": false,
+          "order": 0
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17665698320640.8595955405814866",
+      "title": "Prepare google docs for nye",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2025-12-24T09:50:32.064Z",
+      "lastUpdated": "2025-12-24T12:52:44.766Z",
+      "reviewDates": [],
+      "lastReviewAt": "2025-12-24T09:50:32.064Z",
+      "nextReviewAt": "2025-12-31T09:50:32.064Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17642663847920.6639404578112873",
+      "title": "Create book tracking app",
+      "motivation": 5,
+      "urgency": 3,
+      "deadline": null,
+      "status": "notCompleted",
+      "createdAt": "2025-11-27T17:59:44.792Z",
+      "lastUpdated": "2026-02-22T07:28:41.517Z",
+      "reviewDates": [
+        "2025-12-05T14:34:32.059Z",
+        "2025-12-12T15:06:02.467Z",
+        "2025-12-29T13:44:49.039Z",
+        "2026-01-13T21:17:58.883Z"
+      ],
+      "lastReviewAt": "2026-01-13T21:17:58.883Z",
+      "nextReviewAt": "2026-02-12T21:17:58.883Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17671931584450.05071920822629972",
+      "title": "Check my eyesight",
+      "motivation": 4,
+      "urgency": 4,
+      "deadline": "2026-01-15T23:00:00.000Z",
+      "status": "active",
+      "createdAt": "2025-12-31T14:59:18.445Z",
+      "lastUpdated": "2026-03-03T21:45:31.311Z",
+      "reviewDates": [
+        "2026-01-07T15:07:37.505Z",
+        "2026-01-15T20:43:13.490Z",
+        "2026-01-22T21:18:06.810Z",
+        "2026-02-09T18:50:30.898Z"
+      ],
+      "lastReviewAt": "2026-02-09T18:50:30.898Z",
+      "nextReviewAt": "2026-03-11T18:50:30.898Z",
+      "reviewIntervalIndex": 2,
+      "steps": [
+        {
+          "id": "1771966382151-41380852",
+          "text": "get new glasses and sunglasses",
+          "completed": false,
+          "order": 0
+        },
+        {
+          "id": "1771966412535-529f4182",
+          "text": "get 850sek refund from work",
+          "completed": false,
+          "order": 1
+        },
+        {
+          "id": "1771966454664-adc5a5b2",
+          "text": "talk with andres about tanning glasses",
+          "completed": false,
+          "order": 2
+        },
+        {
+          "id": "1772574313433-16a42a08",
+          "text": "pick up eye test results at synsam",
+          "completed": false,
+          "order": 3
+        },
+        {
+          "id": "1772489228939-b4f64dc0",
+          "text": "talk with Johannes",
+          "completed": true,
+          "order": 4
+        },
+        {
+          "id": "1771966395993-99fc68f6",
+          "text": "go back to take eye picture",
+          "completed": true,
+          "order": 5
+        },
+        {
+          "id": "1768860420402-10e1ff08",
+          "text": "book appointment",
+          "completed": true,
+          "order": 6
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17672010906530.04907789688685227",
+      "title": "2026 goal setting",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2025-12-30T23:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2025-12-31T17:11:30.653Z",
+      "lastUpdated": "2026-02-22T07:29:28.654Z",
+      "reviewDates": [
+        "2026-01-07T18:07:27.508Z",
+        "2026-01-21T20:28:58.372Z",
+        "2026-02-22T07:29:24.964Z"
+      ],
+      "lastReviewAt": "2026-02-22T07:29:24.964Z",
+      "nextReviewAt": "2026-03-24T07:29:24.964Z",
+      "reviewIntervalIndex": 2,
+      "steps": [
+        {
+          "id": "1768724138914-8ca39d00",
+          "text": "print bingo",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1768724125095-e287371e",
+          "text": "3 extra goals for bingo sheet",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1767452766682-669b0ff4",
+          "text": "refine goal workplan",
+          "completed": true,
+          "order": 2
+        },
+        {
+          "id": "1767201123717-d675dd50",
+          "text": "3 the 2026 goal setting",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1767201114082-32032449",
+          "text": "2 the 2025 annual report",
+          "completed": true,
+          "order": 4
+        },
+        {
+          "id": "1767201105723-e206a2eb",
+          "text": "1 the 2025 data gathering",
+          "completed": true,
+          "order": 5
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17672013769570.7567121126458184",
+      "title": "DBK: Write a timeline of my addictive acting out",
+      "motivation": 2,
+      "urgency": 1,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-12-31T17:16:16.957Z",
+      "lastUpdated": "2026-03-01T15:44:28.171Z",
+      "reviewDates": [
+        "2026-01-07T18:07:36.949Z",
+        "2026-01-15T20:43:16.230Z",
+        "2026-01-30T15:36:51.155Z",
+        "2026-03-01T15:44:28.171Z"
+      ],
+      "lastReviewAt": "2026-03-01T15:44:28.171Z",
+      "nextReviewAt": "2026-03-31T15:44:28.171Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17674513666460.09816504743777199",
+      "title": "Create a budget plan ",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": null,
+      "status": "notCompleted",
+      "createdAt": "2026-01-03T14:42:46.646Z",
+      "lastUpdated": "2026-01-04T21:58:37.428Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-01-03T14:42:46.646Z",
+      "nextReviewAt": "2026-01-10T14:42:46.646Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1767451371809-e2f05d43",
+          "text": "identify monthly spendings",
+          "completed": false,
+          "order": 0
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17675639577050.2963126286163661",
+      "title": "Talk with Merle about our connection.",
+      "motivation": 3,
+      "urgency": 4,
+      "deadline": null,
+      "status": "notCompleted",
+      "createdAt": "2026-01-04T21:59:17.705Z",
+      "lastUpdated": "2026-02-22T07:29:58.857Z",
+      "reviewDates": [
+        "2026-01-12T08:37:59.828Z",
+        "2026-01-28T20:58:51.617Z"
+      ],
+      "lastReviewAt": "2026-01-28T20:58:51.617Z",
+      "nextReviewAt": "2026-02-27T20:58:51.617Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17676846336000.3555341280558747",
+      "title": "Hallon (switch to non-student)",
+      "motivation": 5,
+      "urgency": 3,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2026-01-06T07:30:33.600Z",
+      "lastUpdated": "2026-03-10T20:08:53.913Z",
+      "reviewDates": [
+        "2026-01-13T21:18:09.261Z",
+        "2026-01-28T20:58:53.145Z",
+        "2026-02-28T12:32:53.763Z"
+      ],
+      "lastReviewAt": "2026-02-28T12:32:53.763Z",
+      "nextReviewAt": "2026-03-30T12:32:53.763Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17677984386300.02106687409848218",
+      "title": "Tighten bed screws",
+      "motivation": 5,
+      "urgency": 3,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2026-01-07T15:07:18.630Z",
+      "lastUpdated": "2026-03-01T15:44:52.073Z",
+      "reviewDates": [
+        "2026-01-15T20:42:55.560Z",
+        "2026-01-22T21:18:04.537Z",
+        "2026-02-09T18:50:30.151Z"
+      ],
+      "lastReviewAt": "2026-02-09T18:50:30.151Z",
+      "nextReviewAt": "2026-03-11T18:50:30.151Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17678092445020.6583171992812836",
+      "title": "Write a mail to Lona about my PRI",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2026-01-07T23:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2026-01-07T18:07:24.502Z",
+      "lastUpdated": "2026-01-07T20:24:09.026Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-01-07T18:07:24.502Z",
+      "nextReviewAt": "2026-01-14T18:07:24.502Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17632320879210.06539314456303125",
+      "title": "Stop smoking",
+      "motivation": 1,
+      "urgency": 1,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2025-11-15T18:41:27.921Z",
+      "lastUpdated": "2026-02-09T18:50:34.928Z",
+      "reviewDates": [
+        "2025-11-23T18:20:02.364Z",
+        "2025-12-07T20:58:24.188Z",
+        "2026-01-08T06:29:13.951Z",
+        "2026-02-09T18:50:34.928Z"
+      ],
+      "lastReviewAt": "2026-02-09T18:50:34.928Z",
+      "nextReviewAt": "2026-03-11T18:50:34.928Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17678564658580.7206831449898778",
+      "title": "Call Erik",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2026-01-08T07:14:25.858Z",
+      "lastUpdated": "2026-01-13T21:18:33.526Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-01-08T07:14:25.858Z",
+      "nextReviewAt": "2026-01-15T07:14:25.858Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1767856513470-fa8f49dd",
+          "text": "find his number",
+          "completed": false,
+          "order": 0
+        },
+        {
+          "id": "1767856518993-5c203727",
+          "text": "ask for a plan to not masturbate",
+          "completed": false,
+          "order": 1
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17678581353410.6864487248312121",
+      "title": "Call Philips support",
+      "motivation": 5,
+      "urgency": 4,
+      "deadline": "2026-01-14T23:00:00.000Z",
+      "status": "notCompleted",
+      "createdAt": "2026-01-08T07:42:15.341Z",
+      "lastUpdated": "2026-01-19T06:47:12.372Z",
+      "reviewDates": [
+        "2026-01-15T20:43:21.348Z"
+      ],
+      "lastReviewAt": "2026-01-15T20:43:21.348Z",
+      "nextReviewAt": "2026-01-22T20:43:21.348Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17678749405720.031471015766296295",
+      "title": "Buy mouthwash for office",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2026-01-11T23:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2026-01-08T12:22:20.572Z",
+      "lastUpdated": "2026-01-11T16:58:39.101Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-01-08T12:22:20.572Z",
+      "nextReviewAt": "2026-01-15T12:22:20.572Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1768136170429-873ac941",
+          "text": "on way home today",
+          "completed": false,
+          "order": 0
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17681471306720.618591055808979",
+      "title": "NYE Stuga plan",
+      "motivation": 5,
+      "urgency": 1,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2026-01-11T15:58:50.672Z",
+      "lastUpdated": "2026-02-09T18:50:16.933Z",
+      "reviewDates": [
+        "2026-01-19T06:47:01.300Z",
+        "2026-02-09T18:50:16.933Z"
+      ],
+      "lastReviewAt": "2026-02-09T18:50:16.933Z",
+      "nextReviewAt": "2026-03-11T18:50:16.933Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17682071735690.025929377637876283",
+      "title": "organize bday present for theresa",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2026-01-29T23:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2026-01-12T08:39:33.569Z",
+      "lastUpdated": "2026-01-30T15:51:18.921Z",
+      "reviewDates": [
+        "2026-01-19T21:40:08.936Z"
+      ],
+      "lastReviewAt": "2026-01-19T21:40:08.936Z",
+      "nextReviewAt": "2026-02-02T21:40:08.936Z",
+      "reviewIntervalIndex": 1,
+      "steps": [
+        {
+          "id": "1769267325937-5fc7ad5b",
+          "text": "package gift",
+          "completed": false,
+          "order": 0
+        },
+        {
+          "id": "1768805270302-cf98f999",
+          "text": "get gift",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1768339165788-3094f22a",
+          "text": "decide gift",
+          "completed": true,
+          "order": 2
+        },
+        {
+          "id": "1768339159369-f6f5647c",
+          "text": "create howabout",
+          "completed": true,
+          "order": 3
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17656498612730.5233608590929135",
+      "title": "Test Goal 1",
+      "motivation": 3,
+      "urgency": 4,
+      "deadline": "2026-01-15T00:00:00.000Z",
+      "status": "notCompleted",
+      "createdAt": "2025-12-13T18:17:41.273Z",
+      "lastUpdated": "2026-01-19T06:47:45.957Z",
+      "reviewDates": [
+        "2026-01-17T18:15:46.561Z"
+      ],
+      "lastReviewAt": "2026-01-17T18:15:46.561Z",
+      "nextReviewAt": "2026-01-31T18:15:46.561Z",
+      "reviewIntervalIndex": 1,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17689449394270.2336309545596531",
+      "title": "Rent skiing equipment",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2026-01-19T23:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2026-01-20T21:35:39.427Z",
+      "lastUpdated": "2026-01-21T22:09:27.358Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-01-20T21:35:39.427Z",
+      "nextReviewAt": "2026-01-27T21:35:39.427Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17689450200260.14910728309338517",
+      "title": "Pick 3 restaurants for pokemon win",
+      "motivation": 4,
+      "urgency": 3,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2026-01-20T21:37:00.026Z",
+      "lastUpdated": "2026-03-01T21:56:54.221Z",
+      "reviewDates": [
+        "2026-01-28T20:58:53.802Z",
+        "2026-02-22T07:28:33.464Z",
+        "2026-03-01T10:46:09.623Z"
+      ],
+      "lastReviewAt": "2026-03-01T10:46:09.623Z",
+      "nextReviewAt": "2026-03-08T10:46:09.623Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1772379899228-452fb914",
+          "text": "Mama Wolf (Japanese)",
+          "completed": false,
+          "order": 0
+        },
+        {
+          "id": "1772380074271-d9a5483e",
+          "text": "Thongwiset (Thai)",
+          "completed": false,
+          "order": 1
+        },
+        {
+          "id": "1772380139732-67838e1d",
+          "text": "Crêperie Fyra Knop (French)",
+          "completed": false,
+          "order": 2
+        },
+        {
+          "id": "1772380789601-20c56963",
+          "text": "Bap Kitchen (Korean)",
+          "completed": false,
+          "order": 3
+        },
+        {
+          "id": "1772380894802-711cc9ad",
+          "text": "Verte (Vegan Swedish)",
+          "completed": false,
+          "order": 4
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17691167370040.8254848349787918",
+      "title": "Text Marcus C to have lunch",
+      "motivation": 5,
+      "urgency": 1,
+      "deadline": "2026-01-21T23:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2026-01-22T21:18:57.004Z",
+      "lastUpdated": "2026-01-24T22:33:47.769Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-01-22T21:18:57.004Z",
+      "nextReviewAt": "2026-01-29T21:18:57.004Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17697874427360.8123515983056593",
+      "title": "buy skiing socka",
+      "motivation": 5,
+      "urgency": 1,
+      "deadline": "2026-12-31T23:00:00.000Z",
+      "status": "inactive",
+      "createdAt": "2026-01-30T15:37:22.737Z",
+      "lastUpdated": "2026-02-24T20:52:50.065Z",
+      "reviewDates": [
+        "2026-02-09T18:50:34.125Z",
+        "2026-02-24T20:52:50.065Z"
+      ],
+      "lastReviewAt": "2026-02-24T20:52:50.065Z",
+      "nextReviewAt": "2026-03-26T20:52:50.065Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17707608518280.831806038544131",
+      "title": "Get birthday present Anne",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2026-02-17T23:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2026-02-10T22:00:51.828Z",
+      "lastUpdated": "2026-02-17T19:16:13.610Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-02-10T22:00:51.828Z",
+      "nextReviewAt": "2026-02-17T22:00:51.828Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17707608749990.2893515940397743",
+      "title": "Put my name on dj list",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2026-02-14T23:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2026-02-10T22:01:14.999Z",
+      "lastUpdated": "2026-02-13T13:33:26.525Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-02-10T22:01:14.999Z",
+      "nextReviewAt": "2026-02-17T22:01:14.999Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17707609192250.1776126027911593",
+      "title": "Text Kay for XRay",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2026-02-10T22:01:59.227Z",
+      "lastUpdated": "2026-02-17T19:16:17.408Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-02-10T22:01:59.227Z",
+      "nextReviewAt": "2026-02-17T22:01:59.227Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17707609508360.7826693445127955",
+      "title": "Household day /w Bella",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2026-02-10T22:02:30.836Z",
+      "lastUpdated": "2026-02-22T07:29:46.472Z",
+      "reviewDates": [
+        "2026-02-22T07:29:12.741Z"
+      ],
+      "lastReviewAt": "2026-02-22T07:29:12.741Z",
+      "nextReviewAt": "2026-03-08T07:29:12.741Z",
+      "reviewIntervalIndex": 1,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17707633124960.5460711979166477",
+      "title": "Send receipts from doctor to skandia",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2026-02-09T23:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2026-02-10T22:41:52.496Z",
+      "lastUpdated": "2026-02-13T13:33:23.988Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-02-10T22:41:52.496Z",
+      "nextReviewAt": "2026-02-17T22:41:52.496Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17639831462740.35591330905518315",
+      "title": "Set up new reading tracking app",
+      "motivation": 5,
+      "urgency": 2,
+      "deadline": null,
+      "status": "notCompleted",
+      "createdAt": "2025-11-24T11:19:06.274Z",
+      "lastUpdated": "2026-02-22T21:02:34.759Z",
+      "reviewDates": [
+        "2025-12-01T13:31:57.156Z",
+        "2025-12-15T19:45:22.733Z",
+        "2026-01-15T20:43:17.880Z",
+        "2026-02-22T16:15:03.345Z"
+      ],
+      "lastReviewAt": "2026-02-22T16:15:03.345Z",
+      "nextReviewAt": "2026-03-24T16:15:03.345Z",
+      "reviewIntervalIndex": 2,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17720970400530.8425833378838771",
+      "title": "Organise Massage course",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2026-03-02T23:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2026-02-26T09:10:40.053Z",
+      "lastUpdated": "2026-03-04T14:24:43.738Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-02-26T09:10:40.053Z",
+      "nextReviewAt": "2026-03-05T09:10:40.053Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1772383804055-3131b4d1",
+          "text": "Gustafsberg https://www.camillanilsson.se/",
+          "completed": false,
+          "order": 0
+        },
+        {
+          "id": "1772383835945-2c47aa03",
+          "text": "Stockholm https://www.hermelinmassage.se/massagekurs/",
+          "completed": false,
+          "order": 1
+        },
+        {
+          "id": "1772633669602-db4c34e7",
+          "text": "book sj",
+          "completed": false,
+          "order": 2
+        },
+        {
+          "id": "1772484909090-94963319",
+          "text": "book course",
+          "completed": true,
+          "order": 3
+        },
+        {
+          "id": "1772484918157-1547a800",
+          "text": "ask vacation",
+          "completed": true,
+          "order": 4
+        },
+        {
+          "id": "1772484925387-e441f086",
+          "text": "book journey",
+          "completed": true,
+          "order": 5
+        },
+        {
+          "id": "1772383791823-948d4cbe",
+          "text": "Visby https://www.folkuniversitetet.se/kurser-utbildningar/halsa-friskvard/friskvard/visby/83419/",
+          "completed": true,
+          "order": 6
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17723621542870.6576465612560813",
+      "title": "Plan 2nd Twitch lifestream",
+      "motivation": 5,
+      "urgency": 3,
+      "deadline": "2026-03-19T23:00:00.000Z",
+      "status": "active",
+      "createdAt": "2026-03-01T10:49:14.287Z",
+      "lastUpdated": "2026-03-10T20:49:14.733Z",
+      "reviewDates": [
+        "2026-03-10T20:49:14.733Z"
+      ],
+      "lastReviewAt": "2026-03-10T20:49:14.733Z",
+      "nextReviewAt": "2026-03-24T20:49:14.733Z",
+      "reviewIntervalIndex": 1,
+      "steps": [
+        {
+          "id": "1772694409035-db31ca7c",
+          "text": "decide if eater oskviq happens",
+          "completed": false,
+          "order": 0
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17723622397660.6798970144201493",
+      "title": "Draft Systemerror Volunteer framwork ",
+      "motivation": 5,
+      "urgency": 2,
+      "deadline": "2026-05-28T22:00:00.000Z",
+      "status": "inactive",
+      "createdAt": "2026-03-01T10:50:39.766Z",
+      "lastUpdated": "2026-03-09T14:20:17.714Z",
+      "reviewDates": [
+        "2026-03-09T14:20:17.714Z"
+      ],
+      "lastReviewAt": "2026-03-09T14:20:17.714Z",
+      "nextReviewAt": "2026-03-23T14:20:17.714Z",
+      "reviewIntervalIndex": 1,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17723622836240.018969113178549768",
+      "title": "Reorganise how-to-event process /w Klaas",
+      "motivation": 5,
+      "urgency": 2,
+      "deadline": "2026-05-28T22:00:00.000Z",
+      "status": "inactive",
+      "createdAt": "2026-03-01T10:51:23.624Z",
+      "lastUpdated": "2026-03-09T14:20:18.636Z",
+      "reviewDates": [
+        "2026-03-09T14:20:18.636Z"
+      ],
+      "lastReviewAt": "2026-03-09T14:20:18.636Z",
+      "nextReviewAt": "2026-03-23T14:20:18.636Z",
+      "reviewIntervalIndex": 1,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17724022377590.7371744792546544",
+      "title": "Buy Underwear",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": null,
+      "status": "completed",
+      "createdAt": "2026-03-01T21:57:17.759Z",
+      "lastUpdated": "2026-03-10T20:48:07.502Z",
+      "reviewDates": [
+        "2026-03-09T14:20:20.211Z"
+      ],
+      "lastReviewAt": "2026-03-09T14:20:20.211Z",
+      "nextReviewAt": "2026-03-23T14:20:20.211Z",
+      "reviewIntervalIndex": 1,
+      "steps": [
+        {
+          "id": "1772694373921-5f882bc6",
+          "text": "research underwear",
+          "completed": true,
+          "order": 0
+        },
+        {
+          "id": "1772694382465-ed45ff20",
+          "text": "h&m",
+          "completed": true,
+          "order": 1
+        },
+        {
+          "id": "1772694390446-7cd722a3",
+          "text": "talk with anne",
+          "completed": true,
+          "order": 2
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17724425988560.8070540945307184",
+      "title": "Alkfree beer solene",
+      "motivation": 5,
+      "urgency": 3,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2026-03-02T09:09:58.856Z",
+      "lastUpdated": "2026-03-09T14:20:20.823Z",
+      "reviewDates": [
+        "2026-03-09T14:20:20.823Z"
+      ],
+      "lastReviewAt": "2026-03-09T14:20:20.823Z",
+      "nextReviewAt": "2026-03-23T14:20:20.823Z",
+      "reviewIntervalIndex": 1,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17724431059860.2540171748676635",
+      "title": "Get shoe laces for winter shoes",
+      "motivation": 3,
+      "urgency": 4,
+      "deadline": null,
+      "status": "active",
+      "createdAt": "2026-03-02T09:18:25.986Z",
+      "lastUpdated": "2026-03-10T20:49:11.426Z",
+      "reviewDates": [
+        "2026-03-09T14:20:21.610Z"
+      ],
+      "lastReviewAt": "2026-03-09T14:20:21.610Z",
+      "nextReviewAt": "2026-03-23T14:20:21.610Z",
+      "reviewIntervalIndex": 1,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17724904940050.6026157981664562",
+      "title": "slaa basic text as epub",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": null,
+      "status": "notCompleted",
+      "createdAt": "2026-03-02T22:28:14.005Z",
+      "lastUpdated": "2026-03-04T22:22:25.963Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-03-02T22:28:14.005Z",
+      "nextReviewAt": "2026-03-09T22:28:14.005Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1772633686787-45bc43bb",
+          "text": "buy apple or amazon",
+          "completed": false,
+          "order": 0
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17725439011480.44922209607921937",
+      "title": "skattedeklaration 2025",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2026-05-03T22:00:00.000Z",
+      "status": "paused",
+      "createdAt": "2026-03-03T13:18:21.152Z",
+      "lastUpdated": "2026-03-10T20:49:13.195Z",
+      "reviewDates": [
+        "2026-03-10T20:49:13.195Z"
+      ],
+      "lastReviewAt": "2026-03-10T20:49:13.195Z",
+      "nextReviewAt": "2026-03-24T20:49:13.195Z",
+      "reviewIntervalIndex": 1,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": "2026-03-16T23:00:00.000Z",
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17726380309270.9516455070563847",
+      "title": "write a packing list for gotland",
+      "motivation": 3,
+      "urgency": 3,
+      "deadline": "2026-04-08T22:00:00.000Z",
+      "status": "inactive",
+      "createdAt": "2026-03-04T15:27:10.927Z",
+      "lastUpdated": "2026-03-04T15:27:10.927Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-03-04T15:27:10.927Z",
+      "nextReviewAt": "2026-03-11T15:27:10.927Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17726423675960.4191626860151053",
+      "title": "signup fas 3 instensiv",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2026-03-05T23:00:00.000Z",
+      "status": "active",
+      "createdAt": "2026-03-04T16:39:27.596Z",
+      "lastUpdated": "2026-03-05T07:06:09.753Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-03-04T16:39:27.596Z",
+      "nextReviewAt": "2026-03-11T16:39:27.596Z",
+      "reviewIntervalIndex": 0,
+      "steps": [
+        {
+          "id": "1772694365226-ba02ba72",
+          "text": "decide date",
+          "completed": false,
+          "order": 0
+        },
+        {
+          "id": "1772642377409-58b0d177",
+          "text": "write mail to joakrzep@gmail.com",
+          "completed": true,
+          "order": 1
+        }
+      ],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17726943519000.9426663517602909",
+      "title": "plan london trip",
+      "motivation": 3,
+      "urgency": 2,
+      "deadline": null,
+      "status": "inactive",
+      "createdAt": "2026-03-05T07:05:51.900Z",
+      "lastUpdated": "2026-03-05T07:05:51.900Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-03-05T07:05:51.900Z",
+      "nextReviewAt": "2026-03-12T07:05:51.900Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    },
+    {
+      "id": "17726967225450.3580088815651524",
+      "title": "Plan assignment hour",
+      "motivation": 5,
+      "urgency": 5,
+      "deadline": "2026-03-05T23:00:00.000Z",
+      "status": "completed",
+      "createdAt": "2026-03-05T07:45:22.545Z",
+      "lastUpdated": "2026-03-10T20:48:58.454Z",
+      "reviewDates": [],
+      "lastReviewAt": "2026-03-05T07:45:22.545Z",
+      "nextReviewAt": "2026-03-12T07:45:22.545Z",
+      "reviewIntervalIndex": 0,
+      "steps": [],
+      "resources": [],
+      "pauseUntil": null,
+      "pauseUntilGoalId": null,
+      "forceActivated": false,
+      "isRecurring": false,
+      "recurCount": 0,
+      "completionCount": 0,
+      "notCompletedCount": 0,
+      "recurPeriod": 7,
+      "recurPeriodUnit": "days"
+    }
+  ],
+  "settings": {
+    "maxActiveGoals": 5,
+    "language": "en",
+    "reviewIntervals": [
+      7,
+      14,
+      30
+    ]
+  },
+  "exportDate": "2026-03-10T20:49:21.448Z"
+}
